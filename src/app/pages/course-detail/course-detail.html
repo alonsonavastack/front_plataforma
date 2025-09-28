@@ -1,0 +1,247 @@
+<!-- src/app/pages/course-detail/course-detail.html -->
+<div class="min-h-[calc(100vh-4rem)] bg-slate-950">
+
+  <!-- ERROR -->
+  @if (hasError()) {
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+      <div class="rounded-xl border border-red-400/40 bg-red-500/10 text-red-200 p-4">
+        <div class="font-semibold mb-1">No se pudo cargar el curso</div>
+        <div class="text-xs opacity-80 break-all">{{ errorMessage() }}</div>
+        <button class="mt-3 px-3 py-2 rounded-lg border border-white/10 hover:border-lime-400/40 hover:text-lime-300 transition"
+                (click)="reload()">
+          Reintentar
+        </button>
+      </div>
+    </div>
+  }
+  <app-header></app-header>
+
+  <!-- HERO / PORTADA -->
+  <section class="relative">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      @if (isLoading()) {
+        <div class="h-48 md:h-64 rounded-2xl border border-white/10 bg-white/5 animate-pulse"></div>
+      } @else {
+        <div class="grid md:grid-cols-[1.5fr_1fr] gap-6">
+          <!-- Info -->
+          <div class="space-y-4">
+            <a routerLink="/home" class="text-xs text-white/60 hover:text-lime-300">← Volver</a>
+            <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
+              {{ course()?.title }}
+            </h1>
+            <p class="text-white/70">{{ course()?.subtitle }}</p>
+
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/70">
+              <span class="inline-flex items-center gap-1">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" d="M12 17l-5 3 1.5-5.5L4 9l5.5-.5L12 3l2.5 5.5L20 9l-4.5 5.5L17 20z"/></svg>
+                {{ metaRating() }} ({{ metaReviews() }} reseñas)
+              </span>
+              <span>•</span>
+              <span>{{ metaStudents() | number }} estudiantes</span>
+              <span>•</span>
+              <span>{{ categoryTitle() }}</span>
+              <span>•</span>
+              <span>Instructor: {{ instructorName() }}</span>
+            </div>
+
+            <!-- KPIs del curso -->
+            <div class="flex flex-wrap gap-3 text-xs text-white/60">
+              <span class="rounded-lg border border-white/10 bg-white/5 px-3 py-1">Duración total: {{ totalTime() }}</span>
+              <span class="rounded-lg border border-white/10 bg-white/5 px-3 py-1">{{ totalClasses() }} clases</span>
+              <span class="rounded-lg border border-white/10 bg-white/5 px-3 py-1">{{ totalFiles() }} archivos</span>
+              <span class="rounded-lg border border-white/10 bg-white/5 px-3 py-1">Nivel: {{ course()?.level }}</span>
+              <span class="rounded-lg border border-white/10 bg-white/5 px-3 py-1">Idioma: {{ course()?.idioma }}</span>
+            </div>
+          </div>
+
+          <!-- Card de compra -->
+          <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden">
+            <!-- Portada -->
+            <img [src]="coverUrl()" alt="Portada del curso" class="w-full h-40 object-cover border-b border-white/10">
+            <div class="p-4 space-y-3">
+              <div class="flex items-baseline gap-3">
+                <span class="text-2xl font-extrabold text-lime-300">${{ priceCurrent() | number:'1.0-2' }}</span>
+                @if (hasDiscount()) {
+                  <span class="text-white/40 line-through">${{ priceOriginal() | number:'1.0-2' }}</span>
+                  <span class="px-2 py-0.5 rounded-md text-xs border border-lime-400/40 text-lime-300 bg-lime-400/10">
+                    -{{ discountPercent() }}%
+                  </span>
+                }
+              </div>
+
+              @if (studentHasCourse()) {
+                <div class="text-xs text-lime-300">Ya cuentas con este curso.</div>
+              } @else {
+                <div class="grid grid-cols-1 gap-2">
+                  <button class="h-11 rounded-xl border border-lime-400/40 bg-lime-400/10 text-lime-300 font-semibold
+                                 hover:border-lime-400 hover:shadow-[0_0_16px_#22c55e] transition"
+                          (click)="buyNow()">
+                    Comprar ahora
+                  </button>
+                  <button class="h-11 rounded-xl border border-white/10 text-white/80 hover:text-lime-300 hover:border-lime-400/40 transition"
+                          (click)="addToCart()">
+                    Agregar al carrito
+                  </button>
+                </div>
+              }
+              <div class="text-xs text-white/50">
+                Acceso de por vida • Actualizaciones incluidas • Certificado
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- CONTENIDO / MALLA -->
+  <section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    @if (isLoading()) {
+      <div class="space-y-3">
+        @for (i of [1,2,3,4]; track i) {
+          <div class="h-12 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
+        }
+      </div>
+    } @else {
+      <h2 class="text-white/90 font-semibold mb-4">Contenido del curso</h2>
+
+      @if ((course()?.malla_curricular ?? course()?.malla ?? []).length === 0) {
+        <div class="rounded-xl border border-white/10 bg-white/5 p-4 text-white/70">
+          Aún no hay secciones publicadas.
+        </div>
+      } @else {
+        <div class="space-y-3">
+          @for (sec of (course()?.malla_curricular ?? course()?.malla ?? []); track sec._id) {
+            <div class="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
+              <button class="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-white/5 transition"
+                      (click)="toggleSection(sec._id)">
+                <div class="flex items-center gap-3">
+                  <svg class="w-4 h-4 text-white/60" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-width="2" d="M4 7h16M4 12h16M4 17h16"/>
+                  </svg>
+                  <span class="text-white">{{ sec.title }}</span>
+                  <span class="text-xs text-white/50">• {{ sec.clases?.length || 0 }} clases • {{ sec.time_parse || '0' }}</span>
+                </div>
+                <svg class="w-5 h-5 text-white/60 transition"
+                     [class.rotate-180]="isSectionOpen(sec._id)"
+                     viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-width="2" d="M6 9l6 6 6-6"/>
+                </svg>
+              </button>
+
+              @if (isSectionOpen(sec._id)) {
+                <div class="border-t border-white/10">
+                  @for (cl of (sec.clases ?? []); track cl._id) {
+                    <div class="px-4 py-3 flex items-center gap-3 text-sm hover:bg-white/5">
+                      <svg class="w-4 h-4 text-white/60" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-width="2" d="M8 5v14l11-7-11-7z"/>
+                      </svg>
+                      <div class="flex-1 text-white/80">{{ cl.title }}</div>
+                      <div class="text-xs text-white/50">{{ cl.time_parse || cl.time || '—' }}</div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+  </section>
+
+  <!-- RESEÑAS -->
+  <section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+    <h2 class="text-white/90 font-semibold mb-4">Reseñas</h2>
+    @if (isLoading()) {
+      <div class="grid sm:grid-cols-2 gap-4">
+        @for (i of [1,2,3,4]; track i) {
+          <div class="h-28 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
+        }
+      </div>
+    } @else {
+      @if (reviews().length === 0) {
+        <div class="rounded-xl border border-white/10 bg-white/5 p-4 text-white/70">
+          Aún no hay reseñas.
+        </div>
+      } @else {
+        <div class="grid sm:grid-cols-2 gap-4">
+          @for (r of reviews(); track r._id) {
+            <div class="rounded-xl border border-white/10 bg-white/5 p-4 space-y-2">
+              <div class="flex items-center gap-3">
+                <img [src]="r.user_info?.avatar || 'https://i.pravatar.cc/48'"
+                     alt="avatar" class="w-8 h-8 rounded-full object-cover">
+                <div class="text-sm">
+                  <div class="text-white">{{ r.user_info?.full_name || 'Alumno' }}</div>
+                  <div class="text-white/50">{{ r.createdAt | date:'mediumDate' }}</div>
+                </div>
+                <div class="ml-auto text-lime-300 text-sm font-semibold">{{ r.rating }}/5</div>
+              </div>
+              <p class="text-sm text-white/80">{{ r.review }}</p>
+            </div>
+          }
+        </div>
+      }
+    }
+  </section>
+
+  <!-- MÁS DEL INSTRUCTOR / RELACIONADOS -->
+  <section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 space-y-8">
+    <div>
+      <h3 class="text-white/90 font-semibold mb-3">Más del instructor</h3>
+      @if (isLoading()) {
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          @for (i of [1,2,3]; track i) {
+            <div class="h-40 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
+          }
+        </div>
+      } @else {
+        @if (moreFromInstructor().length === 0) {
+          <div class="rounded-xl border border-white/10 bg-white/5 p-4 text-white/70">Sin cursos por ahora.</div>
+        } @else {
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            @for (c of moreFromInstructor(); track c._id) {
+              <a [routerLink]="['/landing-curso', c.slug]"
+                 class="rounded-xl border border-white/10 bg-white/5 hover:border-lime-400/40 transition overflow-hidden">
+                <img [src]="c.imagen ? buildImage(c.imagen) : 'https://picsum.photos/seed/inst/600/360'"
+                     [alt]="c.title" class="w-full h-32 object-cover border-b border-white/10">
+                <div class="p-3">
+                  <div class="text-sm text-white/90 line-clamp-2">{{ c.title }}</div>
+                  <div class="text-xs text-white/50 mt-1">${{ (c.price_discount ?? c.price_usd) | number:'1.0-2' }}</div>
+                </div>
+              </a>
+            }
+          </div>
+        }
+      }
+    </div>
+
+    <div>
+      <h3 class="text-white/90 font-semibold mb-3">Relacionados</h3>
+      @if (isLoading()) {
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          @for (i of [1,2,3]; track i) {
+            <div class="h-40 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
+          }
+        </div>
+      } @else {
+        @if (relatedCourses().length === 0) {
+          <div class="rounded-xl border border-white/10 bg-white/5 p-4 text-white/70">Sin relacionados por ahora.</div>
+        } @else {
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            @for (c of relatedCourses(); track c._id) {
+              <a [routerLink]="['/landing-curso', c.slug]"
+                 class="rounded-xl border border-white/10 bg-white/5 hover:border-lime-400/40 transition overflow-hidden">
+                <img [src]="c.imagen ? buildImage(c.imagen) : 'https://picsum.photos/seed/rel/600/360'"
+                     [alt]="c.title" class="w-full h-32 object-cover border-b border-white/10">
+                <div class="p-3">
+                  <div class="text-sm text-white/90 line-clamp-2">{{ c.title }}</div>
+                  <div class="text-xs text-white/50 mt-1">${{ (c.price_discount ?? c.price_usd) | number:'1.0-2' }}</div>
+                </div>
+              </a>
+            }
+          </div>
+        }
+      }
+    </div>
+  </section>
+</div>

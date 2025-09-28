@@ -1,0 +1,217 @@
+@if (viewMode() === 'list') {
+  <!-- VISTA: LISTA DE CURSOS -->
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <h2 class="text-2xl font-bold text-white">Gestión de Cursos</h2>
+      <button (click)="openCreateModal()" class="h-10 px-5 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition">
+        Crear Curso
+      </button>
+    </div>
+
+    <!-- Tabla de Cursos -->
+    <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-white/10">
+      <table class="w-full text-sm text-left text-gray-400">
+        <thead class="text-xs uppercase bg-slate-700/50 text-gray-400">
+          <tr>
+            <th scope="col" class="px-6 py-3">Portada</th>
+            <th scope="col" class="px-6 py-3">Título</th>
+            <th scope="col" class="px-6 py-3">Categoría</th>
+            <th scope="col" class="px-6 py-3">Instructor</th>
+            <th scope="col" class="px-6 py-3 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (coursesService.isLoadingList()) {
+            <tr class="border-b bg-slate-800/50 border-gray-700">
+              <td colspan="5" class="px-6 py-4 text-center">Cargando cursos...</td>
+            </tr>
+          } @else {
+            @for (course of coursesService.courses(); track course._id) {
+              <tr class="border-b bg-slate-800/50 border-gray-700 hover:bg-slate-700/50">
+                <td class="px-6 py-4">
+                  <img [src]="buildImageUrl(course.imagen)" alt="{{ course.title }}" class="w-24 h-14 object-cover rounded-md">
+                </td>
+                <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white">
+                  {{ course.title }}
+                </th>
+                <td class="px-6 py-4">{{ course.categorie.title }}</td>
+                <td class="px-6 py-4">{{ course.user.name }} {{ course.user.surname }}</td>
+                <td class="px-6 py-4 text-right space-x-2">
+                  <button (click)="switchToContentView(course)" class="font-medium text-cyan-400 hover:underline">Contenido</button>
+                  <button (click)="openEditModal(course)" class="font-medium text-lime-400 hover:underline">Editar</button>
+                  <button (click)="deleteCourse(course._id)" class="font-medium text-red-400 hover:underline">Eliminar</button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal para Crear/Editar Curso -->
+  <!-- Backdrop -->
+  <div (click)="closeModal()" [class.hidden]="!isModalOpen()" class="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm"></div>
+
+  <!-- Modal -->
+  <div id="course-modal" tabindex="-1" aria-hidden="true" [class.hidden]="!isModalOpen()" class="fixed top-0 right-0 left-0 z-50 justify-center items-start w-full md:inset-0 h-modal md:h-full flex pt-8">
+    <div class="relative p-4 w-full max-w-2xl max-h-[90vh]">
+      <div class="relative rounded-lg shadow bg-slate-800 border border-white/10 flex flex-col h-full">
+        <button (click)="closeModal()" type="button" class="absolute top-3 right-2.5 text-gray-400 bg-transparent rounded-lg text-sm p-1.5 ml-auto inline-flex items-center hover:bg-gray-600 hover:text-white">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+          <span class="sr-only">Cerrar modal</span>
+        </button>
+        <!-- Modal header -->
+        <div class="py-6 px-6 lg:px-8 border-b border-slate-700">
+          <h3 class="text-xl font-medium text-white">
+            {{ isEditing() ? 'Editar Curso' : 'Nuevo Curso' }}
+          </h3>
+        </div>
+        <!-- Modal body -->
+        <div class="flex-grow overflow-y-auto p-6 lg:p-8">
+          <form id="course-form" class="space-y-6" [formGroup]="courseForm" (ngSubmit)="onSubmit()">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="title" class="block mb-2 text-sm font-medium text-gray-300">Título del curso</label>
+                <input type="text" id="title" formControlName="title" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500" required>
+              </div>
+              <div>
+                <label for="subtitle" class="block mb-2 text-sm font-medium text-gray-300">Subtítulo</label>
+                <input type="text" id="subtitle" formControlName="subtitle" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500" required>
+              </div>
+              <div>
+                <label for="categorie" class="block mb-2 text-sm font-medium text-gray-300">Categoría</label>
+                <select id="categorie" formControlName="categorie" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500" required>
+                  <option value="" disabled>Selecciona una categoría</option>
+                  @for(cat of coursesService.config().categories; track cat._id) {
+                    <option [value]="cat._id">{{ cat.title }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label for="user" class="block mb-2 text-sm font-medium text-gray-300">Instructor</label>
+                <select id="user" formControlName="user" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500" required>
+                  <option value="" disabled>Selecciona un instructor</option>
+                  @for(instructor of coursesService.config().users; track instructor._id) {
+                    <option [value]="instructor._id">{{ instructor.name }} {{ instructor.surname }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label for="level" class="block mb-2 text-sm font-medium text-gray-300">Nivel</label>
+                <select id="level" formControlName="level" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500" required>
+                  <option value="Basico">Básico</option>
+                  <option value="Intermedio">Intermedio</option>
+                  <option value="Avanzado">Avanzado</option>
+                </select>
+              </div>
+              <div>
+                <label for="idioma" class="block mb-2 text-sm font-medium text-gray-300">Idioma</label>
+                <select id="idioma" formControlName="idioma" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500" required>
+                  <option value="Español">Español</option>
+                  <option value="Inglés">Inglés</option>
+                </select>
+              </div>
+              <div>
+                <label for="price_usd" class="block mb-2 text-sm font-medium text-gray-300">Precio (USD)</label>
+                <input type="number" id="price_usd" formControlName="price_usd" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500" required>
+              </div>
+              <div>
+                <label for="price_soles" class="block mb-2 text-sm font-medium text-gray-300">Precio (S/.)</label>
+                <input type="number" id="price_soles" formControlName="price_soles" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500" required>
+              </div>
+              <div class="md:col-span-2">
+                <label for="description" class="block mb-2 text-sm font-medium text-gray-300">Descripción</label>
+                <textarea id="description" formControlName="description" rows="3" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500"></textarea>
+              </div>
+              <div class="md:col-span-2">
+                <label for="portada" class="block mb-2 text-sm font-medium text-gray-300">Imagen de Portada</label>
+                <input (change)="onFileSelected($event)" class="block w-full text-sm border rounded-lg cursor-pointer text-gray-400 focus:outline-none bg-slate-700 border-slate-600 placeholder-gray-400" id="portada" type="file" accept="image/*">
+                @if (imagePreview()) {
+                  <div class="mt-4">
+                    <img [src]="imagePreview()" alt="Vista previa" class="w-full h-40 object-cover rounded-lg">
+                  </div>
+                }
+              </div>
+            </div>
+          </form>
+        </div>
+        <!-- Modal footer -->
+        <div class="p-6 border-t border-slate-700">
+          <button type="submit" form="course-form" [disabled]="courseForm.invalid" class="w-full text-slate-900 bg-lime-400 hover:bg-lime-500 focus:ring-4 focus:outline-none focus:ring-lime-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:bg-slate-600 disabled:cursor-not-allowed">
+            {{ isEditing() ? 'Guardar Cambios' : 'Crear Curso' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+} @else if (viewMode() === 'content' && selectedCourse()) {
+  <!-- VISTA: GESTIÓN DE CONTENIDO DEL CURSO -->
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <button (click)="switchToListView()" class="text-sm text-lime-400 hover:underline mb-2">← Volver a Cursos</button>
+        <h2 class="text-2xl font-bold text-white">Gestionar Contenido: <span class="font-normal">{{ selectedCourse()?.title }}</span></h2>
+      </div>
+      <button (click)="openCreateSectionModal()" class="h-10 px-5 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition">
+        Crear Sección
+      </button>
+    </div>
+
+    <!-- Tabla de Secciones -->
+    <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-white/10">
+      <table class="w-full text-sm text-left text-gray-400">
+        <thead class="text-xs uppercase bg-slate-700/50 text-gray-400">
+          <tr>
+            <th scope="col" class="px-6 py-3">Título de la Sección</th>
+            <th scope="col" class="px-6 py-3">Clases</th>
+            <th scope="col" class="px-6 py-3 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (coursesService.isLoadingSections()) {
+            <tr class="border-b bg-slate-800/50 border-gray-700">
+              <td colspan="3" class="px-6 py-4 text-center">Cargando secciones...</td>
+            </tr>
+          } @else {
+            @for (section of coursesService.sections(); track section._id) {
+              <tr class="border-b bg-slate-800/50 border-gray-700 hover:bg-slate-700/50">
+                <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white">{{ section.title }}</th>
+                <td class="px-6 py-4">{{ section.num_clases }}</td>
+                <td class="px-6 py-4 text-right space-x-2">
+                  <button class="font-medium text-cyan-400 hover:underline">Gestionar Clases</button>
+                  <button (click)="openEditSectionModal(section)" class="font-medium text-lime-400 hover:underline">Editar</button>
+                  <button (click)="deleteSection(section._id)" class="font-medium text-red-400 hover:underline">Eliminar</button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal para Crear/Editar Sección -->
+  <div (click)="closeSectionModal()" [class.hidden]="!isSectionModalOpen()" class="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm"></div>
+  <div id="section-modal" tabindex="-1" aria-hidden="true" [class.hidden]="!isSectionModalOpen()" class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-modal md:h-full flex">
+    <div class="relative p-4 w-full max-w-md h-full md:h-auto">
+      <div class="relative rounded-lg shadow bg-slate-800 border border-white/10">
+        <button (click)="closeSectionModal()" type="button" class="absolute top-3 right-2.5 text-gray-400 bg-transparent rounded-lg text-sm p-1.5 ml-auto inline-flex items-center hover:bg-gray-600 hover:text-white">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+        </button>
+        <div class="py-6 px-6 lg:px-8">
+          <h3 class="mb-4 text-xl font-medium text-white">{{ isEditingSection() ? 'Editar Sección' : 'Nueva Sección' }}</h3>
+          <form class="space-y-6" [formGroup]="sectionForm" (ngSubmit)="onSectionSubmit()">
+            <div>
+              <label for="section-title" class="block mb-2 text-sm font-medium text-gray-300">Título de la sección</label>
+              <input type="text" id="section-title" formControlName="title" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500" required>
+            </div>
+            <button type="submit" [disabled]="sectionForm.invalid" class="w-full text-slate-900 bg-lime-400 hover:bg-lime-500 focus:ring-4 focus:outline-none focus:ring-lime-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:bg-slate-600 disabled:cursor-not-allowed">
+              {{ isEditingSection() ? 'Guardar Cambios' : 'Crear Sección' }}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+}

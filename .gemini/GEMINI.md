@@ -45,3 +45,17 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+## Animaciones
+
+- Usa `animate.enter` y `animate.leave` en lugar de `@transition
+
+## Estilos
+
+- Usa unicamente Tailwindcss y Flowbite para estilos
+
+## Componentes servicios y modulos
+
+- Cuando crees un componente nuevo, con interfaz para que el usuario lo vea, que este dentro de la carpeta pages
+- Usa la carpeta de services para crear servicios
+- Usa la carpeta de models para crear nuevos modelos o interfaces

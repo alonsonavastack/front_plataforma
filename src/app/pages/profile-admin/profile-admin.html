@@ -1,0 +1,86 @@
+<app-header></app-header>
+
+<div class="bg-slate-950 text-white min-h-screen">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="space-y-8">
+      <div class="text-center">
+        <div class="relative inline-block group">
+          <img [src]="authService.currentUserAvatar()" alt="Avatar" class="w-32 h-32 rounded-full mx-auto border-4 border-lime-400/50 object-cover">
+          <label for="avatar-upload" class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path>
+            </svg>
+          </label>
+          <input type="file" id="avatar-upload" class="hidden" (change)="onAvatarSelected($event)" accept="image/*">
+        </div>
+        <h1 class="mt-4 text-3xl font-bold text-white">
+          Perfil de Administrador: {{ authService.currentUser()?.name }}
+        </h1>
+        <p class="text-lg text-slate-400">Gestiona tu información personal y de seguridad.</p>
+      </div>
+
+      <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm">
+        <h3 class="text-2xl font-bold mb-6">Editar Información</h3>
+
+        @if (profileService.isLoading()) {
+          <p>Cargando datos del perfil...</p>
+        } @else {
+          <form [formGroup]="profileForm" (ngSubmit)="onSubmitProfile()" class="space-y-4 max-w-2xl">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="name" class="block mb-2 text-sm font-medium text-slate-300">Nombre</label>
+                <input type="text" id="name" formControlName="name" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5">
+              </div>
+              <div>
+                <label for="surname" class="block mb-2 text-sm font-medium text-slate-300">Apellidos</label>
+                <input type="text" id="surname" formControlName="surname" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5">
+              </div>
+            </div>
+            <div>
+              <button type="submit" [disabled]="profileForm.invalid || profileForm.pristine || isSubmitting()" class="h-11 px-6 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition disabled:bg-slate-600 disabled:cursor-not-allowed flex items-center justify-center">
+                @if (isSubmitting()) {
+                  <span class="animate-spin h-5 w-5 border-2 border-slate-900 border-t-transparent rounded-full"></span>
+                } @else {
+                  <span>Guardar Cambios</span>
+                }
+              </button>
+            </div>
+          </form>
+
+          <div class="border-t border-white/10 mt-8 pt-8">
+            <h4 class="text-xl font-bold mb-6">Cambiar Contraseña</h4>
+            <form [formGroup]="passwordForm" (ngSubmit)="onSubmitPassword()" class="space-y-4 max-w-lg">
+              <div>
+                <label for="currentPassword" class="block mb-2 text-sm font-medium text-slate-300">Contraseña Actual</label>
+                <input type="password" id="currentPassword" formControlName="currentPassword" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5">
+              </div>
+              <div>
+                <label for="newPassword" class="block mb-2 text-sm font-medium text-slate-300">Nueva Contraseña</label>
+                <input type="password" id="newPassword" formControlName="newPassword" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5">
+                @if (passwordForm.get('newPassword')?.hasError('minlength')) {
+                  <p class="text-xs text-red-400 mt-1">La contraseña debe tener al menos 6 caracteres.</p>
+                }
+              </div>
+              <div>
+                <label for="confirmPassword" class="block mb-2 text-sm font-medium text-slate-300">Confirmar Nueva Contraseña</label>
+                <input type="password" id="confirmPassword" formControlName="confirmPassword" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5">
+                @if (passwordForm.hasError('passwordsMismatch') && passwordForm.get('confirmPassword')?.touched) {
+                  <p class="text-xs text-red-400 mt-1">Las contraseñas no coinciden.</p>
+                }
+              </div>
+              <div>
+                <button type="submit" [disabled]="passwordForm.invalid || isPasswordSubmitting()" class="h-11 px-6 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition disabled:bg-slate-600 disabled:cursor-not-allowed flex items-center justify-center">
+                  @if (isPasswordSubmitting()) {
+                    <span class="animate-spin h-5 w-5 border-2 border-slate-900 border-t-transparent rounded-full"></span>
+                  } @else {
+                    <span>Cambiar Contraseña</span>
+                  }
+                </button>
+              </div>
+            </form>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

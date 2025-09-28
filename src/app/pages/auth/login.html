@@ -1,0 +1,61 @@
+<app-header></app-header>
+<div class="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+    <div class="bg-slate-800/50 backdrop-blur-lg border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl">
+      <div class="text-center mb-6">
+        <h1 class="text-3xl font-extrabold text-white">Iniciar Sesión</h1>
+        <p class="text-slate-400 mt-2">Bienvenido de vuelta a NeoCourse</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
+        <div>
+          <label for="email" class="block mb-2 text-sm font-medium text-slate-300">Correo Electrónico</label>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
+            placeholder="tu@correo.com"
+            required
+          />
+        </div>
+
+        <div>
+          <label for="password" class="block mb-2 text-sm font-medium text-slate-300">Contraseña</label>
+          <input
+            type="password"
+            id="password"
+            formControlName="password"
+            class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
+            placeholder="••••••••"
+            required
+          />
+        </div>
+
+        @if (errorMessage()) {
+          <div class="bg-red-500/10 border border-red-400/30 text-red-300 text-sm rounded-lg p-3 text-center">
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <button
+          type="submit"
+          [disabled]="loginForm.invalid"
+          class="w-full h-11 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition disabled:bg-slate-600 disabled:cursor-not-allowed"
+        >
+          Ingresar
+        </button>
+
+        <div class="text-sm text-center text-slate-400">
+          ¿No tienes una cuenta? <a routerLink="/register" class="font-medium text-lime-400 hover:underline">Regístrate aquí</a>
+        </div>
+      </form>
+
+      <div class="text-center mt-6">
+        <a routerLink="/" class="text-sm text-slate-400 hover:text-lime-300 transition-colors duration-300">
+          ← Regresar a la página de inicio
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

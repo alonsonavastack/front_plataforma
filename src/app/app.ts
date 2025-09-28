@@ -1,5 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { AnimateService } from './core/animate.service';
+import { initFlowbite } from 'flowbite'
+
 
 @Component({
   selector: 'app-root',
@@ -8,5 +11,10 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('cursos');
+  animate = inject(AnimateService);
+  year = signal(new Date().getFullYear());
+
+  ngOnInit(): void {
+    initFlowbite();
+  }
 }

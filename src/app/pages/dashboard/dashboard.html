@@ -1,0 +1,60 @@
+<div class="bg-slate-950 text-white lg:flex">
+  <!-- DRAWER LATERAL (Flowbite) -->
+  <aside id="dashboard-drawer"
+         class="fixed top-0 left-0 z-40 h-screen transition-transform -translate-x-full
+                lg:translate-x-0 lg:static lg:transition-[width]
+                bg-slate-950/80 backdrop-blur-lg border-r border-white/10
+                @{ isSidebarCollapsed() ? 'lg:w-20' : 'lg:w-72' }"
+         tabindex="-1" aria-labelledby="drawer-label"
+         (animate.enter)="animate.animateFadeInDashboard($event)">
+
+    <div class="h-full flex flex-col py-4 overflow-y-auto">
+      <!-- Branding -->
+      <a routerLink="/" class="flex items-center p-2 mb-5 gap-3">
+        <span class="h-8 w-8 rounded-lg bg-gradient-to-br from-lime-400 to-yellow-400 grid place-items-center text-slate-900 font-black shrink-0">NC</span>
+        <span class="self-center text-lg font-semibold whitespace-nowrap" [class.lg:hidden]="isSidebarCollapsed()">NeoCourse</span>
+      </a>
+
+      <!-- Tu menú angular -->
+      <app-sidebar
+        class="flex-grow"
+        [selected]="active"
+        [isCollapsed]="isSidebarCollapsed()"
+        (navigate)="setActive($event)">
+      </app-sidebar>
+    </div>
+  </aside>
+
+  <!-- OVERLAY (Fondo para cerrar en móvil) -->
+  <div data-drawer-backdrop="dashboard-drawer" class="bg-gray-900/80 fixed inset-0 z-30 lg:hidden hidden"></div>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="flex-1 relative lg:h-screen lg:overflow-y-auto">
+    <!-- TOPBAR (Ahora dentro del main) -->
+    <app-topbar
+      [isSidebarCollapsed]="isSidebarCollapsed()"
+      (toggleSidebar)="toggleSidebar()">
+    </app-topbar>
+
+    <!-- Contenido de la sección -->
+    <div class="p-4 md:p-6 lg:p-8 space-y-8">
+      <!-- KPIs -->
+      <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4"> @for (k of dashboardService.kpis(); track k.label) {
+        <div class="rounded-2xl border border-white/10 bg-slate-900/50 p-5 backdrop-blur-sm">
+          <p class="text-sm font-medium text-white/60">{{ k.label }}</p>
+          <p class="mt-2 text-3xl font-extrabold tracking-tight text-lime-300"> @if (k.isPct) { {{ k.value }}% } @else { $ {{ k.value | number }} } </p>
+          <p class="text-xs mt-1 @if (k.delta >= 0) { text-lime-400 } @else { text-red-400 }">
+            <span class="font-semibold">@if (k.delta >= 0) { ▲ } @else { ▼ } {{ k.delta }}%</span> vs. mes anterior
+          </p>
+        </div> } </div>
+      <!-- Sección activa -->
+      <div class="rounded-2xl border border-white/10 bg-slate-900/50 p-6 backdrop-blur-sm"> @switch (active) {
+        @case ('overview') { <div class="h-96 grid place-items-center text-white/70">[Resumen general]</div> }
+        @case ('categories') { <app-categories /> }
+        @case ('courses') { <app-courses /> }
+        @case ('students') { <div class="h-96 grid place-items-center text-white/70">[Estudiantes / cohortes]</div> }
+        @case ('reports') { <div class="h-96 grid place-items-center text-white/70">[Reportes y analítica]</div> }
+        @case ('settings') { <div class="h-96 grid place-items-center text-white/70">[Ajustes de la plataforma]</div> } } </div>
+    </div>
+  </main>
+</div>

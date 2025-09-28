@@ -1,0 +1,9 @@
+<button
+  class="px-4 py-2 rounded-full border transition text-sm whitespace-nowrap
+         @if (active()) {
+           border-lime-400/60 text-lime-300 shadow-[0_0_12px_#22c55e]/30
+         } @else {
+           border-white/10 text-white/80 hover:text-lime-300 hover:border-lime-400/40
+         }">
+  <ng-content></ng-content>
+</button>

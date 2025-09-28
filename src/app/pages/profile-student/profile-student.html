@@ -1,0 +1,177 @@
+<app-header></app-header>
+
+<div class="bg-slate-950 text-white min-h-screen">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid md:grid-cols-[1fr_3fr] gap-8">
+
+      <!-- Columna Izquierda: Perfil y Navegación -->
+      <aside class="space-y-6">
+        <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm text-center">
+          @if (profileService.isLoading()) {
+            <div class="w-24 h-24 rounded-full bg-slate-700 animate-pulse mx-auto"></div>
+            <div class="h-6 w-3/4 bg-slate-700 animate-pulse rounded-md mt-4 mx-auto"></div>
+            <div class="h-4 w-1/2 bg-slate-700 animate-pulse rounded-md mt-2 mx-auto"></div>
+          } @else {
+            <div class="relative inline-block group">
+              <img [src]="authService.currentUserAvatar()" alt="Avatar" class="w-24 h-24 rounded-full mx-auto border-4 border-lime-400/50 object-cover">
+              <label for="avatar-upload" class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path>
+                </svg>
+              </label>
+              <input type="file" id="avatar-upload" class="hidden" (change)="onAvatarSelected($event)" accept="image/*">
+            </div>
+            <h2 class="mt-4 text-xl font-bold text-white">{{ authService.currentUser()?.name }} {{ authService.currentUser()?.surname }}</h2>
+            <p class="text-sm text-slate-400">{{ authService.currentUser()?.email }}</p>
+          }
+        </div>
+
+        <nav class="p-4 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm">
+          <ul class="space-y-1">
+            <li>
+              <button (click)="setActiveSection('courses')" [class.bg-lime-400/10]="activeSection() === 'courses'" [class.text-lime-300]="activeSection() === 'courses'" class="w-full text-left flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-slate-700 transition">
+                <span>Mis Cursos</span>
+              </button>
+            </li>
+            <li>
+              <button (click)="setActiveSection('purchases')" [class.bg-lime-400/10]="activeSection() === 'purchases'" [class.text-lime-300]="activeSection() === 'purchases'" class="w-full text-left flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-slate-700 transition">
+                <span>Mis Compras</span>
+              </button>
+            </li>
+            <li>
+              <button (click)="setActiveSection('edit')" [class.bg-lime-400/10]="activeSection() === 'edit'" [class.text-lime-300]="activeSection() === 'edit'" class="w-full text-left flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-slate-700 transition">
+                <span>Editar Perfil</span>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </aside>
+
+      <!-- Columna Derecha: Contenido de la Pestaña -->
+      <main>
+        @switch (activeSection()) {
+          @case ('courses') {
+            <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm">
+              <h3 class="text-2xl font-bold mb-6">Mis Cursos</h3>
+              @if (profileService.isLoading()) { <p>Cargando cursos...</p> }
+              @else if (profileService.profile(); as profile) {
+                @if (profile.enrolled_course_news.length === 0) {
+                  <p class="text-slate-400">Aún no te has inscrito a ningún curso.</p>
+                } @else {
+                  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @for (enrollment of profile.enrolled_course_news; track enrollment._id) {
+                      <a [routerLink]="['/landing-curso', enrollment.course.slug]" class="block p-4 rounded-xl border border-white/10 hover:border-lime-400/50 transition bg-slate-800/50">
+                        <img [src]="buildImageUrl(enrollment.course.imagen)" alt="{{ enrollment.course.title }}" class="w-full h-32 object-cover rounded-lg mb-3">
+                        <h4 class="font-semibold text-white line-clamp-2">{{ enrollment.course.title }}</h4>
+                        <div class="w-full bg-slate-700 rounded-full h-2.5 mt-2">
+                          <div class="bg-lime-400 h-2.5 rounded-full" [style.width.%]="enrollment.percentage"></div>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">{{ enrollment.percentage }}% completado</p>
+                      </a>
+                    }
+                  </div>
+                }
+              }
+            </div>
+          }
+          @case ('purchases') {
+            <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm">
+              <h3 class="text-2xl font-bold mb-6">Historial de Compras</h3>
+              @if (profileService.isLoading()) { <p>Cargando historial...</p> }
+              @else if (profileService.profile(); as profile) {
+                @if (profile.sales.length === 0) {
+                  <p class="text-slate-400">No has realizado ninguna compra.</p>
+                } @else {
+                  <div class="space-y-4">
+                    @for (sale of profile.sales; track sale._id) {
+                      <div class="p-4 rounded-lg border border-white/10 bg-slate-800/50">
+                        <div class="flex justify-between items-center mb-2">
+                          <p class="text-sm text-slate-400">Orden #{{ sale._id.slice(-6) }}</p>
+                          <p class="text-sm text-slate-400">{{ sale.created_at }}</p>
+                        </div>
+                        <p class="text-lg font-bold text-lime-300">${{ sale.total | number:'1.2-2' }} {{ sale.currency_total }}</p>
+                      </div>
+                    }
+                  </div>
+                }
+              }
+            </div>
+          }
+          @case ('edit') {
+            <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm">
+              <h3 class="text-2xl font-bold mb-6">Editar Perfil</h3>
+              <form [formGroup]="profileForm" (ngSubmit)="onSubmitProfile()" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label for="name" class="block mb-2 text-sm font-medium text-slate-300">Nombre</label>
+                    <input type="text" id="name" formControlName="name" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5" />
+                  </div>
+                  <div>
+                    <label for="surname" class="block mb-2 text-sm font-medium text-slate-300">Apellidos</label>
+                    <input type="text" id="surname" formControlName="surname" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5" />
+                  </div>
+                </div>
+                <div>
+                  <label for="email" class="block mb-2 text-sm font-medium text-slate-300">Correo Electrónico</label>
+                  <input type="email" id="email" formControlName="email" class="w-full bg-slate-700/50 border border-slate-600 text-slate-400 text-sm rounded-lg block p-2.5 cursor-not-allowed">
+                </div>
+                <div>
+                  <label for="profession" class="block mb-2 text-sm font-medium text-slate-300">Profesión</label>
+                  <input type="text" id="profession" formControlName="profession" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5" />
+                </div>
+                <div>
+                  <label for="description" class="block mb-2 text-sm font-medium text-slate-300">Sobre mí</label>
+                  <textarea id="description" formControlName="description" rows="4" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"></textarea>
+                </div>
+                <div>
+                  <button type="submit" [disabled]="profileForm.invalid || profileForm.pristine || isSubmitting()" class="h-11 px-6 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition disabled:bg-slate-600 disabled:cursor-not-allowed flex items-center justify-center">
+                    @if (isSubmitting()) {
+                      <span class="animate-spin h-5 w-5 border-2 border-slate-900 border-t-transparent rounded-full"></span>
+                    } @else {
+                      <span>Guardar Cambios</span>
+                    }
+                  </button>
+                </div>
+              </form>
+
+              <!-- Sección para cambiar contraseña -->
+              <div class="border-t border-white/10 mt-8 pt-8">
+                <h4 class="text-xl font-bold mb-6">Cambiar Contraseña</h4>
+                <form [formGroup]="passwordForm" (ngSubmit)="onSubmitPassword()" class="space-y-4 max-w-lg">
+                  <div>
+                    <label for="currentPassword" class="block mb-2 text-sm font-medium text-slate-300">Contraseña Actual</label>
+                    <input type="password" id="currentPassword" formControlName="currentPassword" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5">
+                  </div>
+                  <div>
+                    <label for="newPassword" class="block mb-2 text-sm font-medium text-slate-300">Nueva Contraseña</label>
+                    <input type="password" id="newPassword" formControlName="newPassword" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5">
+                    @if (passwordForm.get('newPassword')?.hasError('minlength')) {
+                      <p class="text-xs text-red-400 mt-1">La contraseña debe tener al menos 6 caracteres.</p>
+                    }
+                  </div>
+                  <div>
+                    <label for="confirmPassword" class="block mb-2 text-sm font-medium text-slate-300">Confirmar Nueva Contraseña</label>
+                    <input type="password" id="confirmPassword" formControlName="confirmPassword" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5">
+                    @if (passwordForm.hasError('passwordsMismatch') && passwordForm.get('confirmPassword')?.touched) {
+                      <p class="text-xs text-red-400 mt-1">Las contraseñas no coinciden.</p>
+                    }
+                  </div>
+                  <div>
+                    <button type="submit" [disabled]="passwordForm.invalid || isPasswordSubmitting()" class="h-11 px-6 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition disabled:bg-slate-600 disabled:cursor-not-allowed flex items-center justify-center">
+                      @if (isPasswordSubmitting()) {
+                        <span class="animate-spin h-5 w-5 border-2 border-slate-900 border-t-transparent rounded-full"></span>
+                      } @else {
+                        <span>Cambiar Contraseña</span>
+                      }
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          }
+        }
+      </main>
+
+    </div>
+  </div>
+</div>

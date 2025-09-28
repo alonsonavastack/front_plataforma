@@ -1,0 +1,19 @@
+<nav>
+  <ul class="space-y-2 font-medium pt-5">
+    @for (it of items; track it.id) {
+      <li>
+        <button
+          (click)="navigate.emit(it.id)"
+          class="w-full flex items-center p-2 text-white/80 rounded-lg hover:bg-white/5 group"
+          [class.justify-center]="isCollapsed()"
+          [class.bg-white/5]="selected() === it.id"
+          [class.text-lime-300]="selected() === it.id">
+          <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path [attr.d]="it.icon" stroke-linecap="round" stroke-width="2"/>
+          </svg>
+          <span class="ms-3 flex-1 whitespace-nowrap text-left" [class.lg:hidden]="isCollapsed()">{{ it.label }}</span>
+        </button>
+      </li>
+    }
+  </ul>
+</nav>

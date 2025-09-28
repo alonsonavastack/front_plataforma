@@ -1,0 +1,65 @@
+<!-- src/app/shared/course-card/course-card.html -->
+<a
+  class="block rounded-2xl border border-white/10 bg-white/5 hover:border-lime-400/40 transition overflow-hidden
+         focus:outline-none focus:ring-2 focus:ring-lime-400/40"
+  [routerLink]="['/landing-curso', slug()]"
+>
+  <!-- Cover -->
+  <div class="relative">
+    <img
+      [src]="coverUrl()"
+      [alt]="title()"
+      class="w-full h-36 object-cover border-b border-white/10"
+      loading="lazy"
+      decoding="async"
+    />
+    @if (hasDiscount()) {
+      <div class="absolute top-2 left-2 px-2 py-0.5 rounded-md text-xs font-semibold
+                  border border-lime-400/40 text-lime-300 bg-lime-400/10">
+        -{{ discountPct() }}%
+      </div>
+    }
+  </div>
+
+  <!-- Body -->
+  <div class="p-4 space-y-2">
+    <div class="text-white/90 font-semibold leading-snug line-clamp-2">
+      {{ title() }}
+    </div>
+
+    <div class="flex items-center gap-2 text-xs text-white/60">
+      @if (category()) {
+        <span class="rounded px-2 py-0.5 border border-white/10 bg-white/5">{{ category() }}</span>
+      }
+      @if (instructor()) {
+        <span>•</span>
+        <span class="truncate">Por {{ instructor() }}</span>
+      }
+    </div>
+
+    @if (rating()) {
+      <div class="flex items-center gap-2 text-xs text-white/70">
+        <span class="inline-flex items-center gap-1">
+          <svg class="w-4 h-4 text-lime-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/>
+          </svg>
+          <span class="text-lime-300 font-semibold">{{ rating() }}</span>
+        </span>
+        @if (reviews() > 0) {
+          <span class="text-white/50">({{ reviews() }} reseñas)</span>
+        }
+      </div>
+    }
+
+    <div class="flex items-baseline gap-2 pt-1">
+      <div class="text-lg font-extrabold text-lime-300">
+        ${{ priceCurrent() | number:'1.0-2' }}
+      </div>
+      @if (hasDiscount()) {
+        <div class="text-xs text-white/40 line-through">
+          ${{ priceOriginal() | number:'1.0-2' }}
+        </div>
+      }
+    </div>
+  </div>
+</a>
