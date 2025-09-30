@@ -119,8 +119,8 @@
                   <svg class="w-4 h-4 text-white/60" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-width="2" d="M4 7h16M4 12h16M4 17h16"/>
                   </svg>
-                  <span class="text-white">{{ sec.title }}</span>
-                  <span class="text-xs text-white/50">• {{ sec.clases?.length || 0 }} clases • {{ sec.time_parse || '0' }}</span>
+                  <span class="text-white font-medium">{{ sec.title }}</span>
+                  <span class="text-xs text-white/50">• {{ sec.clases?.length || 0 }} clases • {{ formatSectionDuration(sec.time_parse) }}</span>
                 </div>
                 <svg class="w-5 h-5 text-white/60 transition"
                      [class.rotate-180]="isSectionOpen(sec._id)"
@@ -137,7 +137,7 @@
                         <path stroke-width="2" d="M8 5v14l11-7-11-7z"/>
                       </svg>
                       <div class="flex-1 text-white/80">{{ cl.title }}</div>
-                      <div class="text-xs text-white/50">{{ cl.time_parse || cl.time || '—' }}</div>
+                      <div class="text-xs text-white/50">{{ formatSectionDuration(cl.time) }}</div>
                     </div>
                   }
                 </div>

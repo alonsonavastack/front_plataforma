@@ -44,7 +44,7 @@ export class CourseDetailComponent implements OnInit {
 
   // Estado para el video preview
   showVideoPreview = signal(false);
-  
+
   // Helper robusto para construir URL de imagen
   buildImage(part: string | null | undefined): string {
     if (!part) return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
@@ -177,7 +177,10 @@ export class CourseDetailComponent implements OnInit {
     return String(this.course()?.['avg_rating'] ?? '0.0');
   }
   totalTime(): string {
-    return String(this.course()?.['time_total'] ?? '0');
+    const totalSeconds = Number(this.course()?.['time_total'] ?? 0);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    return `${hours}h ${minutes}m de contenido`;
   }
   totalClasses(): number {
     return Number(this.course()?.['num_clases_total'] ?? 0);
@@ -229,6 +232,19 @@ export class CourseDetailComponent implements OnInit {
     return stars;
   }
 
+  // Helper para formatear duración de secciones
+  formatSectionDuration(seconds: number | undefined | null): string {
+    if (!seconds || seconds <= 0) {
+      return '0m';
+    }
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+
+    if (h > 0) {
+      return `${h}h ${m}m`;
+    }
+    return `${m}m`;
+  }
   // acciones
   addToCart() {
     if (!this.authService.isLoggedIn()) {

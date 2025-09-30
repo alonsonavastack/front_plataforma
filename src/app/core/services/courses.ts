@@ -2,9 +2,10 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { computed, inject, Injectable, signal, effect } from '@angular/core';
 import { environment } from '../../../environments/environment.development';
-import { toQuery } from '../utils/resource-helpers';
+import { toQuery } from '../utils/resource-helpers'; // Asegúrate de que este helper exista y funcione
 import { catchError, throwError } from 'rxjs';
-import { CourseListResponse, CourseAdmin, CourseShowResponse, CourseConfigResponse, CourseSection } from '../models/home.models';
+import { moveItemInArray } from '@angular/cdk/drag-drop';
+import { CourseListResponse, CourseAdmin, CourseShowResponse, CourseConfigResponse, CourseSection, CourseClase } from '../models/home.models';
 
 @Injectable({ providedIn: 'root' })
 export class CoursesService {
@@ -119,24 +120,73 @@ export class CoursesService {
     if (!this._currentCourseIdForSections()) return;
 
     this.sectionsState.update(s => ({ ...s, isLoading: true }));
-    this.http.get<{ sections: CourseSection[] }>(`${this.base}course_section/list?course_id=${courseId}`).subscribe({
+    this.http.get<{ sections: CourseSection[] }>(`${this.base}course-sections/list?course_id=${courseId}`).subscribe({
       next: (response) => this.sectionsState.set({ sections: response.sections, isLoading: false, error: null }),
       error: (err) => this.sectionsState.set({ sections: [], isLoading: false, error: err }),
     });
   }
 
   createSection(data: { title: string; course: string }) {
-    return this.http.post(`${this.base}course_section/register`, data);
+    return this.http.post(`${this.base}course-sections/register`, data);
   }
 
   updateSection(sectionId: string, data: { title?: string | null; course?: string }) {
     const payload = { _id: sectionId, ...data };
-    return this.http.put(`${this.base}course_section/update`, payload);
+    return this.http.put(`${this.base}course-sections/update`, payload);
   }
 
   removeSection(id: string) {
-    return this.http.delete(`${this.base}course_section/remove/${id}`).pipe(
+    return this.http.delete(`${this.base}course-sections/remove/${id}`).pipe(
       catchError((error) => throwError(() => new Error(error.error.message || 'Error al eliminar la sección')))
     );
+  }
+
+  // --- Class Methods ---
+  createClass(data: { title: string; section: string; description?: string | null; vimeo_id?: string; }) {
+    return this.http.post(`${this.base}course_clase/register`, data);
+  }
+
+  updateClass(id: string, data: { title?: string; description?: string | null; vimeo_id?: string; }) {
+    return this.http.put(`${this.base}course_clase/update`, { _id: id, ...data });
+  }
+
+  removeClass(id: string) {
+    return this.http.delete(`${this.base}course_clase/remove/${id}`);
+  }
+
+  reorderClasses(orderedIds: string[]) {
+    return this.http.put(`${this.base}course_clase/reorder`, { ids: orderedIds });
+  }
+
+  getVimeoData(url: string) {
+    return this.http.get<{ duration: number }>(`${this.base}course_clase/vimeo-data?url=${encodeURIComponent(url)}`);
+  }
+
+  updateLocalClassOrder(previousIndex: number, currentIndex: number) {
+    const updatedClasses = [...this.classesState().classes];
+    moveItemInArray(updatedClasses, previousIndex, currentIndex);
+    this.classesState.update(s => ({ ...s, classes: updatedClasses }));
+  }
+
+  private classesState = signal<{ classes: CourseClase[], isLoading: boolean, error: any }>({
+    classes: [],
+    isLoading: false,
+    error: null,
+  });
+
+  classes = computed(() => this.classesState().classes);
+  isLoadingClasses = computed(() => this.classesState().isLoading);
+
+  reloadClasses(sectionId: string) {
+    if (!sectionId) return;
+
+    this.classesState.update(s => ({ ...s, isLoading: true }));
+    // La API devuelve un array de clases directamente
+    this.http.get<CourseClase[]>(`${this.base}course_clase/list?section_id=${sectionId}`).subscribe({
+      next: (response) => {
+        this.classesState.set({ classes: response, isLoading: false, error: null });
+      },
+      error: (err) => this.classesState.set({ classes: [], isLoading: false, error: err }),
+    });
   }
 }

@@ -47,6 +47,18 @@ export interface CourseSection {
   // Puedes añadir más propiedades como `order` o un array de `CourseClase` si es necesario
 }
 
+// Modelo para las clases de un curso
+export interface CourseClase {
+  _id: string;
+  title: string;
+  description?: string;
+  section: string; // ID de la sección
+  state?: boolean;
+  time?: number; // Duración en segundos
+  vimeo_id?: string; // ID del video de Vimeo
+  order?: number;
+}
+
 // Respuestas de la API para el servicio de cursos
 export interface CourseListResponse {
   courses: CourseAdmin[];

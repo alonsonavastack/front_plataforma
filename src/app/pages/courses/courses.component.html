@@ -11,7 +11,7 @@
     <!-- Tabla de Cursos -->
     <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-white/10">
       <table class="w-full text-sm text-left text-gray-400">
-        <thead class="text-xs uppercase bg-slate-700/50 text-gray-400">
+        <thead class="text-xs uppercase bg-slate-900 text-gray-400">
           <tr>
             <th scope="col" class="px-6 py-3">Portada</th>
             <th scope="col" class="px-6 py-3">Título</th>
@@ -23,20 +23,20 @@
         <tbody>
           @if (coursesService.isLoadingList()) {
             <tr class="border-b bg-slate-800/50 border-gray-700">
-              <td colspan="5" class="px-6 py-4 text-center">Cargando cursos...</td>
+              <td colspan="5" class="px-6 py-8 text-center text-gray-500">Cargando cursos...</td>
             </tr>
           } @else {
             @for (course of coursesService.courses(); track course._id) {
               <tr class="border-b bg-slate-800/50 border-gray-700 hover:bg-slate-700/50">
-                <td class="px-6 py-4">
+                <td class="px-6 py-4 align-middle">
                   <img [src]="buildImageUrl(course.imagen)" alt="{{ course.title }}" class="w-24 h-14 object-cover rounded-md">
                 </td>
-                <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white">
+                <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white align-middle">
                   {{ course.title }}
                 </th>
-                <td class="px-6 py-4">{{ course.categorie.title }}</td>
-                <td class="px-6 py-4">{{ course.user.name }} {{ course.user.surname }}</td>
-                <td class="px-6 py-4 text-right space-x-2">
+                <td class="px-6 py-4 align-middle">{{ course.categorie.title }}</td>
+                <td class="px-6 py-4 align-middle">{{ course.user.name }} {{ course.user.surname }}</td>
+                <td class="px-6 py-4 text-right space-x-2 align-middle">
                   <button (click)="switchToContentView(course)" class="font-medium text-cyan-400 hover:underline">Contenido</button>
                   <button (click)="openEditModal(course)" class="font-medium text-lime-400 hover:underline">Editar</button>
                   <button (click)="deleteCourse(course._id)" class="font-medium text-red-400 hover:underline">Eliminar</button>
@@ -161,7 +161,7 @@
     <!-- Tabla de Secciones -->
     <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-white/10">
       <table class="w-full text-sm text-left text-gray-400">
-        <thead class="text-xs uppercase bg-slate-700/50 text-gray-400">
+        <thead class="text-xs uppercase bg-slate-900 text-gray-400">
           <tr>
             <th scope="col" class="px-6 py-3">Título de la Sección</th>
             <th scope="col" class="px-6 py-3">Clases</th>
@@ -171,15 +171,19 @@
         <tbody>
           @if (coursesService.isLoadingSections()) {
             <tr class="border-b bg-slate-800/50 border-gray-700">
-              <td colspan="3" class="px-6 py-4 text-center">Cargando secciones...</td>
+              <td colspan="3" class="px-6 py-8 text-center text-gray-500">Cargando secciones...</td>
+            </tr>
+          } @else if (coursesService.sections().length === 0) {
+            <tr class="border-b bg-slate-800/50 border-gray-700">
+              <td colspan="3" class="px-6 py-8 text-center text-gray-500">No hay secciones en este curso. ¡Crea la primera!</td>
             </tr>
           } @else {
             @for (section of coursesService.sections(); track section._id) {
               <tr class="border-b bg-slate-800/50 border-gray-700 hover:bg-slate-700/50">
-                <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white">{{ section.title }}</th>
-                <td class="px-6 py-4">{{ section.num_clases }}</td>
-                <td class="px-6 py-4 text-right space-x-2">
-                  <button class="font-medium text-cyan-400 hover:underline">Gestionar Clases</button>
+                <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white align-middle">{{ section.title }}</th>
+                <td class="px-6 py-4 align-middle">{{ section.num_clases }}</td>
+                <td class="px-6 py-4 text-right space-x-2 align-middle">
+                  <button (click)="switchToClassesView(section)" class="font-medium text-cyan-400 hover:underline">Gestionar Clases</button>
                   <button (click)="openEditSectionModal(section)" class="font-medium text-lime-400 hover:underline">Editar</button>
                   <button (click)="deleteSection(section._id)" class="font-medium text-red-400 hover:underline">Eliminar</button>
                 </td>
@@ -210,6 +214,117 @@
               {{ isEditingSection() ? 'Guardar Cambios' : 'Crear Sección' }}
             </button>
           </form>
+        </div>
+      </div>
+    </div>
+  </div>
+} @else if (viewMode() === 'classes' && selectedSection()) {
+  <!-- NUEVA VISTA: GESTIÓN DE CLASES DE LA SECCIÓN -->
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <button (click)="selectedCourse() && switchToContentView(selectedCourse()!)" class="text-sm text-lime-400 hover:underline mb-2">← Volver a Secciones</button>
+        <h2 class="text-2xl font-bold text-white">Gestionar Clases: <span class="font-normal">{{ selectedSection()?.title }}</span></h2>
+      </div>
+      <button (click)="openCreateClassModal()" class="h-10 px-5 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition">
+        Crear Clase
+      </button>
+    </div>
+
+    <!-- Aquí irá la tabla o lista de clases para la sección seleccionada -->
+    <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-white/10">
+      <table class="w-full text-sm text-left text-gray-400">
+        <thead class="text-xs uppercase bg-slate-900 text-gray-400">
+          <tr>
+            <th scope="col" class="px-4 py-3"></th> <!-- Columna para el drag handle -->
+            <th scope="col" class="px-6 py-3">Título de la Clase</th>
+            <th scope="col" class="px-6 py-3">Descripción</th>
+            <th scope="col" class="px-6 py-3">Video</th>
+            <th scope="col" class="px-6 py-3">Duración</th>
+            <th scope="col" class="px-6 py-3 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody cdkDropList [cdkDropListData]="coursesService.classes()" (cdkDropListDropped)="dropClass($event)">
+          @if (coursesService.isLoadingClasses()) {
+            <tr class="border-b bg-slate-800/50 border-gray-700">
+              <td colspan="6" class="px-6 py-8 text-center text-gray-500">Cargando clases...</td>
+            </tr>
+          } @else if (coursesService.classes().length === 0) {
+            <tr class="border-b bg-slate-800/50 border-gray-700">
+              <td colspan="6" class="px-6 py-8 text-center text-gray-500">No hay clases en esta sección. ¡Crea la primera!</td>
+            </tr>
+          } @else {
+            @for (clase of coursesService.classes(); track clase._id; let i = $index) {
+              <tr cdkDrag [cdkDragData]="clase" class="border-b bg-slate-800/50 border-gray-700 hover:bg-slate-700/50">
+                <td cdkDragHandle class="px-4 py-4 cursor-move text-gray-500 hover:text-white w-12 align-middle">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>
+                </td>
+                <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white align-middle">{{ clase.title }}</th>
+                <td class="px-6 py-4 text-gray-400 line-clamp-1 align-middle">{{ clase.description || 'Sin descripción' }}</td>
+                <td class="px-6 py-4 align-middle">
+                  @if (clase.vimeo_id) {
+                    <a [href]="'https://player.vimeo.com/video/' + clase.vimeo_id" target="_blank" class="text-cyan-400 hover:underline text-xs">Ver Video</a>
+                  } @else {
+                    <span class="text-gray-500 text-xs">Sin video</span>
+                  }
+                </td>
+                <td class="px-6 py-4 text-gray-400 align-middle">
+                  {{ formatDuration(clase.time) }}
+                </td>
+                <td class="px-6 py-4 text-right space-x-2 align-middle">
+                  <button (click)="openEditClassModal(clase)" class="font-medium text-lime-400 hover:underline">Editar</button>
+                  <button (click)="deleteClass(clase._id)" class="font-medium text-red-400 hover:underline">Eliminar</button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal para Crear/Editar Clase -->
+  <div (click)="closeClassModal()" [class.hidden]="!isClassModalOpen()" class="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm"></div>
+  <div id="class-modal" tabindex="-1" aria-hidden="true" [class.hidden]="!isClassModalOpen()" class="fixed top-0 right-0 left-0 z-50 justify-center items-start w-full md:inset-0 h-modal md:h-full flex pt-8">
+    <div class="relative p-4 w-full max-w-2xl max-h-[90vh]">
+      <div class="relative rounded-lg shadow bg-slate-800 border border-white/10 flex flex-col h-full">
+        <button (click)="closeClassModal()" type="button" class="absolute top-3 right-2.5 text-gray-400 bg-transparent rounded-lg text-sm p-1.5 ml-auto inline-flex items-center hover:bg-gray-600 hover:text-white">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+        </button>
+        <!-- Modal header -->
+        <div class="py-6 px-6 lg:px-8 border-b border-slate-700">
+          <h3 class="mb-4 text-xl font-medium text-white">{{ isEditingClass() ? 'Editar Clase' : 'Nueva Clase' }}</h3>
+        </div>
+        <!-- Modal body -->
+        <div class="flex-grow overflow-y-auto p-6 lg:p-8">
+          <form id="class-form" class="space-y-6" [formGroup]="classForm" (ngSubmit)="onClassSubmit()">
+            <div>
+              <label for="class-title" class="block mb-2 text-sm font-medium text-gray-300">Título de la clase</label>
+              <input type="text" id="class-title" formControlName="title" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500" required>
+            </div>
+            <div>
+              <label for="class-description" class="block mb-2 text-sm font-medium text-gray-300">Descripción (opcional)</label>
+              <textarea id="class-description" formControlName="description" rows="4" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500"></textarea>
+            </div>
+            <div>
+              <label for="vimeo-link" class="block mb-2 text-sm font-medium text-gray-300">Enlace del video (Vimeo)</label>
+              <input type="url" id="vimeo-link" formControlName="vimeo_link" placeholder="https://vimeo.com/123456789" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500">
+            </div>
+            <div>
+              <label for="class-time" class="block mb-2 text-sm font-medium text-gray-300">Duración (minutos)</label>
+              <div class="relative">
+                <input type="number" id="class-time" [value]="(classForm.get('time')?.value || 0) / 60 | number:'1.0-2'" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-900 border-slate-700 placeholder-gray-400 text-gray-400 cursor-not-allowed" readonly>
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">min</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">La duración se obtiene automáticamente del video de Vimeo.</p>
+            </div>
+          </form>
+        </div>
+        <!-- Modal footer -->
+        <div class="p-6 border-t border-slate-700">
+          <button type="submit" form="class-form" [disabled]="classForm.invalid" class="w-full text-slate-900 bg-lime-400 hover:bg-lime-500 focus:ring-4 focus:outline-none focus:ring-lime-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:bg-slate-600 disabled:cursor-not-allowed">
+            {{ isEditingClass() ? 'Guardar Cambios' : 'Crear Clase' }}
+          </button>
         </div>
       </div>
     </div>
