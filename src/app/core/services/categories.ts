@@ -28,7 +28,7 @@ export class CategoriesService {
 
   // --- Métodos para interactuar con el servicio ---
   reload() {
-    const token = this.authService.clientToken();
+    const token = this.authService.token();
     if (!token) return;
 
     this.state.update((s: CategoriesState) => ({ ...s, isLoading: true }));

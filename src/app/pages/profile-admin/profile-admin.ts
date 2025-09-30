@@ -1,9 +1,10 @@
-import { Component, inject, effect, signal } from '@angular/core';
+import { Component, inject, effect, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { HeaderComponent } from '../../layout/header/header';
 import { AuthService } from '../../core/services/auth';
 import { ProfileService } from '../../core/services/profile';
+import { AdminService } from '../../core/services/admin.service';
 
 @Component({
   selector: 'app-profile-admin',
@@ -11,9 +12,10 @@ import { ProfileService } from '../../core/services/profile';
   imports: [CommonModule, HeaderComponent, ReactiveFormsModule],
   templateUrl: './profile-admin.html',
 })
-export class ProfileAdminComponent {
+export class ProfileAdminComponent implements OnInit {
   authService = inject(AuthService);
   profileService = inject(ProfileService);
+  adminService = inject(AdminService); // Inyectamos el servicio correcto
 
   isSubmitting = signal(false);
   isPasswordSubmitting = signal(false);
@@ -35,22 +37,22 @@ export class ProfileAdminComponent {
   });
 
   constructor() {
-    this.profileService.reload();
-
     effect(() => {
-      const profileData = this.profileService.profile();
-      if (profileData?.profile?.email) {
-        // Sincronizamos el usuario global con los datos completos del perfil
-        this.authService.currentUser.set(profileData.profile);
-        this.profileForm.patchValue({
-          name: profileData.profile.name,
-          surname: profileData.profile.surname,
-          email: profileData.profile.email,
-          profession: profileData.profile.profession,
-          description: profileData.profile.description,
-        });
+      // Leemos los datos del perfil desde AdminService
+      const profileResponse = this.adminService.profile();
+      if (profileResponse?.profile?.email) {
+        // La respuesta contiene un objeto 'profile', lo usamos para rellenar el formulario.
+        this.profileForm.patchValue(profileResponse.profile as any);
       }
-    }, { allowSignalWrites: true });
+    });
+  }
+
+  ngOnInit(): void {
+    // Asegurarnos de que los datos se carguen cuando el componente se inicialice
+    const profileData = this.adminService.profile();
+    if (!profileData && this.authService.user()?.rol === 'admin') {
+      this.adminService.reload();
+    }
   }
 
   onSubmitProfile() {
@@ -61,12 +63,9 @@ export class ProfileAdminComponent {
 
     this.profileService.update(formData).subscribe({
       next: () => {
-        this.authService.currentUser.update(user => ({
-          ...user,
-          ...formData,
-        }));
         alert('¡Perfil actualizado con éxito!');
-        this.profileService.reload();
+        // En lugar de actualizar la señal manualmente, le pedimos al servicio que recargue los datos.
+        this.adminService.reload();
         this.isSubmitting.set(false);
       },
       error: (err) => {
@@ -83,8 +82,7 @@ export class ProfileAdminComponent {
       const file = input.files[0];
       this.profileService.updateAvatar(file).subscribe({
         next: (response) => {
-          this.authService.currentUser.set(response.user);
-          this.profileService.reload();
+          this.authService.user.set(response.user);
           alert('¡Avatar actualizado con éxito!');
         },
         error: (err) => {
@@ -107,7 +105,7 @@ export class ProfileAdminComponent {
         alert('¡Contraseña actualizada con éxito! Se cerrará la sesión por seguridad.');
         this.passwordForm.reset();
         this.isPasswordSubmitting.set(false);
-        this.authService.logoutClient();
+        this.authService.logout();
       },
       error: (err) => {
         console.error('Error al actualizar la contraseña:', err);

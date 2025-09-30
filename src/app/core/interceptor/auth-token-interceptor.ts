@@ -1,13 +1,22 @@
-// src/app/core/interceptors/auth-token.interceptor.ts
 import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { AuthService } from '../services/auth';
 
 export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
-  const isAuth = /\/users\/login(_admin)?$/.test(req.url);
-  if (isAuth) return next(req);
+  const authService = inject(AuthService);
 
-  const token = localStorage.getItem('adminToken') ?? localStorage.getItem('clientToken');
-  if (token && req.headers && req.url.startsWith('http://localhost:3000/api')) {
-    req = req.clone({ setHeaders: { token } });
+  // Usamos el token unificado
+  const token = authService.token();
+
+  // Si hay token, agregarlo a los headers
+  if (token) {
+    const authReq = req.clone({
+      setHeaders: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return next(authReq);
   }
+
   return next(req);
 };

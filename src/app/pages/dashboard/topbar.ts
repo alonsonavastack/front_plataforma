@@ -25,12 +25,12 @@ export class TopbarComponent implements AfterViewInit {
   }
 
   logout() {
-    this.authService.logoutClient(); // El servicio ya se encarga de la redirección.
+    this.authService.logout(); // El servicio ya se encarga de la redirección.
   }
 
   // Devuelve el enlace de perfil correcto según el rol del usuario.
   getProfileLink(): string {
-    const role = this.authService.currentUser()?.rol;
+    const role = this.authService.user()?.rol;
     if (role === 'admin') {
       return '/profile-admin';
     } else if (role === 'instructor') {

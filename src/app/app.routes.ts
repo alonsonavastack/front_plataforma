@@ -1,7 +1,5 @@
 import { Routes } from '@angular/router';
-import { adminGuard } from './core/guards/admin.guard';
-import { customerGuard } from './core/guards/customer.guard';
-import { instructorGuard } from './core/guards/instructor.guard';
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   {
@@ -25,25 +23,26 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.DashboardComponent),
-    // Aquí aplicamos el guardián
-    canActivate: [adminGuard]
+    // Solo los roles 'admin' e 'instructor' pueden acceder al dashboard
+    canActivate: [roleGuard(['admin', 'instructor'])]
   },
   {
     path: 'profile-instructor',
     loadComponent: () => import('./pages/profile-instructor/profile-instructor').then(m => m.ProfileInstructorComponent),
-    // Aplicamos el nuevo guardián de instructor
-    canActivate: [instructorGuard]
+    // Solo el rol 'instructor' puede acceder
+    canActivate: [roleGuard(['instructor'])]
   },
   {
     path: 'profile-admin',
     loadComponent: () => import('./pages/profile-admin/profile-admin').then(m => m.ProfileAdminComponent),
-    canActivate: [adminGuard]
+    // Solo el rol 'admin' puede acceder
+    canActivate: [roleGuard(['admin'])]
   },
-  // Ruta para el perfil del estudiante (si la tienes)
   {
     path: 'profile-student',
     loadComponent: () => import('./pages/profile-student/profile-student').then(m => m.ProfileStudentComponent),
-    canActivate: [customerGuard] // Usamos el guardián que permite a cualquier usuario logueado.
+    // Solo el rol 'cliente' puede acceder
+    canActivate: [roleGuard(['cliente'])]
   },
   {
     // Redirige cualquier otra ruta a la página de inicio

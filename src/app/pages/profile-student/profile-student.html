@@ -7,13 +7,10 @@
       <!-- Columna Izquierda: Perfil y Navegación -->
       <aside class="space-y-6">
         <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm text-center">
-          @if (profileService.isLoading()) {
-            <div class="w-24 h-24 rounded-full bg-slate-700 animate-pulse mx-auto"></div>
-            <div class="h-6 w-3/4 bg-slate-700 animate-pulse rounded-md mt-4 mx-auto"></div>
-            <div class="h-4 w-1/2 bg-slate-700 animate-pulse rounded-md mt-2 mx-auto"></div>
-          } @else {
+          @if (studentProfile(); as profile) {
+            <!-- Vista con datos cargados -->
             <div class="relative inline-block group">
-              <img [src]="authService.currentUserAvatar()" alt="Avatar" class="w-24 h-24 rounded-full mx-auto border-4 border-lime-400/50 object-cover">
+              <img [src]="authService.currentUserAvatar()" alt="Avatar" class="w-24 h-24 rounded-full mx-auto border-4 border-lime-400/50 object-cover" />
               <label for="avatar-upload" class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                 <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path>
@@ -21,10 +18,16 @@
               </label>
               <input type="file" id="avatar-upload" class="hidden" (change)="onAvatarSelected($event)" accept="image/*">
             </div>
-            <h2 class="mt-4 text-xl font-bold text-white">{{ authService.currentUser()?.name }} {{ authService.currentUser()?.surname }}</h2>
-            <p class="text-sm text-slate-400">{{ authService.currentUser()?.email }}</p>
+            <h2 class="mt-4 text-xl font-bold text-white">{{ profile.profile.name }} {{ profile.profile.surname }}</h2>
+            <p class="text-sm text-slate-400">{{ profile.profile.email }}</p>
+          } @else {
+            <!-- Skeleton Loader mientras se cargan los datos -->
+            <div class="w-24 h-24 rounded-full bg-slate-700 animate-pulse mx-auto"></div>
+            <div class="h-6 w-3/4 bg-slate-700 animate-pulse rounded-md mt-4 mx-auto"></div>
+            <div class="h-4 w-1/2 bg-slate-700 animate-pulse rounded-md mt-2 mx-auto"></div>
           }
         </div>
+
 
         <nav class="p-4 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm">
           <ul class="space-y-1">
@@ -52,48 +55,120 @@
         @switch (activeSection()) {
           @case ('courses') {
             <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm">
-              <h3 class="text-2xl font-bold mb-6">Mis Cursos</h3>
-              @if (profileService.isLoading()) { <p>Cargando cursos...</p> }
-              @else if (profileService.profile(); as profile) {
-                @if (profile.enrolled_course_news.length === 0) {
-                  <p class="text-slate-400">Aún no te has inscrito a ningún curso.</p>
-                } @else {
+              <h3 class="text-2xl font-bold mb-6">Mis Cursos</h3> @if (studentProfile(); as profile) {
+                <div class="mb-4 grid grid-cols-3 gap-4">
+                  <div class="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                    <p class="text-sm text-slate-400">Total Inscritos</p>
+                    <p class="text-2xl font-bold text-lime-400">{{ profile.enrolled_course_count || 0 }}</p>
+                  </div>
+                  <div class="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                    <p class="text-sm text-slate-400">En Progreso</p>
+                    <p class="text-2xl font-bold text-blue-400">{{ profile.actived_course_count || 0 }}</p>
+                  </div>
+                  <div class="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                    <p class="text-sm text-slate-400">Completados</p>
+                    <p class="text-2xl font-bold text-green-400">{{ profile.termined_course_count || 0 }}</p>
+                  </div>
+                </div>
+                @if (profile.enrolled_courses && profile.enrolled_courses.length === 0) {
+                  <div class="text-center py-12">
+                    <svg class="w-16 h-16 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    <p class="text-slate-400 text-lg">Aún no te has inscrito a ningún curso.</p>
+                    <a routerLink="/" class="inline-block mt-4 px-6 py-3 bg-lime-400 text-slate-900 rounded-lg font-semibold hover:bg-lime-300 transition">Explorar Cursos</a>
+                  </div>
+                } @else if (profile.enrolled_courses) {
                   <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @for (enrollment of profile.enrolled_course_news; track enrollment._id) {
-                      <a [routerLink]="['/landing-curso', enrollment.course.slug]" class="block p-4 rounded-xl border border-white/10 hover:border-lime-400/50 transition bg-slate-800/50">
-                        <img [src]="buildImageUrl(enrollment.course.imagen)" alt="{{ enrollment.course.title }}" class="w-full h-32 object-cover rounded-lg mb-3">
-                        <h4 class="font-semibold text-white line-clamp-2">{{ enrollment.course.title }}</h4>
+                    @for (enrollment of profile.enrolled_courses; track enrollment._id) {
+                      <a [routerLink]="['/learning', enrollment.course.slug]" class="block p-4 rounded-xl border border-white/10 hover:border-lime-400/50 transition bg-slate-800/50 hover:bg-slate-800 group">
+                        <div class="relative overflow-hidden rounded-lg mb-3">
+                          <img [src]="buildImageUrl(enrollment.course.imagen)" alt="{{ enrollment.course.title }}" class="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300">
+                          @if (enrollment.state === 2) {
+                            <span class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">Completado</span>
+                          } @else if (enrollment.clases_checked && enrollment.clases_checked.length > 0) {
+                            <span class="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">En progreso</span>
+                          }
+                        </div>
+                        <h4 class="font-semibold text-white line-clamp-2 mb-2 group-hover:text-lime-400 transition">{{ enrollment.course.title }}</h4>
                         <div class="w-full bg-slate-700 rounded-full h-2.5 mt-2">
-                          <div class="bg-lime-400 h-2.5 rounded-full" [style.width.%]="enrollment.percentage"></div>
+                          <div class="bg-lime-400 h-2.5 rounded-full transition-all duration-300" [style.width.%]="enrollment.percentage"></div>
                         </div>
                         <p class="text-xs text-slate-400 mt-1">{{ enrollment.percentage }}% completado</p>
                       </a>
                     }
                   </div>
                 }
+              } @else {
+                <div class="flex items-center justify-center py-12">
+                  <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
+                  <p class="ml-4 text-slate-400">Cargando cursos...</p>
+                </div>
               }
             </div>
           }
           @case ('purchases') {
             <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm">
               <h3 class="text-2xl font-bold mb-6">Historial de Compras</h3>
-              @if (profileService.isLoading()) { <p>Cargando historial...</p> }
-              @else if (profileService.profile(); as profile) {
-                @if (profile.sales.length === 0) {
-                  <p class="text-slate-400">No has realizado ninguna compra.</p>
-                } @else {
+              @if (studentProfile(); as profile) {
+                @if (profile.sales && profile.sales.length === 0) {
+                  <div class="text-center py-12">
+                    <svg class="w-16 h-16 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                    </svg>
+                    <p class="text-slate-400 text-lg">No has realizado ninguna compra.</p>
+                    <a routerLink="/" class="inline-block mt-4 px-6 py-3 bg-lime-400 text-slate-900 rounded-lg font-semibold hover:bg-lime-300 transition">Explorar Cursos</a>
+                  </div>
+                } @else if (profile.sales) {
                   <div class="space-y-4">
                     @for (sale of profile.sales; track sale._id) {
-                      <div class="p-4 rounded-lg border border-white/10 bg-slate-800/50">
-                        <div class="flex justify-between items-center mb-2">
-                          <p class="text-sm text-slate-400">Orden #{{ sale._id.slice(-6) }}</p>
-                          <p class="text-sm text-slate-400">{{ sale.created_at }}</p>
+                      <div class="p-5 rounded-lg border border-white/10 bg-slate-800/50 hover:bg-slate-800/70 transition">
+                        <div class="flex justify-between items-center mb-4">
+                          <div>
+                            <p class="text-sm text-slate-400">Orden #{{ sale._id.slice(-8).toUpperCase() }}</p>
+                            <p class="text-sm text-slate-500">{{ sale.created_at }}</p>
+                          </div>
+                          <div class="text-right">
+                            <p class="text-2xl font-bold text-lime-400">${{ sale.total | number:'1.2-2' }}</p>
+                            <p class="text-xs text-slate-400">{{ sale.currency_total || 'USD' }}</p>
+                          </div>
                         </div>
-                        <p class="text-lg font-bold text-lime-300">${{ sale.total | number:'1.2-2' }} {{ sale.currency_total }}</p>
+                        @if (sale.sales_details && sale.sales_details.length > 0) {
+                          <div class="border-t border-white/10 pt-4 space-y-2">
+                            <p class="text-xs text-slate-400 font-semibold uppercase mb-2">Productos:</p>
+                            @for (detail of sale.sales_details; track detail._id) {
+                              <div class="flex items-center gap-3 p-2 rounded bg-slate-900/50">
+                                @if (detail.product?.imagen) {
+                                  <img [src]="buildImageUrl(detail.product.imagen)" alt="{{ detail.product.title }}" class="w-12 h-12 object-cover rounded">
+                                }
+                                <div class="flex-1">
+                                  <p class="text-sm font-medium text-white">{{ detail.product?.title }}</p>
+                                  <p class="text-xs text-slate-400">
+                                    {{ detail.product_type === 'course' ? 'Curso' : 'Proyecto' }}
+                                    @if (detail.product?.categorie?.title) {
+                                      <span> • {{ detail.product.categorie.title }}</span>
+                                    }
+                                  </p>
+                                </div>
+                                <div class="text-right">
+                                  <p class="text-sm font-semibold text-lime-300">${{ detail.total | number:'1.2-2' }}</p>
+                                  @if (detail.type_discount) {
+                                    <p class="text-xs text-slate-500">{{ detail.type_discount }}</p>
+                                  }
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        }
                       </div>
                     }
                   </div>
                 }
+              } @else {
+                <div class="flex items-center justify-center py-12">
+                  <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
+                  <p class="ml-4 text-slate-400">Cargando historial...</p>
+                </div>
               }
             </div>
           }

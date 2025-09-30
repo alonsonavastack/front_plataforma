@@ -1,12 +1,9 @@
 // src/app/core/services/profile.service.ts
 import { HttpClient } from '@angular/common/http';
-import { computed, effect, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { catchError, throwError } from 'rxjs';
-import { ProfileResponse } from '../models/home.models';
+import { catchError, tap, throwError } from 'rxjs';
 import { AuthService } from './auth';
-
-type ProfileState = { profile: ProfileResponse | null, isLoading: boolean, error: any };
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
@@ -14,77 +11,42 @@ export class ProfileService {
   authService = inject(AuthService);
   base = environment.url;
 
-  private state = signal<ProfileState>({
-    profile: null,
-    isLoading: false,
-    error: null,
-  });
+  // El perfil ahora es una señal computada que lee directamente de AuthService.
+  // Ya no necesitamos un estado local (private state).
+  profile = computed(() => this.authService.user());
 
-  constructor() {
-    effect(() => {
-      // Recargar el perfil cuando el token cambie (inicio de sesión)
-      if (this.authService.clientToken()) {
-        this.reload();
-      } else {
-        // Limpiar el estado si el usuario cierra sesión
-        this.state.set({ profile: null, isLoading: false, error: null });
-      }
-    });
-  }
-
-  profile = computed(() => this.state().profile);
-  isLoading = computed(() => this.state().isLoading);
-
-  reload() {
-    const token = this.authService.clientToken();
-    if (!token) {
-      return;
-    }
-
-    const user = this.authService.currentUser();
-    let url: string | undefined;
-
-    switch (user?.rol) {
-      case 'admin':
-        url = `${this.base}profile-admin/profile`;
-        break;
-      case 'instructor':
-        url = `${this.base}profile-instructor/profile`;
-        break;
-      case 'cliente':
-        url = `${this.base}profile/client`;
-        break;
-      default:
-        url = undefined;
-    }
-
-    if (!url) return;
-
-    this.state.update((s: ProfileState) => ({ ...s, isLoading: true }));
-    this.http.get<ProfileResponse>(url).subscribe({
-      next: (data) => {
-        this.state.update((s: ProfileState) => ({ ...s, profile: data, isLoading: false }));
-      },
-      error: (err) => {
-        this.state.update((s: ProfileState) => ({ ...s, isLoading: false, error: err }));
-      }
-    });
-  }
+  // El constructor ahora está vacío, ya que la lógica reactiva se maneja con `computed`.
+  constructor() {}
 
   update(body: any) {
     // Determina el endpoint correcto basado en el rol del usuario
-    const user = this.authService.currentUser();
+    const user = this.authService.user();
     let endpoint = '';
     if (user?.rol === 'admin') {
-      endpoint = 'profile-admin/update'; // Asumiendo que tendrás este endpoint
+      endpoint = 'users/update'; // Admin usa el endpoint genérico de usuarios
     } else if (user?.rol === 'instructor') {
       endpoint = 'profile-instructor/update';
+    } else if (user?.rol === 'cliente') {
+      endpoint = 'profile-student/update';
     } else {
-      endpoint = 'profile/update';
+      endpoint = 'users/update'; // Fallback genérico
     }
 
-    return this.http.post<any>(`${this.base}${endpoint}`, body)
-      .pipe(catchError(err => throwError(() => err)));
+    return this.http.put<any>(`${this.base}${endpoint}`, body).pipe(
+      // Después de actualizar, actualizamos la señal del perfil en AuthService.
+      tap(response => {
+        console.log('Respuesta de update:', response);
+        // La respuesta puede venir como { profile: ... }, { user: ... }, o el objeto de usuario directamente.
+        const updatedUser = response.profile || response.user || response;
+        if (updatedUser) {
+          // Fusionamos con el usuario existente para no perder datos que no vengan en la respuesta.
+          const currentUser = this.authService.user();
+          const userToSet = { ...currentUser, ...updatedUser };
+          this.authService.user.set(updatedUser);
+        }
+      }),
+      catchError(err => throwError(() => err))
+    );
   }
 
   updateAvatar(file: File) {
@@ -92,13 +54,31 @@ export class ProfileService {
     formData.append('avatar', file);
 
     // Hacemos que el endpoint sea dinámico según el rol
-    const user = this.authService.currentUser();
+    const user = this.authService.user();
     let endpoint = '';
-    if (user?.rol === 'admin' || user?.rol === 'instructor') {
-      endpoint = 'profile-instructor/update-avatar'; // El backend ya maneja ambos roles aquí
+    if (user?.rol === 'admin') {
+      endpoint = 'users/update'; // Admin usa el endpoint genérico de usuarios que maneja multipart
+    } else if (user?.rol === 'instructor') {
+      endpoint = 'profile-instructor/update'; // Revertido: Instructor usa una ruta diferente para el avatar
+    } else if (user?.rol === 'cliente') {
+      endpoint = 'profile-student/update-avatar';
     } else {
-      endpoint = 'profile/update'; // El endpoint de estudiante ya maneja archivos
+      endpoint = 'users/update'; // Fallback genérico
     }
-    return this.http.post<any>(`${this.base}${endpoint}`, formData);
+
+    return this.http.put<any>(`${this.base}${endpoint}`, formData).pipe(
+      // Después de actualizar el avatar, actualizamos la señal del usuario en AuthService.
+      tap(response => {
+        console.log('Respuesta de updateAvatar:', response);
+        // La respuesta puede venir como { user: ... } o el objeto de usuario directamente.
+        const updatedUser = response.user || response;
+        if (updatedUser) {
+          const currentUser = this.authService.user();
+          const userToSet = { ...currentUser, ...updatedUser };
+          this.authService.user.set(userToSet);
+        }
+      }),
+      catchError(err => throwError(() => err))
+    );
   }
 }

@@ -1,10 +1,11 @@
 import { Component, inject, effect, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth';
 import { ProfileService } from '../../core/services/profile';
 import { HeaderComponent } from '../../layout/header/header';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../environments/environment.development';
 import { RouterLink } from '@angular/router';
 
 type ProfileSection = 'courses' | 'purchases' | 'edit';
@@ -21,8 +22,13 @@ export const passwordsMatchValidator: ValidatorFn = (control: AbstractControl): 
   templateUrl: './profile-student.html',
 })
 export class ProfileStudentComponent implements OnInit {
+  // Usamos ProfileService para las acciones de 'update', pero no para leer el estado.
   profileService = inject(ProfileService);
   authService = inject(AuthService);
+  private http = inject(HttpClient);
+
+  // Creamos una señal local para almacenar los datos completos del perfil del estudiante.
+  studentProfile = signal<any>(null);
 
   // Señal para manejar la pestaña activa
   activeSection = signal<ProfileSection>('courses');
@@ -55,19 +61,45 @@ export class ProfileStudentComponent implements OnInit {
     // Usamos un effect para reaccionar cuando los datos del perfil se cargan.
     // Esto llenará el formulario automáticamente.
     effect(() => {
-      const profileData = this.profileService.profile();
-      console.log('Datos del perfil del estudiante:', profileData);
-      if (profileData?.profile?.email) { // Usamos una propiedad real para confirmar que los datos han llegado
-        // Sincronizamos el usuario global con los datos completos del perfil
-        this.authService.currentUser.set(profileData.profile);
-        this.profileForm.patchValue(profileData.profile);
+      // Primero intentamos usar los datos del AuthService (más rápido)
+      const currentUser = this.authService.user();
+      // Luego intentamos con los datos del perfil del estudiante (más completo)
+      const profileData = this.studentProfile()?.profile;
+
+      // Priorizamos los datos más completos del endpoint de estudiante
+      const dataToUse = profileData || currentUser;
+
+      if (dataToUse?.email) {
+        console.log('Rellenando formulario con:', dataToUse);
+        this.profileForm.patchValue({
+          name: dataToUse.name || '',
+          surname: dataToUse.surname || '',
+          email: dataToUse.email || '',
+          profession: dataToUse.profession || '',
+          description: dataToUse.description || '',
+        });
       }
-    }, { allowSignalWrites: true });
+    });
   }
 
   ngOnInit(): void {
-    // Cargar los datos del perfil al iniciar el componente
-    this.profileService.reload();
+    this.loadStudentProfile();
+  }
+
+  // Método para cargar los datos específicos del estudiante
+  loadStudentProfile() {
+    this.http.get<any>(`${environment.url}profile-student/client`).subscribe({
+      next: (data) => {
+        console.log('Datos del perfil del estudiante:', data);
+        console.log('Cursos inscritos:', data.enrolled_courses);
+        console.log('Compras realizadas:', data.sales);
+        this.studentProfile.set(data);
+      },
+      error: (err) => {
+        console.error('Error al cargar el perfil del estudiante:', err);
+        console.error('Detalles del error:', err.error);
+      }
+    });
   }
 
   // Cambia la sección activa
@@ -85,17 +117,14 @@ export class ProfileStudentComponent implements OnInit {
     const formData = this.profileForm.getRawValue();
 
     this.profileService.update(formData).subscribe({
-      next: () => {
-        // Actualizar los datos del usuario en el AuthService para que se reflejen en toda la app
-        this.authService.currentUser.update(user => ({
-          ...user,
-          name: formData.name,
-          surname: formData.surname,
-          profession: formData.profession,
-          description: formData.description,
-        }));
+      next: (response) => {
+        // Después de actualizar, recargamos los datos para reflejar los cambios.
+        // Y reseteamos el formulario con los nuevos datos para que vuelva al estado 'pristine'.
+        const updatedUser = response.user || response.profile || response;
+        this.profileForm.reset(updatedUser);
+
+        this.loadStudentProfile();
         alert('¡Perfil actualizado con éxito!');
-        this.profileService.reload(); // Recargamos los datos del perfil
         this.isSubmitting.set(false);
       },
       error: (err) => {
@@ -118,12 +147,12 @@ export class ProfileStudentComponent implements OnInit {
     // El backend espera 'password' para la nueva contraseña y 'old_password' para la actual.
     const payload = { password: newPassword, old_password: currentPassword };
 
-    this.profileService.update(payload).subscribe({
+    this.http.post<any>(`${environment.url}profile-student/update-password`, payload).subscribe({
       next: () => {
         alert('¡Contraseña actualizada con éxito! Se cerrará la sesión por seguridad.');
         this.passwordForm.reset();
         this.isPasswordSubmitting.set(false);
-        this.authService.logoutClient(); // Cierra la sesión y redirige a /login
+        this.authService.logout(); // Cierra la sesión y redirige a /login
       },
       error: (err) => {
         console.error('Error al actualizar la contraseña:', err);
@@ -137,13 +166,14 @@ export class ProfileStudentComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       const file = input.files[0];
-      const formData = new FormData();
-      formData.append('avatar', file);
-      this.profileService.update(formData).subscribe({
+      // Usamos el método específico para avatares
+      this.profileService.updateAvatar(file).subscribe({
         next: (response) => {
           // Actualizamos el usuario en el AuthService para que el cambio se refleje en toda la app
-          this.authService.currentUser.set(response.user);
-          this.profileService.reload(); // Forzamos la recarga de los datos del perfil
+          // El tap en el servicio ya se encarga de esto, pero una doble confirmación no hace daño
+          if (response.user) {
+            this.authService.user.set(response.user);
+          }
           alert('¡Avatar actualizado con éxito!');
         },
         error: (err) => {
@@ -159,3 +189,4 @@ export class ProfileStudentComponent implements OnInit {
     return `${environment.images.course}${imageName}`;
   }
 }
+

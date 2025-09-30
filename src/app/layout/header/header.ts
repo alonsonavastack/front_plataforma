@@ -23,12 +23,7 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild('headerElement') headerEl!: ElementRef<AnimationCallbackEvent>;
 
-  constructor() {
-    // Este efecto asegura que el componente reaccione a los cambios en la sesión del usuario.
-    effect(() => {
-      const user = this.authService.currentUser();
-    });
-  }
+  constructor() {}
 
   ngAfterViewInit(): void {
     if (this.headerEl) {
@@ -60,7 +55,7 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
 
   isProfileMenuOpen = signal(false); // Convertido a signal
   toggleProfileMenu() { this.isProfileMenuOpen.update(v => !v); } // Usando método de signal
-  logout() { this.authService.logoutClient(); this.isProfileMenuOpen.set(false); } // Usando método de signal
+  logout() { this.authService.logout(); this.isProfileMenuOpen.set(false); } // Usando método de signal
 
   // Computed signal para saber si estamos en una página de autenticación
   isOnAuthPage = computed(() => {
@@ -80,7 +75,7 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
 
   // Devuelve el enlace de perfil correcto según el rol del usuario.
   getProfileLink(): string {
-    const role = this.authService.currentUser()?.rol;
+    const role = this.authService.user()?.rol;
     if (role === 'admin') {
       return '/profile-admin';
     } else if (role === 'instructor') {

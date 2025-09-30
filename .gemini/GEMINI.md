@@ -59,3 +59,8 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Cuando crees un componente nuevo, con interfaz para que el usuario lo vea, que este dentro de la carpeta pages
 - Usa la carpeta de services para crear servicios
 - Usa la carpeta de models para crear nuevos modelos o interfaces
+
+
+## roles
+
+- para este proyecto no olvides que trabajamos con roles (cliente, admin e instructor)

@@ -48,7 +48,7 @@ export class CartService {
     // solo cuando la autenticación está 100% lista.
     effect(() => {
       // Solo cargar el carrito si el usuario está logueado Y es un cliente.
-      if (this.authService.isLoggedIn() && this.authService.currentUser()?.rol === 'cliente') {
+      if (this.authService.isLoggedIn() && this.authService.user()?.rol === 'cliente') {
         this.reloadCart();
       }
     });
@@ -70,8 +70,8 @@ export class CartService {
 
   /** Carga los artículos del carrito desde el backend. */
   reloadCart() {
-    const isClient = this.authService.currentUser()?.rol === 'cliente';
-    if (!this.authService.clientToken() || !isClient) {
+    const isClient = this.authService.user()?.rol === 'cliente';
+    if (!this.authService.token() || !isClient) {
       this.state.set({ carts: [], isLoading: false, error: null });
       return;
     }
