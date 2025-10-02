@@ -1,20 +1,29 @@
 // src/app/pages/home/home.ts
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { CoursePublic } from '../../core/models/home.models';
+import { CoursePublic, Project } from '../../core/models/home.models';
 import { HomeService } from '../../core/services/home';
+import { AuthService } from '../../core/services/auth';
+import { CartService } from '../../core/services/cart.service';
 import { CourseCardComponent } from '../../shared/course-card/course-card';
 import { PillFilterComponent } from '../../shared/pill-filter/pill-filter';
+import { environment } from '../../../environments/environment';
 import { HeaderComponent } from "../../layout/header/header";
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   standalone: true,
   selector: 'app-home',
-  imports: [CommonModule, CourseCardComponent, PillFilterComponent, HeaderComponent],
+  imports: [CommonModule, CourseCardComponent, PillFilterComponent, HeaderComponent, RouterLink],
   templateUrl: './home.html',
 })
 export class HomeComponent implements OnInit {
-  private api = inject(HomeService);
+  api = inject(HomeService);
+  private sanitizer = inject(DomSanitizer);
+  private router = inject(Router);
+  cartService = inject(CartService);
+  authService = inject(AuthService);
 
   // ---------- UI state ----------
   q = signal<string>('');
@@ -45,6 +54,68 @@ export class HomeComponent implements OnInit {
   featuredSafe(): CoursePublic[] {
     try { return this.api.featuredCourses(); }
     catch { return []; }
+  }
+
+  featuredProjects = computed<Project[]>(() => {
+    try { return this.api.home().projects_featured ?? []; }
+    catch { return []; }
+  });
+
+  // --- Video Modal State ---
+  videoModalUrl = signal<string | null>(null);
+
+  sanitizedVideoUrl = computed<SafeResourceUrl | null>(() => {
+    const url = this.videoModalUrl();
+    if (!url) return null;
+
+    let embedUrl = '';
+    // Regex para extraer el ID de video de varias URLs de YouTube (youtube.com/watch, youtu.be/, etc.)
+    const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const youtubeMatch = url.match(youtubeRegex);
+
+    if (youtubeMatch && youtubeMatch[1]) {
+      const videoId = youtubeMatch[1];
+      embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    }
+    // Vimeo: https://vimeo.com/VIDEO_ID -> https://player.vimeo.com/video/VIDEO_ID
+    else if (url.includes('vimeo.com/')) {
+      const videoId = url.split('vimeo.com/')[1].split(/[\/?]/)[0];
+      embedUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1`;
+    }
+
+    return embedUrl ? this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl) : null;
+  });
+
+  openVideoModal(url: string | undefined): void {
+    if (url) this.videoModalUrl.set(url);
+  }
+
+  // --- Cart Methods ---
+  isProjectInCart(projectId: string): boolean {
+    return this.cartService.items().some(item => item.product._id === projectId && item.product_type === 'project');
+  }
+
+  addProjectToCart(project: Project, event: MouseEvent): void {
+    event.stopPropagation(); // Evita que se abra el modal de video
+    if (!this.authService.isLoggedIn()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.cartService.addToCart(project, 'project');
+  }
+
+  isCourseInCart(courseId: string): boolean {
+    return this.cartService.items().some(item => item.product._id === courseId && item.product_type === 'course');
+  }
+
+  addCourseToCart(course: CoursePublic, event: MouseEvent): void {
+    // Usamos preventDefault en lugar de stopPropagation porque el botón está fuera del enlace <a>
+    event.preventDefault();
+    if (!this.authService.isLoggedIn()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.cartService.addToCart(course, 'course');
   }
 
   // ---------- Búsqueda pro ----------
@@ -189,5 +260,9 @@ export class HomeComponent implements OnInit {
     this.searchRows.set(null);
     // Si prefieres limpiar también el input:
     // this.q.set('');
+  }
+
+  buildProjectImageUrl(imagen: string): string {
+    return `${environment.url}project/imagen-project/${imagen}`;
   }
 }

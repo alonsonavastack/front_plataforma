@@ -26,7 +26,7 @@ export interface CourseAdmin {
   subtitle: string;
   description?: string;
   price_usd: number;
-  price_soles: number;
+  price_mxn: number;
   categorie: Category; // Objeto Category poblado
   user: User; // Objeto User poblado
   level: 'Basico' | 'Intermedio' | 'Avanzado';
@@ -80,8 +80,8 @@ export interface CoursePublic {
   subtitle: string;
   slug: string;
   imagen?: string;
-  price_usd: number;
-  price_soles: number;
+  price_usd: number; // Mantener USD para precios internacionales
+  price_mxn: number; // Cambiado de price_soles a price_mxn
   level: string;
   idioma: string;
   categorie: Category;
@@ -113,6 +113,7 @@ export interface HomeApiResponse {
   courses_banners: CoursePublic[];
   campaing_banner: any; // Define una interfaz más específica si es necesario
   courses_flash: CoursePublic[];
+  projects_featured?: Project[]; // Añadido para proyectos destacados
   campaing_flash: any; // Define una interfaz más específica si es necesario
 }
 
@@ -127,4 +128,27 @@ export interface ProfileResponse {
   termined_course_news?: any[];
   sales: any[]; // Puedes crear una interfaz más específica para las ventas
   projects?: any[];
+}
+
+// Modelo para Proyectos
+export interface Project {
+  _id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  imagen: string;
+  url_video?: string;
+  categorie: Category;
+  price_mxn: number;
+  price_usd: number;
+  state?: number; // 1: borrador, 2: publico, 3: anulado
+  user?: User; // Opcional porque puede no estar poblado
+}
+
+export interface ProjectListResponse {
+  projects: Project[];
+}
+
+export interface ProjectSingleResponse {
+  project: Project;
 }

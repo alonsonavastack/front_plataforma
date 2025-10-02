@@ -2,7 +2,7 @@
 import { HttpClient } from "@angular/common/http";
 import { computed, inject, Injectable, signal, effect } from "@angular/core";
 import { environment } from "../../../environments/environment.development";
-import { CoursePublic, SearchCourseBody } from "../models/home.models";
+import { CoursePublic, Project, SearchCourseBody } from "../models/home.models";
 import { toQuery } from "../utils/resource-helpers";
 import { map, catchError, throwError, tap } from "rxjs";
 
@@ -19,6 +19,7 @@ interface HomeApiResponse {
   campaing_banner: any;
   courses_flash: CoursePublic[];
   campaing_flash: any;
+  projects_featured?: Project[]; // Añadido para proyectos destacados
 }
 
 @Injectable({ providedIn: "root" })
@@ -35,6 +36,7 @@ export class HomeService {
       campaing_banner: null,
       courses_flash: [],
       campaing_flash: null,
+      projects_featured: [],
     },
     isLoading: false,
     error: null,
@@ -174,4 +176,9 @@ export class HomeService {
       reload,
       }
   };
+
+  buildCourseImageUrl(imageName?: string): string {
+    if (!imageName) return 'https://i.pravatar.cc/300?u=placeholder';
+    return `${this.base}courses/imagen-course/${imageName}`;
+  }
 }

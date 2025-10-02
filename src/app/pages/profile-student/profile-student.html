@@ -81,21 +81,26 @@
                 } @else if (profile.enrolled_courses) {
                   <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     @for (enrollment of profile.enrolled_courses; track enrollment._id) {
-                      <a [routerLink]="['/learning', enrollment.course.slug]" class="block p-4 rounded-xl border border-white/10 hover:border-lime-400/50 transition bg-slate-800/50 hover:bg-slate-800 group">
+                      <div class="flex flex-col p-4 rounded-xl border border-white/10 bg-slate-800/50">
                         <div class="relative overflow-hidden rounded-lg mb-3">
-                          <img [src]="buildImageUrl(enrollment.course.imagen)" alt="{{ enrollment.course.title }}" class="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300">
+                          <a [routerLink]="['/learning', enrollment.course.slug]">
+                            <img [src]="buildImageUrl(enrollment.course.imagen)" alt="{{ enrollment.course.title }}" class="w-full h-32 object-cover hover:scale-105 transition-transform duration-300">
+                          </a>
                           @if (enrollment.state === 2) {
                             <span class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">Completado</span>
                           } @else if (enrollment.clases_checked && enrollment.clases_checked.length > 0) {
                             <span class="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">En progreso</span>
                           }
                         </div>
-                        <h4 class="font-semibold text-white line-clamp-2 mb-2 group-hover:text-lime-400 transition">{{ enrollment.course.title }}</h4>
-                        <div class="w-full bg-slate-700 rounded-full h-2.5 mt-2">
+                        <h4 class="font-semibold text-white line-clamp-2 mb-2 flex-grow">{{ enrollment.course.title }}</h4>
+                        <div class="w-full bg-slate-700 rounded-full h-2.5 mt-auto">
                           <div class="bg-lime-400 h-2.5 rounded-full transition-all duration-300" [style.width.%]="enrollment.percentage || 0"></div>
                         </div>
                         <p class="text-xs text-slate-400 mt-1">{{ enrollment.percentage || 0 }}% completado</p>
-                      </a>
+                        <a [routerLink]="['/learning', enrollment.course.slug]" class="mt-4 w-full text-center px-4 py-2 bg-lime-400/10 text-lime-300 rounded-lg text-sm font-semibold hover:bg-lime-400/20 transition">
+                          Ir al curso
+                        </a>
+                      </div>
                     }
                   </div>
                 }

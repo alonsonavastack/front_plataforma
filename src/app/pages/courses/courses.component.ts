@@ -33,7 +33,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
     subtitle: new FormControl('', [Validators.required]),
     description: new FormControl(''),
     price_usd: new FormControl(0, [Validators.required, Validators.min(0)]),
-    price_soles: new FormControl(0, [Validators.required, Validators.min(0)]),
+    price_mxn: new FormControl(0, [Validators.required, Validators.min(0)]),
     categorie: new FormControl('', [Validators.required]),
     user: new FormControl('', [Validators.required]),
     level: new FormControl('Basico', [Validators.required]),
@@ -78,7 +78,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
       level: 'Basico',
       idioma: 'Español',
       price_usd: 0,
-      price_soles: 0,
+      price_mxn: 0,
     });
     this.imagePreview.set(null);
     this.isModalOpen.set(true);

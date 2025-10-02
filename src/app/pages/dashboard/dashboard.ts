@@ -7,14 +7,16 @@ import { SidebarComponent } from './sidebar';
 import { initFlowbite } from 'flowbite';
 import { Categories } from '../categories/categories.component'; // Mantenemos este para la sección de categorías
 import { CoursesComponent } from '../courses/courses.component'; // Añadimos el nuevo componente de cursos
+import { StudentsComponent } from '../students/students.component';
+import { ProjectsComponent } from '../projects/projects.component';
 
 
-type Section = 'overview'|'categories'|'courses'|'students'|'reports'|'settings';
+type Section = 'overview'|'categories'|'courses'|'projects'|'students'|'reports'|'settings';
 
 @Component({
   standalone: true,
   selector: 'app-dashboard',
-  imports: [CommonModule, TopbarComponent, SidebarComponent, Categories, CoursesComponent],
+  imports: [CommonModule, TopbarComponent, SidebarComponent, Categories, CoursesComponent, ProjectsComponent, StudentsComponent],
   templateUrl: './dashboard.html',
 })
 export class DashboardComponent implements OnInit, AfterViewInit {

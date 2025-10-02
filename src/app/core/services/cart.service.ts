@@ -50,6 +50,11 @@ export class CartService {
       // Solo cargar el carrito si el usuario está logueado Y es un cliente.
       if (this.authService.isLoggedIn() && this.authService.user()?.rol === 'cliente') {
         this.reloadCart();
+      } else {
+        // Si el usuario no está logueado (o no es cliente), nos aseguramos de que el carrito esté vacío.
+        // Esto soluciona el problema de que el carrito no se limpie al cerrar sesión.
+        this.state.set({ carts: [], isLoading: false, error: null });
+        this.isDrawerOpen.set(false); // También cerramos el panel del carrito
       }
     });
   }

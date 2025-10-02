@@ -1,0 +1,104 @@
+<app-header></app-header>
+
+<div class="bg-slate-950 text-white min-h-[calc(100vh-4rem)]">
+  @if (isLoading()) { <!-- isLoading no está definido en el componente, asegúrate de que exista -->
+    <!-- Skeleton Loader -->
+    <div class="flex items-center justify-center h-full">
+      <div class="animate-spin rounded-full h-24 w-24 border-b-2 border-lime-400"></div>
+    </div>
+  } @else if (course(); as courseData) { <!-- course no está definido en el componente, asegúrate de que exista -->
+    <div class="grid lg:grid-cols-[1fr_350px] h-full">
+
+      <!-- Columna Izquierda: Reproductor de Video -->
+      <main class="flex flex-col bg-black">
+        <div class="flex-grow flex items-center justify-center">
+          @if (videoUrl(); as url) {
+            <iframe [src]="url"
+                    class="w-full aspect-video"
+                    frameborder="0"
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    allowfullscreen>
+            </iframe>
+          } @else {
+            <div class="text-center text-slate-400">
+              <p>Selecciona una clase para comenzar a aprender.</p>
+            </div>
+          }
+        </div>
+        <div class="p-4 md:p-6 border-t border-white/10 bg-slate-900 flex items-center justify-between gap-4">
+          <div>
+            <h1 class="text-lg md:text-xl font-bold">{{ activeClass()?.title || courseData.title }}</h1>
+            <p class="text-sm text-slate-400 mt-1 line-clamp-2">{{ activeClass()?.description || 'Bienvenido al curso' }}</p>
+          </div>
+          <!-- Botón para abrir el menú en móviles -->
+          <button (click)="toggleMenu()" class="lg:hidden flex-shrink-0 p-2 rounded-md hover:bg-slate-800 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            <span class="sr-only">Abrir menú del curso</span>
+          </button>
+        </div>
+      </main>
+
+      <!-- Backdrop para el menú móvil -->
+      @if(isMenuOpen()) {
+        <div (click)="toggleMenu()" class="fixed inset-0 bg-black/60 z-40 lg:hidden"></div>
+      }
+
+      <!-- Columna Derecha: Lista de Clases -->
+      <aside class="fixed top-0 right-0 h-full w-80 bg-slate-900 z-50 transform transition-transform duration-300 ease-in-out lg:static lg:w-[350px] lg:translate-x-0 flex flex-col border-l border-white/10"
+             [class.translate-x-0]="isMenuOpen()"
+             [class.translate-x-full]="!isMenuOpen()">
+        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+          <h2 class="font-semibold text-lg">{{ courseData.title }}</h2>
+          <!-- Botón para cerrar el menú en móviles -->
+          <button (click)="toggleMenu()" class="lg:hidden p-1 text-slate-400 hover:text-white">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            <span class="sr-only">Cerrar menú</span>
+          </button>
+        </div>
+        <div class="p-4 border-b border-white/10">
+          <a routerLink="/profile-student" class="text-xs text-lime-400 hover:underline mt-1">← Volver a mi perfil</a>
+        </div>
+
+        <div class="flex-grow overflow-y-auto">
+          @if (curriculum().length === 0) {
+            <div class="p-4 text-slate-400">No hay contenido en este curso.</div>
+          } @else {
+            <div class="space-y-2 p-2">
+              @for (section of curriculum(); track section._id) {
+                <div class="rounded-lg bg-slate-800/50 overflow-hidden">
+                  <button (click)="toggleSection(section._id)" class="w-full text-left px-3 py-3 flex items-center justify-between hover:bg-slate-700/50 transition">
+                    <span class="font-semibold text-sm">{{ section.title }}</span>
+                    <svg class="w-4 h-4 text-slate-400 transition-transform" [class.rotate-180]="isSectionOpen(section._id)" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path stroke-width="2" d="M6 9l6 6 6-6"/>
+                    </svg>
+                  </button>
+
+                  @if (isSectionOpen(section._id)) {
+                    <div class="border-t border-slate-700">
+                      @for (clase of section.clases; track clase._id) {
+                        <button (click)="selectClass(clase)"
+                                [class.bg-lime-400/10]="activeClass()?._id === clase._id"
+                                [class.text-lime-300]="activeClass()?._id === clase._id"
+                                class="w-full text-left px-3 py-2.5 flex items-center gap-3 text-sm hover:bg-slate-700/50 transition">
+                          <svg class="w-4 h-4 flex-shrink-0" [class.text-lime-400]="activeClass()?._id === clase._id" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-width="2" d="M8 5v14l11-7-11-7z"/>
+                          </svg>
+                          <span class="flex-1 line-clamp-1">{{ clase.title }}</span>
+                          <span class="text-xs text-slate-500">{{ formatDuration(clase.time) }}</span>
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </aside>
+    </div>
+  } @else {
+    <div class="p-6 text-center text-red-400">
+      <p>No se pudo cargar el curso o no tienes acceso.</p>
+    </div>
+  }
+</div>
