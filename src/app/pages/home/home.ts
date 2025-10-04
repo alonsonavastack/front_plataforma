@@ -1,9 +1,10 @@
 // src/app/pages/home/home.ts
 import { CommonModule } from '@angular/common';
-import { CoursePublic, Project } from '../../core/models/home.models';
+import { CoursePublic, Project, Enrollment } from '../../core/models/home.models';
 import { HomeService } from '../../core/services/home';
 import { AuthService } from '../../core/services/auth';
 import { CartService } from '../../core/services/cart.service';
+
 import { CourseCardComponent } from '../../shared/course-card/course-card';
 import { PillFilterComponent } from '../../shared/pill-filter/pill-filter';
 import { environment } from '../../../environments/environment';
@@ -11,11 +12,12 @@ import { HeaderComponent } from "../../layout/header/header";
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { ProfileService } from '../../core/services/profile.service';
 
 @Component({
   standalone: true,
   selector: 'app-home',
-  imports: [CommonModule, CourseCardComponent, PillFilterComponent, HeaderComponent, RouterLink],
+  imports: [CommonModule, CourseCardComponent, PillFilterComponent, HeaderComponent, RouterLink,],
   templateUrl: './home.html',
 })
 export class HomeComponent implements OnInit {
@@ -24,6 +26,7 @@ export class HomeComponent implements OnInit {
   private router = inject(Router);
   cartService = inject(CartService);
   authService = inject(AuthService);
+  profileService = inject(ProfileService);
 
   // ---------- UI state ----------
   q = signal<string>('');
@@ -31,6 +34,9 @@ export class HomeComponent implements OnInit {
 
   // Loading del httpResource
   isLoading = this.api.isLoadingHome;
+
+  // Cursos del usuario
+  enrolledCourses = this.profileService.enrolledCourses;
 
   // ---------- Error-safe helpers ----------
   hasHomeError(): boolean {
@@ -118,6 +124,16 @@ export class HomeComponent implements OnInit {
     this.cartService.addToCart(course, 'course');
   }
 
+  // --- Course Enrollment Methods ---
+  isCourseEnrolled(courseId: string): boolean {
+    if (!this.authService.isLoggedIn()) {
+      return false;
+    }
+    // La respuesta del perfil tiene el curso anidado.
+    // enrolled_courses: [{ course: { _id: '...' } }]
+    return this.enrolledCourses().some((enrollment: Enrollment) => enrollment.course?._id === courseId);
+  }
+
   // ---------- Búsqueda pro ----------
   private debounceId: any = null;
   // Permite buscar con 1 caracter si el usuario presiona Enter (submit manual),
@@ -154,6 +170,10 @@ export class HomeComponent implements OnInit {
   ngOnInit(): void {
     // Inicia la carga de datos para la página de inicio.
     this.api.reloadHome();
+    // Si el usuario está logueado, carga su perfil para obtener los cursos.
+    if (this.authService.isLoggedIn()) {
+      this.profileService.reloadProfile();
+    }
   }
 
   // ---------- Handlers de búsqueda ----------

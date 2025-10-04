@@ -117,10 +117,20 @@ export interface HomeApiResponse {
   campaing_flash: any; // Define una interfaz más específica si es necesario
 }
 
+// Modelo para una inscripción a un curso
+export interface Enrollment {
+  _id: string;
+  user: string; // o User si está poblado
+  course: CoursePublic;
+  clases_checked: any[];
+  state: number; // 1: activo, 2: terminado
+  percentage?: number;
+}
+
 // Modelo para la respuesta del perfil de usuario (cliente, instructor, admin)
 export interface ProfileResponse {
   profile: User;
-  enrolled_course_count?: number;
+  enrolled_courses?: Enrollment[];
   actived_course_count?: number;
   termined_course_count?: number;
   enrolled_course_news: any[]; // Puedes crear una interfaz más específica para esto
@@ -128,6 +138,15 @@ export interface ProfileResponse {
   termined_course_news?: any[];
   sales: any[]; // Puedes crear una interfaz más específica para las ventas
   projects?: any[];
+}
+
+// Modelo para archivos de proyecto
+export interface ProjectFile {
+  _id: string;
+  name: string;
+  filename: string;
+  size: number;
+  uploadDate: string;
 }
 
 // Modelo para Proyectos
@@ -143,6 +162,7 @@ export interface Project {
   price_usd: number;
   state?: number; // 1: borrador, 2: publico, 3: anulado
   user?: User; // Opcional porque puede no estar poblado
+  files?: ProjectFile[]; // Archivos ZIP adjuntos al proyecto
 }
 
 export interface ProjectListResponse {

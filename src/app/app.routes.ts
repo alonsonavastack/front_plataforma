@@ -27,6 +27,15 @@ export const routes: Routes = [
       ),
   },
   {
+    path: "checkout",
+    loadComponent: () =>
+      import("./pages/checkout/checkout.component").then(
+        (m) => m.CheckoutComponent
+      ),
+    // Solo clientes pueden acceder al checkout
+    canActivate: [roleGuard(["cliente"])],
+  },
+  {
     path: "dashboard",
     loadComponent: () =>
       import("./pages/dashboard/dashboard").then((m) => m.DashboardComponent),

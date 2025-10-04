@@ -30,6 +30,11 @@ export class ProjectService {
     return this.http.get<ProjectSingleResponse>(`${this.url}/show/${id}`);
   }
 
+  getByIdAdmin(id: string): Observable<ProjectSingleResponse> {
+    // El interceptor añade el token
+    return this.http.get<ProjectSingleResponse>(`${this.url}/get-admin/${id}`);
+  }
+
   register(data: FormData): Observable<ProjectSingleResponse> {
     // El interceptor añade el token
     return this.http.post<ProjectSingleResponse>(`${this.url}/register`, data);
@@ -43,5 +48,34 @@ export class ProjectService {
   delete(id: string): Observable<{ message: string }> {
     // El interceptor añade el token
     return this.http.delete<{ message: string }>(`${this.url}/remove/${id}`);
+  }
+
+  // ===== NUEVOS MÉTODOS PARA GESTIÓN DE ARCHIVOS ZIP =====
+
+  /**
+   * Subir archivos ZIP al proyecto
+   * @param projectId ID del proyecto
+   * @param formData FormData con los archivos ZIP
+   */
+  uploadFiles(projectId: string, formData: FormData): Observable<any> {
+    return this.http.post<any>(`${this.url}/upload-files/${projectId}`, formData);
+  }
+
+  /**
+   * Eliminar un archivo específico del proyecto
+   * @param projectId ID del proyecto
+   * @param fileId ID del archivo a eliminar
+   */
+  deleteFile(projectId: string, fileId: string): Observable<{ message: string; files: any[] }> {
+    return this.http.delete<{ message: string; files: any[] }>(`${this.url}/remove-file/${projectId}/${fileId}`);
+  }
+
+  /**
+   * Obtener URL para descargar un archivo
+   * @param projectId ID del proyecto
+   * @param filename Nombre del archivo en el servidor
+   */
+  getFileDownloadUrl(projectId: string, filename: string): string {
+    return `${this.url}/download-file/${projectId}/${filename}`;
   }
 }

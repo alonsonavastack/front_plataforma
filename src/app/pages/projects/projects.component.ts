@@ -6,6 +6,14 @@ import { ProjectService } from "../../core/services/project.service";
 import { CoursesService } from "../../core/services/courses";
 import { environment } from "../../../environments/environment";
 
+interface ProjectFile {
+  _id: string;
+  name: string;
+  filename: string;
+  size: number;
+  uploadDate: string;
+}
+
 @Component({
   selector: 'app-projects',
   standalone: true,
@@ -44,6 +52,17 @@ export class ProjectsComponent implements OnInit {
   isEditing = signal(false);
   currentProjectId = signal<string | null>(null);
   imagePreview = signal<string | null>(null);
+
+  // --- FILES State ---
+  isFilesModalOpen = signal(false);
+  selectedFiles = signal<File[]>([]);
+  projectFiles = signal<ProjectFile[]>([]);
+  uploadingFiles = signal(false);
+  deletingFileId = signal<string | null>(null);
+  fileErrorMessages = signal<string[]>([]);
+  fileSuccessMessage = signal<string>('');
+
+  private readonly MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
   projectForm = new FormGroup({
     title: new FormControl('', [Validators.required]),
@@ -265,5 +284,165 @@ export class ProjectsComponent implements OnInit {
       case 3: return 'Anulado';
       default: return 'Desconocido';
     }
+  }
+
+  // ===== MÉTODOS PARA GESTIÓN DE ARCHIVOS ZIP =====
+
+  openFilesModal(project: Project): void {
+    this.currentProjectId.set(project._id);
+    this.selectedFiles.set([]);
+    this.fileErrorMessages.set([]);
+    this.fileSuccessMessage.set('');
+    this.loadProjectFiles(project._id);
+    this.isFilesModalOpen.set(true);
+  }
+
+  closeFilesModal(): void {
+    this.isFilesModalOpen.set(false);
+    this.currentProjectId.set(null);
+    this.selectedFiles.set([]);
+    this.projectFiles.set([]);
+    this.fileErrorMessages.set([]);
+    this.fileSuccessMessage.set('');
+  }
+
+  loadProjectFiles(projectId: string): void {
+    this.projectService.getByIdAdmin(projectId).subscribe({
+      next: (response) => {
+        this.projectFiles.set(response.project.files || []);
+      },
+      error: (error) => {
+        console.error('Error al cargar archivos:', error);
+      }
+    });
+  }
+
+  onZipFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files) return;
+
+    const files = Array.from(input.files);
+    const errors: string[] = [];
+    const validFiles: File[] = [];
+
+    files.forEach(file => {
+      // Validar extensión
+      if (!file.name.toLowerCase().endsWith('.zip')) {
+        errors.push(`${file.name}: Solo se permiten archivos ZIP`);
+        return;
+      }
+
+      // Validar tamaño
+      if (file.size > this.MAX_FILE_SIZE) {
+        errors.push(`${file.name}: Excede el tamaño máximo de 50MB`);
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    this.selectedFiles.update(current => [...current, ...validFiles]);
+    this.fileErrorMessages.set(errors);
+
+    // Limpiar el input
+    input.value = '';
+  }
+
+  removeSelectedFile(index: number): void {
+    this.selectedFiles.update(files => files.filter((_, i) => i !== index));
+  }
+
+  uploadZipFiles(): void {
+    const files = this.selectedFiles();
+    if (files.length === 0) return;
+
+    const projectId = this.currentProjectId();
+    if (!projectId) return;
+
+    this.uploadingFiles.set(true);
+    this.fileErrorMessages.set([]);
+    this.fileSuccessMessage.set('');
+
+    const formData = new FormData();
+    files.forEach((file, index) => {
+      formData.append(`file${index}`, file);
+    });
+
+    this.projectService.uploadFiles(projectId, formData).subscribe({
+      next: (response) => {
+        this.fileSuccessMessage.set(`Se subieron ${response.uploadedFiles} archivo(s) correctamente`);
+
+        if (response.errors && response.errors.length > 0) {
+          this.fileErrorMessages.set(response.errors);
+        }
+
+        this.selectedFiles.set([]);
+        this.loadProjectFiles(projectId);
+        this.uploadingFiles.set(false);
+
+        setTimeout(() => {
+          this.fileSuccessMessage.set('');
+        }, 5000);
+      },
+      error: (error) => {
+        console.error('Error al subir archivos:', error);
+        this.fileErrorMessages.set(['Error al subir los archivos. Por favor, intenta de nuevo.']);
+        this.uploadingFiles.set(false);
+      }
+    });
+  }
+
+  deleteZipFile(file: ProjectFile): void {
+    if (!confirm(`¿Estás seguro de eliminar el archivo "${file.name}"?`)) {
+      return;
+    }
+
+    const projectId = this.currentProjectId();
+    if (!projectId) return;
+
+    this.deletingFileId.set(file._id);
+
+    this.projectService.deleteFile(projectId, file._id).subscribe({
+      next: (response) => {
+        this.fileSuccessMessage.set('Archivo eliminado correctamente');
+        this.loadProjectFiles(projectId);
+        this.deletingFileId.set(null);
+
+        setTimeout(() => {
+          this.fileSuccessMessage.set('');
+        }, 3000);
+      },
+      error: (error) => {
+        console.error('Error al eliminar archivo:', error);
+        this.fileErrorMessages.set(['Error al eliminar el archivo']);
+        this.deletingFileId.set(null);
+      }
+    });
+  }
+
+  downloadZipFile(file: ProjectFile): void {
+    const projectId = this.currentProjectId();
+    if (!projectId) return;
+
+    const url = this.projectService.getFileDownloadUrl(projectId, file.filename);
+    window.open(url, '_blank');
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  formatDate(date: string): string {
+    return new Date(date).toLocaleDateString('es-MX', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 }

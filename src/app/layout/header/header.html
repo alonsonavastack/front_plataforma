@@ -33,7 +33,6 @@
 
       <!-- Botones de acción / Perfil de usuario (Escritorio) -->
       @if (!authService.isLoggedIn() && !isOnAuthPage()) {
-        <!-- Muestra si el usuario NO ha iniciado sesión -->
         <div class="hidden lg:flex items-center gap-3">
         <a
           routerLink="/login"
@@ -48,7 +47,6 @@
         </a>
         </div>
       } @else if (authService.isLoggedIn()) {
-        <!-- Muestra si el usuario SÍ ha iniciado sesión -->
         <div class="hidden lg:block relative">
         <button (click)="toggleProfileMenu()" class="flex items-center gap-3">
           <span class="text-sm font-medium hidden sm:inline text-slate-200">Hola, {{ authService.user()?.name }}</span>
@@ -191,7 +189,12 @@
             <span>${{ cartService.subtotal() | number:'1.2-2' }}</span>
           </div>
           <p class="text-xs text-gray-400 mt-1">Los impuestos y gastos de envío se calculan en la pantalla de pago.</p>
-          <button class="w-full mt-4 h-12 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition">
+          <button 
+            (click)="goToCheckout()"
+            class="w-full mt-4 h-12 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+            </svg>
             Proceder al Pago
           </button>
         </div>

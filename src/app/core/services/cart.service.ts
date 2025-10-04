@@ -43,12 +43,19 @@ export class CartService {
 
 
   constructor() {
+    // Carga inicial del carrito si el usuario ya está logueado al iniciar la app.
+    this.initCart();
+
     // Este efecto se ejecutará automáticamente cuando el usuario inicie sesión.
     // Al depender directamente del token, nos aseguramos que la recarga ocurra
     // solo cuando la autenticación está 100% lista.
     effect(() => {
-      // Solo cargar el carrito si el usuario está logueado Y es un cliente.
-      if (this.authService.isLoggedIn() && this.authService.user()?.rol === 'cliente') {
+      // Usamos isLoggedIn() como disparador principal.
+      // Si el usuario no está logueado, el resto del código se encarga de limpiar el estado.
+      const isLoggedIn = this.authService.isLoggedIn();
+
+      if (isLoggedIn && this.authService.user()?.rol === 'cliente') {
+        // Recarga el carrito cuando el estado de login cambia a 'logueado'.
         this.reloadCart();
       } else {
         // Si el usuario no está logueado (o no es cliente), nos aseguramos de que el carrito esté vacío.
@@ -72,6 +79,14 @@ export class CartService {
   );
 
   // --- Métodos para interactuar con el carrito ---
+
+  /** Carga el carrito si el usuario ya ha iniciado sesión al cargar el servicio. */
+  private initCart(): void {
+    const isClient = this.authService.user()?.rol === 'cliente';
+    if (this.authService.isLoggedIn() && isClient) {
+      this.reloadCart();
+    }
+  }
 
   /** Carga los artículos del carrito desde el backend. */
   reloadCart() {
