@@ -29,7 +29,7 @@ export interface CheckoutResponse {
 })
 export class CheckoutService {
   private readonly http = inject(HttpClient);
-  private readonly API_URL = `${environment.url}sale`;
+  private readonly API_URL = `${environment.url}checkout`; // Aseguramos que la ruta base es /checkout
 
   // Métodos de pago disponibles
   readonly paymentMethods: PaymentMethod[] = [

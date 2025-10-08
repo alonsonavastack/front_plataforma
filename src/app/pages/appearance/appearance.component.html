@@ -1,0 +1,54 @@
+<div class="p-4 sm:p-6 lg:p-8">
+  <div class="sm:flex sm:items-center">
+    <div class="sm:flex-auto">
+      <h1 class="text-base font-semibold leading-6 text-white">Apariencia</h1>
+      <p class="mt-2 text-sm text-gray-300">
+        Controla la visibilidad de las secciones en la página de inicio.
+      </p>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="mt-8 text-gray-400">Cargando ajustes...</div>
+  } @else {
+    <div class="mt-8 flow-root">
+      <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+          <div class="divide-y divide-gray-700 rounded-lg bg-gray-800/50 border border-gray-700">
+
+            <!-- Fila para Cursos Destacados -->
+            <div class="flex items-center justify-between p-4">
+              <div>
+                <h3 class="font-medium text-white">Sección de Cursos Destacados</h3>
+                <p class="text-sm text-gray-400">Muestra la sección de cursos destacados en la página de inicio.</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox"
+                       class="sr-only peer"
+                       [checked]="showFeaturedCourses()"
+                       (change)="onToggleChange('home_show_featured_courses', $event)">
+                <div class="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-lime-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-lime-500"></div>
+              </label>
+            </div>
+
+            <!-- Fila para Proyectos Destacados -->
+            <div class="flex items-center justify-between p-4">
+              <div>
+                <h3 class="font-medium text-white">Sección de Proyectos Destacados</h3>
+                <p class="text-sm text-gray-400">Muestra la sección de proyectos destacados en la página de inicio.</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox"
+                       class="sr-only peer"
+                       [checked]="showFeaturedProjects()"
+                       (change)="onToggleChange('home_show_featured_projects', $event)">
+                <div class="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-lime-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-lime-500"></div>
+              </label>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

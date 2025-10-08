@@ -31,6 +31,8 @@ export class CourseCardComponent {
   title = computed(() => this.course()?.['title'] ?? '');
   slug  = computed(() => this.course()?.['slug'] ?? '');
 
+  isLink = computed(() => !!this.slug());
+
   coverUrl = computed(() => {
     const c = this.course();
     const img = c?.['imagen'] || c?.['cover'] || c?.['portada'] || null;

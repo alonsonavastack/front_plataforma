@@ -163,6 +163,7 @@ export interface Project {
   state?: number; // 1: borrador, 2: publico, 3: anulado
   user?: User; // Opcional porque puede no estar poblado
   files?: ProjectFile[]; // Archivos ZIP adjuntos al proyecto
+  featured?: boolean; // Añadido para saber si es destacado
 }
 
 export interface ProjectListResponse {

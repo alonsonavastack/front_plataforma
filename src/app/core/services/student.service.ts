@@ -66,8 +66,8 @@ export class StudentService {
       const filterValue = this.stateFilter();
       filtered = filtered.filter(s => {
         // Normalizar el state a boolean para comparar
-        const studentState = typeof s.state === 'boolean' ? s.state : s.state === 1;
-        const filterState = typeof filterValue === 'boolean' ? filterValue : filterValue === 1;
+        const studentState = s.state === true || s.state === 1;
+        const filterState = filterValue === true || filterValue === 1;
         return studentState === filterState;
       });
     }
@@ -100,12 +100,17 @@ export class StudentService {
 
   updateStudentState(studentId: string, newState: boolean) {
     return this.http.put(`${this.base}users/update-state/${studentId}`, { state: newState }).pipe(
-      tap(() => {
-        // Actualizar el estado local
+      tap((response: any) => {
+        console.log('Respuesta del servidor:', response);
+        // Actualizar el estado local inmediatamente usando el boolean directamente
         const updatedStudents = this.students().map(s =>
           s._id === studentId ? { ...s, state: newState } : s
         );
         this.studentsState.update(s => ({ ...s, students: updatedStudents }));
+      }),
+      catchError(err => {
+        console.error('Error en updateStudentState:', err);
+        return throwError(() => err);
       })
     );
   }
@@ -141,7 +146,8 @@ export class StudentService {
 
   // Stats computed - normalizar state a boolean
   private isActive(student: Student): boolean {
-    return typeof student.state === 'boolean' ? student.state : student.state === 1;
+    // El state ahora es siempre boolean del modelo
+    return student.state === true || student.state === 1;
   }
 
   totalStudents = computed(() => this.students().length);

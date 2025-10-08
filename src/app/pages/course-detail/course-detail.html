@@ -79,7 +79,7 @@
                     Comprar ahora
                   </button>
                   <button class="h-11 rounded-xl border border-white/10 text-white/80 hover:text-lime-300 hover:border-lime-400/40 transition"
-                          (click)="addToCart()">
+                          (click)="addCourseToCart(course())">
                     Agregar al carrito
                   </button>
                 </div>
@@ -200,7 +200,7 @@
         } @else {
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             @for (c of moreFromInstructor(); track c._id) {
-              <a [routerLink]="['/landing-curso', c.slug]"
+              <a [routerLink]="['/course-detail', c.slug]"
                  class="rounded-xl border border-white/10 bg-white/5 hover:border-lime-400/40 transition overflow-hidden">
                 <img [src]="c.imagen ? buildImage(c.imagen) : 'https://picsum.photos/seed/inst/600/360'"
                      [alt]="c.title" class="w-full h-32 object-cover border-b border-white/10">
@@ -229,7 +229,7 @@
         } @else {
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             @for (c of relatedCourses(); track c._id) {
-              <a [routerLink]="['/landing-curso', c.slug]"
+              <a [routerLink]="['/course-detail', c.slug]"
                  class="rounded-xl border border-white/10 bg-white/5 hover:border-lime-400/40 transition overflow-hidden">
                 <img [src]="c.imagen ? buildImage(c.imagen) : 'https://picsum.photos/seed/rel/600/360'"
                      [alt]="c.title" class="w-full h-32 object-cover border-b border-white/10">

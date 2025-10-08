@@ -37,6 +37,11 @@
               </button>
             </li>
             <li>
+              <button (click)="setActiveSection('projects')" [class.bg-lime-400/10]="activeSection() === 'projects'" [class.text-lime-300]="activeSection() === 'projects'" class="w-full text-left flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-slate-700 transition">
+                <span>Mis Proyectos</span>
+              </button>
+            </li>
+            <li>
               <button (click)="setActiveSection('purchases')" [class.bg-lime-400/10]="activeSection() === 'purchases'" [class.text-lime-300]="activeSection() === 'purchases'" class="w-full text-left flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-slate-700 transition">
                 <span>Mis Compras</span>
               </button>
@@ -112,6 +117,147 @@
               }
             </div>
           }
+          @case ('projects') {
+            <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm">
+              <h3 class="text-2xl font-bold mb-6">Mis Proyectos</h3>
+              @if (studentProfile(); as profile) {
+                @if (profile.projects && profile.projects.length === 0) {
+                  <div class="text-center py-12">
+                    <svg class="w-16 h-16 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <p class="text-slate-400 text-lg">Aún no has adquirido ningún proyecto.</p>
+                    <a routerLink="/" class="inline-block mt-4 px-6 py-3 bg-lime-400 text-slate-900 rounded-lg font-semibold hover:bg-lime-300 transition">Explorar Proyectos</a>
+                  </div>
+                } @else if (profile.projects) {
+                  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @for (project of profile.projects; track project._id) {
+                      <div class="group flex flex-col rounded-xl border border-white/10 bg-slate-800/50 hover:bg-slate-800/80 transition-all duration-300 overflow-hidden hover:shadow-lg hover:shadow-lime-400/10">
+                        <!-- Imagen o Video del proyecto -->
+                        <div class="relative overflow-hidden h-48">
+                          @if (project.url_video) {
+                            <div class="relative w-full h-full bg-slate-900">
+                              <!-- Usamos un iframe para los videos de Vimeo -->
+                              @if(getSanitizedVideoUrl(project.url_video); as videoUrl) {
+                                <iframe [src]="videoUrl" class="w-full h-full" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                              }
+                              <div class="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1">
+                                <svg class="w-3 h-3 text-lime-400" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"></path>
+                                </svg>
+                                <span class="text-xs text-white font-medium">Video</span>
+                              </div>
+                            </div>
+                          } @else {
+                            <img
+                              [src]="buildProjectImageUrl(project.imagen)"
+                              alt="{{ project.title }}"
+                              class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            >
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
+                          }
+
+                          <!-- Badge de archivos disponibles -->
+                          @if (project.files && project.files.length > 0) {
+                            <div class="absolute top-3 left-3 bg-lime-400/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1.5">
+                              <svg class="w-3.5 h-3.5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                              </svg>
+                              <span class="text-xs text-slate-900 font-bold">{{ project.files.length }} archivos</span>
+                            </div>
+                          }
+                        </div>
+
+                        <div class="flex flex-col p-5 flex-grow">
+                          <h4 class="font-bold text-white text-lg line-clamp-2 mb-2 group-hover:text-lime-300 transition-colors">{{ project.title }}</h4>
+                          <p class="text-sm text-slate-400 mb-4 line-clamp-2 flex-grow">{{ project.subtitle }}</p>
+
+                        <!-- Dropdown de archivos -->
+                        @if (project.files && project.files.length > 0) {
+                          <div class="relative mt-auto">
+                            <button
+                              (click)="toggleDropdown(project._id)"
+                              data-dropdown
+                              class="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-lime-400/10 to-lime-400/5 text-lime-300 rounded-lg text-sm font-bold hover:from-lime-400/20 hover:to-lime-400/10 transition-all duration-300 border border-lime-400/20 hover:border-lime-400/40 group/button"
+                            >
+                              <span class="flex items-center gap-2">
+                                <svg class="w-4 h-4 group-hover/button:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                                Descargar archivos
+                              </span>
+                              <svg
+                                class="w-4 h-4 transition-transform duration-300"
+                                [class.rotate-180]="isDropdownOpen(project._id)"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                              </svg>
+                            </button>
+
+                            @if (isDropdownOpen(project._id)) {
+                              <div
+                                data-dropdown-menu
+                                class="absolute bottom-full mb-2 w-full bg-slate-900/95 backdrop-blur-md border border-lime-400/20 rounded-xl shadow-2xl shadow-lime-400/20 z-10 max-h-64 overflow-y-auto"
+                              >
+                                <div class="p-2 space-y-1">
+                                  @for (file of project.files; track file.filename) {
+                                    <button
+                                      (click)="downloadProjectFile(project, file)"
+                                      [disabled]="downloadingFileId() === file._id"
+                                      class="w-full flex items-center justify-between px-4 py-3 hover:bg-lime-400/10 rounded-lg transition-all duration-200 group/file border border-transparent hover:border-lime-400/30 disabled:opacity-50 disabled:cursor-wait"
+                                    >
+                                      <div class="flex items-center gap-3 flex-1 min-w-0">
+                                        <div class="w-8 h-8 rounded-lg bg-lime-400/20 flex items-center justify-center flex-shrink-0">
+                                          <svg class="w-4 h-4 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                          </svg>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                          <p class="text-sm font-semibold text-white truncate group-hover/file:text-lime-300 transition-colors">{{ file.name }}</p>
+                                          <p class="text-xs text-slate-400">{{ formatFileSize(file.size) }}</p>
+                                        </div>
+                                      </div>
+                                      @if (downloadingFileId() === file._id) {
+                                        <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                                          <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-lime-400"></div>
+                                        </div>
+                                      } @else {
+                                        <div class="w-8 h-8 rounded-lg bg-lime-400/10 flex items-center justify-center flex-shrink-0 group-hover/file:bg-lime-400/20 transition-colors">
+                                          <svg class="w-4 h-4 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                          </svg>
+                                        </div>
+                                      }
+                                    </button>
+                                  }
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        } @else {
+                          <div class="mt-auto px-4 py-3 bg-slate-700/30 text-slate-500 rounded-lg text-sm text-center border border-slate-700/50">
+                            <svg class="w-5 h-5 mx-auto mb-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                            </svg>
+                            Sin archivos disponibles
+                          </div>
+                        }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              } @else {
+                <div class="flex items-center justify-center py-12">
+                  <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
+                  <p class="ml-4 text-slate-400">Cargando proyectos...</p>
+                </div>
+              }
+            </div>
+          }
           @case ('purchases') {
             <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm">
               <h3 class="text-2xl font-bold mb-6">Historial de Compras</h3>
@@ -126,23 +272,58 @@
                   </div>
                 } @else if (profile.sales) {
                   <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-white/10">
-                    <table class="w-full text-sm text-left text-gray-400">
-                      <thead class="text-xs uppercase bg-slate-900 text-gray-400">
+                    <table class="w-full text-sm text-left text-slate-300">
+                      <thead class="text-xs uppercase bg-slate-800/50 text-slate-400">
                         <tr>
-                          <th scope="col" class="px-6 py-3">Orden</th>
+                          <th scope="col" class="px-6 py-3">Detalles</th>
                           <th scope="col" class="px-6 py-3">Fecha</th>
                           <th scope="col" class="px-6 py-3">Total</th>
                           <th scope="col" class="px-6 py-3">Transacción</th>
+                          <th scope="col" class="px-6 py-3 text-center">Estado</th>
                         </tr>
                       </thead>
                       <tbody>
                         @for (sale of profile.sales; track sale._id) {
-                          <tr class="border-b bg-slate-800/50 border-gray-700 hover:bg-slate-700/50">
-                            <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white">#{{ sale._id.slice(-6).toUpperCase() }}</th>
+                          <tr class="border-b border-slate-800 bg-slate-900/50 hover:bg-slate-800/50">
+                            <td class="px-6 py-4">
+                              <button (click)="togglePurchaseDetails(sale._id)" class="text-lime-400 hover:text-lime-300 font-medium text-sm">
+                                {{ isPurchaseDetailsVisible(sale._id) ? 'Ocultar' : 'Ver' }}
+                              </button>
+                            </td>
                             <td class="px-6 py-4">{{ sale.createdAt | date:'dd/MM/yyyy' }}</td>
                             <td class="px-6 py-4 font-semibold text-lime-400">{{ sale.total | currency:sale.currency_total:'symbol':'1.2-2' }}</td>
-                            <td class="px-6 py-4 text-gray-500">{{ sale.n_transaccion }}</td>
+                            <td class="px-6 py-4 text-slate-500 font-mono">{{ sale.n_transaccion }}</td>
+                            <td class="px-6 py-4 text-center">
+                              <span [ngClass]="{
+                                'bg-green-500/10 text-green-400': sale.status === 'Pagado',
+                                'bg-yellow-500/10 text-yellow-400': sale.status === 'Pendiente',
+                                'bg-red-500/10 text-red-400': sale.status === 'Anulado'
+                              }" class="py-1 px-3 rounded-full text-xs font-medium">
+                                {{ sale.status }}
+                              </span>
+                            </td>
                           </tr>
+                          <!-- Fila de detalles desplegable -->
+                          @if (isPurchaseDetailsVisible(sale._id)) {
+                            <tr class="bg-slate-800/50">
+                              <td colspan="5" class="p-4 border-t border-slate-700">
+                                <div class="space-y-2">
+                                  @for (item of sale.detail; track item.product._id) {
+                                    <div class="flex items-center p-3 bg-slate-900 rounded-lg border border-slate-700">
+                                      <img [src]="item.product_type === 'project' ? buildProjectImageUrl(item.product.imagen) : buildImageUrl(item.product.imagen)" alt="{{ item.title }}" class="w-24 h-16 object-cover rounded-md mr-4" />
+                                      <div class="flex-grow">
+                                        <p class="font-bold text-white">{{ item.title }}</p>
+                                        <p class="text-sm text-slate-400">{{ getProductTypeName(item.product_type) }}</p>
+                                      </div>
+                                      <div class="text-right font-semibold text-lime-400">
+                                        {{ item.price_unit | currency:'USD' }}
+                                      </div>
+                                    </div>
+                                  }
+                                </div>
+                              </td>
+                            </tr>
+                          }
                         }
                       </tbody>
                     </table>

@@ -121,9 +121,9 @@
             <!-- Contenedor de la tarjeta que agrupa el componente y el botón -->
             <div class="flex flex-col rounded-xl border border-white/10 bg-slate-800/50 hover:bg-slate-700/50 transition-colors group">
               <!-- El componente <course-card> se encarga de la parte superior (imagen, título, etc.) -->
-              <a [routerLink]="['/course-detail', c.slug]">
+              <div (click)="navigateToCourse(c, $event)" class="cursor-pointer">
                 <course-card [course]="c"></course-card>
-              </a>
+              </div>
               <!-- Botón de Carrito añadido debajo -->
               <div class="px-4 pb-4 mt-auto">
                 @if (isCourseEnrolled(c._id)) {
@@ -181,17 +181,22 @@
               <h3 class="font-semibold text-white line-clamp-2">{{ project.title }}</h3>
               <p class="text-sm text-white/60 mt-1 line-clamp-2">{{ project.subtitle }}</p>
               <div class="flex items-baseline justify-between mt-3">
-                <div class="text-lime-400 font-bold">${{ project.price_usd | number:'1.0-2' }}</div>
-                <div class="text-xs text-gray-400 font-semibold">${{ project.price_mxn | number:'1.0-2' }} MXN</div>
+                <div class="text-lime-400 font-bold">${{ project.price_usd | number:'1.0-2' }} USD</div>
               </div>
               <!-- Botón de Carrito -->
               <div class="mt-4">
-                @if (isProjectInCart(project._id)) {
+                @if (isProjectPurchased(project._id)) {
+                  <button class="w-full h-9 px-4 rounded-lg bg-sky-600/50 text-sky-300 text-sm font-semibold cursor-not-allowed" disabled>
+                    Comprado
+                  </button>
+                } @else if (isProjectInCart(project._id)) {
                   <button (click)="$event.stopPropagation(); cartService.toggleDrawer()" class="w-full h-9 px-4 rounded-lg bg-slate-700 text-white/80 text-sm font-semibold hover:bg-slate-600 transition">
                     Ver en el carrito
                   </button>
                 } @else {
-                  <button (click)="addProjectToCart(project, $event)" class="w-full h-9 px-4 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition">
+                  <button (click)="addProjectToCart(project, $event)"
+                          [disabled]="!authService.isLoggedIn()"
+                          class="w-full h-9 px-4 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed">
                     Añadir al carrito
                   </button>
                 }

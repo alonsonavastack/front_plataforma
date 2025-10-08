@@ -38,6 +38,14 @@ export class ProfileService {
   });
 
   /**
+   * Expone la lista de proyectos comprados por el usuario.
+   * Devuelve un array vacío si no hay datos o no hay proyectos.
+   */
+  public purchasedProjects = computed<any[]>(() => {
+    return this.state().data?.projects ?? [];
+  });
+
+  /**
    * Carga o recarga los datos del perfil del usuario desde el backend.
    */
   public reloadProfile(): void {

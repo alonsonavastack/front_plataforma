@@ -63,7 +63,7 @@ export class StudentsComponent implements OnInit {
     this.isEditing.set(true);
     this.currentStudent.set(student);
     
-    const state = typeof student.state === 'boolean' ? student.state : student.state === 1;
+    const state = student.state === true || student.state === 1;
     
     this.studentForm.patchValue({
       name: student.name,
@@ -85,20 +85,27 @@ export class StudentsComponent implements OnInit {
   }
 
   toggleStudentState(student: Student): void {
-    const currentState = typeof student.state === 'boolean' ? student.state : student.state === 1;
+    const currentState = student.state === true || student.state === 1;
     const newState = !currentState;
     const action = newState ? 'activar' : 'desactivar';
     
     const confirmChange = confirm(`¿Estás seguro de ${action} a ${student.name} ${student.surname}?`);
     if (!confirmChange) return;
 
+    // Mostrar feedback visual inmediato
     this.studentService.updateStudentState(student._id, newState).subscribe({
-      next: () => {
+      next: (response) => {
+        console.log('Usuario actualizado:', response);
         alert(`Estudiante ${action === 'activar' ? 'activado' : 'desactivado'} exitosamente`);
+        // Recargar la lista completa para asegurar consistencia
+        this.studentService.loadStudents().subscribe();
       },
       error: (error) => {
         console.error('Error al cambiar estado:', error);
-        alert('Error al cambiar el estado del estudiante');
+        const errorMessage = error.error?.message_text || error.error?.message || 'Error al cambiar el estado del estudiante';
+        alert(errorMessage);
+        // Recargar en caso de error para mantener consistencia
+        this.studentService.loadStudents().subscribe();
       }
     });
   }
@@ -145,7 +152,8 @@ export class StudentsComponent implements OnInit {
   }
 
   isStudentActive(student: Student): boolean {
-    return typeof student.state === 'boolean' ? student.state : student.state === 1;
+    // El state puede ser boolean o number (legacy), normalizamos
+    return student.state === true || student.state === 1;
   }
 
   getStateBadgeClass(student: Student): string {

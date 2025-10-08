@@ -1,9 +1,7 @@
 <!-- src/app/shared/course-card/course-card.html -->
-<a
-  class="block rounded-2xl border border-white/10 bg-white/5 hover:border-lime-400/40 transition overflow-hidden
-         focus:outline-none focus:ring-2 focus:ring-lime-400/40"
-  [routerLink]="['/landing-curso', slug()]"
->
+<!-- Se reemplaza <a> por <div> para evitar anidamiento de enlaces.
+     El routerLink se aplica desde el componente padre (ej. home.html) -->
+<div class="block h-full">
   <!-- Cover -->
   <div class="relative">
     <img
@@ -62,4 +60,4 @@
       }
     </div>
   </div>
-</a>
+</div>

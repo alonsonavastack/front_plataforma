@@ -20,7 +20,7 @@ export const routes: Routes = [
       import("./pages/auth/login").then((m) => m.LoginComponent), // Temporalmente apunta a login
   },
   {
-    path: "landing-curso/:slug",
+    path: "course-detail/:slug",
     loadComponent: () =>
       import("./pages/course-detail/course-detail").then(
         (m) => m.CourseDetailComponent
@@ -76,6 +76,13 @@ export const routes: Routes = [
       ),
     // Solo el rol 'cliente' puede acceder
     canActivate: [roleGuard(["cliente"])],
+  },
+  {
+    path: "sales",
+    loadComponent: () =>
+      import("./pages/sales/sales.component").then((m) => m.SalesComponent),
+    // Solo el rol 'cliente' puede acceder
+    canActivate: [roleGuard(["admin"])],
   },
   {
     // Redirige cualquier otra ruta a la página de inicio

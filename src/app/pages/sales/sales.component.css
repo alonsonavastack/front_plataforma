@@ -1,0 +1,10 @@
+/* Estilos para la transición del desplegable */
+tr[data-details] {
+  transition: all 0.3s ease-in-out;
+}
+
+tr[data-details].collapsed {
+  display: none;
+}
+
+/* Puedes añadir más estilos personalizados aquí */

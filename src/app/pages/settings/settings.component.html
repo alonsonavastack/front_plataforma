@@ -1,0 +1,209 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center">
+    <h2 class="text-2xl font-bold text-white">Ajustes de Destacados</h2>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="rounded-lg border border-white/10 bg-slate-800/50 p-5">
+      <p class="text-sm font-medium text-white/60">Cursos Destacados</p>
+      <p class="mt-2 text-3xl font-extrabold tracking-tight text-lime-300">
+        {{ featuredCoursesCount() }}
+      </p>
+      <p class="text-xs text-white/50 mt-1">de {{ courses().length }} cursos totales</p>
+    </div>
+
+    <div class="rounded-lg border border-white/10 bg-slate-800/50 p-5">
+      <p class="text-sm font-medium text-white/60">Proyectos Destacados</p>
+      <p class="mt-2 text-3xl font-extrabold tracking-tight text-cyan-300">
+        {{ featuredProjectsCount() }}
+      </p>
+      <p class="text-xs text-white/50 mt-1">de {{ projects().length }} proyectos totales</p>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="border-b border-white/10">
+    <nav class="flex space-x-8" aria-label="Tabs">
+      <button
+        (click)="setTab('courses')"
+        [class]="activeTab() === 'courses'
+          ? 'border-lime-400 text-lime-400'
+          : 'border-transparent text-white/60 hover:text-white hover:border-white/30'"
+        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors"
+      >
+        Cursos ({{ courses().length }})
+      </button>
+      <button
+        (click)="setTab('projects')"
+        [class]="activeTab() === 'projects'
+          ? 'border-cyan-400 text-cyan-400'
+          : 'border-transparent text-white/60 hover:text-white hover:border-white/30'"
+        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors"
+      >
+        Proyectos ({{ projects().length }})
+      </button>
+    </nav>
+  </div>
+
+  <!-- Cursos Tab -->
+  @if (activeTab() === 'courses') {
+    <div class="space-y-4">
+      <!-- Search -->
+      <div class="flex gap-4">
+        <input
+          type="text"
+          placeholder="Buscar cursos..."
+          [value]="courseSearch()"
+          (input)="courseSearch.set($any($event.target).value)"
+          class="flex-1 border text-sm rounded-lg p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500"
+        />
+      </div>
+
+      <!-- Loading -->
+      @if (isLoadingCourses()) {
+        <div class="flex justify-center items-center py-12">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
+        </div>
+      }
+
+      <!-- Courses Grid -->
+      @if (!isLoadingCourses()) {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          @for (course of filteredCourses(); track course._id) {
+            <div [class]="'rounded-lg border overflow-hidden transition-all ' + (course.featured ? 'bg-lime-950/50 border-lime-500/30' : 'bg-slate-800/50 border-white/10')">
+              <!-- Image -->
+              <div class="relative h-32">
+                <img
+                  [src]="getCourseImageUrl(course.imagen)"
+                  [alt]="course.title"
+                  class="w-full h-full object-cover"
+                />
+                @if (course.featured) { <!-- Corregido: course.featured -->
+                  <div class="absolute top-2 right-2 bg-lime-500 text-slate-900 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                    Destacado
+                  </div>
+                }
+              </div>
+
+              <!-- Content -->
+              <div class="p-4">
+                <h3 class="font-semibold text-white text-sm line-clamp-2 mb-1">
+                  {{ course.title }}
+                </h3>
+                <p class="text-xs text-white/60 line-clamp-2 mb-3">
+                  {{ course.subtitle }}
+                </p>
+
+                <div class="flex items-center justify-between">
+                  <div class="text-lime-400 font-bold text-sm">
+                    ${{ course.price_usd | number:'1.0-2' }}
+                  </div>
+
+                  <!-- Toggle Button -->
+                  <button
+                    (click)="toggleCourseFeatured(course, $event)"
+                    [class]="course.featured
+                      ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border-red-500/40'
+                      : 'bg-lime-500/20 text-lime-400 hover:bg-lime-500/30 border-lime-500/40'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors"
+                  >
+                    {{ course.featured ? 'Quitar Destacado' : 'Destacar' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          } @empty {
+            <div class="col-span-full text-center py-12 text-white/60">
+              No se encontraron cursos
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Proyectos Tab -->
+  @if (activeTab() === 'projects') {
+    <div class="space-y-4">
+      <!-- Search -->
+      <div class="flex gap-4">
+        <input
+          type="text"
+          placeholder="Buscar proyectos..."
+          [value]="projectSearch()"
+          (input)="projectSearch.set($any($event.target).value)"
+          class="flex-1 border text-sm rounded-lg p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-cyan-500 focus:border-cyan-500"
+        />
+      </div>
+
+      <!-- Loading -->
+      @if (isLoadingProjects()) {
+        <div class="flex justify-center items-center py-12">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
+        </div>
+      }
+
+      <!-- Projects Grid -->
+      @if (!isLoadingProjects()) {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          @for (project of filteredProjects(); track project._id) {
+            <div [class]="'rounded-lg border overflow-hidden transition-all ' + (project.featured ? 'bg-cyan-950/50 border-cyan-500/30' : 'bg-slate-800/50 border-white/10')">
+              <!-- Image -->
+              <div class="relative h-32">
+                <img
+                  [src]="getProjectImageUrl(project.imagen)"
+                  [alt]="project.title"
+                  class="w-full h-full object-cover"
+                />
+                @if (project.featured) { <!-- Corregido: project.featured -->
+                  <div class="absolute top-2 right-2 bg-cyan-500 text-slate-900 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                    Destacado
+                  </div>
+                }
+              </div>
+
+              <!-- Content -->
+              <div class="p-4">
+                <h3 class="font-semibold text-white text-sm line-clamp-2 mb-1">
+                  {{ project.title }}
+                </h3>
+                <p class="text-xs text-white/60 line-clamp-2 mb-3">
+                  {{ project.subtitle }}
+                </p>
+
+                <div class="flex items-center justify-between">
+                  <div class="text-cyan-400 font-bold text-sm">
+                    ${{ project.price_usd | number:'1.0-2' }}
+                  </div>
+
+                  <!-- Toggle Button -->
+                  <button
+                    (click)="toggleProjectFeatured(project, $event)"
+                    [class]="project.featured
+                      ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border-red-500/40'
+                      : 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 border-cyan-500/40'"
+                    class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors"
+                  >
+                    {{ project.featured ? 'Quitar Destacado' : 'Destacar' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          } @empty {
+            <div class="col-span-full text-center py-12 text-white/60">
+              No se encontraron proyectos
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

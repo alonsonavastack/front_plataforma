@@ -246,12 +246,13 @@ export class CourseDetailComponent implements OnInit {
     return `${m}m`;
   }
   // acciones
-  addToCart() {
+  addCourseToCart(course: any, event?: MouseEvent) {
+    event?.stopPropagation(); // Evita que el clic se propague si el botón está dentro de un enlace.
     if (!this.authService.isLoggedIn()) {
       this.router.navigate(['/login']);
       return;
     }
-    this.cartService.addToCart(this.course(), 'course');
+    this.cartService.addToCart(course, 'course');
   }
 
   buyNow() {

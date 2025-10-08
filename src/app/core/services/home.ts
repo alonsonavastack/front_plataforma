@@ -20,6 +20,7 @@ interface HomeApiResponse {
   courses_flash: CoursePublic[];
   campaing_flash: any;
   projects_featured?: Project[]; // Añadido para proyectos destacados
+  courses_featured?: CoursePublic[]; // Añadido para cursos destacados
 }
 
 @Injectable({ providedIn: "root" })
@@ -37,6 +38,7 @@ export class HomeService {
       courses_flash: [],
       campaing_flash: null,
       projects_featured: [],
+      courses_featured: [],
     },
     isLoading: false,
     error: null,

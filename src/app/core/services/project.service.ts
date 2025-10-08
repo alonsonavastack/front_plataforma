@@ -78,4 +78,13 @@ export class ProjectService {
   getFileDownloadUrl(projectId: string, filename: string): string {
     return `${this.url}/download-file/${projectId}/${filename}`;
   }
+
+  /**
+   * Descarga un archivo usando HttpClient para incluir el token de autenticación.
+   * @param projectId ID del proyecto
+   * @param filename Nombre del archivo en el servidor
+   */
+  downloadFile(projectId: string, filename: string): Observable<Blob> {
+    return this.http.get(`${this.url}/download-file/${projectId}/${filename}`, { responseType: 'blob' });
+  }
 }

@@ -1,14 +1,17 @@
-import { Component, inject, effect, signal, OnInit } from '@angular/core';
+import { Component, inject, effect, signal, OnInit, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ProfileService } from '../../core/services/profile';
 import { HeaderComponent } from '../../layout/header/header';
-import { environment } from '../../../environments/environment.development';
 import { RouterLink } from '@angular/router';
+import { ProfileStudentService, EnrolledCourse, Sale, Project, ProjectFile } from '../../core/services/profile-student.service';
+import { ProjectService } from '../../core/services/project.service';
+import { environment } from '../../../environments/environment';
 
-type ProfileSection = 'courses' | 'purchases' | 'edit';
+type ProfileSection = 'courses' | 'projects' | 'purchases' | 'edit';
 
 // Validador personalizado para confirmar que las contraseñas coinciden
 export const passwordsMatchValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
@@ -24,11 +27,11 @@ export const passwordsMatchValidator: ValidatorFn = (control: AbstractControl): 
 export class ProfileStudentComponent implements OnInit {
   // Usamos ProfileService para las acciones de 'update', pero no para leer el estado.
   profileService = inject(ProfileService);
+  profileStudentService = inject(ProfileStudentService);
+  projectService = inject(ProjectService);
   authService = inject(AuthService);
+  private sanitizer = inject(DomSanitizer);
   private http = inject(HttpClient);
-
-  // Creamos una señal local para almacenar los datos completos del perfil del estudiante.
-  studentProfile = signal<any>(null);
 
   // Señal para manejar la pestaña activa
   activeSection = signal<ProfileSection>('courses');
@@ -38,6 +41,14 @@ export class ProfileStudentComponent implements OnInit {
 
   // Señal para el estado de envío del formulario de contraseña
   isPasswordSubmitting = signal(false);
+
+  // Señal para mostrar un indicador de carga en el archivo que se está descargando
+  downloadingFileId = signal<string | null>(null);
+
+  // Señales computadas para obtener los datos del servicio
+  studentProfile = computed(() => this.profileStudentService.profileData());
+  isLoading = computed(() => this.profileStudentService.isLoading());
+  user = computed(() => this.authService.user());
 
   // Formulario para editar el perfil
   profileForm = new FormGroup({
@@ -61,16 +72,13 @@ export class ProfileStudentComponent implements OnInit {
     // Usamos un effect para reaccionar cuando los datos del perfil se cargan.
     // Esto llenará el formulario automáticamente.
     effect(() => {
-      // Primero intentamos usar los datos del AuthService (más rápido)
-      const currentUser = this.authService.user();
-      // Luego intentamos con los datos del perfil del estudiante (más completo)
-      const profileData = this.studentProfile()?.profile;
+      const studentProfileData = this.studentProfile();
+      const authUser = this.user();
 
       // Priorizamos los datos más completos del endpoint de estudiante
-      const dataToUse = profileData || currentUser;
+      const dataToUse = studentProfileData?.profile || authUser;
 
       if (dataToUse?.email) {
-        console.log('Rellenando formulario con:', dataToUse);
         this.profileForm.patchValue({
           name: dataToUse.name || '',
           surname: dataToUse.surname || '',
@@ -83,23 +91,7 @@ export class ProfileStudentComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadStudentProfile();
-  }
-
-  // Método para cargar los datos específicos del estudiante
-  loadStudentProfile() {
-    this.http.get<any>(`${environment.url}profile-student/client`).subscribe({
-      next: (data) => {
-        console.log('Datos del perfil del estudiante:', data);
-        console.log('Cursos inscritos:', data.enrolled_courses);
-        console.log('Compras realizadas:', data.sales);
-        this.studentProfile.set(data);
-      },
-      error: (err) => {
-        console.error('Error al cargar el perfil del estudiante:', err);
-        console.error('Detalles del error:', err.error);
-      }
-    });
+    this.profileStudentService.loadProfile().subscribe();
   }
 
   // Cambia la sección activa
@@ -123,7 +115,7 @@ export class ProfileStudentComponent implements OnInit {
         const updatedUser = response.user || response.profile || response;
         this.profileForm.reset(updatedUser);
 
-        this.loadStudentProfile();
+        this.profileStudentService.loadProfile().subscribe();
         alert('¡Perfil actualizado con éxito!');
         this.isSubmitting.set(false);
       },
@@ -188,5 +180,113 @@ export class ProfileStudentComponent implements OnInit {
     if (!imageName) return 'https://i.pravatar.cc/300?u=placeholder';
     return `${environment.images.course}${imageName}`;
   }
-}
 
+  buildProjectImageUrl(imageName?: string): string {
+    if (!imageName) return 'https://via.placeholder.com/300x200?text=No+Image';
+    // CORRECCIÓN: Usamos la URL base de la API y la ruta correcta para las imágenes de proyectos.
+    return `${environment.url}project/imagen-project/${imageName}`;
+  }
+
+  buildProjectFileUrl(projectId: string, filename: string): string {
+    return `${environment.url}project/download-file/${projectId}/${filename}`;
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  getSanitizedVideoUrl(url: string): SafeResourceUrl | null {
+    if (!url) return null;
+
+    let embedUrl = '';
+    // Vimeo: https://vimeo.com/VIDEO_ID -> https://player.vimeo.com/video/VIDEO_ID
+    if (url.includes('vimeo.com/')) {
+      const videoId = url.split('vimeo.com/')[1].split(/[\/?]/)[0];
+      embedUrl = `https://player.vimeo.com/video/${videoId}`;
+    }
+
+    // Devuelve una URL segura para ser usada en un iframe
+    return embedUrl ? this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl) : null;
+  }
+
+  downloadProjectFile(project: Project, file: ProjectFile): void {
+    if (this.downloadingFileId()) return; // Evitar descargas múltiples
+
+    this.downloadingFileId.set(file._id);
+
+    this.projectService.downloadFile(project._id, file.filename).subscribe({
+      next: (blob) => {
+        // Crear un enlace temporal en memoria para el archivo descargado (Blob)
+        const a = document.createElement('a');
+        const objectUrl = URL.createObjectURL(blob);
+        a.href = objectUrl;
+        a.download = file.name; // Usar el nombre original del archivo
+        a.click();
+
+        // Limpiar el objeto URL después de la descarga
+        URL.revokeObjectURL(objectUrl);
+        this.downloadingFileId.set(null);
+      },
+      error: (err) => {
+        console.error('Error al descargar el archivo:', err);
+        alert('No se pudo descargar el archivo. Por favor, intenta de nuevo.');
+        this.downloadingFileId.set(null);
+      }
+    });
+  }
+
+  // --- Lógica para Desplegables (Dropdowns) ---
+
+  // Señal para el dropdown de descarga de archivos de proyectos
+  openDropdownId = signal<string | null>(null);
+  // Usamos un Set para los detalles de las compras, permitiendo múltiples abiertos si es necesario
+  expandedPurchases = new Set<string>();
+
+  toggleDropdown(id: string) {
+    if (this.openDropdownId() === id) {
+      this.openDropdownId.set(null); // Cierra el dropdown actual
+    } else {
+      this.openDropdownId.set(id); // Abre el nuevo dropdown
+    }
+  }
+
+  isDropdownOpen(id: string): boolean {
+    return this.openDropdownId() === id;
+  }
+
+  // Cerrar dropdown al hacer clic fuera
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const isDropdownButton = target.closest('button[data-dropdown]');
+    const isDropdownMenu = target.closest('[data-dropdown-menu]');
+
+    if (!isDropdownButton && !isDropdownMenu) {
+      this.openDropdownId.set(null);
+    }
+  }
+
+  /**
+   * Muestra u oculta los detalles de una compra.
+   * @param saleId El ID de la venta.
+   */
+  togglePurchaseDetails(saleId: string): void {
+    if (this.expandedPurchases.has(saleId)) {
+      this.expandedPurchases.delete(saleId);
+    } else {
+      this.expandedPurchases.add(saleId);
+    }
+  }
+
+  isPurchaseDetailsVisible(saleId: string): boolean {
+    return this.expandedPurchases.has(saleId);
+  }
+
+  getProductTypeName(type: 'course' | 'project'): string {
+    return type === 'course' ? 'Curso' : 'Proyecto';
+  }
+}

@@ -9,14 +9,17 @@ import { Categories } from '../categories/categories.component'; // Mantenemos e
 import { CoursesComponent } from '../courses/courses.component'; // Añadimos el nuevo componente de cursos
 import { StudentsComponent } from '../students/students.component';
 import { ProjectsComponent } from '../projects/projects.component';
+import { SalesComponent } from '../sales/sales.component';
+import { SettingsComponent } from '../settings/settings.component';
+import { AppearanceComponent } from '../appearance/appearance.component';
 
+import { NavId } from './nav.types';
 
-type Section = 'overview'|'categories'|'courses'|'projects'|'students'|'reports'|'settings';
 
 @Component({
   standalone: true,
   selector: 'app-dashboard',
-  imports: [CommonModule, TopbarComponent, SidebarComponent, Categories, CoursesComponent, ProjectsComponent, StudentsComponent],
+  imports: [CommonModule, TopbarComponent, SidebarComponent, Categories, CoursesComponent, ProjectsComponent, StudentsComponent, SalesComponent, SettingsComponent, AppearanceComponent],
   templateUrl: './dashboard.html',
 })
 export class DashboardComponent implements OnInit, AfterViewInit {
@@ -26,8 +29,8 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   isSidebarCollapsed = signal(false);
   toggleSidebar() { this.isSidebarCollapsed.update(v => !v); }
 
-  active: Section = 'overview';
-  setActive(s: Section) { this.active = s; }
+  active: NavId = 'overview';
+  setActive(s: NavId) { this.active = s; }
 
   ngOnInit(): void {
     // Cargamos los KPIs cuando el componente se inicializa

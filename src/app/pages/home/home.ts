@@ -38,6 +38,9 @@ export class HomeComponent implements OnInit {
   // Cursos del usuario
   enrolledCourses = this.profileService.enrolledCourses;
 
+  // Proyectos comprados del usuario
+  purchasedProjects = this.profileService.purchasedProjects;
+
   // ---------- Error-safe helpers ----------
   hasHomeError(): boolean {
     try { this.api.home(); return false; }
@@ -58,7 +61,7 @@ export class HomeComponent implements OnInit {
   }
 
   featuredSafe(): CoursePublic[] {
-    try { return this.api.featuredCourses(); }
+    try { return this.api.home().courses_featured ?? []; }
     catch { return []; }
   }
 
@@ -103,6 +106,7 @@ export class HomeComponent implements OnInit {
 
   addProjectToCart(project: Project, event: MouseEvent): void {
     event.stopPropagation(); // Evita que se abra el modal de video
+    event.preventDefault(); // Previene la navegación si está dentro de un enlace
     if (!this.authService.isLoggedIn()) {
       this.router.navigate(['/login']);
       return;
@@ -132,6 +136,15 @@ export class HomeComponent implements OnInit {
     // La respuesta del perfil tiene el curso anidado.
     // enrolled_courses: [{ course: { _id: '...' } }]
     return this.enrolledCourses().some((enrollment: Enrollment) => enrollment.course?._id === courseId);
+  }
+
+  // --- Project Purchase Methods ---
+  isProjectPurchased(projectId: string): boolean {
+    if (!this.authService.isLoggedIn()) {
+      return false;
+    }
+    // Verifica si el proyecto está en la lista de proyectos comprados
+    return this.purchasedProjects().some((project: any) => project._id === projectId || project.project?._id === projectId);
   }
 
   // ---------- Búsqueda pro ----------
@@ -284,5 +297,18 @@ export class HomeComponent implements OnInit {
 
   buildProjectImageUrl(imagen: string): string {
     return `${environment.url}project/imagen-project/${imagen}`;
+  }
+
+  // Método temporal para depurar navegación
+  navigateToCourse(course: any, event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    console.log('Intentando navegar a:', course);
+    console.log('Slug:', course.slug);
+    if (course.slug) {
+      this.router.navigate(['/course-detail', course.slug]);
+    } else {
+      console.error('El curso no tiene slug:', course);
+    }
   }
 }
