@@ -103,50 +103,45 @@
       </div>
     </div>
   } @else {
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-white/90 font-semibold">
-          @if (q().trim() || selectedCategorie()) { Resultados de búsqueda } @else { Cursos destacados }
-        </h2>
-        <div class="text-xs text-white/50">{{ courses().length }} cursos</div>
-      </div>
+    <!-- Solo muestra la sección de cursos si hay una búsqueda o si los destacados están habilitados Y hay cursos -->
+    @if (searchRows() !== null || featuredCoursesEnabled()) {
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Encabezado de la sección -->
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-white/90 font-semibold">
+            @if (q().trim() || selectedCategorie()) { Resultados de búsqueda } @else { Cursos destacados }
+          </h2>
+          <div class="text-xs text-white/50">{{ courses().length }} cursos</div>
+        </div>
 
-      @if (courses().length === 0) {
-        <div class="rounded-2xl border border-white/10 bg-white/5 p-6 text-white/70">
-          No encontramos cursos con esos criterios.
-        </div>
-      } @else {
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          @for (c of courses(); track c._id) {
-            <!-- Contenedor de la tarjeta que agrupa el componente y el botón -->
-            <div class="flex flex-col rounded-xl border border-white/10 bg-slate-800/50 hover:bg-slate-700/50 transition-colors group">
-              <!-- El componente <course-card> se encarga de la parte superior (imagen, título, etc.) -->
-              <div (click)="navigateToCourse(c, $event)" class="cursor-pointer">
-                <course-card [course]="c"></course-card>
+        <!-- Contenido: Cuadrícula de cursos o mensaje de "no hay resultados" -->
+        @if (courses().length > 0) {
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            @for (c of courses(); track c._id) {
+              <div class="flex flex-col rounded-xl border border-white/10 bg-slate-800/50 hover:bg-slate-700/50 transition-colors group">
+                <div (click)="navigateToCourse(c, $event)" class="cursor-pointer">
+                  <course-card [course]="c"></course-card>
+                </div>
+                <div class="px-4 pb-4 mt-auto">
+                  @if (isCourseEnrolled(c._id)) {
+                    <button class="w-full h-9 px-4 rounded-lg bg-sky-600/50 text-sky-300 text-sm font-semibold cursor-not-allowed" disabled>Comprado</button>
+                  } @else if (isCourseInCart(c._id)) {
+                    <button (click)="cartService.toggleDrawer()" class="w-full h-9 px-4 rounded-lg bg-slate-700 text-white/80 text-sm font-semibold hover:bg-slate-600 transition">Ver en el carrito</button>
+                  } @else {
+                    <button (click)="addCourseToCart(c, $event)" [disabled]="!authService.isLoggedIn()" class="w-full h-9 px-4 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed">Añadir al carrito</button>
+                  }
+                </div>
               </div>
-              <!-- Botón de Carrito añadido debajo -->
-              <div class="px-4 pb-4 mt-auto">
-                @if (isCourseEnrolled(c._id)) {
-                  <button class="w-full h-9 px-4 rounded-lg bg-sky-600/50 text-sky-300 text-sm font-semibold cursor-not-allowed" disabled>
-                    Comprado
-                  </button>
-                } @else if (isCourseInCart(c._id)) {
-                  <button (click)="cartService.toggleDrawer()" class="w-full h-9 px-4 rounded-lg bg-slate-700 text-white/80 text-sm font-semibold hover:bg-slate-600 transition">
-                    Ver en el carrito
-                  </button>
-                } @else {
-                  <button (click)="addCourseToCart(c, $event)"
-                          [disabled]="!authService.isLoggedIn()"
-                          class="w-full h-9 px-4 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                    Añadir al carrito
-                  </button>
-                }
-              </div>
-            </div>
-          }
-        </div>
-      }
-    </section>
+            }
+          </div>
+        } @else {
+          <!-- Este mensaje solo se mostrará si la sección es visible pero no hay cursos (ej. búsqueda sin resultados) -->
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-6 text-white/70">
+            No encontramos cursos con esos criterios.
+          </div>
+        }
+      </section>
+    }
   }
 
   <!-- PROYECTOS DESTACADOS -->

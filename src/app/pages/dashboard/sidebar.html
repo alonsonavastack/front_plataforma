@@ -1,6 +1,6 @@
 <nav>
   <ul class="space-y-2 font-medium pt-5">
-    @for (it of items; track it.id) {
+    @for (it of items(); track it.id) {
       <li>
         <button
           (click)="navigate.emit(it.id)"

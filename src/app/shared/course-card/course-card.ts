@@ -9,7 +9,7 @@ type AnyObj = Record<string, any>;
 @Component({
   standalone: true,
   selector: 'course-card',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './course-card.html',
 })
 export class CourseCardComponent {

@@ -1,9 +1,10 @@
 import { CommonModule } from "@angular/common";
-import { Component, OnDestroy, OnInit, inject, signal } from "@angular/core";
+import { Component, OnDestroy, OnInit, inject, signal, effect } from "@angular/core";
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { CourseAdmin, CourseClase, CourseSection } from "../../core/models/home.models";
 import { CoursesService } from "../../core/services/courses";
 import { environment } from "../../../environments/environment";
+import { AuthService } from "../../core/services/auth";
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from "rxjs/operators";
 import { Subscription } from "rxjs";
@@ -16,6 +17,7 @@ import { Subscription } from "rxjs";
 })
 export class CoursesComponent implements OnInit, OnDestroy {
   coursesService = inject(CoursesService);
+  authService = inject(AuthService);
 
   // --- State Management ---
   viewMode = signal<'list' | 'content' | 'classes'>('list'); // 'list', 'content' (secciones), 'classes' (clases de una sección)
@@ -61,6 +63,16 @@ export class CoursesComponent implements OnInit, OnDestroy {
   });
 
   private vimeoSub: Subscription | null = null;
+
+  constructor() {
+    effect(() => {
+      if (this.authService.user()?.rol === 'instructor') {
+        this.courseForm.get('user')?.disable();
+      } else {
+        this.courseForm.get('user')?.enable();
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.coursesService.reloadList();

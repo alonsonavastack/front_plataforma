@@ -19,6 +19,7 @@
       <app-sidebar
         class="flex-grow"
         [selected]="active"
+        [items]="items()"
         [isCollapsed]="isSidebarCollapsed()"
         (navigate)="setActive($event)">
       </app-sidebar>

@@ -1,5 +1,6 @@
 import { Component, inject, effect, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { AuthService } from '../../core/services/auth';
 import { ProfileService } from '../../core/services/profile';
@@ -15,6 +16,7 @@ import { environment } from '../../../environments/environment';
 export class ProfileInstructorComponent {
   authService = inject(AuthService);
   profileService = inject(ProfileService); // Para actualizar
+  http = inject(HttpClient);
 
   isSubmitting = signal(false);
   isPasswordSubmitting = signal(false);
@@ -101,17 +103,6 @@ export class ProfileInstructorComponent {
       });
     }
   }
-}
-
-export const passwordsMatchValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
-  const newPassword = control.get('newPassword');
-  const confirmPassword = control.get('confirmPassword');
-  return newPassword && confirmPassword && newPassword.value !== confirmPassword.value ? { passwordsMismatch: true } : null;
-};
-
-/*
-  // This method was missing. I've added a basic implementation based on other profile components.
-  // You can uncomment and adjust it as needed.
 
   onSubmitPassword() {
     if (this.passwordForm.invalid) {
@@ -121,10 +112,9 @@ export const passwordsMatchValidator: ValidatorFn = (control: AbstractControl): 
     this.isPasswordSubmitting.set(true);
     const { newPassword, currentPassword } = this.passwordForm.getRawValue();
 
-    // The backend expects 'password' for the new password and 'old_password' for the current one.
-    const payload = { password: newPassword, old_password: currentPassword };
+    const payload = { newPassword, currentPassword };
 
-    this.profileService.update(payload).subscribe({
+    this.http.post<any>(`${environment.url}profile-instructor/update-password`, payload).subscribe({
       next: () => {
         alert('¡Contraseña actualizada con éxito! Se cerrará la sesión por seguridad.');
         this.passwordForm.reset();
@@ -138,4 +128,10 @@ export const passwordsMatchValidator: ValidatorFn = (control: AbstractControl): 
       },
     });
   }
-*/
+}
+
+export const passwordsMatchValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+  const newPassword = control.get('newPassword');
+  const confirmPassword = control.get('confirmPassword');
+  return newPassword && confirmPassword && newPassword.value !== confirmPassword.value ? { passwordsMismatch: true } : null;
+};

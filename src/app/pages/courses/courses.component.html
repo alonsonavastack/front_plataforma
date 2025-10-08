@@ -3,9 +3,11 @@
   <div class="space-y-6">
     <div class="flex justify-between items-center">
       <h2 class="text-2xl font-bold text-white">Gestión de Cursos</h2>
-      <button (click)="openCreateModal()" class="h-10 px-5 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition">
-        Crear Curso
-      </button>
+      @if (authService.user()?.rol === 'admin') {
+        <button (click)="openCreateModal()" class="h-10 px-5 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition">
+          Crear Curso
+        </button>
+      }
     </div>
 
     <!-- Tabla de Cursos -->
@@ -90,7 +92,7 @@
               </div>
               <div>
                 <label for="user" class="block mb-2 text-sm font-medium text-gray-300">Instructor</label>
-                <select id="user" formControlName="user" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500" required>
+                <select id="user" formControlName="user" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500 disabled:bg-slate-900 disabled:text-gray-400" required>
                   <option value="" disabled>Selecciona un instructor</option>
                   @for(instructor of coursesService.config().users; track instructor._id) {
                     <option [value]="instructor._id">{{ instructor.name }} {{ instructor.surname }}</option>

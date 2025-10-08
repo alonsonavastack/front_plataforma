@@ -30,9 +30,13 @@
               <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white">
                 {{ category.title }}
               </th>
-              <td class="px-6 py-4 text-right space-x-2">
-                <button (click)="openEditModal(category)" class="font-medium text-lime-400 hover:underline">Editar</button>
-                <button (click)="deleteCategory(category._id)" class="font-medium text-red-400 hover:underline">Eliminar</button>
+              <td class="px-6 py-4 text-right">
+                @if (authService.user()?.rol === 'admin') {
+                  <div class="space-x-2">
+                    <button (click)="openEditModal(category)" class="font-medium text-lime-400 hover:underline">Editar</button>
+                    <button (click)="deleteCategory(category._id)" class="font-medium text-red-400 hover:underline">Eliminar</button>
+                  </div>
+                }
               </td>
             </tr>
           }

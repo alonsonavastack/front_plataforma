@@ -65,6 +65,11 @@ export class HomeComponent implements OnInit {
     catch { return []; }
   }
 
+  featuredCoursesEnabled = computed<boolean>(() => {
+    try { return Array.isArray(this.api.home().courses_featured); }
+    catch { return false; }
+  });
+
   featuredProjects = computed<Project[]>(() => {
     try { return this.api.home().projects_featured ?? []; }
     catch { return []; }

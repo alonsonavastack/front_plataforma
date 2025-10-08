@@ -4,6 +4,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { environment } from '../../../environments/environment';
 import { Category } from '../../core/models/home.models';
 import { CategoriesService } from '../../core/services/categories';
+import { AuthService } from '../../core/services/auth';
 
 @Component({
   selector: 'app-categories',
@@ -13,6 +14,7 @@ import { CategoriesService } from '../../core/services/categories';
 })
 export class Categories implements OnInit {
   categoriesService = inject(CategoriesService);
+  authService = inject(AuthService);
 
   isModalOpen = signal(false);
   isEditing = signal(false);
