@@ -203,6 +203,309 @@
     </section>
   }
 
+  <!-- CATÁLOGO COMPLETO CON FILTROS -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="mb-8">
+      <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">Explora todo nuestro catálogo</h2>
+      <p class="text-white/70">Encuentra el curso o proyecto perfecto para ti</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <!-- SIDEBAR DE FILTROS -->
+      <div class="lg:col-span-1">
+        <!-- Botón toggle para móvil -->
+        <button
+          (click)="toggleCatalogFilters()"
+          class="lg:hidden w-full mb-4 px-4 py-3 rounded-lg border border-white/10 bg-slate-800/50 text-white font-medium flex items-center justify-between hover:bg-slate-700/50 transition"
+        >
+          <span class="flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+            </svg>
+            Filtros
+            @if (hasActiveFilters()) {
+              <span class="px-2 py-0.5 rounded-full bg-lime-400 text-slate-900 text-xs font-bold">{{ activeFiltersCount() }}</span>
+            }
+          </span>
+          <svg [class]="'w-5 h-5 transition-transform ' + (showCatalogFilters() ? 'rotate-180' : '')" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+
+        <!-- Panel de filtros -->
+        <div [class]="'space-y-4 ' + (showCatalogFilters() ? 'block' : 'hidden lg:block')">
+          <!-- Tipo de Contenido -->
+          <div class="rounded-xl border border-white/10 bg-slate-800/50 p-4">
+            <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
+              <svg class="w-5 h-5 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+              </svg>
+              Tipo
+            </h3>
+            <div class="space-y-2">
+              <label class="flex items-center gap-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  [checked]="catalogShowCourses()"
+                  (change)="catalogShowCourses.set($any($event.target).checked)"
+                  class="w-4 h-4 rounded border-white/20 bg-slate-700 text-lime-400 focus:ring-lime-400 focus:ring-offset-slate-900"
+                />
+                <span class="text-sm text-white/80 group-hover:text-white">Cursos</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  [checked]="catalogShowProjects()"
+                  (change)="catalogShowProjects.set($any($event.target).checked)"
+                  class="w-4 h-4 rounded border-white/20 bg-slate-700 text-lime-400 focus:ring-lime-400 focus:ring-offset-slate-900"
+                />
+                <span class="text-sm text-white/80 group-hover:text-white">Proyectos</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Categorías -->
+          <div class="rounded-xl border border-white/10 bg-slate-800/50 p-4">
+            <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
+              <svg class="w-5 h-5 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+              </svg>
+              Categoría
+            </h3>
+            <select
+              [value]="catalogCategory()"
+              (change)="catalogCategory.set($any($event.target).value)"
+              class="w-full border text-sm rounded-lg p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500"
+            >
+              <option value="">Todas las categorías</option>
+              @for (cat of categoriesService.categories(); track cat._id) {
+                <option [value]="cat._id">{{ cat.title }}</option>
+              }
+              @if (categoriesService.isLoading()) {
+                <option value="" disabled>Cargando categorías...</option>
+              }
+            </select>
+          </div>
+
+          <!-- Rango de Precio -->
+          <div class="rounded-xl border border-white/10 bg-slate-800/50 p-4">
+            <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
+              <svg class="w-5 h-5 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              Precio
+            </h3>
+            <select
+              [value]="catalogPriceRange()"
+              (change)="catalogPriceRange.set($any($event.target).value)"
+              class="w-full border text-sm rounded-lg p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500"
+            >
+              <option value="">Cualquier precio</option>
+              <option value="0-50">Menos de $50</option>
+              <option value="50-100">$50 - $100</option>
+              <option value="100-200">$100 - $200</option>
+              <option value="200-">Más de $200</option>
+            </select>
+          </div>
+
+          <!-- Nivel (solo para cursos) -->
+          @if (catalogShowCourses()) {
+            <div class="rounded-xl border border-white/10 bg-slate-800/50 p-4">
+              <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
+                <svg class="w-5 h-5 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+                Nivel
+              </h3>
+              <select
+                [value]="catalogLevel()"
+                (change)="catalogLevel.set($any($event.target).value)"
+                class="w-full border text-sm rounded-lg p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500"
+              >
+                <option value="">Todos los niveles</option>
+                <option value="Basico">Básico</option>
+                <option value="Intermedio">Intermedio</option>
+                <option value="Avanzado">Avanzado</option>
+              </select>
+            </div>
+          }
+
+          <!-- Botón Limpiar Filtros -->
+          <button
+            (click)="clearCatalogFilters()"
+            class="w-full px-4 py-2.5 rounded-lg border border-white/10 text-white/80 hover:text-white hover:border-lime-400/40 hover:bg-slate-700/50 transition text-sm font-medium"
+          >
+            Limpiar filtros
+          </button>
+        </div>
+      </div>
+
+      <!-- RESULTADOS -->
+      <div class="lg:col-span-3">
+        <!-- Header de resultados -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div class="text-white/90">
+            <span class="font-semibold">{{ catalogResults().length }}</span>
+            <span class="text-white/60 text-sm ml-1">resultados encontrados</span>
+          </div>
+          <select
+            [value]="catalogSortBy()"
+            (change)="catalogSortBy.set($any($event.target).value)"
+            class="border text-sm rounded-lg p-2 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500 w-full sm:w-auto"
+          >
+            <option value="recent">Más recientes</option>
+            <option value="price-low">Precio: menor a mayor</option>
+            <option value="price-high">Precio: mayor a menor</option>
+            <option value="popular">Más populares</option>
+          </select>
+        </div>
+
+        <!-- Lista de resultados -->
+        <div class="space-y-4">
+          @for (item of catalogResults(); track item._id) {
+            <div class="rounded-xl border border-white/10 bg-slate-800/50 hover:bg-slate-700/50 transition-all group">
+              <div class="flex flex-col sm:flex-row gap-4 p-4">
+                <!-- Imagen -->
+                <div
+                  class="relative flex-shrink-0 w-full sm:w-48 h-40 sm:h-32 rounded-lg overflow-hidden"
+                  [class.cursor-pointer]="item.type === 'project' && item.url_video"
+                  (click)="item.type === 'project' && item.url_video ? openVideoModal(item.url_video) : null"
+                >
+                  <img
+                    [src]="item.type === 'course' ? getCourseImageUrl(item.imagen) : buildProjectImageUrl(item.imagen)"
+                    [alt]="item.title"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  @if (item.type === 'course') {
+                    <div class="absolute top-2 left-2 bg-lime-500/90 text-slate-900 px-2 py-0.5 rounded text-xs font-bold">
+                      Curso
+                    </div>
+                  } @else {
+                    <div class="absolute top-2 left-2 bg-cyan-500/90 text-slate-900 px-2 py-0.5 rounded text-xs font-bold">
+                      Proyecto
+                    </div>
+                  }
+                  <!-- Icono de play para proyectos con video -->
+                  @if (item.type === 'project' && item.url_video) {
+                    <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+                      </svg>
+                    </div>
+                  }
+                </div>
+
+                <!-- Contenido -->
+                <div class="flex-1 min-w-0 flex flex-col">
+                  <h3 class="text-white font-semibold text-lg mb-1 line-clamp-2 sm:line-clamp-1 group-hover:text-lime-300 transition-colors">
+                    {{ item.title }}
+                  </h3>
+                  <p class="text-white/60 text-sm mb-3 line-clamp-2">
+                    {{ item.subtitle }}
+                  </p>
+
+                  <div class="flex flex-wrap items-center gap-3 text-xs text-white/50 mb-3">
+                    @if (item.categorie?.title) {
+                      <span class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"></path>
+                        </svg>
+                        {{ item.categorie.title }}
+                      </span>
+                    }
+                    @if (item.type === 'course' && item.level) {
+                      <span class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"></path>
+                        </svg>
+                        {{ item.level }}
+                      </span>
+                    }
+                  </div>
+
+                  <!-- Precio y botones -->
+                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-auto">
+                    <div>
+                      <span class="text-xl sm:text-2xl font-bold text-lime-300">${{ item.price_usd | number:'1.0-2' }}</span>
+                      <span class="text-white/60 text-sm ml-1">USD</span>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                      @if (item.type === 'course') {
+                        @if (isCourseEnrolled(item._id)) {
+                          <button class="px-4 py-2 rounded-lg bg-sky-600/50 text-sky-300 text-sm font-semibold cursor-not-allowed" disabled>
+                            Comprado
+                          </button>
+                        } @else if (isCourseInCart(item._id)) {
+                          <button (click)="cartService.toggleDrawer()" class="px-4 py-2 rounded-lg bg-slate-700 text-white/80 text-sm font-semibold hover:bg-slate-600 transition">
+                            Ver carrito
+                          </button>
+                        } @else {
+                          <button
+                            (click)="addCourseToCart(item, $event)"
+                            [disabled]="!authService.isLoggedIn()"
+                            class="px-4 py-2 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Añadir al carrito
+                          </button>
+                        }
+                        <button
+                          (click)="navigateToCourse(item, $event)"
+                          class="px-4 py-2 rounded-lg border border-white/20 text-white hover:border-lime-400 hover:text-lime-300 transition text-sm font-semibold"
+                        >
+                          Ver detalles
+                        </button>
+                      } @else {
+                        @if (isProjectPurchased(item._id)) {
+                          <button class="px-4 py-2 rounded-lg bg-sky-600/50 text-sky-300 text-sm font-semibold cursor-not-allowed" disabled>
+                            Comprado
+                          </button>
+                        } @else if (isProjectInCart(item._id)) {
+                          <button (click)="cartService.toggleDrawer()" class="px-4 py-2 rounded-lg bg-slate-700 text-white/80 text-sm font-semibold hover:bg-slate-600 transition">
+                            Ver carrito
+                          </button>
+                        } @else {
+                          <button
+                            (click)="addProjectToCart(item, $event)"
+                            [disabled]="!authService.isLoggedIn()"
+                            class="px-4 py-2 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Añadir al carrito
+                          </button>
+                        }
+                        <!-- Botón de ver video si el proyecto tiene url_video -->
+                        @if (item.url_video) {
+                          <button
+                            (click)="openVideoModal(item.url_video)"
+                            class="px-4 py-2 rounded-lg border border-white/20 text-white hover:border-cyan-400 hover:text-cyan-300 transition text-sm font-semibold flex items-center gap-2"
+                          >
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="hidden sm:inline">Ver demo</span>
+                          </button>
+                        }
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          } @empty {
+            <div class="rounded-xl border border-white/10 bg-slate-800/50 p-12 text-center">
+              <svg class="w-16 h-16 mx-auto mb-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <p class="text-white/70 text-lg font-medium mb-1">No se encontraron resultados</p>
+              <p class="text-white/50 text-sm">Intenta ajustar tus filtros</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- VIDEO MODAL -->
   @if (videoModalUrl()) {
     <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" (click)="videoModalUrl.set(null)">

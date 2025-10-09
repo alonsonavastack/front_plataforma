@@ -13,6 +13,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ProfileService } from '../../core/services/profile.service';
+import { CategoriesService } from '../../core/services/categories';
 
 @Component({
   standalone: true,
@@ -27,6 +28,7 @@ export class HomeComponent implements OnInit {
   cartService = inject(CartService);
   authService = inject(AuthService);
   profileService = inject(ProfileService);
+  categoriesService = inject(CategoriesService);
 
   // ---------- UI state ----------
   q = signal<string>('');
@@ -40,6 +42,99 @@ export class HomeComponent implements OnInit {
 
   // Proyectos comprados del usuario
   purchasedProjects = this.profileService.purchasedProjects;
+
+  // ---------- Catálogo con filtros ----------
+  catalogShowCourses = signal<boolean>(true);
+  catalogShowProjects = signal<boolean>(true);
+  catalogCategory = signal<string>('');
+  catalogPriceRange = signal<string>('');
+  catalogLevel = signal<string>('');
+  catalogSortBy = signal<string>('recent');
+
+  // Control de visibilidad de filtros en móvil
+  showCatalogFilters = signal<boolean>(false);
+
+  // Helpers para el contador de filtros activos
+  hasActiveFilters = computed(() => {
+    return this.catalogCategory() !== '' ||
+           this.catalogPriceRange() !== '' ||
+           this.catalogLevel() !== '' ||
+           !this.catalogShowCourses() ||
+           !this.catalogShowProjects();
+  });
+
+  activeFiltersCount = computed(() => {
+    let count = 0;
+    if (this.catalogCategory()) count++;
+    if (this.catalogPriceRange()) count++;
+    if (this.catalogLevel()) count++;
+    if (!this.catalogShowCourses()) count++;
+    if (!this.catalogShowProjects()) count++;
+    return count;
+  });
+
+  // Resultados del catálogo combinando cursos y proyectos
+  catalogResults = computed(() => {
+    let items: any[] = [];
+
+    // Agregar cursos si está seleccionado
+    if (this.catalogShowCourses()) {
+      const coursesWithType = (this.api.allCourses() ?? []).map((c: CoursePublic) => ({ ...c, type: 'course' }));
+      items = [...items, ...coursesWithType];
+    }
+
+    // Agregar proyectos si está seleccionado
+    if (this.catalogShowProjects()) {
+      const projectsWithType = (this.api.allProjects() ?? []).map((p: Project) => ({ ...p, type: 'project' }));
+      items = [...items, ...projectsWithType];
+    }
+
+    // Filtrar por categoría
+    const cat = this.catalogCategory();
+    if (cat) {
+      items = items.filter(item => {
+        const catId = typeof item.categorie === 'object' ? item.categorie._id : item.categorie;
+        return catId === cat;
+      });
+    }
+
+    // Filtrar por precio
+    const priceRange = this.catalogPriceRange();
+    if (priceRange) {
+      const [min, max] = priceRange.split('-').map(v => v ? parseFloat(v) : null);
+      items = items.filter(item => {
+        const price = item.price_usd || 0;
+        if (min !== null && max !== null) {
+          return price >= min && price <= max;
+        } else if (min !== null) {
+          return price >= min;
+        } else if (max !== null) {
+          return price <= max;
+        }
+        return true;
+      });
+    }
+
+    // Filtrar por nivel (solo cursos)
+    const level = this.catalogLevel();
+    if (level) {
+      items = items.filter(item => item.type === 'course' && item.level === level);
+    }
+
+    // Ordenar
+    const sortBy = this.catalogSortBy();
+    if (sortBy === 'price-low') {
+      items.sort((a, b) => (a.price_usd || 0) - (b.price_usd || 0));
+    } else if (sortBy === 'price-high') {
+      items.sort((a, b) => (b.price_usd || 0) - (a.price_usd || 0));
+    } else if (sortBy === 'popular') {
+      // Ordenar por rating o número de estudiantes si está disponible
+      items.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
+    }
+    // 'recent' es el orden por defecto
+
+    return items;
+  });
 
   // ---------- Error-safe helpers ----------
   hasHomeError(): boolean {
@@ -188,10 +283,14 @@ export class HomeComponent implements OnInit {
   ngOnInit(): void {
     // Inicia la carga de datos para la página de inicio.
     this.api.reloadHome();
+    this.api.reloadAllCourses(); // Carga todos los cursos para el catálogo
+    this.api.reloadAllProjects(); // Carga todos los proyectos para el catálogo
     // Si el usuario está logueado, carga su perfil para obtener los cursos.
     if (this.authService.isLoggedIn()) {
       this.profileService.reloadProfile();
     }
+    // Cargamos las categorías para los filtros.
+    this.categoriesService.reload();
   }
 
   // ---------- Handlers de búsqueda ----------
@@ -282,13 +381,13 @@ export class HomeComponent implements OnInit {
 
   selectCategorie(id?: string): void {
     this.selectedCategorie.set(id);
-    // Si no hay término, volvemos a featured
-    if (this.q().trim().length === 0) {
+    // Si se selecciona "Todas" (id es undefined), reseteamos los resultados de búsqueda
+    // para volver a mostrar los cursos destacados.
+    if (!id) {
       this.searchRows.set(null);
-      return;
+    } else {
+      this.runSearch(true); // Si se selecciona una categoría específica, ejecutamos la búsqueda.
     }
-    // Si hay término >= 3, relanza con nueva categoría (o si se forzó manual)
-    if (this.q().trim().length >= 3) this.runSearch();
   }
 
   // ---------- Recargar ----------
@@ -302,6 +401,27 @@ export class HomeComponent implements OnInit {
 
   buildProjectImageUrl(imagen: string): string {
     return `${environment.url}project/imagen-project/${imagen}`;
+  }
+
+  getCourseImageUrl(imagen?: string): string {
+    if (!imagen) return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
+    const img = String(imagen).trim();
+    if (/^https?:\/\//i.test(img)) return img;
+    const base = environment.images.course.endsWith('/') ? environment.images.course : environment.images.course + '/';
+    return base + encodeURIComponent(img);
+  }
+
+  clearCatalogFilters(): void {
+    this.catalogShowCourses.set(true);
+    this.catalogShowProjects.set(true);
+    this.catalogCategory.set('');
+    this.catalogPriceRange.set('');
+    this.catalogLevel.set('');
+    this.catalogSortBy.set('recent');
+  }
+
+  toggleCatalogFilters(): void {
+    this.showCatalogFilters.update(v => !v);
   }
 
   // Método temporal para depurar navegación

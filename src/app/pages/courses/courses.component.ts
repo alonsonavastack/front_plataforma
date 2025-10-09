@@ -41,6 +41,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
     level: new FormControl('Basico', [Validators.required]),
     idioma: new FormControl('Español', [Validators.required]),
     portada: new FormControl<File | null>(null),
+    state: new FormControl(1), // Se añade el control 'state' con valor por defecto 1 (Borrador)
   });
 
   // --- Section Modal and Form State ---
@@ -66,10 +67,13 @@ export class CoursesComponent implements OnInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      if (this.authService.user()?.rol === 'instructor') {
-        this.courseForm.get('user')?.disable();
-      } else {
-        this.courseForm.get('user')?.enable();
+      const user = this.authService.user();
+      const userControl = this.courseForm.get('user');
+      if (user?.rol === 'instructor') {
+        userControl?.setValue(user._id, { emitEvent: false });
+        userControl?.disable();
+      } else if (userControl?.disabled) {
+        userControl?.enable();
       }
     });
   }
@@ -91,6 +95,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
       idioma: 'Español',
       price_usd: 0,
       price_mxn: 0,
+      state: 1, // Borrador por defecto
     });
     this.imagePreview.set(null);
     this.isModalOpen.set(true);

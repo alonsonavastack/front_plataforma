@@ -212,14 +212,16 @@
                   <div class="text-red-400 text-sm mt-1">La categoría es requerida</div>
                 }
               </div>
-              <div>
-                <label for="state" class="block mb-2 text-sm font-medium text-gray-300">Estado <span class="text-red-400">*</span></label>
-                <select id="state" formControlName="state" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500">
-                  <option [value]="1">Borrador</option>
-                  <option [value]="2">Público</option>
-                  <option [value]="3">Anulado</option>
-                </select>
-              </div>
+              @if (authService.user()?.rol === 'admin') {
+                <div>
+                  <label for="state" class="block mb-2 text-sm font-medium text-gray-300">Estado <span class="text-red-400">*</span></label>
+                  <select id="state" formControlName="state" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500">
+                    <option [value]="1">Borrador</option>
+                    <option [value]="2">Público</option>
+                    <option [value]="3">Anulado</option>
+                  </select>
+                </div>
+              }
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>

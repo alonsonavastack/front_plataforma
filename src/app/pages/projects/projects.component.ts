@@ -5,6 +5,7 @@ import { Project } from "../../core/models/home.models";
 import { ProjectService } from "../../core/services/project.service";
 import { CoursesService } from "../../core/services/courses";
 import { environment } from "../../../environments/environment";
+import { AuthService } from "../../core/services/auth";
 
 interface ProjectFile {
   _id: string;
@@ -23,6 +24,7 @@ interface ProjectFile {
 export class ProjectsComponent implements OnInit {
   projectService = inject(ProjectService);
   coursesService = inject(CoursesService);
+  public authService = inject(AuthService); // <-- ¡AQUÍ ESTÁ LA SOLUCIÓN!
 
   // --- State Management with Signals ---
   private projectsState = signal<{

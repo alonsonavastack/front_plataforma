@@ -1,12 +1,11 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from "@angular/router";
 import { NavId, NavItem } from "./nav.types";
 
 @Component({
   standalone: true,
   selector: 'app-sidebar',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './sidebar.html',
 })
 export class SidebarComponent {

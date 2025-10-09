@@ -44,6 +44,24 @@ export class HomeService {
     error: null,
   });
 
+  // --- State for All Courses (for catalog) ---
+  private allCoursesState = signal<{ data: CoursePublic[], isLoading: boolean, error: any }>({
+    data: [],
+    isLoading: false,
+    error: null,
+  });
+
+  // --- State for All Projects (for catalog) ---
+  private allProjectsState = signal<{ data: Project[], isLoading: boolean, error: any }>({
+    data: [],
+    isLoading: false,
+    error: null,
+  });
+
+  // Public computed signals for catalog
+  allCourses = computed(() => this.allCoursesState().data);
+  allProjects = computed(() => this.allProjectsState().data);
+
   // ---- filtros reactivos (opcional) ----
   private filtro = signal<{ q?: string; categorie?: string }>({});
   setFiltro(patch: { q?: string; categorie?: string }) {
@@ -73,6 +91,34 @@ export class HomeService {
       error: (err) => {
         console.error('Error loading home data:', err);
         this.homeState.update(s => ({ ...s, isLoading: false, error: err }));
+      }
+    });
+  }
+
+  reloadAllCourses() {
+    this.allCoursesState.update(s => ({ ...s, isLoading: true }));
+    const url = `${this.base}home/get_all_courses`;
+    this.http.get<{ courses: CoursePublic[] }>(url).subscribe({
+      next: (data) => {
+        this.allCoursesState.set({ data: data.courses, isLoading: false, error: null });
+      },
+      error: (err) => {
+        console.error('Error loading all courses:', err);
+        this.allCoursesState.update(s => ({ ...s, isLoading: false, error: err }));
+      }
+    });
+  }
+
+  reloadAllProjects() {
+    this.allProjectsState.update(s => ({ ...s, isLoading: true }));
+    const url = `${this.base}home/get_all_projects`;
+    this.http.get<{ projects: Project[] }>(url).subscribe({
+      next: (data) => {
+        this.allProjectsState.set({ data: data.projects, isLoading: false, error: null });
+      },
+      error: (err) => {
+        console.error('Error loading all projects:', err);
+        this.allProjectsState.update(s => ({ ...s, isLoading: false, error: err }));
       }
     });
   }
