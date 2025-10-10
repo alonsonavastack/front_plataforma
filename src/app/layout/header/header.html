@@ -9,12 +9,6 @@
 
     <!-- Navegación para Escritorio -->
     <nav class="hidden lg:flex items-center gap-6 text-sm text-slate-300">
-      <a routerLink="/" routerLinkActive="text-lime-300" class="hover:text-lime-300 transition">Inicio</a>
-      @if (authService.user()?.rol === 'admin' || authService.user()?.rol === 'instructor') {
-        <a routerLink="/dashboard" routerLinkActive="text-lime-300" class="hover:text-lime-300 transition">Dashboard</a>
-      }
-      <a class="hover:text-lime-300 transition" href="#">Blog</a>
-      <a class="hover:text-lime-300 transition" href="#">Soporte</a>
     </nav>
 
     <!-- Lado derecho: Carrito, Notificaciones, Perfil -->
@@ -189,7 +183,7 @@
             <span>${{ cartService.subtotal() | number:'1.2-2' }}</span>
           </div>
           <p class="text-xs text-gray-400 mt-1">Los impuestos y gastos de envío se calculan en la pantalla de pago.</p>
-          <button 
+          <button
             (click)="goToCheckout()"
             class="w-full mt-4 h-12 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition flex items-center justify-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,0 +1,355 @@
+
+<main class="bg-slate-900 min-h-screen text-white pt-24 pb-12">
+  <div class="container mx-auto px-4">
+    <!-- Cabecera -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold">Gestión de Usuarios</h1>
+        <p class="text-slate-400 mt-1">Administra, crea y edita los usuarios de la plataforma.</p>
+      </div>
+      <button (click)="openCreateModal()" class="bg-lime-400 text-slate-900 font-semibold px-5 py-2 rounded-lg hover:bg-lime-300 transition flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+        Nuevo Usuario
+      </button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-slate-800 p-4 rounded-lg mb-6 flex flex-wrap gap-4 items-center border border-white/10">
+      <div class="relative flex-grow">
+        <input type="text" placeholder="Buscar por nombre, apellido o email..."
+               (input)="onSearch($event)"
+               class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-lime-400">
+        <svg class="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+      </div>
+      <select (change)="onRoleFilter($event)" class="bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
+        <option value="">Todos los roles</option>
+        <option value="admin">Administrador</option>
+        <option value="instructor">Instructor</option>
+        <option value="cliente">Cliente</option>
+      </select>
+      <select (change)="onStateFilter($event)" class="bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
+        <option value="">Todos los estados</option>
+        <option value="true">Activo</option>
+        <option value="false">Inactivo</option>
+      </select>
+    </div>
+
+    <!-- Tabla de Usuarios -->
+    <div class="bg-slate-800 rounded-lg overflow-hidden border border-white/10">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-slate-300">
+          <thead class="text-xs text-slate-400 uppercase bg-slate-900/50">
+            <tr>
+              <th scope="col" class="px-6 py-3">Usuario</th>
+              <th scope="col" class="px-6 py-3">Rol</th>
+              <th scope="col" class="px-6 py-3">Estado</th>
+              <th scope="col" class="px-6 py-3">Fecha de Registro</th>
+              <th scope="col" class="px-6 py-3 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (usersService.isLoading()) {
+              <tr>
+                <td colspan="5" class="text-center py-8">
+                  <div class="flex justify-center items-center gap-2 text-slate-400">
+                    <svg class="animate-spin h-5 w-5 text-lime-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    Cargando usuarios...
+                  </div>
+                </td>
+              </tr>
+            } @else if (usersService.filteredUsers().length === 0) {
+              <tr>
+                <td colspan="5" class="text-center py-8 text-slate-500">
+                  No se encontraron usuarios con los filtros aplicados.
+                </td>
+              </tr>
+            } @else {
+              @for (user of usersService.filteredUsers(); track user._id) {
+                <tr class="border-b border-slate-700 hover:bg-slate-800/50">
+                  <th scope="row" class="px-6 py-4 font-medium text-white whitespace-nowrap">
+                    <div class="flex items-center gap-3">
+                      <img [src]="getAvatarUrl(user.avatar)" [alt]="user.name" class="w-10 h-10 rounded-full object-cover">
+                      <div>
+                        <div class="font-semibold">{{ user.name }} {{ user.surname }}</div>
+                        <div class="font-normal text-slate-400">{{ user.email }}</div>
+                      </div>
+                    </div>
+                  </th>
+                  <td class="px-6 py-4">
+                    <span [class]="'px-2 py-1 rounded-full text-xs font-medium ' + getRoleBadgeClass(user.rol)">
+                      {{ getRoleLabel(user.rol) }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span [class]="'px-2 py-1 rounded-full text-xs font-medium ' + getStateBadgeClass(user)">
+                      {{ getStateText(user) }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-slate-400">
+                    {{ user.createdAt | date:'dd/MM/yyyy' }}
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <button (click)="openViewModal(user)" class="p-2 rounded-md hover:bg-slate-700 transition" title="Ver detalles">
+                        <svg class="w-5 h-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                      </button>
+                      <button (click)="openEditModal(user)" class="p-2 rounded-md hover:bg-slate-700 transition" title="Editar usuario">
+                        <svg class="w-5 h-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                      </button>
+                      <button (click)="deleteUser(user)" class="p-2 rounded-md hover:bg-red-500/20 transition" title="Eliminar usuario">
+                        <svg class="w-5 h-5 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.124-2.033-2.124H8.033C6.91 2.75 6 3.694 6 4.874v.916m7.5 0h-7.5" /></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Modales -->
+<ng-template #modals>
+  <!-- Modal de Creación/Edición -->
+  @if (isCreateModalOpen() || isEditModalOpen()) {
+    <div class="fixed inset-0 z-50 overflow-y-auto" (click)="isCreateModalOpen() ? closeCreateModal() : closeEditModal()">
+      <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black/70 backdrop-blur-sm"></div>
+
+        <div class="relative bg-slate-800 rounded-2xl p-6 w-full max-w-2xl border border-white/10 shadow-2xl" (click)="$event.stopPropagation()">
+          <form [formGroup]="isCreateModalOpen() ? createForm : editForm" (ngSubmit)="isCreateModalOpen() ? saveCreate() : saveEdit()">
+            <div class="mb-6">
+              <h3 class="text-2xl font-bold text-white">{{ isCreateModalOpen() ? 'Crear Nuevo Usuario' : 'Editar Usuario' }}</h3>
+              <p class="text-slate-400 mt-2">{{ isCreateModalOpen() ? 'Completa los datos para registrar un nuevo usuario.' : 'Actualiza la información del usuario.' }}</p>
+            </div>
+
+            <div class="space-y-4 mb-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="name" class="block text-sm font-medium text-slate-300 mb-2">Nombre</label>
+                  <input type="text" id="name" formControlName="name" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
+                </div>
+                <div>
+                  <label for="surname" class="block text-sm font-medium text-slate-300 mb-2">Apellidos</label>
+                  <input type="text" id="surname" formControlName="surname" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
+                </div>
+              </div>
+
+              <div>
+                <label for="email" class="block text-sm font-medium text-slate-300 mb-2">Email</label>
+                <input type="email" id="email" formControlName="email" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
+              </div>
+
+              @if (isCreateModalOpen()) {
+                <div>
+                  <label for="password" class="block text-sm font-medium text-slate-300 mb-2">Contraseña</label>
+                  <input type="password" id="password" formControlName="password" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
+                </div>
+              }
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="profession" class="block text-sm font-medium text-slate-300 mb-2">Profesión</label>
+                  <input type="text" id="profession" formControlName="profession" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
+                </div>
+                <div>
+                  <label for="phone" class="block text-sm font-medium text-slate-300 mb-2">Teléfono</label>
+                  <input type="tel" id="phone" formControlName="phone" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
+                </div>
+              </div>
+
+              <div>
+                <label for="description" class="block text-sm font-medium text-slate-300 mb-2">Descripción</label>
+                <textarea id="description" formControlName="description" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400"></textarea>
+              </div>
+
+              @if (isEditModalOpen()) {
+                <div>
+                  <label for="rol-edit" class="block text-sm font-medium text-slate-300 mb-2">Rol</label>
+                  <select id="rol-edit" formControlName="rol" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
+                    <option value="" disabled>Selecciona un rol</option>
+                    <option value="cliente">Estudiante</option>
+                    <option value="instructor">Instructor</option>
+                    <option value="admin">Administrador</option>
+                  </select>
+                </div>
+              }
+
+              @if (isCreateModalOpen()) {
+                <div>
+                  <label for="rol" class="block text-sm font-medium text-slate-300 mb-2">Rol</label>
+                  <select id="rol" formControlName="rol" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
+                    <option value="cliente">Cliente</option>
+                    <option value="instructor">Instructor</option>
+                    <option value="admin">Administrador</option>
+                  </select>
+                </div>
+              }
+
+              @if (isEditModalOpen()) {
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-2">Estado</label>
+                  <div class="flex items-center">
+                    <input type="checkbox" id="state" formControlName="state" class="h-4 w-4 rounded border-slate-600 bg-slate-700 text-lime-500 focus:ring-lime-500">
+                    <label for="state" class="ml-2 text-sm text-slate-300">Usuario Activo</label>
+                  </div>
+                </div>
+              }
+
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Avatar</label>
+                <div class="flex items-center gap-4">
+                  @if (previewUrl()) {
+                    <img [src]="previewUrl()!" class="w-16 h-16 rounded-full object-cover" alt="Preview" />
+                  } @else if (isEditModalOpen() && currentUser()?.avatar) {
+                    <img [src]="getAvatarUrl(currentUser()!.avatar)" class="w-16 h-16 rounded-full object-cover" alt="Avatar Actual" />
+                  }
+                  <input
+                    type="file"
+                    (change)="onFileSelected($event)"
+                    accept="image/*"
+                    class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-lime-400 file:text-slate-900 hover:file:bg-lime-300"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="flex gap-3">
+              <button
+                type="button"
+                (click)="isCreateModalOpen() ? closeCreateModal() : closeEditModal()"
+                class="flex-1 px-4 py-2 bg-slate-700 text-white font-medium rounded-lg hover:bg-slate-600 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                [disabled]="(isCreateModalOpen() ? createForm.invalid : editForm.invalid) || isLoading()"
+                class="flex-1 px-4 py-2 bg-lime-400 text-slate-900 font-semibold rounded-lg hover:bg-lime-300 transition disabled:bg-slate-600 disabled:cursor-not-allowed"
+              >
+                {{ isCreateModalOpen() ? 'Crear Usuario' : 'Guardar Cambios' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal de Vista/Detalles -->
+  @if (isViewModalOpen()) {
+    <div class="fixed inset-0 z-50 overflow-y-auto" (click)="closeViewModal()">
+      <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black/70 backdrop-blur-sm"></div>
+
+        <div class="relative bg-slate-800 rounded-2xl p-6 w-full max-w-2xl border border-white/10 shadow-2xl" (click)="$event.stopPropagation()">
+          @if (currentUser(); as user) {
+            <div class="mb-6">
+              <h3 class="text-2xl font-bold text-white">Detalles del Usuario</h3>
+              <p class="text-slate-400 mt-2">Información completa del usuario</p>
+            </div>
+
+            <div class="space-y-6">
+              <!-- Avatar y Info Básica -->
+              <div class="flex items-center gap-6 pb-6 border-b border-white/10">
+                <img
+                  [src]="getAvatarUrl(user.avatar)"
+                  [alt]="user.name"
+                  class="w-24 h-24 rounded-full object-cover border-4 border-lime-400/20"
+                />
+                <div class="flex-1">
+                  <h4 class="text-2xl font-bold text-white">
+                    {{ user.name }} {{ user.surname }}
+                  </h4>
+                  <p class="text-slate-400 mt-1">{{ user.email }}</p>
+                  <div class="flex items-center gap-3 mt-3">
+                    <span [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getRoleBadgeClass(user.rol)">
+                      {{ getRoleLabel(user.rol) }}
+                    </span>
+                    <span [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getStateBadgeClass(user)">
+                      {{ getStateText(user) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Información de Contacto -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-slate-400 mb-1">Teléfono</label>
+                  <p class="text-white">
+                    @if (user.phone) {
+                      {{ user.phone }}
+                    } @else {
+                      <span class="text-slate-500">No especificado</span>
+                    }
+                  </p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-slate-400 mb-1">Profesión</label>
+                  <p class="text-white">
+                    @if (user.profession) {
+                      {{ user.profession }}
+                    } @else {
+                      <span class="text-slate-500">No especificada</span>
+                    }
+                  </p>
+                </div>
+              </div>
+
+              <!-- Descripción -->
+              @if (user.description) {
+                <div>
+                  <label class="block text-sm font-medium text-slate-400 mb-2">Descripción</label>
+                  <div class="bg-slate-900/50 border border-white/10 rounded-lg p-4">
+                    <p class="text-slate-300 leading-relaxed">{{ user.description }}</p>
+                  </div>
+                </div>
+              }
+
+              <!-- Información del Sistema -->
+              <div class="bg-slate-900/50 border border-white/10 rounded-lg p-4">
+                <h5 class="text-sm font-medium text-slate-400 mb-3">Información del Sistema</h5>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span class="text-slate-500">ID:</span>
+                    <p class="text-slate-300 font-mono text-xs mt-1">{{ user._id }}</p>
+                  </div>
+                  @if (user.createdAt) {
+                    <div>
+                      <span class="text-slate-500">Fecha de Registro:</span>
+                      <p class="text-slate-300 mt-1">{{ user.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 flex gap-3">
+              <button
+                type="button"
+                (click)="closeViewModal()"
+                class="flex-1 px-4 py-2 bg-slate-700 text-white font-medium rounded-lg hover:bg-slate-600 transition"
+              >
+                Cerrar
+              </button>
+              <button
+                type="button"
+                (click)="closeViewModal(); openEditModal(user)"
+                class="flex-1 px-4 py-2 bg-lime-400 text-slate-900 font-semibold rounded-lg hover:bg-lime-300 transition"
+              >
+                Editar Usuario
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</ng-template>
+
+<ng-container *ngTemplateOutlet="modals"></ng-container>

@@ -3,6 +3,11 @@ export interface SaleDetailItem {
     _id: string;
     title: string;
     imagen: string;
+    user?: {
+      _id?: string;
+      name?: string;
+      surname?: string;
+    } | string; // Puede ser un objeto poblado o solo el ID
   };
   product_type: 'course' | 'project';
   price_unit: number;

@@ -51,8 +51,10 @@
       <!-- Sección activa -->
       <div class="rounded-2xl border border-white/10 bg-slate-900/50 p-6 backdrop-blur-sm"> @switch (active) {
         @case ('overview') { <div class="h-96 grid place-items-center text-white/70">[Resumen general]</div> }
+        @case ('users') { <app-users /> }
         @case ('categories') { <app-categories /> }
         @case ('courses') { <app-courses /> }
+        @case ('discounts') { <app-discounts /> }
         @case ('sales') { <app-sales /> }
         @case ('projects') { <app-projects /> }
         @case ('students') { <app-students /> }

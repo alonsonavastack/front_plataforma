@@ -1,0 +1,213 @@
+<app-header></app-header>
+<div class="min-h-screen bg-slate-950 flex items-center justify-center p-4 py-12">
+  <div class="w-full max-w-2xl">
+    <div class="bg-slate-800/50 backdrop-blur-lg border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl">
+      <div class="text-center mb-6">
+        <h1 class="text-3xl font-extrabold text-white">Crear Cuenta</h1>
+        <p class="text-slate-400 mt-2">Únete a NeoCourse y empieza a aprender</p>
+      </div>
+
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
+        <!-- Tipo de cuenta -->
+        <div class="bg-slate-900/50 border border-white/10 rounded-xl p-4 mb-6">
+          <label class="block mb-3 text-sm font-medium text-slate-300">
+            <span class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+              ¿Qué tipo de cuenta deseas?
+            </span>
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label class="relative cursor-pointer">
+              <input
+                type="radio"
+                formControlName="rol"
+                value="cliente"
+                class="peer sr-only"
+              />
+              <div class="p-4 rounded-lg border-2 border-slate-700 peer-checked:border-lime-400 peer-checked:bg-lime-400/10 transition-all hover:border-lime-400/50">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-white">Estudiante</div>
+                    <div class="text-xs text-slate-400">Aprende y crece</div>
+                  </div>
+                </div>
+              </div>
+            </label>
+
+            <label class="relative cursor-pointer">
+              <input
+                type="radio"
+                formControlName="rol"
+                value="instructor"
+                class="peer sr-only"
+              />
+              <div class="p-4 rounded-lg border-2 border-slate-700 peer-checked:border-lime-400 peer-checked:bg-lime-400/10 transition-all hover:border-lime-400/50">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-lime-500/20 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-white">Instructor</div>
+                    <div class="text-xs text-slate-400">Enseña y comparte</div>
+                  </div>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Información personal -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="name" class="block mb-2 text-sm font-medium text-slate-300">
+              Nombre <span class="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              id="name"
+              formControlName="name"
+              class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
+              placeholder="Juan"
+              required
+            />
+          </div>
+
+          <div>
+            <label for="surname" class="block mb-2 text-sm font-medium text-slate-300">
+              Apellido <span class="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              id="surname"
+              formControlName="surname"
+              class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
+              placeholder="Pérez"
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="email" class="block mb-2 text-sm font-medium text-slate-300">
+            Correo Electrónico <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
+            placeholder="tu@correo.com"
+            required
+          />
+        </div>
+
+        <!-- Campos opcionales -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="profession" class="block mb-2 text-sm font-medium text-slate-300">
+              Profesión
+            </label>
+            <input
+              type="text"
+              id="profession"
+              formControlName="profession"
+              class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
+              placeholder="Desarrollador, Diseñador..."
+            />
+          </div>
+
+          <div>
+            <label for="phone" class="block mb-2 text-sm font-medium text-slate-300">
+              Teléfono
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              formControlName="phone"
+              class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
+              placeholder="+52 123 456 7890"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="password" class="block mb-2 text-sm font-medium text-slate-300">
+              Contraseña <span class="text-red-400">*</span>
+            </label>
+            <input
+              type="password"
+              id="password"
+              formControlName="password"
+              class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
+              placeholder="••••••••"
+              required
+            />
+            <p class="text-xs text-slate-500 mt-1">Mínimo 6 caracteres</p>
+          </div>
+
+          <div>
+            <label for="confirmPassword" class="block mb-2 text-sm font-medium text-slate-300">
+              Confirmar Contraseña <span class="text-red-400">*</span>
+            </label>
+            <input
+              type="password"
+              id="confirmPassword"
+              formControlName="confirmPassword"
+              class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="bg-red-500/10 border border-red-400/30 text-red-300 text-sm rounded-lg p-3">
+            {{ errorMessage() }}
+          </div>
+        }
+
+        @if (successMessage()) {
+          <div class="bg-lime-500/10 border border-lime-400/30 text-lime-300 text-sm rounded-lg p-3">
+            {{ successMessage() }}
+          </div>
+        }
+
+        <button
+          type="submit"
+          [disabled]="registerForm.invalid || isLoading()"
+          class="w-full h-11 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition disabled:bg-slate-600 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          @if (isLoading()) {
+            <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Registrando...
+          } @else {
+            Crear Cuenta
+          }
+        </button>
+
+        <div class="text-sm text-center text-slate-400">
+          ¿Ya tienes una cuenta? <a routerLink="/login" class="font-medium text-lime-400 hover:underline">Inicia sesión aquí</a>
+        </div>
+      </form>
+
+      <div class="text-center mt-6">
+        <a routerLink="/" class="text-sm text-slate-400 hover:text-lime-300 transition-colors duration-300">
+          ← Regresar a la página de inicio
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

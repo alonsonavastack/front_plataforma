@@ -182,6 +182,10 @@ export class AuthService {
     this.router.navigate(['/']);
   }
 
+  register(userData: any) {
+    return this.http.post(`${environment.url}users/register`, userData);
+  }
+
   // Helper para verificar rol
   hasRole(role: string): boolean {
     return this.user()?.rol === role;

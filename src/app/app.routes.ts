@@ -15,9 +15,8 @@ export const routes: Routes = [
   },
   {
     path: "register",
-    // Asumiendo que tienes o tendrás un componente de registro
     loadComponent: () =>
-      import("./pages/auth/login").then((m) => m.LoginComponent), // Temporalmente apunta a login
+      import("./pages/auth/register").then((m) => m.RegisterComponent),
   },
   {
     path: "course-detail/:slug",
@@ -81,8 +80,26 @@ export const routes: Routes = [
     path: "sales",
     loadComponent: () =>
       import("./pages/sales/sales.component").then((m) => m.SalesComponent),
-    // Solo el rol 'cliente' puede acceder
+    // Admin e Instructor pueden acceder
+    canActivate: [roleGuard(["admin", "instructor"])],
+  },
+  {
+    path: "users",
+    loadComponent: () =>
+      import("./pages/users/users.component").then(
+        (m) => m.UsersComponent
+      ),
+    // Solo el rol 'admin' puede acceder
     canActivate: [roleGuard(["admin"])],
+  },
+  {
+    path: "discounts",
+    loadComponent: () =>
+      import("./pages/discounts/discounts.component").then(
+        (m) => m.DiscountsComponent
+      ),
+    // Admin e Instructor pueden acceder
+    canActivate: [roleGuard(["admin", "instructor"])],
   },
   {
     // Redirige cualquier otra ruta a la página de inicio
