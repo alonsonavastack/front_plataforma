@@ -1,25 +1,44 @@
 // src/app/pages/home/home.ts
-import { CommonModule } from '@angular/common';
-import { CoursePublic, Project, Enrollment } from '../../core/models/home.models';
-import { HomeService } from '../../core/services/home';
-import { AuthService } from '../../core/services/auth';
-import { CartService } from '../../core/services/cart.service';
+import { CommonModule } from "@angular/common";
+import {
+  CoursePublic,
+  Project,
+  Enrollment,
+} from "../../core/models/home.models";
+import { HomeService } from "../../core/services/home";
+import { AuthService } from "../../core/services/auth";
+import { CartService } from "../../core/services/cart.service";
 
-import { CourseCardComponent } from '../../shared/course-card/course-card';
-import { PillFilterComponent } from '../../shared/pill-filter/pill-filter';
-import { environment } from '../../../environments/environment';
+import { CourseCardComponent } from "../../shared/course-card/course-card";
+import { PillFilterComponent } from "../../shared/pill-filter/pill-filter";
+import { environment } from "../../../environments/environment";
 import { HeaderComponent } from "../../layout/header/header";
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { ProfileService } from '../../core/services/profile.service';
-import { CategoriesService } from '../../core/services/categories';
+import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
+import {
+  Component,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+} from "@angular/core";
+import { Router, RouterLink } from "@angular/router";
+import { ProfileService } from "../../core/services/profile.service";
+import { CategoriesService } from "../../core/services/categories";
+import { ProjectsCard } from "../../shared/projects-card/projects-card";
+import { DiscountService } from "../../core/services/discount.service";
 
 @Component({
   standalone: true,
-  selector: 'app-home',
-  imports: [CommonModule, CourseCardComponent, PillFilterComponent, HeaderComponent, RouterLink,],
-  templateUrl: './home.html',
+  selector: "app-home",
+  imports: [
+    CommonModule,
+    CourseCardComponent,
+    PillFilterComponent,
+    HeaderComponent,
+    ProjectsCard,
+  ],
+  templateUrl: "./home.html",
 })
 export class HomeComponent implements OnInit {
   api = inject(HomeService);
@@ -29,9 +48,10 @@ export class HomeComponent implements OnInit {
   authService = inject(AuthService);
   profileService = inject(ProfileService);
   categoriesService = inject(CategoriesService);
+  discountService = inject(DiscountService);
 
   // ---------- UI state ----------
-  q = signal<string>('');
+  q = signal<string>("");
   selectedCategorie = signal<string | undefined>(undefined);
 
   // Loading del httpResource
@@ -46,21 +66,23 @@ export class HomeComponent implements OnInit {
   // ---------- Catálogo con filtros ----------
   catalogShowCourses = signal<boolean>(true);
   catalogShowProjects = signal<boolean>(true);
-  catalogCategory = signal<string>('');
-  catalogPriceRange = signal<string>('');
-  catalogLevel = signal<string>('');
-  catalogSortBy = signal<string>('recent');
+  catalogCategory = signal<string>("");
+  catalogPriceRange = signal<string>("");
+  catalogLevel = signal<string>("");
+  catalogSortBy = signal<string>("recent");
 
   // Control de visibilidad de filtros en móvil
   showCatalogFilters = signal<boolean>(false);
 
   // Helpers para el contador de filtros activos
   hasActiveFilters = computed(() => {
-    return this.catalogCategory() !== '' ||
-           this.catalogPriceRange() !== '' ||
-           this.catalogLevel() !== '' ||
-           !this.catalogShowCourses() ||
-           !this.catalogShowProjects();
+    return (
+      this.catalogCategory() !== "" ||
+      this.catalogPriceRange() !== "" ||
+      this.catalogLevel() !== "" ||
+      !this.catalogShowCourses() ||
+      !this.catalogShowProjects()
+    );
   });
 
   activeFiltersCount = computed(() => {
@@ -79,21 +101,28 @@ export class HomeComponent implements OnInit {
 
     // Agregar cursos si está seleccionado
     if (this.catalogShowCourses()) {
-      const coursesWithType = (this.api.allCourses() ?? []).map((c: CoursePublic) => ({ ...c, type: 'course' }));
+      const coursesWithType = (this.api.allCourses() ?? []).map(
+        (c: CoursePublic) => ({ ...c, type: "course" })
+      );
       items = [...items, ...coursesWithType];
     }
 
     // Agregar proyectos si está seleccionado
     if (this.catalogShowProjects()) {
-      const projectsWithType = (this.api.allProjects() ?? []).map((p: Project) => ({ ...p, type: 'project' }));
+      const projectsWithType = (this.api.allProjects() ?? []).map(
+        (p: Project) => ({ ...p, type: "project" })
+      );
       items = [...items, ...projectsWithType];
     }
 
     // Filtrar por categoría
     const cat = this.catalogCategory();
     if (cat) {
-      items = items.filter(item => {
-        const catId = typeof item.categorie === 'object' ? item.categorie._id : item.categorie;
+      items = items.filter((item) => {
+        const catId =
+          typeof item.categorie === "object"
+            ? item.categorie._id
+            : item.categorie;
         return catId === cat;
       });
     }
@@ -101,8 +130,10 @@ export class HomeComponent implements OnInit {
     // Filtrar por precio
     const priceRange = this.catalogPriceRange();
     if (priceRange) {
-      const [min, max] = priceRange.split('-').map(v => v ? parseFloat(v) : null);
-      items = items.filter(item => {
+      const [min, max] = priceRange
+        .split("-")
+        .map((v) => (v ? parseFloat(v) : null));
+      items = items.filter((item) => {
         const price = item.price_usd || 0;
         if (min !== null && max !== null) {
           return price >= min && price <= max;
@@ -118,16 +149,18 @@ export class HomeComponent implements OnInit {
     // Filtrar por nivel (solo cursos)
     const level = this.catalogLevel();
     if (level) {
-      items = items.filter(item => item.type === 'course' && item.level === level);
+      items = items.filter(
+        (item) => item.type === "course" && item.level === level
+      );
     }
 
     // Ordenar
     const sortBy = this.catalogSortBy();
-    if (sortBy === 'price-low') {
+    if (sortBy === "price-low") {
       items.sort((a, b) => (a.price_usd || 0) - (b.price_usd || 0));
-    } else if (sortBy === 'price-high') {
+    } else if (sortBy === "price-high") {
       items.sort((a, b) => (b.price_usd || 0) - (a.price_usd || 0));
-    } else if (sortBy === 'popular') {
+    } else if (sortBy === "popular") {
       // Ordenar por rating o número de estudiantes si está disponible
       items.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
     }
@@ -136,38 +169,76 @@ export class HomeComponent implements OnInit {
     return items;
   });
 
+  constructor() {
+    // Imprime el arreglo completo de proyectos destacados cuando se cargan.
+    effect(() => {
+      const projects = this.featuredProjects();
+      if (projects.length > 0) {
+        console.log("Proyectos Destacados (arreglo completo):", projects);
+      }
+    });
+    // Imprime el arreglo completo de descuentos cuando se cargan.
+    effect(() => {
+      const discounts = this.discountService.discounts();
+      if (discounts.length > 0) {
+        console.log("Descuentos activos (arreglo completo):", discounts);
+      }
+    });
+  }
+
   // ---------- Error-safe helpers ----------
   hasHomeError(): boolean {
-    try { this.api.home(); return false; }
-    catch { return true; }
+    try {
+      this.api.home();
+      return false;
+    } catch {
+      return true;
+    }
   }
 
   homeErrorMessage(): string {
-    try { this.api.home(); return ''; }
-    catch (e: any) {
+    try {
+      this.api.home();
+      return "";
+    } catch (e: any) {
       const cause = e?.cause ?? e;
-      return (typeof cause?.message === 'string' && cause.message) || 'Error interno del servidor';
+      return (
+        (typeof cause?.message === "string" && cause.message) ||
+        "Error interno del servidor"
+      );
     }
   }
 
   categoriesSafe(): any[] {
-    try { return this.api.home().categories ?? []; }
-    catch { return []; }
+    try {
+      return this.api.home().categories ?? [];
+    } catch {
+      return [];
+    }
   }
 
   featuredSafe(): CoursePublic[] {
-    try { return this.api.home().courses_featured ?? []; }
-    catch { return []; }
+    try {
+      return this.api.home().courses_featured ?? [];
+    } catch {
+      return [];
+    }
   }
 
   featuredCoursesEnabled = computed<boolean>(() => {
-    try { return Array.isArray(this.api.home().courses_featured); }
-    catch { return false; }
+    try {
+      return Array.isArray(this.api.home().courses_featured);
+    } catch {
+      return false;
+    }
   });
 
   featuredProjects = computed<Project[]>(() => {
-    try { return this.api.home().projects_featured ?? []; }
-    catch { return []; }
+    try {
+      return this.api.home().projects_featured ?? [];
+    } catch {
+      return [];
+    }
   });
 
   // --- Video Modal State ---
@@ -177,9 +248,10 @@ export class HomeComponent implements OnInit {
     const url = this.videoModalUrl();
     if (!url) return null;
 
-    let embedUrl = '';
+    let embedUrl = "";
     // Regex para extraer el ID de video de varias URLs de YouTube (youtube.com/watch, youtu.be/, etc.)
-    const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const youtubeRegex =
+      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
     const youtubeMatch = url.match(youtubeRegex);
 
     if (youtubeMatch && youtubeMatch[1]) {
@@ -187,12 +259,14 @@ export class HomeComponent implements OnInit {
       embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
     }
     // Vimeo: https://vimeo.com/VIDEO_ID -> https://player.vimeo.com/video/VIDEO_ID
-    else if (url.includes('vimeo.com/')) {
-      const videoId = url.split('vimeo.com/')[1].split(/[\/?]/)[0];
+    else if (url.includes("vimeo.com/")) {
+      const videoId = url.split("vimeo.com/")[1].split(/[\/?]/)[0];
       embedUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1`;
     }
 
-    return embedUrl ? this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl) : null;
+    return embedUrl
+      ? this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl)
+      : null;
   });
 
   openVideoModal(url: string | undefined): void {
@@ -201,31 +275,39 @@ export class HomeComponent implements OnInit {
 
   // --- Cart Methods ---
   isProjectInCart(projectId: string): boolean {
-    return this.cartService.items().some(item => item.product._id === projectId && item.product_type === 'project');
+    return this.cartService
+      .items()
+      .some(
+        (item) =>
+          item.product._id === projectId && item.product_type === "project"
+      );
   }
 
-  addProjectToCart(project: Project, event: MouseEvent): void {
-    event.stopPropagation(); // Evita que se abra el modal de video
-    event.preventDefault(); // Previene la navegación si está dentro de un enlace
+  addProjectToCart(project: Project): void {
     if (!this.authService.isLoggedIn()) {
-      this.router.navigate(['/login']);
+      this.router.navigate(["/login"]);
       return;
     }
-    this.cartService.addToCart(project, 'project');
+    this.cartService.addToCart(project, "project");
   }
 
   isCourseInCart(courseId: string): boolean {
-    return this.cartService.items().some(item => item.product._id === courseId && item.product_type === 'course');
+    return this.cartService
+      .items()
+      .some(
+        (item) =>
+          item.product._id === courseId && item.product_type === "course"
+      );
   }
 
   addCourseToCart(course: CoursePublic, event: MouseEvent): void {
     // Usamos preventDefault en lugar de stopPropagation porque el botón está fuera del enlace <a>
     event.preventDefault();
     if (!this.authService.isLoggedIn()) {
-      this.router.navigate(['/login']);
+      this.router.navigate(["/login"]);
       return;
     }
-    this.cartService.addToCart(course, 'course');
+    this.cartService.addToCart(course, "course");
   }
 
   // --- Course Enrollment Methods ---
@@ -235,7 +317,9 @@ export class HomeComponent implements OnInit {
     }
     // La respuesta del perfil tiene el curso anidado.
     // enrolled_courses: [{ course: { _id: '...' } }]
-    return this.enrolledCourses().some((enrollment: Enrollment) => enrollment.course?._id === courseId);
+    return this.enrolledCourses().some(
+      (enrollment: Enrollment) => enrollment.course?._id === courseId
+    );
   }
 
   // --- Project Purchase Methods ---
@@ -244,7 +328,10 @@ export class HomeComponent implements OnInit {
       return false;
     }
     // Verifica si el proyecto está en la lista de proyectos comprados
-    return this.purchasedProjects().some((project: any) => project._id === projectId || project.project?._id === projectId);
+    return this.purchasedProjects().some(
+      (project: any) =>
+        project._id === projectId || project.project?._id === projectId
+    );
   }
 
   // ---------- Búsqueda pro ----------
@@ -257,17 +344,24 @@ export class HomeComponent implements OnInit {
 
   // Lista efectiva para pintar (featured o searchRows) con filtros locales
   courses = computed<CoursePublic[]>(() => {
-    const base = this.searchRows() ?? this.featuredSafe();
+    const isSearchActive = this.searchRows() !== null;
+    const base = isSearchActive ? this.searchRows()! : this.featuredSafe();
+
+    // Imprime en consola solo cuando se están mostrando los cursos destacados
+    if (!isSearchActive) {
+      console.log("Cursos Destacados (datos recibidos):", base);
+    }
+
     const cat = this.selectedCategorie();
     const term = this.q().trim().toLowerCase();
 
     const result = base.filter((c: any) => {
-      const catId = typeof c?.categorie === 'object' ? c.categorie._id : c.categorie;
+      const catId =
+        typeof c?.categorie === "object" ? c.categorie._id : c.categorie;
       const byCat = !cat || catId === cat;
-      const byQ = !term || (c?.title || '').toLowerCase().includes(term);
+      const byQ = !term || (c?.title || "").toLowerCase().includes(term);
       return byCat && byQ;
     });
-    console.log('Cursos a mostrar:', result);
     return result;
   });
 
@@ -295,7 +389,7 @@ export class HomeComponent implements OnInit {
 
   // ---------- Handlers de búsqueda ----------
   private sanitizeTerm(v: string): string {
-    return v.replace(/\s+/g, ' ').replace(/^\s+/, '');
+    return v.replace(/\s+/g, " ").replace(/^\s+/, "");
   }
 
   onSearchInput(raw: string): void {
@@ -315,8 +409,8 @@ export class HomeComponent implements OnInit {
   }
 
   onSearchKeydown(ev: KeyboardEvent): void {
-    if (ev.key === 'Enter') this.submitSearch();
-    else if (ev.key === 'Escape') this.clearSearch();
+    if (ev.key === "Enter") this.submitSearch();
+    else if (ev.key === "Escape") this.clearSearch();
   }
 
   submitSearch(): void {
@@ -331,7 +425,7 @@ export class HomeComponent implements OnInit {
 
   clearSearch(): void {
     clearTimeout(this.debounceId);
-    this.q.set('');
+    this.q.set("");
     this.searchRows.set(null);
   }
 
@@ -351,29 +445,35 @@ export class HomeComponent implements OnInit {
     }
 
     this.searching.set(true);
-    this.api.searchCourses({
-      q: term || undefined,
-      categorie: this.selectedCategorie() || undefined,
-    }).subscribe({
-      next: rows => {
-        // Si la API devuelve resultados, los usamos. Si no, hacemos un fallback local.
-        const results = (Array.isArray(rows) && rows.length > 0) ? rows : this.getLocalFallback(term);
-        this.searchRows.set(results);
-      },
-      error: () => {
-        // En caso de error en la API, también usamos el fallback local.
-        this.searchRows.set(this.getLocalFallback(term));
-      },
-      complete: () => this.searching.set(false),
-    });
+    this.api
+      .searchCourses({
+        q: term || undefined,
+        categorie: this.selectedCategorie() || undefined,
+      })
+      .subscribe({
+        next: (rows) => {
+          // Si la API devuelve resultados, los usamos. Si no, hacemos un fallback local.
+          const results =
+            Array.isArray(rows) && rows.length > 0
+              ? rows
+              : this.getLocalFallback(term);
+          this.searchRows.set(results);
+        },
+        error: () => {
+          // En caso de error en la API, también usamos el fallback local.
+          this.searchRows.set(this.getLocalFallback(term));
+        },
+        complete: () => this.searching.set(false),
+      });
   }
 
   private getLocalFallback(term: string): CoursePublic[] {
     const localTerm = term.toLowerCase();
     const cat = this.selectedCategorie();
     return this.featuredSafe().filter((c: any) => {
-      const byTitle = (c?.title || '').toLowerCase().includes(localTerm);
-      const catId = typeof c?.categorie === 'string' ? c.categorie : c?.categorie?._id;
+      const byTitle = (c?.title || "").toLowerCase().includes(localTerm);
+      const catId =
+        typeof c?.categorie === "string" ? c.categorie : c?.categorie?._id;
       const byCat = !cat || catId === cat;
       return byTitle && byCat;
     });
@@ -393,7 +493,7 @@ export class HomeComponent implements OnInit {
   // ---------- Recargar ----------
   reload(): void {
     clearTimeout(this.debounceId);
-    this.api.reloadHome();   // revalida httpResource
+    this.api.reloadHome(); // revalida httpResource
     this.searchRows.set(null);
     // Si prefieres limpiar también el input:
     // this.q.set('');
@@ -404,36 +504,39 @@ export class HomeComponent implements OnInit {
   }
 
   getCourseImageUrl(imagen?: string): string {
-    if (!imagen) return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
+    if (!imagen)
+      return "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800";
     const img = String(imagen).trim();
     if (/^https?:\/\//i.test(img)) return img;
-    const base = environment.images.course.endsWith('/') ? environment.images.course : environment.images.course + '/';
+    const base = environment.images.course.endsWith("/")
+      ? environment.images.course
+      : environment.images.course + "/";
     return base + encodeURIComponent(img);
   }
 
   clearCatalogFilters(): void {
     this.catalogShowCourses.set(true);
     this.catalogShowProjects.set(true);
-    this.catalogCategory.set('');
-    this.catalogPriceRange.set('');
-    this.catalogLevel.set('');
-    this.catalogSortBy.set('recent');
+    this.catalogCategory.set("");
+    this.catalogPriceRange.set("");
+    this.catalogLevel.set("");
+    this.catalogSortBy.set("recent");
   }
 
   toggleCatalogFilters(): void {
-    this.showCatalogFilters.update(v => !v);
+    this.showCatalogFilters.update((v) => !v);
   }
 
   // Método temporal para depurar navegación
   navigateToCourse(course: any, event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    console.log('Intentando navegar a:', course);
-    console.log('Slug:', course.slug);
+    console.log("Intentando navegar a:", course);
+    console.log("Slug:", course.slug);
     if (course.slug) {
-      this.router.navigate(['/course-detail', course.slug]);
+      this.router.navigate(["/course-detail", course.slug]);
     } else {
-      console.error('El curso no tiene slug:', course);
+      console.error("El curso no tiene slug:", course);
     }
   }
 }

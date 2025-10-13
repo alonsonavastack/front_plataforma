@@ -57,7 +57,14 @@
           <!-- Card de compra -->
           <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden">
             <!-- Portada -->
-            <img [src]="coverUrl()" alt="Portada del curso" class="w-full h-40 object-cover border-b border-white/10">
+            <div class="relative">
+              <img [src]="coverUrl()" alt="Portada del curso" class="w-full h-40 object-cover border-b border-white/10">
+              @if (hasDiscount()) {
+                <div class="absolute top-2 left-2 px-3 py-1 rounded-lg bg-lime-500 text-slate-900 text-sm font-bold shadow-lg">
+                  -{{ discountValue() }}{{ discountType() === 1 ? '%' : ' USD' }}
+                </div>
+              }
+            </div>
             <div class="p-4 space-y-3">
               <div class="flex items-baseline gap-3">
                 <span class="text-2xl font-extrabold text-lime-300">${{ priceCurrent() | number:'1.0-2' }}</span>
@@ -202,11 +209,23 @@
             @for (c of moreFromInstructor(); track c._id) {
               <a [routerLink]="['/course-detail', c.slug]"
                  class="rounded-xl border border-white/10 bg-white/5 hover:border-lime-400/40 transition overflow-hidden">
-                <img [src]="c.imagen ? buildImage(c.imagen) : 'https://picsum.photos/seed/inst/600/360'"
-                     [alt]="c.title" class="w-full h-32 object-cover border-b border-white/10">
+                <div class="relative">
+                  <img [src]="c.imagen ? buildImage(c.imagen) : 'https://picsum.photos/seed/inst/600/360'"
+                       [alt]="c.title" class="w-full h-32 object-cover border-b border-white/10">
+                  @if (c.discount_active) {
+                    <div class="absolute top-2 left-2 px-2 py-1 rounded-md bg-lime-500 text-slate-900 text-xs font-bold shadow">
+                      -{{ c.discount_active.discount }}{{ c.discount_active.type_discount === 1 ? '%' : ' USD' }}
+                    </div>
+                  }
+                </div>
                 <div class="p-3">
                   <div class="text-sm text-white/90 line-clamp-2">{{ c.title }}</div>
-                  <div class="text-xs text-white/50 mt-1">${{ (c.price_discount ?? c.price_usd) | number:'1.0-2' }}</div>
+                  <div class="flex items-baseline gap-2 mt-1">
+                    <div class="text-sm font-bold text-lime-300">${{ (c.final_price_usd ?? c.price_usd) | number:'1.0-2' }}</div>
+                    @if (c.discount_active && c.final_price_usd !== undefined && c.final_price_usd < c.price_usd) {
+                      <div class="text-xs text-white/40 line-through">${{ c.price_usd | number:'1.0-2' }}</div>
+                    }
+                  </div>
                 </div>
               </a>
             }
@@ -231,11 +250,23 @@
             @for (c of relatedCourses(); track c._id) {
               <a [routerLink]="['/course-detail', c.slug]"
                  class="rounded-xl border border-white/10 bg-white/5 hover:border-lime-400/40 transition overflow-hidden">
-                <img [src]="c.imagen ? buildImage(c.imagen) : 'https://picsum.photos/seed/rel/600/360'"
-                     [alt]="c.title" class="w-full h-32 object-cover border-b border-white/10">
+                <div class="relative">
+                  <img [src]="c.imagen ? buildImage(c.imagen) : 'https://picsum.photos/seed/rel/600/360'"
+                       [alt]="c.title" class="w-full h-32 object-cover border-b border-white/10">
+                  @if (c.discount_active) {
+                    <div class="absolute top-2 left-2 px-2 py-1 rounded-md bg-lime-500 text-slate-900 text-xs font-bold shadow">
+                      -{{ c.discount_active.discount }}{{ c.discount_active.type_discount === 1 ? '%' : ' USD' }}
+                    </div>
+                  }
+                </div>
                 <div class="p-3">
                   <div class="text-sm text-white/90 line-clamp-2">{{ c.title }}</div>
-                  <div class="text-xs text-white/50 mt-1">${{ (c.price_discount ?? c.price_usd) | number:'1.0-2' }}</div>
+                  <div class="flex items-baseline gap-2 mt-1">
+                    <div class="text-sm font-bold text-lime-300">${{ (c.final_price_usd ?? c.price_usd) | number:'1.0-2' }}</div>
+                    @if (c.discount_active && c.final_price_usd !== undefined && c.final_price_usd < c.price_usd) {
+                      <div class="text-xs text-white/40 line-through">${{ c.price_usd | number:'1.0-2' }}</div>
+                    }
+                  </div>
                 </div>
               </a>
             }

@@ -145,12 +145,12 @@ export class CourseDetailComponent implements OnInit {
   // precios
   hasDiscount(): boolean {
     const c = this.course();
-    return !!(c?.['price_discount'] && c['price_usd'] && c['price_discount'] < c['price_usd']);
+    return !!(c?.['discount_active'] && c['final_price_usd'] !== undefined && c['final_price_usd'] < c['price_usd']);
   }
 
   priceCurrent(): number {
     const c = this.course();
-    return Number(c?.['price_discount'] ?? c?.['price_usd'] ?? 0);
+    return Number(c?.['final_price_usd'] ?? c?.['price_usd'] ?? 0);
   }
 
   priceOriginal(): number {
@@ -160,10 +160,23 @@ export class CourseDetailComponent implements OnInit {
 
   discountPercent(): number | null {
     if (!this.hasDiscount()) return null;
-    const p0 = this.priceOriginal(),
-      p1 = this.priceCurrent();
-    if (!p0 || !p1) return null;
+    const p0 = this.priceOriginal();
+    const p1 = this.priceCurrent();
+    if (!p0 || !(p1 < p0)) return null;
     return Math.round((1 - p1 / p0) * 100);
+  }
+
+  // Información del descuento
+  discountValue(): number | null {
+    const c = this.course();
+    if (!c?.['discount_active']) return null;
+    return Number(c.discount_active.discount ?? 0);
+  }
+
+  discountType(): number | null {
+    const c = this.course();
+    if (!c?.['discount_active']) return null;
+    return Number(c.discount_active.type_discount ?? 1);
   }
 
   // métricas superiores

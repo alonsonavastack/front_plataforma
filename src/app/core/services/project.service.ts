@@ -1,10 +1,11 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal, effect, computed } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ProjectListResponse,
   ProjectSingleResponse,
+  Project,
 } from '../models/home.models';
 
 @Injectable({
@@ -86,5 +87,39 @@ export class ProjectService {
    */
   downloadFile(projectId: string, filename: string): Observable<Blob> {
     return this.http.get(`${this.url}/download-file/${projectId}/${filename}`, { responseType: 'blob' });
+  }
+
+  listResource = (searchSignal: () => string, categorieSignal: () => string) => {
+    const state = signal<{ projects: Project[] | null, isLoading: boolean, error: any }>({
+      projects: null,
+      isLoading: false,
+      error: null,
+    });
+
+    const reload = () => {
+      const search = searchSignal();
+      const categorie = categorieSignal();
+      state.update(s => ({ ...s, isLoading: true }));
+
+      let params = new HttpParams().set('search', search);
+      if (categorie) {
+        params = params.set('categorie', categorie);
+      }
+
+      this.http.get<ProjectListResponse>(`${this.url}/list`, { params }).subscribe({
+        next: (response) => state.set({ projects: response.projects, isLoading: false, error: null }),
+        error: (err) => state.set({ projects: null, isLoading: false, error: err }),
+      });
+    };
+
+    effect(() => {
+      reload();
+    }, { allowSignalWrites: true });
+
+    return {
+      projects: computed(() => state().projects),
+      isLoading: computed(() => state().isLoading),
+      reload,
+    };
   }
 }

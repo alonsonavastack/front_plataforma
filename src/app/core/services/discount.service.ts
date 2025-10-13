@@ -45,7 +45,7 @@ export class DiscountService {
   stats = computed(() => {
     const discountsData = this.discounts();
     const now = Date.now();
-    
+
     return {
       total: discountsData.length,
       active: discountsData.filter(d => d.state && d.end_date_num >= now && d.start_date_num <= now).length,
@@ -61,23 +61,25 @@ export class DiscountService {
 
   loadDiscounts(): Observable<DiscountsResponse> {
     this.state.update(s => ({ ...s, isLoading: true }));
-    
+
     return this.http.get<DiscountsResponse>(`${this.API_URL}discount/list`).pipe(
       tap({
         next: (response) => {
-          this.state.update(s => ({ 
-            ...s, 
-            discounts: response.discounts, 
-            isLoading: false, 
-            error: null 
+          // Imprime el arreglo de descuentos en la consola
+          console.log('Descuentos recibidos de la API:', response.discounts);
+          this.state.update(s => ({
+            ...s,
+            discounts: response.discounts,
+            isLoading: false,
+            error: null
           }));
         },
         error: (err) => {
-          this.state.update(s => ({ 
-            ...s, 
-            discounts: [], 
-            isLoading: false, 
-            error: err 
+          this.state.update(s => ({
+            ...s,
+            discounts: [],
+            isLoading: false,
+            error: err
           }));
         }
       })

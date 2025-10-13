@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { DiscountService } from '../../core/services/discount.service';
 import { Discount } from '../../core/models/discount.model';
 import { environment } from '../../../environments/environment';
@@ -8,7 +8,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-discounts',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './discounts.component.html',
 })
 export class DiscountsComponent implements OnInit {
@@ -60,6 +60,47 @@ export class DiscountsComponent implements OnInit {
   selectedCourses = signal<string[]>([]);
   selectedProjects = signal<string[]>([]);
   selectedCategories = signal<string[]>([]);
+  
+  itemSearchTerm = signal('');
+
+  // Computed signals para filtrado eficiente
+  filteredCourses = computed(() => {
+    const courses = this.config()?.courses;
+    if (!courses) return [];
+    
+    const search = this.itemSearchTerm().toLowerCase();
+    if (!search) return courses;
+    
+    return courses.filter(course => 
+      course.title.toLowerCase().includes(search) ||
+      course.categorie.title.toLowerCase().includes(search)
+    );
+  });
+
+  filteredProjects = computed(() => {
+    const projects = this.config()?.projects;
+    if (!projects) return [];
+    
+    const search = this.itemSearchTerm().toLowerCase();
+    if (!search) return projects;
+    
+    return projects.filter(project => 
+      project.title.toLowerCase().includes(search) ||
+      project.categorie.title.toLowerCase().includes(search)
+    );
+  });
+
+  filteredCategories = computed(() => {
+    const categories = this.config()?.categories;
+    if (!categories) return [];
+    
+    const search = this.itemSearchTerm().toLowerCase();
+    if (!search) return categories;
+    
+    return categories.filter(category => 
+      category.title.toLowerCase().includes(search)
+    );
+  });
 
   discountForm = new FormGroup({
     type_campaign: new FormControl(1, [Validators.required]),
@@ -331,12 +372,51 @@ export class DiscountsComponent implements OnInit {
   }
 
   getImageUrl(imagen: string, type: 'course' | 'project' | 'category'): string {
-    if (!imagen) return 'https://via.placeholder.com/150';
+    if (!imagen) {
+      // Imagen placeholder en base64 (1x1 pixel gris)
+      return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMjMzYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5NGEzYjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5TaW4gSW1hZ2VuPC90ZXh0Pjwvc3ZnPg==';
+    }
     const paths: Record<string, string> = {
       course: 'courses/imagen-course',
       project: 'project/imagen-project',
       category: 'categorie/imagen-categorie',
     };
     return `${environment.url}${paths[type]}/${imagen}`;
+  }
+
+  // Nuevas funciones para mejorar la UI
+  onSegmentChange(): void {
+    // Resetear búsqueda al cambiar de segmento
+    this.itemSearchTerm.set('');
+  }
+
+  selectAllItems(): void {
+    const typeSegment = this.discountForm.value.type_segment;
+    
+    if (typeSegment === 1 && this.config()?.courses) {
+      const filtered = this.filteredCourses();
+      const allIds = filtered.map(c => c._id);
+      this.selectedCourses.set([...new Set([...this.selectedCourses(), ...allIds])]);
+    } else if (typeSegment === 2 && this.config()?.categories) {
+      const filtered = this.filteredCategories();
+      const allIds = filtered.map(c => c._id);
+      this.selectedCategories.set([...new Set([...this.selectedCategories(), ...allIds])]);
+    } else if (typeSegment === 3 && this.config()?.projects) {
+      const filtered = this.filteredProjects();
+      const allIds = filtered.map(p => p._id);
+      this.selectedProjects.set([...new Set([...this.selectedProjects(), ...allIds])]);
+    }
+  }
+
+  clearAllItems(): void {
+    const typeSegment = this.discountForm.value.type_segment;
+    
+    if (typeSegment === 1) {
+      this.selectedCourses.set([]);
+    } else if (typeSegment === 2) {
+      this.selectedCategories.set([]);
+    } else if (typeSegment === 3) {
+      this.selectedProjects.set([]);
+    }
   }
 }

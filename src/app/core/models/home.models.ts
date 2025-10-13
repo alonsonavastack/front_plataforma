@@ -80,12 +80,27 @@ export interface CoursePublic {
   subtitle: string;
   slug: string;
   imagen?: string;
-  price_usd: number; // Mantener USD para precios internacionales
-  price_mxn: number; // Cambiado de price_soles a price_mxn
+  price_usd: number; // Precio original USD
+  price_mxn: number; // Precio original MXN
+  final_price_usd?: number; // Precio con descuento aplicado USD
+  final_price_mxn?: number; // Precio con descuento aplicado MXN
   level: string;
   idioma: string;
   categorie: Category;
   user: User;
+  // Campos de descuento
+  discount_active?: {
+    _id: string;
+    discount: number;
+    type_discount: number; // 1: porcentaje, 2: monto fijo
+    type_campaign: number; // 1: normal, 2: flash, 3: banner
+    end_date: string;
+  };
+  // Metadatos
+  N_CLASES?: number;
+  N_STUDENTS?: number;
+  N_REVIEWS?: number;
+  AVG_RATING?: string | number;
   // Añadir otras propiedades públicas del curso si son necesarias
 }
 
@@ -160,10 +175,20 @@ export interface Project {
   categorie: Category;
   price_mxn: number;
   price_usd: number;
+  final_price_mxn?: number; // Precio con descuento aplicado
+  final_price_usd?: number; // Precio con descuento aplicado
   state?: number; // 1: borrador, 2: publico, 3: anulado
   user?: User; // Opcional porque puede no estar poblado
   files?: ProjectFile[]; // Archivos ZIP adjuntos al proyecto
   featured?: boolean; // Añadido para saber si es destacado
+  // Campos de descuento
+  discount_active?: {
+    _id: string;
+    discount: number;
+    type_discount: number; // 1: porcentaje, 2: monto fijo
+    type_campaign: number; // 1: normal, 2: flash, 3: banner
+    end_date: string;
+  };
 }
 
 export interface ProjectListResponse {

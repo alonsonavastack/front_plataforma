@@ -1,0 +1,78 @@
+<!--
+  Este es el contenedor principal de la tarjeta.
+  - (click) maneja la navegación o la apertura del video.
+  - [class.cursor-pointer] añade el cursor de puntero si hay un video.
+-->
+<div
+  (click)="project.url_video ? onOpenVideo($event) : null"
+  [routerLink]="!project.url_video ? ['/project-detail', project._id] : null"
+  [class.cursor-pointer]="project.url_video"
+  class="flex flex-col h-full rounded-xl border border-white/10 bg-slate-800/50 hover:bg-slate-700/50 transition-colors group"
+>
+  <!-- Imagen del proyecto -->
+  <div class="h-40 bg-slate-900 overflow-hidden rounded-t-xl relative">
+    <img [src]="imageUrl()" [alt]="project.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+
+    <!-- Badge de descuento -->
+    @if (project.discount_active) {
+      <div class="absolute top-2 left-2 px-3 py-1 rounded-lg bg-lime-500 text-slate-900 text-sm font-bold shadow-lg">
+        -{{ project.discount_active.discount }}{{ project.discount_active.type_discount === 1 ? '%' : ' USD' }}
+      </div>
+    }
+
+    <!-- Icono de Play si hay video -->
+    @if (project.url_video) {
+      <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+        </svg>
+      </div>
+    }
+  </div>
+
+  <!-- Contenido de la tarjeta -->
+  <div class="p-4 flex flex-col flex-grow">
+    <h3 class="font-semibold text-white line-clamp-2">{{ project.title }}</h3>
+    <p class="text-sm text-white/60 mt-1 line-clamp-2">{{ project.subtitle }}</p>
+
+    <!-- Precios -->
+    <div class="flex items-baseline justify-between mt-3">
+      <div class="flex items-baseline gap-2">
+        <!-- Lógica para mostrar precios con y sin descuento -->
+        @if (project.discount_active && project.final_price_usd !== undefined) {
+          <!-- Precio con descuento -->
+          <div class="text-xl font-bold text-lime-300">${{ project.final_price_usd | number:'1.0-2' }}</div>
+          <!-- Precio original tachado -->
+          <div class="text-sm text-white/50 line-through">${{ project.price_usd | number:'1.0-2' }}</div>
+        } @else {
+          <!-- Precio normal sin descuento -->
+          <div class="text-xl font-bold text-lime-300">${{ project.price_usd | number:'1.0-2' }}</div>
+        }
+        <span class="text-white/60 text-sm">USD</span>
+      </div>
+      <!-- Badge de descuento (visible solo si hay descuento) -->
+      @if (project.discount_active) {
+        <span class="px-2 py-0.5 rounded bg-lime-500/20 text-lime-300 text-xs font-bold border border-lime-500/30">
+          -{{ project.discount_active.discount }}{{ project.discount_active.type_discount === 1 ? '%' : ' USD' }}
+        </span>
+      }
+    </div>
+
+    <!-- Botones de acción (sección que empuja hacia abajo) -->
+    <div class="mt-auto pt-4">
+      @if (isPurchased) {
+        <button class="w-full h-9 px-4 rounded-lg bg-sky-600/50 text-sky-300 text-sm font-semibold cursor-not-allowed" disabled>
+          Comprado
+        </button>
+      } @else if (isInCart) {
+        <button (click)="$event.stopPropagation(); $event.preventDefault()" class="w-full h-9 px-4 rounded-lg bg-slate-700 text-white/80 text-sm font-semibold hover:bg-slate-600 transition">
+          En el carrito
+        </button>
+      } @else {
+        <button (click)="onAddToCart($event)" class="w-full h-9 px-4 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed">
+          Añadir al carrito
+        </button>
+      }
+    </div>
+  </div>
+</div>

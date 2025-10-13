@@ -155,49 +155,14 @@
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         @for (project of featuredProjects(); track project._id) {
-          <!-- Cambiado de <a> a <div> o <button> para manejar el clic -->
-          <div
-            (click)="project.url_video ? openVideoModal(project.url_video) : null"
-            [routerLink]="!project.url_video ? ['/project-detail', project._id] : null"
-            [class.cursor-pointer]="project.url_video"
-            class="block rounded-xl border border-white/10 bg-slate-800/50 hover:bg-slate-700/50 transition-colors group"
-          >
-            <div class="h-40 bg-slate-900 overflow-hidden rounded-t-xl relative">
-              <img [src]="buildProjectImageUrl(project.imagen)" [alt]="project.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-              @if (project.url_video) {
-                <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
-                  </svg>
-                </div>
-              }
-            </div>
-            <div class="p-4">
-              <h3 class="font-semibold text-white line-clamp-2">{{ project.title }}</h3>
-              <p class="text-sm text-white/60 mt-1 line-clamp-2">{{ project.subtitle }}</p>
-              <div class="flex items-baseline justify-between mt-3">
-                <div class="text-lime-400 font-bold">${{ project.price_usd | number:'1.0-2' }} USD</div>
-              </div>
-              <!-- Botón de Carrito -->
-              <div class="mt-4">
-                @if (isProjectPurchased(project._id)) {
-                  <button class="w-full h-9 px-4 rounded-lg bg-sky-600/50 text-sky-300 text-sm font-semibold cursor-not-allowed" disabled>
-                    Comprado
-                  </button>
-                } @else if (isProjectInCart(project._id)) {
-                  <button (click)="$event.stopPropagation(); cartService.toggleDrawer()" class="w-full h-9 px-4 rounded-lg bg-slate-700 text-white/80 text-sm font-semibold hover:bg-slate-600 transition">
-                    Ver en el carrito
-                  </button>
-                } @else {
-                  <button (click)="addProjectToCart(project, $event)"
-                          [disabled]="!authService.isLoggedIn()"
-                          class="w-full h-9 px-4 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                    Añadir al carrito
-                  </button>
-                }
-              </div>
-            </div>
-          </div>
+          <!-- Usando el componente reutilizable app-projects-card -->
+          <app-projects-card
+            [project]="project"
+            [isPurchased]="isProjectPurchased(project._id)"
+            [isInCart]="isProjectInCart(project._id)"
+            (addToCart)="addProjectToCart($event)"
+            (openVideo)="openVideoModal($event)"
+          ></app-projects-card>
         }
       </div>
     </section>
@@ -425,9 +390,25 @@
 
                   <!-- Precio y botones -->
                   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-auto">
-                    <div>
-                      <span class="text-xl sm:text-2xl font-bold text-lime-300">${{ item.price_usd | number:'1.0-2' }}</span>
-                      <span class="text-white/60 text-sm ml-1">USD</span>
+                    <div class="flex items-baseline gap-2">
+                      @if (item.discount_active && item.final_price_usd !== undefined) {
+                        <!-- Precio con descuento -->
+                        <div class="text-xl sm:text-2xl font-bold text-lime-300">
+                          ${{ item.final_price_usd | number:'1.0-2' }}
+                        </div>
+                        <!-- Precio original tachado -->
+                        <div class="text-sm text-white/50 line-through">
+                          ${{ item.price_usd | number:'1.0-2' }}
+                        </div>
+                        <!-- Badge de descuento -->
+                        <span class="px-2 py-0.5 rounded bg-lime-500/20 text-lime-300 text-xs font-bold border border-lime-500/30">
+                          -{{ item.discount_active.discount }}{{ item.discount_active.type_discount === 1 ? '%' : ' USD' }}
+                        </span>
+                      } @else {
+                        <!-- Precio normal sin descuento -->
+                        <div class="text-xl sm:text-2xl font-bold text-lime-300">${{ item.price_usd | number:'1.0-2' }}</div>
+                      }
+                      <span class="text-white/60 text-sm">USD</span>
                     </div>
 
                     <!-- Botones de acción -->
@@ -467,7 +448,7 @@
                           </button>
                         } @else {
                           <button
-                            (click)="addProjectToCart(item, $event)"
+                            (click)="addProjectToCart(item)"
                             [disabled]="!authService.isLoggedIn()"
                             class="px-4 py-2 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
                           >
