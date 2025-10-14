@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { HeaderComponent } from '../../layout/header/header';
 import { AuthService } from '../../core/services/auth';
+import { HttpClient } from '@angular/common/http';
 import { ProfileService } from '../../core/services/profile';
 import { AdminService } from '../../core/services/admin.service';
 
@@ -16,6 +17,7 @@ export class ProfileAdminComponent implements OnInit {
   authService = inject(AuthService);
   profileService = inject(ProfileService);
   adminService = inject(AdminService); // Inyectamos el servicio correcto
+  http = inject(HttpClient); // Inyectamos HttpClient para llamadas específicas
 
   isSubmitting = signal(false);
   isPasswordSubmitting = signal(false);
@@ -82,7 +84,7 @@ export class ProfileAdminComponent implements OnInit {
       const file = input.files[0];
       this.profileService.updateAvatar(file).subscribe({
         next: (response) => {
-          this.authService.user.set(response.user);
+          this.authService.updateUser(response.user);
           alert('¡Avatar actualizado con éxito!');
         },
         error: (err) => {
@@ -98,9 +100,11 @@ export class ProfileAdminComponent implements OnInit {
 
     this.isPasswordSubmitting.set(true);
     const { newPassword, currentPassword } = this.passwordForm.getRawValue();
-    const payload = { password: newPassword, old_password: currentPassword };
+    // El backend espera 'newPassword' y 'currentPassword'
+    const payload = { newPassword, currentPassword };
 
-    this.profileService.update(payload).subscribe({
+    // Llamamos directamente al endpoint específico para cambiar la contraseña
+    this.http.put<any>(`${this.profileService.base}profile-admin/update-password`, payload).subscribe({
       next: () => {
         alert('¡Contraseña actualizada con éxito! Se cerrará la sesión por seguridad.');
         this.passwordForm.reset();

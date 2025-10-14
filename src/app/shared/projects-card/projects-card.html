@@ -1,20 +1,30 @@
-<!--
-  Este es el contenedor principal de la tarjeta.
-  - (click) maneja la navegación o la apertura del video.
-  - [class.cursor-pointer] añade el cursor de puntero si hay un video.
--->
 <div
   (click)="project.url_video ? onOpenVideo($event) : null"
   [routerLink]="!project.url_video ? ['/project-detail', project._id] : null"
   [class.cursor-pointer]="project.url_video"
-  class="flex flex-col h-full rounded-xl border border-white/10 bg-slate-800/50 hover:bg-slate-700/50 transition-colors group"
+  class="flex flex-col h-full rounded-xl border border-white/10 bg-slate-800/50 hover:bg-slate-700/50 transition-colors group relative"
 >
+  <!-- Badge de Ya Comprado -->
+  @if (isPurchased()) {
+    <div class="absolute top-2 right-2 z-10 px-3 py-1 rounded-full text-xs font-bold
+                bg-green-500 text-white shadow-lg flex items-center gap-1">
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+      </svg>
+      Comprado
+    </div>
+  }
+
   <!-- Imagen del proyecto -->
   <div class="h-40 bg-slate-900 overflow-hidden rounded-t-xl relative">
-    <img [src]="imageUrl()" [alt]="project.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+    <img 
+      [src]="imageUrl()" 
+      [alt]="project.title" 
+      [class.opacity-60]="isPurchased()"
+      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
 
     <!-- Badge de descuento -->
-    @if (project.discount_active) {
+    @if (project.discount_active && !isPurchased()) {
       <div class="absolute top-2 left-2 px-3 py-1 rounded-lg bg-lime-500 text-slate-900 text-sm font-bold shadow-lg">
         -{{ project.discount_active.discount }}{{ project.discount_active.type_discount === 1 ? '%' : ' USD' }}
       </div>
@@ -38,19 +48,14 @@
     <!-- Precios -->
     <div class="flex items-baseline justify-between mt-3">
       <div class="flex items-baseline gap-2">
-        <!-- Lógica para mostrar precios con y sin descuento -->
         @if (project.discount_active && project.final_price_usd !== undefined) {
-          <!-- Precio con descuento -->
           <div class="text-xl font-bold text-lime-300">${{ project.final_price_usd | number:'1.0-2' }}</div>
-          <!-- Precio original tachado -->
           <div class="text-sm text-white/50 line-through">${{ project.price_usd | number:'1.0-2' }}</div>
         } @else {
-          <!-- Precio normal sin descuento -->
           <div class="text-xl font-bold text-lime-300">${{ project.price_usd | number:'1.0-2' }}</div>
         }
         <span class="text-white/60 text-sm">USD</span>
       </div>
-      <!-- Badge de descuento (visible solo si hay descuento) -->
       @if (project.discount_active) {
         <span class="px-2 py-0.5 rounded bg-lime-500/20 text-lime-300 text-xs font-bold border border-lime-500/30">
           -{{ project.discount_active.discount }}{{ project.discount_active.type_discount === 1 ? '%' : ' USD' }}
@@ -58,19 +63,29 @@
       }
     </div>
 
-    <!-- Botones de acción (sección que empuja hacia abajo) -->
+    <!-- Botones de acción -->
     <div class="mt-auto pt-4">
-      @if (isPurchased) {
-        <button class="w-full h-9 px-4 rounded-lg bg-sky-600/50 text-sky-300 text-sm font-semibold cursor-not-allowed" disabled>
-          Comprado
-        </button>
-      } @else if (isInCart) {
-        <button (click)="$event.stopPropagation(); $event.preventDefault()" class="w-full h-9 px-4 rounded-lg bg-slate-700 text-white/80 text-sm font-semibold hover:bg-slate-600 transition">
-          En el carrito
+      @if (isPurchased()) {
+        <a 
+          [routerLink]="['/project-detail', project._id]"
+          (click)="$event.stopPropagation()"
+          class="block w-full text-center px-4 py-2 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg font-medium hover:bg-green-500/30 transition-colors">
+          Ver Proyecto
+        </a>
+      } @else if (isInCart()) {
+        <button 
+          disabled
+          class="w-full px-4 py-2 bg-slate-600 text-slate-400 rounded-lg font-medium cursor-not-allowed">
+          En el Carrito
         </button>
       } @else {
-        <button (click)="onAddToCart($event)" class="w-full h-9 px-4 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed">
-          Añadir al carrito
+        <button 
+          (click)="addToCart($event)" 
+          class="w-full px-4 py-2 bg-lime-400 hover:bg-lime-500 text-slate-900 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          Añadir al Carrito
         </button>
       }
     </div>

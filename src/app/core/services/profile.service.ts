@@ -97,7 +97,11 @@ export class ProfileService {
     else if (user?.rol === 'cliente') endpoint = 'profile-student/update-avatar';
     else endpoint = 'users/update';
 
-    return this.http.put<any>(`${this.base}${endpoint}`, formData).pipe(
+    const request = (user?.rol === 'admin' || user?.rol === 'instructor')
+      ? this.http.post<any>(`${this.base}${endpoint}`, formData)
+      : this.http.put<any>(`${this.base}${endpoint}`, formData); // Cliente usa PUT
+
+    return request.pipe(
       tap(response => {
         const updatedUser = response.user || response;
         if (updatedUser) {

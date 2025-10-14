@@ -51,6 +51,9 @@
                (clickOutside)="isProfileMenuOpen.set(false)">
             <a [routerLink]="getProfileLink()" (click)="isProfileMenuOpen.set(false)" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/80 hover:text-lime-300">Mi Panel</a>
             <a routerLink="/" (click)="isProfileMenuOpen.set(false)" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/80 hover:text-lime-300">Ver Sitio</a>
+            @if (authService.user()?.rol === 'admin' || authService.user()?.rol === 'instructor') {
+              <a routerLink="/dashboard" class="block py-2 pr-4 pl-3 rounded hover:bg-gray-700 text-lime-400 hover:text-white border-gray-700">Dashboard</a>
+            }
             <div class="border-t border-white/10 my-1"></div>
             <button (click)="logout()" class="w-full text-left block px-4 py-2 text-sm text-red-400 font-medium hover:bg-slate-700/80">Cerrar Sesión</button>
           </div>

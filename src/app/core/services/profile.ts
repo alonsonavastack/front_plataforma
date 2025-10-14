@@ -1,11 +1,11 @@
 // src/app/core/services/profile.service.ts
-import { HttpClient } from '@angular/common/http';
-import { computed, inject, Injectable } from '@angular/core';
-import { environment } from '../../../environments/environment';
-import { catchError, tap, throwError } from 'rxjs';
-import { AuthService } from './auth';
+import { HttpClient } from "@angular/common/http";
+import { computed, inject, Injectable } from "@angular/core";
+import { environment } from "../../../environments/environment";
+import { catchError, tap, throwError } from "rxjs";
+import { AuthService } from "./auth";
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class ProfileService {
   http = inject(HttpClient);
   authService = inject(AuthService);
@@ -21,21 +21,21 @@ export class ProfileService {
   update(body: any) {
     // Determina el endpoint correcto basado en el rol del usuario
     const user = this.authService.user();
-    let endpoint = '';
-    if (user?.rol === 'admin') {
-      endpoint = 'users/update'; // Admin usa el endpoint genérico de usuarios
-    } else if (user?.rol === 'instructor') {
-      endpoint = 'profile-instructor/update';
-    } else if (user?.rol === 'cliente') {
-      endpoint = 'profile-student/update';
+    let endpoint = "";
+    if (user?.rol === "admin") {
+      endpoint = "profile-admin/update"; // Admin usa el endpoint genérico de usuarios
+    } else if (user?.rol === "instructor") {
+      endpoint = "profile-instructor/update";
+    } else if (user?.rol === "cliente") {
+      endpoint = "profile-student/update";
     } else {
-      endpoint = 'users/update'; // Fallback genérico
+      endpoint = "users/update"; // Fallback genérico
     }
 
     return this.http.put<any>(`${this.base}${endpoint}`, body).pipe(
       // Después de actualizar, actualizamos la señal del perfil en AuthService.
-      tap(response => {
-        console.log('Respuesta de update:', response);
+      tap((response) => {
+        console.log("Respuesta de update:", response);
         // La respuesta puede venir como { profile: ... }, { user: ... }, o el objeto de usuario directamente.
         const updatedUser = response.profile || response.user || response;
         if (updatedUser) {
@@ -45,31 +45,37 @@ export class ProfileService {
           this.authService.user.set(updatedUser);
         }
       }),
-      catchError(err => throwError(() => err))
+      catchError((err) => throwError(() => err))
     );
   }
 
   updateAvatar(file: File) {
     const formData = new FormData();
-    formData.append('avatar', file);
+    formData.append("avatar", file);
 
     // Hacemos que el endpoint sea dinámico según el rol
     const user = this.authService.user();
-    let endpoint = '';
-    if (user?.rol === 'admin') {
-      endpoint = 'users/update'; // Admin usa el endpoint genérico de usuarios que maneja multipart
-    } else if (user?.rol === 'instructor') {
-      endpoint = 'profile-instructor/update'; // Revertido: Instructor usa una ruta diferente para el avatar
-    } else if (user?.rol === 'cliente') {
-      endpoint = 'profile-student/update-avatar';
+    let endpoint = "";
+    if (user?.rol === "admin") {
+      endpoint = "profile-admin/update-avatar"; // Endpoint correcto y dedicado para el avatar del admin
+    } else if (user?.rol === "instructor") {
+      endpoint = "profile-instructor/update-avatar"; // Revertido: Instructor usa una ruta diferente para el avatar
+    } else if (user?.rol === "cliente") {
+      endpoint = "profile-student/update-avatar";
     } else {
-      endpoint = 'users/update'; // Fallback genérico
+      return throwError(
+        () => new Error("Rol de usuario no reconocido para actualizar avatar.")
+      );
     }
 
-    return this.http.put<any>(`${this.base}${endpoint}`, formData).pipe(
+    const request = (user?.rol === 'admin' || user?.rol === 'instructor')
+      ? this.http.post<any>(`${this.base}${endpoint}`, formData)
+      : this.http.put<any>(`${this.base}${endpoint}`, formData); // Cliente usa PUT
+
+    return request.pipe(
       // Después de actualizar el avatar, actualizamos la señal del usuario en AuthService.
-      tap(response => {
-        console.log('Respuesta de updateAvatar:', response);
+      tap((response) => {
+        console.log("Respuesta de updateAvatar:", response);
         // La respuesta puede venir como { user: ... } o el objeto de usuario directamente.
         const updatedUser = response.user || response;
         if (updatedUser) {
@@ -78,7 +84,7 @@ export class ProfileService {
           this.authService.user.set(userToSet);
         }
       }),
-      catchError(err => throwError(() => err))
+      catchError((err) => throwError(() => err))
     );
   }
 }

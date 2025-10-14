@@ -1,8 +1,11 @@
-import { Component, Input, Output, EventEmitter, computed, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Project } from '../../core/models/home.models';
 import { environment } from '../../../environments/environment';
+import { PurchasesService } from '../../core/services/purchases.service';
+import { CartService } from '../../core/services/cart.service';
+import { AuthService } from '../../core/services/auth';
 
 @Component({
   selector: 'app-projects-card',
@@ -13,15 +16,14 @@ import { environment } from '../../../environments/environment';
 })
 export class ProjectsCard implements OnInit {
   @Input({ required: true }) project!: Project;
-  @Input() isPurchased: boolean = false;
-  @Input() isInCart: boolean = false;
-
-  @Output() addToCart = new EventEmitter<Project>();
   @Output() openVideo = new EventEmitter<string>();
 
-  ngOnInit(): void {
-    // Imprime los datos del proyecto en la consola cuando el componente se inicializa.
+  private purchasesService = inject(PurchasesService);
+  private cartService = inject(CartService);
+  private authService = inject(AuthService);
 
+  ngOnInit(): void {
+    // Componente inicializado
   }
 
   // Construye la URL de la imagen del proyecto
@@ -31,12 +33,33 @@ export class ProjectsCard implements OnInit {
     }
     return `${environment.url}project/imagen-project/${this.project.imagen}`;
   });
+  
+  // Verificar si ya fue comprado
+  isPurchased = computed(() => {
+    return this.project?._id ? this.purchasesService.isPurchased(this.project._id) : false;
+  });
+  
+  // Verificar si está en el carrito
+  isInCart = computed(() => {
+    if (!this.project?._id) return false;
+    return this.cartService.items().some(item => 
+      item.product._id === this.project._id && item.product_type === 'project'
+    );
+  });
 
-  // Emite el evento para añadir al carrito
-  onAddToCart(event: MouseEvent): void {
+  // Agregar al carrito
+  addToCart(event: MouseEvent): void {
     event.stopPropagation();
     event.preventDefault();
-    this.addToCart.emit(this.project);
+    
+    if (!this.project._id || this.isPurchased() || this.isInCart()) return;
+    
+    if (!this.authService.isLoggedIn()) {
+      alert('Debes iniciar sesión para agregar al carrito');
+      return;
+    }
+    
+    this.cartService.addToCart(this.project, 'project');
   }
 
   // Emite el evento para abrir el modal de video

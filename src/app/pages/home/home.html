@@ -158,9 +158,6 @@
           <!-- Usando el componente reutilizable app-projects-card -->
           <app-projects-card
             [project]="project"
-            [isPurchased]="isProjectPurchased(project._id)"
-            [isInCart]="isProjectInCart(project._id)"
-            (addToCart)="addProjectToCart($event)"
             (openVideo)="openVideoModal($event)"
           ></app-projects-card>
         }

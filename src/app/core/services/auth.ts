@@ -2,7 +2,7 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal, effect } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { tap, catchError, of } from 'rxjs';
+import { tap, catchError, of, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 
 export interface User {
@@ -53,6 +53,14 @@ export class AuthService {
   isAuthenticating = signal<boolean>(false);
   isLoggedIn = computed(() => !!this.user() && !!this.token());
 
+  // Estado para la verificación de la sesión, siguiendo el patrón httpResource
+  private sessionState = signal<{
+    user: User | null;
+    error: any;
+    isLoading: boolean;
+    isLoaded: boolean;
+  }>({ user: null, error: null, isLoading: false, isLoaded: false });
+
   // Computed signal para construir la URL del avatar de forma segura
   currentUserAvatar = computed(() => {
     const user = this.user();
@@ -79,14 +87,36 @@ export class AuthService {
       }
     });
 
-    // Al inicializar, verificar si hay un token válido
-    this.verifyStoredSession();
+    // Efecto para manejar el resultado de la verificación de sesión
+    effect(() => {
+      const state = this.sessionState();
+      this.isAuthenticating.set(state.isLoading);
+
+      if (state.isLoaded) {
+        if (state.user) {
+          // Sesión válida, actualizamos el usuario
+          this.user.set(state.user);
+        } else if (state.error) {
+          // Error de autenticación (401/403), limpiamos la sesión
+          this.token.set(null);
+          this.user.set(null);
+        }
+        // Si no hay error ni usuario, es porque no había token, no hacemos nada.
+        this.isSessionLoaded.set(true);
+      }
+    });
+
+    // La verificación de la sesión se inicia de forma asíncrona para evitar
+    // dependencias circulares con HttpClient y sus interceptores.
+    setTimeout(() => {
+      this.verifyStoredSession();
+    }, 0);
   }
 
   private verifyStoredSession() {
     const token = this.token();
     const storedUser = this.user();
-    
+
     if (token && storedUser) {
       this.isAuthenticating.set(true);
 
@@ -96,7 +126,7 @@ export class AuthService {
             console.error('Error verifying session:', error);
             console.error('Status:', error.status);
             console.error('Error details:', error.error);
-            
+
             // Solo limpiar la sesión si es un error de autenticación (401)
             // Para otros errores, mantener la sesión almacenada
             if (error.status === 401 || error.status === 403) {
@@ -180,6 +210,15 @@ export class AuthService {
     this.token.set(null);
     this.user.set(null);
     this.router.navigate(['/']);
+  }
+
+  /**
+   * Actualiza la señal del usuario con nuevos datos.
+   * Útil después de que un componente actualiza el perfil del usuario.
+   * @param updatedUser El objeto de usuario actualizado recibido del backend.
+   */
+  updateUser(updatedUser: User): void {
+    this.user.set(updatedUser);
   }
 
   register(userData: any) {

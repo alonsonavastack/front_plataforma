@@ -28,7 +28,7 @@ export class CheckoutComponent implements OnInit {
   // Computed values
   cartItems = computed(() => {
     const items = this.cartService.items();
-    console.log('Cart items in checkout:', items); // Debug
+
     return items;
   });
   subtotal = computed(() => this.cartService.subtotal());
@@ -121,11 +121,6 @@ export class CheckoutComponent implements OnInit {
 
         // Limpiar el carrito
         this.cartService.reloadCart();
-
-        // Redirigir después de 3 segundos
-        setTimeout(() => {
-          this.router.navigate(['/profile-student']);
-        }, 3000);
       },
       error: (error) => {
         console.error('Error al procesar la venta:', error);
@@ -135,14 +130,18 @@ export class CheckoutComponent implements OnInit {
     });
   }
 
+  closeSuccessModalAndRedirect(): void {
+    this.showSuccess.set(false);
+    this.router.navigate(['/profile-student']);
+  }
+
   // El backend ya devuelve la URL completa de la imagen, solo necesitamos devolverla
   buildImageUrl(imagen: string): string {
     if (!imagen) {
-      console.warn('No image provided');
+
       return 'https://via.placeholder.com/150x100?text=Sin+Imagen';
     }
 
-    console.log('Image URL:', imagen); // Debug
     return imagen;
   }
 

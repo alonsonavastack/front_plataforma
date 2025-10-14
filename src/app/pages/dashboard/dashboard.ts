@@ -15,6 +15,8 @@ import { UsersComponent } from '../users/users.component';
 import { SettingsComponent } from '../settings/settings.component';
 import { AppearanceComponent } from '../appearance/appearance.component';
 import { DiscountsComponent } from '../discounts/discounts.component';
+import { ReportsComponent } from '../reports/reports.component';
+
 
 import { NavId, NavItem } from './nav.types';
 
@@ -22,7 +24,21 @@ import { NavId, NavItem } from './nav.types';
 @Component({
   standalone: true,
   selector: 'app-dashboard',
-  imports: [CommonModule, TopbarComponent, SidebarComponent, Categories, CoursesComponent, ProjectsComponent, StudentsComponent, SalesComponent, UsersComponent, SettingsComponent, AppearanceComponent, DiscountsComponent],
+  imports: [
+    CommonModule,
+    TopbarComponent,
+    SidebarComponent,
+    Categories,
+    CoursesComponent,
+    ProjectsComponent,
+    StudentsComponent,
+    SalesComponent,
+    UsersComponent,
+    SettingsComponent,
+    AppearanceComponent,
+    DiscountsComponent,
+    ReportsComponent
+  ],
   templateUrl: './dashboard.html',
 })
 export class DashboardComponent implements OnInit, AfterViewInit {
@@ -45,7 +61,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     { id: 'sales', label: 'Ventas', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
     { id: 'projects', label: 'Proyectos',    icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' },
     { id: 'students', label: 'Estudiantes',  icon: 'M15 11a3 3 0 1 0-6 0m10 10a7 7 0 0 0-14 0' },
-    { id: 'reports',  label: 'Reportes',     icon: 'M3 12l6 6L21 6' },
+    { id: 'reports',  label: 'Reportes',     icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
     { id: 'appearance', label: 'Apariencia', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' },
     { id: 'settings', label: 'Ajustes',      icon: 'M12 6v12m6-6H6' },
   ];
@@ -55,7 +71,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     // Filtramos para que los instructores no vean 'users', 'settings' ni 'appearance'
     return this.allItems.filter(item =>
       item.id !== 'users' &&
+      item.id !== 'discounts' &&
       item.id !== 'settings' &&
+      item.id !== 'categories' &&
+      item.id !== 'courses' &&
       item.id !== 'appearance'
     );
   });

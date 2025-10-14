@@ -1,42 +1,49 @@
 // src/app/shared/course-card/course-card.ts
 import { CommonModule } from '@angular/common';
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment.development';
+import { PurchasesService } from '../../core/services/purchases.service';
+import { CartService } from '../../core/services/cart.service';
+import { AuthService } from '../../core/services/auth';
 
 type AnyObj = Record<string, any>;
 
 @Component({
   standalone: true,
   selector: 'course-card',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './course-card.html',
 })
 export class CourseCardComponent {
   course = input.required<AnyObj>();
 
+  private purchasesService = inject(PurchasesService);
+  private cartService = inject(CartService);
+  private authService = inject(AuthService);
+
   galeria = environment.images.course;
+
   private buildImage(part: string | null | undefined): string {
     if (!part) return 'https://picsum.photos/seed/course-card/640/360';
     const p = String(part).trim();
-    // Si ya es una URL absoluta o una ruta de API, la devuelve directamente.
     if (/^https?:\/\//i.test(p)) {
       return p;
     }
     const base = this.galeria.endsWith('/') ? this.galeria : this.galeria + '/';
-    // Si no, construye la URL completa.
     return base + encodeURIComponent(p);
   }
 
   title = computed(() => this.course()?.['title'] ?? '');
   slug  = computed(() => this.course()?.['slug'] ?? '');
+  courseId = computed(() => this.course()?.['_id'] ?? '');
 
   isLink = computed(() => !!this.slug());
 
   coverUrl = computed(() => {
     const c = this.course();
     const img = c?.['imagen'] || c?.['cover'] || c?.['portada'] || null;
-    return this.buildImage(img); // Usar el helper para construir la URL
+    return this.buildImage(img);
   });
 
   category = computed(() => {
@@ -72,4 +79,32 @@ export class CourseCardComponent {
   reviews = computed<number>(() =>
     Number(this.course()?.['n_reviews'] ?? this.course()?.['nReviews'] ?? 0)
   );
+
+  // Verificar si ya fue comprado
+  isPurchased = computed(() => {
+    const id = this.courseId();
+    return id ? this.purchasesService.isPurchased(id) : false;
+  });
+
+  // Verificar si está en el carrito
+  isInCart = computed(() => {
+    const id = this.courseId();
+    if (!id) return false;
+    return this.cartService.items().some(item =>
+      item.product._id === id && item.product_type === 'course'
+    );
+  });
+
+  // Agregar al carrito
+  addToCart() {
+    const id = this.courseId();
+    if (!id || this.isPurchased() || this.isInCart()) return;
+
+    if (!this.authService.isLoggedIn()) {
+      alert('Debes iniciar sesión para agregar al carrito');
+      return;
+    }
+
+    this.cartService.addToCart(this.course(), 'course');
+  }
 }
