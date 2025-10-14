@@ -9,7 +9,6 @@ import { AuthService } from '../../core/services/auth';
 
 @Component({
   selector: 'app-projects-card',
-  standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './projects-card.html',
   styleUrl: './projects-card.css'
@@ -33,16 +32,16 @@ export class ProjectsCard implements OnInit {
     }
     return `${environment.url}project/imagen-project/${this.project.imagen}`;
   });
-  
+
   // Verificar si ya fue comprado
   isPurchased = computed(() => {
     return this.project?._id ? this.purchasesService.isPurchased(this.project._id) : false;
   });
-  
+
   // Verificar si está en el carrito
   isInCart = computed(() => {
     if (!this.project?._id) return false;
-    return this.cartService.items().some(item => 
+    return this.cartService.items().some(item =>
       item.product._id === this.project._id && item.product_type === 'project'
     );
   });
@@ -51,14 +50,14 @@ export class ProjectsCard implements OnInit {
   addToCart(event: MouseEvent): void {
     event.stopPropagation();
     event.preventDefault();
-    
+
     if (!this.project._id || this.isPurchased() || this.isInCart()) return;
-    
+
     if (!this.authService.isLoggedIn()) {
       alert('Debes iniciar sesión para agregar al carrito');
       return;
     }
-    
+
     this.cartService.addToCart(this.project, 'project');
   }
 

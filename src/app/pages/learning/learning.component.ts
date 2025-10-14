@@ -44,7 +44,10 @@ export class LearningComponent implements OnInit {
   });
 
   // Extrae la malla curricular
-  curriculum = computed(() => this.course()?.malla_curricular || []);
+  curriculum = computed(() => {
+    const c = this.course();
+    return c?.malla_curricular || c?.malla || [];
+  });
 
   // Construye la URL segura para el iframe de Vimeo
   videoUrl = computed<SafeResourceUrl | null>(() => {

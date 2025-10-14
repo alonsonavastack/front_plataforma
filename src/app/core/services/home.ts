@@ -23,6 +23,20 @@ interface HomeApiResponse {
   courses_featured?: CoursePublic[]; // Añadido para cursos destacados
 }
 
+// Extendemos la interfaz CoursePublic para incluir las propiedades que faltan
+export interface CoursePublicWithMalla extends CoursePublic {
+  malla_curricular?: any[];
+  malla?: any[];
+}
+
+interface CourseDetailResponse {
+  course: CoursePublicWithMalla | undefined;
+  reviews: any[];
+  course_instructor: CoursePublic[];
+  course_relateds: CoursePublic[];
+  student_have_course: boolean;
+}
+
 @Injectable({ providedIn: "root" })
 export class HomeService {
   http = inject(HttpClient);
@@ -184,14 +198,18 @@ export class HomeService {
   // ---- SHOW: /home/show_course/:slug (GET) ----
   // src/app/core/services/home.service.ts
   coursePublicResource = (slugSignal: () => string) => {
-    const state = signal({
+    const state = signal<{
+      value: CourseDetailResponse;
+      isLoading: boolean;
+      error: any;
+    }>({
       value: {
         course: undefined,
         reviews: [],
         course_instructor: [],
         course_relateds: [],
         student_have_course: false,
-      } as any,
+      },
       isLoading: false,
       error: null,
     });
@@ -201,11 +219,11 @@ export class HomeService {
       if (!slug) return;
 
       state.update(s => ({ ...s, isLoading: true }));
-      const url = `${this.base}home/landing-curso/${slug}${toQuery({ TIME_NOW: Date.now() })}`;
+      const url = `${this.base}home/show_course/${slug}${toQuery({ TIME_NOW: Date.now() })}`;
 
-      this.http.get<any>(url).subscribe({
+      this.http.get<CourseDetailResponse>(url).subscribe({
         next: (data) => state.set({ value: data, isLoading: false, error: null }),
-        error: (err) => state.update(s => ({ ...s, isLoading: false, error: err })),
+        error: (err) => state.update(s => ({ ...s, value: { course: undefined, reviews: [], course_instructor: [], course_relateds: [], student_have_course: false }, isLoading: false, error: err })),
       });
     };
 

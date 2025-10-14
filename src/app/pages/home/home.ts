@@ -27,6 +27,7 @@ import { ProfileService } from "../../core/services/profile.service";
 import { CategoriesService } from "../../core/services/categories";
 import { ProjectsCard } from "../../shared/projects-card/projects-card";
 import { DiscountService } from "../../core/services/discount.service";
+import { SearchService } from "../../core/services/search";
 
 @Component({
   standalone: true,
@@ -49,6 +50,7 @@ export class HomeComponent implements OnInit {
   profileService = inject(ProfileService);
   categoriesService = inject(CategoriesService);
   discountService = inject(DiscountService);
+  searchService = inject(SearchService);
 
   // ---------- UI state ----------
   q = signal<string>("");
@@ -340,29 +342,19 @@ export class HomeComponent implements OnInit {
   // y con 3+ caracteres en auto-búsqueda (debounce).
   minLen = 2;
   searching = signal<boolean>(false);
-  searchRows = signal<CoursePublic[] | null>(null); // resultados de POST /home/search_course
+  isSearchLoading = this.searchService.isLoading; // Estado de carga desde el servicio
+  isResultsVisible = signal<boolean>(false); // Controla la visibilidad del panel de resultados
+  searchRows = this.searchService.results; // resultados de GET /home/general_search
 
   // Lista efectiva para pintar (featured o searchRows) con filtros locales
   courses = computed<CoursePublic[]>(() => {
-    const isSearchActive = this.searchRows() !== null;
-    const base = isSearchActive ? this.searchRows()! : this.featuredSafe();
+    const isSearchActive = this.q().trim().length > 0 && (this.searchRows()?.length ?? 0) > 0;
 
-    // Imprime en consola solo cuando se están mostrando los cursos destacados
-    if (!isSearchActive) {
-      console.log("Cursos Destacados (datos recibidos):", base);
-    }
-
-    const cat = this.selectedCategorie();
-    const term = this.q().trim().toLowerCase();
-
-    const result = base.filter((c: any) => {
-      const catId =
-        typeof c?.categorie === "object" ? c.categorie._id : c.categorie;
-      const byCat = !cat || catId === cat;
-      const byQ = !term || (c?.title || "").toLowerCase().includes(term);
-      return byCat && byQ;
-    });
-    return result;
+    // La sección de "Cursos destacados" ahora solo mostrará los cursos que vienen de la API,
+    // sin ser afectada por el buscador, que es independiente.
+    // La búsqueda se maneja en el panel flotante a través de `searchRows`.
+    // La lógica de filtrado por categoría se mantiene para la sección de catálogo.
+    return this.featuredSafe();
   });
 
   // Botón Buscar deshabilitado si: ya está buscando, o no hay categoría y el término es < minLen
@@ -395,9 +387,10 @@ export class HomeComponent implements OnInit {
   onSearchInput(raw: string): void {
     const v = this.sanitizeTerm(raw);
     this.q.set(v);
+    this.isResultsVisible.set(true); // Muestra el panel al empezar a escribir
 
     if (v.trim().length === 0) {
-      this.searchRows.set(null);
+      this.clearSearch(); // Limpia los resultados del servicio
       return;
     }
 
@@ -409,15 +402,21 @@ export class HomeComponent implements OnInit {
   }
 
   onSearchKeydown(ev: KeyboardEvent): void {
-    if (ev.key === "Enter") this.submitSearch();
-    else if (ev.key === "Escape") this.clearSearch();
+    if (ev.key === "Enter") {
+      this.submitSearch();
+      this.isResultsVisible.set(false); // Oculta el panel al presionar Enter
+    }
+    else if (ev.key === "Escape") {
+      this.clearSearch();
+      this.isResultsVisible.set(false); // Oculta el panel al presionar Escape
+    }
   }
 
   submitSearch(): void {
     const term = this.q().trim();
     // Si no hay término ni categoría, solo limpiamos resultados
     if (!term && !this.selectedCategorie()) {
-      this.searchRows.set(null);
+      this.clearSearch(); // Usamos clearSearch para limpiar los resultados en el servicio
       return;
     }
     this.runSearch(true); // true = submit manual (permite 1+ char)
@@ -426,7 +425,9 @@ export class HomeComponent implements OnInit {
   clearSearch(): void {
     clearTimeout(this.debounceId);
     this.q.set("");
-    this.searchRows.set(null);
+    this.isResultsVisible.set(false); // Oculta el panel
+    // El servicio ya maneja la limpieza si la query está vacía, no es necesaria una suscripción aquí.
+    this.searchService.runSearch({ q: '' });
   }
 
   /**
@@ -444,29 +445,15 @@ export class HomeComponent implements OnInit {
       if (term.length < 1 && !this.selectedCategorie()) return;
     }
 
-    this.searching.set(true);
-    this.api
-      .searchCourses({
-        q: term || undefined,
-        categorie: this.selectedCategorie() || undefined,
-      })
-      .subscribe({
-        next: (rows) => {
-          // Si la API devuelve resultados, los usamos. Si no, hacemos un fallback local.
-          const results =
-            Array.isArray(rows) && rows.length > 0
-              ? rows
-              : this.getLocalFallback(term);
-          this.searchRows.set(results);
-        },
-        error: () => {
-          // En caso de error en la API, también usamos el fallback local.
-          this.searchRows.set(this.getLocalFallback(term));
-        },
-        complete: () => this.searching.set(false),
-      });
+    // Usamos el nuevo SearchService
+    this.searchService.runSearch({
+      q: term || undefined,
+      categoryId: this.selectedCategorie() || undefined,
+    }).subscribe(); // La suscripción es necesaria para que la petición se ejecute
   }
 
+  // El fallback local ya no es necesario, el servicio de búsqueda es la única fuente de verdad.
+  /*
   private getLocalFallback(term: string): CoursePublic[] {
     const localTerm = term.toLowerCase();
     const cat = this.selectedCategorie();
@@ -478,13 +465,14 @@ export class HomeComponent implements OnInit {
       return byTitle && byCat;
     });
   }
+  */
 
   selectCategorie(id?: string): void {
     this.selectedCategorie.set(id);
     // Si se selecciona "Todas" (id es undefined), reseteamos los resultados de búsqueda
     // para volver a mostrar los cursos destacados.
     if (!id) {
-      this.searchRows.set(null);
+      this.clearSearch();
     } else {
       this.runSearch(true); // Si se selecciona una categoría específica, ejecutamos la búsqueda.
     }
@@ -494,12 +482,33 @@ export class HomeComponent implements OnInit {
   reload(): void {
     clearTimeout(this.debounceId);
     this.api.reloadHome(); // revalida httpResource
-    this.searchRows.set(null);
+    this.clearSearch();
     // Si prefieres limpiar también el input:
     // this.q.set('');
   }
 
-  buildProjectImageUrl(imagen: string): string {
+  // --- Métodos para el panel de búsqueda ---
+
+  // Oculta el panel de resultados con un pequeño retraso para permitir el clic en los resultados
+  hideResultsPanel() {
+    setTimeout(() => this.isResultsVisible.set(false), 200);
+  }
+
+  // Navega al detalle y oculta el panel
+  navigateToDetail(item: any) {
+    this.isResultsVisible.set(false);
+    if (item.item_type === 'course') {
+      // Si es un curso, navegamos a su página de detalle.
+      this.router.navigate(['/course-detail', item.slug]);
+    } else if (item.item_type === 'project') {
+      // Si es un proyecto, abrimos el modal de video.
+      // La función openVideoModal ya comprueba si la URL existe.
+      this.openVideoModal(item.url_video);
+    }
+  }
+
+  buildProjectImageUrl(imagen?: string): string {
+    if (!imagen) return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
     return `${environment.url}project/imagen-project/${imagen}`;
   }
 
