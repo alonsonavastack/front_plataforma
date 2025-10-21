@@ -9,12 +9,13 @@ export interface Student {
   name: string;
   surname: string;
   email: string;
-  avatar?: string;
-  course_count: number;
-  state: boolean | number; // Puede ser boolean o number
   phone?: string;
   profession?: string;
   description?: string;
+  avatar?: string;
+  state: boolean | number; // Puede ser boolean o number
+  purchased_courses_count?: number;
+  purchased_projects_count?: number;
   created_at?: string;
 }
 
@@ -153,5 +154,5 @@ export class StudentService {
   totalStudents = computed(() => this.students().length);
   activeStudents = computed(() => this.students().filter(s => this.isActive(s)).length);
   inactiveStudents = computed(() => this.students().filter(s => !this.isActive(s)).length);
-  totalEnrollments = computed(() => this.students().reduce((sum, s) => sum + (s.course_count || 0), 0));
+  totalEnrollments = computed(() => this.students().reduce((sum, s) => sum + (s.purchased_courses_count || 0), 0));
 }

@@ -1,4 +1,3 @@
-// src/app/pages/home/home.ts
 import { CommonModule } from "@angular/common";
 import {
   CoursePublic,
@@ -28,6 +27,7 @@ import { CategoriesService } from "../../core/services/categories";
 import { ProjectsCard } from "../../shared/projects-card/projects-card";
 import { DiscountService } from "../../core/services/discount.service";
 import { SearchService } from "../../core/services/search";
+import { PurchasesService } from "../../core/services/purchases.service";
 
 @Component({
   standalone: true,
@@ -51,6 +51,7 @@ export class HomeComponent implements OnInit {
   categoriesService = inject(CategoriesService);
   discountService = inject(DiscountService);
   searchService = inject(SearchService);
+  purchasesService = inject(PurchasesService);
 
   // ---------- UI state ----------
   q = signal<string>("");
@@ -203,11 +204,8 @@ export class HomeComponent implements OnInit {
       this.api.home();
       return "";
     } catch (e: any) {
-      const cause = e?.cause ?? e;
-      return (
-        (typeof cause?.message === "string" && cause.message) ||
-        "Error interno del servidor"
-      );
+      // Mensaje genérico sin exponer detalles técnicos como URLs o endpoints
+      return "No se pudo cargar el contenido. Por favor, verifica tu conexión a internet e intenta de nuevo.";
     }
   }
 
@@ -374,6 +372,8 @@ export class HomeComponent implements OnInit {
     // Si el usuario está logueado, carga su perfil para obtener los cursos.
     if (this.authService.isLoggedIn()) {
       this.profileService.reloadProfile();
+      // Cargar las compras del usuario
+      this.purchasesService.loadPurchasedProducts();
     }
     // Cargamos las categorías para los filtros.
     this.categoriesService.reload();

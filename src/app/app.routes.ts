@@ -8,6 +8,39 @@ export const routes: Routes = [
       import("./pages/home/home").then((m) => m.HomeComponent),
     pathMatch: "full",
   },
+  // SISTEMA DE PAGOS - ADMIN
+  {
+    path: "admin-instructor-payments",
+    loadComponent: () =>
+      import("./pages/admin-instructor-payments/admin-instructor-payments").then(
+        (m) => m.AdminInstructorPaymentsComponent
+      ),
+    canActivate: [roleGuard(["admin"])],
+  },
+  {
+    path: "admin-instructor-payments/:id",
+    loadComponent: () =>
+      import("./pages/admin-instructor-earnings-detail/admin-instructor-earnings-detail").then(
+        (m) => m.AdminInstructorEarningsDetailComponent
+      ),
+    canActivate: [roleGuard(["admin"])],
+  },
+  {
+    path: "admin-commission-settings",
+    loadComponent: () =>
+      import("./pages/admin-commission-settings/admin-commission-settings").then(
+        (m) => m.AdminCommissionSettingsComponent
+      ),
+    canActivate: [roleGuard(["admin"])],
+  },
+  {
+    path: "admin-payment-history",
+    loadComponent: () =>
+      import("./pages/admin-payment-history/admin-payment-history").then(
+        (m) => m.AdminPaymentHistoryComponent
+      ),
+    canActivate: [roleGuard(["admin"])],
+  },
   {
     path: "login",
     loadComponent: () =>
@@ -100,6 +133,31 @@ export const routes: Routes = [
       ),
     // Admin e Instructor pueden acceder
     canActivate: [roleGuard(["admin", "instructor"])],
+  },
+  // SISTEMA DE PAGOS A INSTRUCTORES
+  {
+    path: "instructor-payment-config",
+    loadComponent: () =>
+      import("./pages/instructor-payment-config/instructor-payment-config").then(
+        (m) => m.InstructorPaymentConfigComponent
+      ),
+    canActivate: [roleGuard(["instructor"])],
+  },
+  {
+    path: "instructor-earnings",
+    loadComponent: () =>
+      import("./pages/instructor-earnings/instructor-earnings").then(
+        (m) => m.InstructorEarningsComponent
+      ),
+    canActivate: [roleGuard(["instructor"])],
+  },
+  {
+    path: "instructor-payment-history",
+    loadComponent: () =>
+      import("./pages/instructor-payment-history/instructor-payment-history").then(
+        (m) => m.InstructorPaymentHistoryComponent
+      ),
+    canActivate: [roleGuard(["instructor"])],
   },
   {
     // Redirige cualquier otra ruta a la página de inicio

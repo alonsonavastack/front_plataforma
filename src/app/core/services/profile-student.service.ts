@@ -38,6 +38,7 @@ export interface Project {
   subtitle: string;
   description: string;
   imagen: string;
+  video_link?: string; // Añadimos esta propiedad opcional
   url_video?: string;
   categorie: any;
   price_mxn: number;

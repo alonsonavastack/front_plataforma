@@ -37,7 +37,7 @@ export class UsersService {
   // Signals para el estado
   private allUsersSignal = signal<AllUser[]>([]);
   isLoading = signal<boolean>(false);
-  
+
   // Filtros
   private searchTermSignal = signal<string>('');
   private roleFilterSignal = signal<string>('');
@@ -52,7 +52,7 @@ export class UsersService {
 
     // Filtrar por búsqueda
     if (search) {
-      users = users.filter(user => 
+      users = users.filter(user =>
         user.name.toLowerCase().includes(search) ||
         user.surname.toLowerCase().includes(search) ||
         user.email.toLowerCase().includes(search)
@@ -130,7 +130,7 @@ export class UsersService {
       ...userData,
       _id: userId
     };
-    
+
     return this.http.post<UserResponse>(`${environment.url}users/update`, body, {
       headers: this.getHeaders()
     });
@@ -151,9 +151,9 @@ export class UsersService {
     console.log('=== updateUserState called ===');
     console.log('userId:', userId);
     console.log('state:', state, 'type:', typeof state);
-    
-    return this.http.put<UserResponse>(`${environment.url}users/update-state/${userId}`, 
-      { state }, 
+
+    return this.http.put<UserResponse>(`${environment.url}users/update-state/${userId}`,
+      { state },
       { headers: this.getHeaders() }
     ).pipe(
       tap({
@@ -177,7 +177,7 @@ export class UsersService {
   // Actualizar usuario con archivo (avatar)
   updateUserWithFile(userId: string, formData: FormData): Observable<UserResponse> {
     formData.append('_id', userId);
-    
+
     return this.http.post<UserResponse>(`${environment.url}users/update`, formData, {
       headers: new HttpHeaders({
         'Authorization': localStorage.getItem('token') || ''

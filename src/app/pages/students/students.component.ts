@@ -1,8 +1,9 @@
 // src/app/pages/dashboard/students/students.component.ts
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { environment } from '../../../environments/environment';
 import { StudentService, Student } from '../../core/services/student.service';
+import { AuthService } from '../../core/services/auth';
 import { FormsModule, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 @Component({
@@ -13,11 +14,16 @@ import { FormsModule, FormControl, FormGroup, ReactiveFormsModule, Validators } 
 })
 export class StudentsComponent implements OnInit {
   studentService = inject(StudentService);
-  
+  authService = inject(AuthService);
+
   // Signals del servicio
   students = this.studentService.filteredStudents;
   isLoading = this.studentService.isLoading;
-  
+
+  // Computed para verificar rol
+  isAdmin = computed(() => this.authService.user()?.rol === 'admin');
+  isInstructor = computed(() => this.authService.user()?.rol === 'instructor');
+
   // Stats
   totalStudents = this.studentService.totalStudents;
   activeStudents = this.studentService.activeStudents;
@@ -62,9 +68,9 @@ export class StudentsComponent implements OnInit {
   openEditModal(student: Student): void {
     this.isEditing.set(true);
     this.currentStudent.set(student);
-    
+
     const state = student.state === true || student.state === 1;
-    
+
     this.studentForm.patchValue({
       name: student.name,
       surname: student.surname,
@@ -73,7 +79,7 @@ export class StudentsComponent implements OnInit {
       description: student.description || '',
       state: state,
     });
-    
+
     this.isModalOpen.set(true);
   }
 
@@ -85,10 +91,16 @@ export class StudentsComponent implements OnInit {
   }
 
   toggleStudentState(student: Student): void {
+    // Solo admins pueden cambiar el estado
+    if (!this.isAdmin()) {
+      alert('⚠️ Solo los administradores pueden cambiar el estado de los estudiantes');
+      return;
+    }
+
     const currentState = student.state === true || student.state === 1;
     const newState = !currentState;
     const action = newState ? 'activar' : 'desactivar';
-    
+
     const confirmChange = confirm(`¿Estás seguro de ${action} a ${student.name} ${student.surname}?`);
     if (!confirmChange) return;
 
@@ -111,6 +123,12 @@ export class StudentsComponent implements OnInit {
   }
 
   saveStudent(): void {
+    // Solo admins pueden editar estudiantes
+    if (!this.isAdmin()) {
+      alert('⚠️ Solo los administradores pueden editar estudiantes');
+      return;
+    }
+
     if (this.studentForm.invalid) {
       Object.keys(this.studentForm.controls).forEach(key => {
         this.studentForm.get(key)?.markAsTouched();

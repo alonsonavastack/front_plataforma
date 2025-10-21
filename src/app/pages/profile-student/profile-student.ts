@@ -45,6 +45,10 @@ export class ProfileStudentComponent implements OnInit {
   // Señal para mostrar un indicador de carga en el archivo que se está descargando
   downloadingFileId = signal<string | null>(null);
 
+  // --- Lógica para el modal de video ---
+  showVideoModal = signal(false);
+  videoUrl = signal<SafeResourceUrl | null>(null);
+
   // Señales computadas para obtener los datos del servicio
   studentProfile = computed(() => this.profileStudentService.profileData());
   isLoading = computed(() => this.profileStudentService.isLoading());
@@ -199,20 +203,6 @@ export class ProfileStudentComponent implements OnInit {
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   }
 
-  getSanitizedVideoUrl(url: string): SafeResourceUrl | null {
-    if (!url) return null;
-
-    let embedUrl = '';
-    // Vimeo: https://vimeo.com/VIDEO_ID -> https://player.vimeo.com/video/VIDEO_ID
-    if (url.includes('vimeo.com/')) {
-      const videoId = url.split('vimeo.com/')[1].split(/[\/?]/)[0];
-      embedUrl = `https://player.vimeo.com/video/${videoId}`;
-    }
-
-    // Devuelve una URL segura para ser usada en un iframe
-    return embedUrl ? this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl) : null;
-  }
-
   downloadProjectFile(project: Project, file: ProjectFile): void {
     if (this.downloadingFileId()) return; // Evitar descargas múltiples
 
@@ -288,5 +278,73 @@ export class ProfileStudentComponent implements OnInit {
 
   getProductTypeName(type: 'course' | 'project'): string {
     return type === 'course' ? 'Curso' : 'Proyecto';
+  }
+
+  /**
+   * Convierte una URL de YouTube a formato embed
+   * Soporta formatos:
+   * - https://www.youtube.com/watch?v=VIDEO_ID
+   * - https://youtu.be/VIDEO_ID
+   * - https://www.youtube.com/embed/VIDEO_ID (ya está en formato correcto)
+   */
+  private convertToEmbedUrl(url: string): string {
+    try {
+      // Si ya es una URL de embed, la retornamos tal cual
+      if (url.includes('/embed/')) {
+        return url;
+      }
+
+      let videoId: string | null = null;
+
+      // Formato: https://www.youtube.com/watch?v=VIDEO_ID
+      if (url.includes('watch?v=')) {
+        const urlObj = new URL(url);
+        videoId = urlObj.searchParams.get('v');
+      }
+      // Formato: https://youtu.be/VIDEO_ID
+      else if (url.includes('youtu.be/')) {
+        const parts = url.split('youtu.be/');
+        if (parts[1]) {
+          videoId = parts[1].split('?')[0].split('&')[0];
+        }
+      }
+      // Formato: https://www.youtube.com/v/VIDEO_ID
+      else if (url.includes('/v/')) {
+        const parts = url.split('/v/');
+        if (parts[1]) {
+          videoId = parts[1].split('?')[0].split('&')[0];
+        }
+      }
+
+      // Si encontramos un video ID, construimos la URL de embed
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}`;
+      }
+
+      // Si no es una URL de YouTube reconocida, la retornamos tal cual
+      // (podría ser Vimeo u otra plataforma)
+      return url;
+    } catch (error) {
+      console.error('Error al convertir URL de video:', error);
+      return url;
+    }
+  }
+
+  onOpenVideo(project: Project, event: MouseEvent): void {
+    event.stopPropagation(); // Evita que otros eventos de clic se disparen
+    const videoLink = project.video_link || project.url_video;
+    if (videoLink) {
+      // Convertimos la URL a formato embed si es necesario
+      const embedUrl = this.convertToEmbedUrl(videoLink);
+      // Sanitizamos la URL para prevenir ataques XSS
+      const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
+      this.videoUrl.set(safeUrl);
+      this.showVideoModal.set(true);
+    }
+  }
+
+  closeVideoModal(): void {
+    this.showVideoModal.set(false);
+    this.videoUrl.set(null);
   }
 }

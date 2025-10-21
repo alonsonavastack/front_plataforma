@@ -1,6 +1,6 @@
 // core/services/auth.service.ts
 import { HttpClient } from '@angular/common/http';
-import { computed, inject, Injectable, signal, effect } from '@angular/core';
+import { computed, inject, Injectable, signal, effect, Injector } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { tap, catchError, of, throwError } from 'rxjs';
 import { Router } from '@angular/router';
@@ -29,6 +29,7 @@ interface LoginResponse {
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private injector = inject(Injector);
 
   // Helper para acceso seguro a localStorage
   private getFromStorage(key: string, isJson = false): any {
@@ -188,6 +189,13 @@ export class AuthService {
           this.token.set(token);
           this.user.set(fullUser as User);
 
+          // Cargar las compras del usuario después del login
+          // Importamos PurchasesService de manera lazy para evitar dependencias circulares
+          import('./purchases.service').then(module => {
+            const purchasesService = this.injector.get(module.PurchasesService);
+            purchasesService.loadPurchasedProducts();
+          });
+
           // Navegación basada en rol
           setTimeout(() => {
             if (user.rol === 'admin' || user.rol === 'instructor') {
@@ -209,6 +217,13 @@ export class AuthService {
   logout() {
     this.token.set(null);
     this.user.set(null);
+    
+    // Limpiar las compras al cerrar sesión
+    import('./purchases.service').then(module => {
+      const purchasesService = this.injector.get(module.PurchasesService);
+      purchasesService.clearPurchases();
+    });
+    
     this.router.navigate(['/']);
   }
 

@@ -1,0 +1,191 @@
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
+import {
+  InstructorPaymentService,
+  Earning,
+  EarningsStats,
+} from '../../core/services/instructor-payment.service';
+
+@Component({
+  selector: 'app-instructor-earnings',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
+  templateUrl: './instructor-earnings.html',
+})
+export class InstructorEarningsComponent implements OnInit {
+  private instructorPaymentService = inject(InstructorPaymentService);
+
+  // Signals
+  earnings = signal<Earning[]>([]);
+  stats = signal<EarningsStats | null>(null);
+  isLoading = signal(false);
+  isLoadingStats = signal(false);
+  error = signal<string | null>(null);
+  currentPage = signal(1);
+  totalPages = signal(1);
+  totalItems = signal(0);
+  limit = 20;
+
+  // Computed
+  hasEarnings = computed(() => this.earnings().length > 0);
+  pendingTotal = computed(() => this.stats()?.pending.total || 0);
+  availableTotal = computed(() => this.stats()?.available.total || 0);
+  paidTotal = computed(() => this.stats()?.paid.total || 0);
+  totalEarned = computed(() => this.stats()?.total_earned || 0);
+  totalSales = computed(() => this.stats()?.total_sales || 0);
+  averagePerSale = computed(() => this.stats()?.average_per_sale || 0);
+
+  // Expose Math to the template
+  Math = Math;
+
+  // Filter form
+  filterForm = new FormGroup({
+    status: new FormControl('all'),
+    startDate: new FormControl(''),
+    endDate: new FormControl(''),
+  });
+
+  ngOnInit() {
+    this.loadStats();
+    this.loadEarnings();
+  }
+
+  loadStats() {
+    this.isLoadingStats.set(true);
+
+    this.instructorPaymentService.getEarningsStats().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.stats.set(response.data);
+        }
+        this.isLoadingStats.set(false);
+      },
+      error: (err) => {
+        console.error('Error al cargar estadísticas:', err);
+        this.isLoadingStats.set(false);
+      },
+    });
+  }
+
+  loadEarnings(page: number = 1) {
+    this.isLoading.set(true);
+    this.error.set(null);
+    this.currentPage.set(page);
+
+    const formValue = this.filterForm.value;
+    const filters: any = {
+      page,
+      limit: this.limit,
+    };
+
+    if (formValue.status && formValue.status !== 'all') {
+      filters.status = formValue.status;
+    }
+    if (formValue.startDate) {
+      filters.startDate = formValue.startDate;
+    }
+    if (formValue.endDate) {
+      filters.endDate = formValue.endDate;
+    }
+
+    this.instructorPaymentService.getEarnings(filters).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.earnings.set(response.data);
+          this.totalPages.set(response.pagination.pages);
+          this.totalItems.set(response.pagination.total);
+        }
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error al cargar ganancias:', err);
+        this.error.set(err.error?.message || 'Error al cargar ganancias');
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  onFilterChange() {
+    this.loadEarnings(1);
+  }
+
+  clearFilters() {
+    this.filterForm.reset({
+      status: 'all',
+      startDate: '',
+      endDate: '',
+    });
+    this.loadEarnings(1);
+  }
+
+  onPageChange(page: number) {
+    if (page < 1 || page > this.totalPages()) return;
+    this.loadEarnings(page);
+  }
+
+  getStatusBadgeClass(status: string): string {
+    const classes: { [key: string]: string } = {
+      pending: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/30',
+      available: 'bg-green-500/10 text-green-300 border-green-500/30',
+      paid: 'bg-blue-500/10 text-blue-300 border-blue-500/30',
+      disputed: 'bg-red-500/10 text-red-300 border-red-500/30',
+    };
+    return classes[status] || 'bg-slate-500/10 text-slate-300 border-slate-500/30';
+  }
+
+  getStatusText(status: string): string {
+    const texts: { [key: string]: string } = {
+      pending: 'Pendiente',
+      available: 'Disponible',
+      paid: 'Pagado',
+      disputed: 'En Disputa',
+    };
+    return texts[status] || status;
+  }
+
+  formatDate(date: Date | string): string {
+    return new Date(date).toLocaleDateString('es-MX', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  }
+
+  formatCurrency(amount: number, currency: string = 'USD'): string {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: currency,
+    }).format(amount);
+  }
+
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const total = this.totalPages();
+    const current = this.currentPage();
+
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (current <= 4) {
+        for (let i = 1; i <= 5; i++) pages.push(i);
+        pages.push(-1);
+        pages.push(total);
+      } else if (current >= total - 3) {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = total - 4; i <= total; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push(-1);
+        for (let i = current - 1; i <= current + 1; i++) pages.push(i);
+        pages.push(-1);
+        pages.push(total);
+      }
+    }
+
+    return pages;
+  }
+}

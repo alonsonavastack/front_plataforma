@@ -13,6 +13,14 @@
               Gestiona y revisa todas las transacciones
             }
           </p>
+          @if (isInstructor()) {
+            <div class="mt-3 flex items-center gap-2 text-xs text-lime-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>Solo se muestran las ventas que incluyen tus productos</span>
+            </div>
+          }
         </div>
         @if (isAdmin()) {
           <button
@@ -39,9 +47,21 @@
             </svg>
           </div>
         </div>
-        <h3 class="text-slate-400 text-sm font-medium mb-1">Total Ingresos</h3>
+        <h3 class="text-slate-400 text-sm font-medium mb-1">
+          @if (isInstructor()) {
+            Mis Ingresos
+          } @else {
+            Total Ingresos
+          }
+        </h3>
         <p class="text-3xl font-bold text-white">${{ stats().totalIngresos | number:'1.2-2' }}</p>
-        <p class="text-lime-400 text-sm mt-2">Ventas pagadas</p>
+        <p class="text-lime-400 text-sm mt-2">
+          @if (isInstructor()) {
+            De tus productos
+          } @else {
+            Ventas pagadas
+          }
+        </p>
       </div>
 
       <!-- Total Ventas -->
@@ -53,9 +73,21 @@
             </svg>
           </div>
         </div>
-        <h3 class="text-slate-400 text-sm font-medium mb-1">Total Ventas</h3>
+        <h3 class="text-slate-400 text-sm font-medium mb-1">
+          @if (isInstructor()) {
+            Mis Ventas
+          } @else {
+            Total Ventas
+          }
+        </h3>
         <p class="text-3xl font-bold text-white">{{ stats().totalVentas }}</p>
-        <p class="text-cyan-400 text-sm mt-2">Todas las transacciones</p>
+        <p class="text-cyan-400 text-sm mt-2">
+          @if (isInstructor()) {
+            Con tus productos
+          } @else {
+            Todas las transacciones
+          }
+        </p>
       </div>
 
       <!-- Ventas Pagadas -->
@@ -331,11 +363,14 @@
         <h3 class="mt-2 text-sm font-medium text-slate-300">No se encontraron ventas</h3>
         <p class="mt-1 text-sm text-slate-500">
           @if (isInstructor()) {
-            Aún no tienes ventas registradas en tus cursos.
+            Aún no tienes ventas registradas de tus cursos y proyectos.
           } @else {
             Aún no se ha registrado ninguna transacción.
           }
         </p>
+        @if (isInstructor() && (searchTerm() || statusFilter() || selectedMonth())) {
+          <p class="mt-2 text-xs text-slate-400">Intenta ajustar o limpiar los filtros</p>
+        }
       </div>
     }
   </div>

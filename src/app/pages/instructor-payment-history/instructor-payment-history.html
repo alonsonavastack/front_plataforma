@@ -1,0 +1,320 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div>
+    <h1 class="text-3xl font-bold text-slate-100">Historial de Pagos</h1>
+    <p class="mt-2 text-sm text-slate-400">
+      Revisa todos los pagos que has recibido por tus ventas
+    </p>
+  </div>
+
+  <!-- Error Message -->
+  @if (error()) {
+  <div class="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg">
+    {{ error() }}
+  </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+  <div class="flex justify-center items-center py-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
+  </div>
+  }
+
+  <!-- Empty State -->
+  @else if (!hasPayments()) {
+  <div class="bg-slate-800/50 rounded-lg p-12 text-center">
+    <svg class="w-16 h-16 mx-auto text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+    </svg>
+    <p class="text-slate-400 text-lg">No tienes pagos registrados aún</p>
+    <p class="text-sm text-slate-500 mt-2">
+      Los pagos que recibas aparecerán aquí
+    </p>
+  </div>
+  }
+
+  <!-- Payments List -->
+  @else {
+  <div class="space-y-4">
+    @for (payment of payments(); track payment._id) {
+    <div class="bg-slate-800/50 rounded-lg overflow-hidden border border-slate-700 hover:border-slate-600 transition-colors">
+      <!-- Payment Header -->
+      <div
+        class="p-6 cursor-pointer"
+        (click)="toggleExpand(payment._id)"
+      >
+        <div class="flex items-start justify-between">
+          <!-- Left Side: Payment Info -->
+          <div class="flex-1">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="text-2xl">{{ getPaymentMethodIcon(payment.payment_method) }}</span>
+              <div>
+                <h3 class="text-lg font-semibold text-slate-200">
+                  {{ getPaymentMethodText(payment.payment_method) }}
+                </h3>
+                <p class="text-sm text-slate-400">
+                  ID: #{{ payment._id.slice(-8).toUpperCase() }}
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-4 mt-3">
+              <!-- Status Badge -->
+              <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border"
+                [ngClass]="getStatusBadgeClass(payment.status)"
+              >
+                {{ getStatusText(payment.status) }}
+              </span>
+
+              <!-- Date -->
+              <span class="text-sm text-slate-400">
+                @if (payment.completed_at) {
+                  <span>Completado: {{ formatDate(payment.completed_at) }}</span>
+                } @else if (payment.processed_at) {
+                  <span>Procesado: {{ formatDate(payment.processed_at) }}</span>
+                } @else {
+                  <span>Creado: {{ formatDate(payment.created_by_admin_at) }}</span>
+                }
+              </span>
+            </div>
+          </div>
+
+          <!-- Right Side: Amount -->
+          <div class="text-right ml-4">
+            <p class="text-3xl font-bold text-lime-400">
+              {{ formatCurrency(payment.final_amount, payment.currency) }}
+            </p>
+            @if (payment.platform_deductions > 0) {
+            <p class="text-sm text-slate-500 mt-1">
+              Deducciones: -{{ formatCurrency(payment.platform_deductions, payment.currency) }}
+            </p>
+            }
+            <p class="text-xs text-slate-500 mt-1">
+              {{ payment.earnings_included.length }} ganancias incluidas
+            </p>
+          </div>
+
+          <!-- Expand Icon -->
+          <div class="ml-4">
+            <svg
+              class="w-6 h-6 text-slate-400 transition-transform"
+              [class.rotate-180]="isExpanded(payment._id)"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Expanded Details -->
+      @if (isExpanded(payment._id)) {
+      <div class="border-t border-slate-700 p-6 bg-slate-900/30">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Payment Summary -->
+          <div>
+            <h4 class="text-sm font-semibold text-slate-300 mb-3">Resumen del Pago</h4>
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-slate-400">Total de ganancias:</span>
+                <span class="text-slate-200 font-medium">
+                  {{ formatCurrency(payment.total_earnings, payment.currency) }}
+                </span>
+              </div>
+
+              @if (payment.platform_deductions > 0) {
+              <div class="flex justify-between text-sm">
+                <span class="text-slate-400">Deducciones de plataforma:</span>
+                <span class="text-red-400 font-medium">
+                  -{{ formatCurrency(payment.platform_deductions, payment.currency) }}
+                </span>
+              </div>
+              }
+
+              <div class="flex justify-between text-sm pt-2 border-t border-slate-700">
+                <span class="text-slate-300 font-semibold">Monto final:</span>
+                <span class="text-lime-400 font-bold">
+                  {{ formatCurrency(payment.final_amount, payment.currency) }}
+                </span>
+              </div>
+
+              <div class="flex justify-between text-sm">
+                <span class="text-slate-400">Ganancias incluidas:</span>
+                <span class="text-slate-200">{{ payment.earnings_included.length }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Details -->
+          <div>
+            <h4 class="text-sm font-semibold text-slate-300 mb-3">Detalles del Método de Pago</h4>
+
+            @if (payment.payment_method === 'paypal' && payment.payment_details) {
+            <div class="space-y-2">
+              @if (payment.payment_details.paypal_email) {
+              <div class="flex justify-between text-sm">
+                <span class="text-slate-400">Email PayPal:</span>
+                <span class="text-slate-200">{{ payment.payment_details.paypal_email }}</span>
+              </div>
+              }
+              @if (payment.payment_details.paypal_transaction_id) {
+              <div class="flex justify-between text-sm">
+                <span class="text-slate-400">ID de transacción:</span>
+                <span class="text-blue-400 font-mono text-xs">
+                  {{ payment.payment_details.paypal_transaction_id }}
+                </span>
+              </div>
+              }
+            </div>
+            }
+
+            @if (payment.payment_method === 'bank_transfer' && payment.payment_details) {
+            <div class="space-y-2">
+              @if (payment.payment_details.bank_name) {
+              <div class="flex justify-between text-sm">
+                <span class="text-slate-400">Banco:</span>
+                <span class="text-slate-200">{{ payment.payment_details.bank_name }}</span>
+              </div>
+              }
+              @if (payment.payment_details.bank_account_number) {
+              <div class="flex justify-between text-sm">
+                <span class="text-slate-400">Cuenta:</span>
+                <span class="text-slate-200">**** {{ payment.payment_details.bank_account_number }}</span>
+              </div>
+              }
+              @if (payment.payment_details.transfer_reference) {
+              <div class="flex justify-between text-sm">
+                <span class="text-slate-400">Referencia:</span>
+                <span class="text-blue-400 font-mono text-xs">
+                  {{ payment.payment_details.transfer_reference }}
+                </span>
+              </div>
+              }
+              @if (payment.payment_details.transfer_receipt) {
+              <div class="mt-2">
+                <a
+                  [href]="payment.payment_details.transfer_receipt"
+                  target="_blank"
+                  class="inline-flex items-center text-sm text-blue-400 hover:text-blue-300"
+                >
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                  Ver comprobante
+                </a>
+              </div>
+              }
+            </div>
+            }
+
+            @if (payment.payment_method === 'other' && payment.payment_details?.other_details) {
+            <div class="text-sm text-slate-300">
+              {{ payment.payment_details.other_details }}
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="mt-6 pt-6 border-t border-slate-700">
+          <h4 class="text-sm font-semibold text-slate-300 mb-3">Cronología</h4>
+          <div class="space-y-2">
+            @if (payment.created_by_admin_at) {
+            <div class="flex items-start text-sm">
+              <div class="w-2 h-2 bg-blue-400 rounded-full mt-1.5 mr-3"></div>
+              <div>
+                <p class="text-slate-300">Pago creado por administrador</p>
+                <p class="text-slate-500 text-xs">{{ formatDate(payment.created_by_admin_at) }}</p>
+              </div>
+            </div>
+            }
+
+            @if (payment.processed_at) {
+            <div class="flex items-start text-sm">
+              <div class="w-2 h-2 bg-yellow-400 rounded-full mt-1.5 mr-3"></div>
+              <div>
+                <p class="text-slate-300">Pago procesado</p>
+                <p class="text-slate-500 text-xs">{{ formatDate(payment.processed_at) }}</p>
+              </div>
+            </div>
+            }
+
+            @if (payment.completed_at) {
+            <div class="flex items-start text-sm">
+              <div class="w-2 h-2 bg-green-400 rounded-full mt-1.5 mr-3"></div>
+              <div>
+                <p class="text-slate-300">Pago completado</p>
+                <p class="text-slate-500 text-xs">{{ formatDate(payment.completed_at) }}</p>
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- Admin Notes -->
+        @if (payment.admin_notes) {
+        <div class="mt-6 pt-6 border-t border-slate-700">
+          <h4 class="text-sm font-semibold text-slate-300 mb-2">Notas del Administrador</h4>
+          <p class="text-sm text-slate-400 bg-slate-800/50 p-3 rounded">
+            {{ payment.admin_notes }}
+          </p>
+        </div>
+        }
+      </div>
+      }
+    </div>
+    }
+  </div>
+
+  <!-- Pagination -->
+  @if (totalPages() > 1) {
+  <div class="bg-slate-800/50 rounded-lg px-6 py-4 flex items-center justify-between">
+    <div class="text-sm text-slate-400">
+      Página {{ currentPage() }} de {{ totalPages() }} ({{ totalItems() }} pagos)
+    </div>
+
+    <div class="flex gap-1">
+      <!-- Previous Button -->
+      <button
+        (click)="onPageChange(currentPage() - 1)"
+        [disabled]="currentPage() === 1"
+        class="px-3 py-1 rounded bg-slate-700 text-slate-300 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        ← Anterior
+      </button>
+
+      <!-- Page Numbers -->
+      @for (page of getPageNumbers(); track page) {
+        @if (page === -1) {
+          <span class="px-3 py-1 text-slate-500">...</span>
+        } @else {
+          <button
+            (click)="onPageChange(page)"
+            [class.bg-lime-500]="page === currentPage()"
+            [class.text-slate-900]="page === currentPage()"
+            [class.bg-slate-700]="page !== currentPage()"
+            [class.text-slate-300]="page !== currentPage()"
+            class="px-3 py-1 rounded hover:bg-slate-600 transition-colors"
+          >
+            {{ page }}
+          </button>
+        }
+      }
+
+      <!-- Next Button -->
+      <button
+        (click)="onPageChange(currentPage() + 1)"
+        [disabled]="currentPage() === totalPages()"
+        class="px-3 py-1 rounded bg-slate-700 text-slate-300 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        Siguiente →
+      </button>
+    </div>
+  </div>
+  }
+  }
+</div>

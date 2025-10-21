@@ -1,0 +1,197 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center">
+    <div>
+      <h2 class="text-2xl font-bold text-white">Configuración Global</h2>
+      <p class="text-white/60 text-sm mt-1">Gestiona la configuración de tu plataforma</p>
+    </div>
+    <button
+      (click)="initializeDefaults()"
+      class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+    >
+      Inicializar Defaults
+    </button>
+  </div>
+
+  <!-- Alerts -->
+  @if (saveSuccess()) {
+    <div class="p-4 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span class="font-medium">Configuración guardada exitosamente</span>
+      </div>
+    </div>
+  }
+
+  @if (saveError()) {
+    <div class="p-4 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        <span class="font-medium">{{ saveError() }}</span>
+      </div>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
+    </div>
+  }
+
+  <!-- Content -->
+  @if (!isLoading()) {
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <!-- Sidebar - Tabs -->
+      <div class="lg:col-span-1">
+        <div class="rounded-lg border border-white/10 bg-slate-800/50 p-4 space-y-2">
+          @for (group of availableGroups(); track group.key) {
+            <button
+              (click)="setActiveTab(group.key)"
+              [class]="activeTab() === group.key
+                ? 'bg-blue-600 text-white'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'"
+              class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors"
+            >
+              <span class="text-lg">{{ group.icon }}</span>
+              <span>{{ group.title }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="lg:col-span-3">
+        <div class="rounded-lg border border-white/10 bg-slate-800/50 p-6">
+          <!-- Group Header -->
+          @if (activeGroupSettings().length > 0) {
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold text-white">
+                {{ activeGroupTitle() }}
+              </h3>
+              <p class="text-sm text-white/60 mt-1">
+                {{ activeGroupDescription() }}
+              </p>
+            </div>
+
+            <!-- Settings Form -->
+            <div class="space-y-6">
+              @for (setting of activeGroupSettings(); track setting.key) {
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-white">
+                    {{ setting.name }}
+                    @if (setting.description) {
+                      <span class="block text-xs text-white/50 font-normal mt-1">
+                        {{ setting.description }}
+                      </span>
+                    }
+                  </label>
+
+                  <!-- Input Type: Text -->
+                  @if (getInputType(setting) === 'text') {
+                    <input
+                      type="text"
+                      [value]="localSettings()[setting.key]"
+                      (input)="onInputChange(setting.key, $any($event.target).value, 'text')"
+                      class="w-full border text-sm rounded-lg p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  }
+
+                  <!-- Input Type: Number -->
+                  @if (getInputType(setting) === 'number') {
+                    <input
+                      type="number"
+                      [value]="localSettings()[setting.key]"
+                      (input)="onInputChange(setting.key, $any($event.target).value, 'number')"
+                      class="w-full border text-sm rounded-lg p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  }
+
+                  <!-- Input Type: Textarea -->
+                  @if (getInputType(setting) === 'textarea') {
+                    <textarea
+                      rows="4"
+                      [value]="localSettings()[setting.key]"
+                      (input)="onInputChange(setting.key, $any($event.target).value, 'text')"
+                      class="w-full border text-sm rounded-lg p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500"
+                    ></textarea>
+                  }
+
+                  <!-- Input Type: Boolean -->
+                  @if (getInputType(setting) === 'boolean') {
+                    <div class="flex items-center">
+                      <label class="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          [checked]="localSettings()[setting.key]"
+                          (change)="onInputChange(setting.key, $any($event.target).checked, 'boolean')"
+                          class="sr-only peer"
+                        />
+                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span class="ml-3 text-sm font-medium text-white">
+                          {{ localSettings()[setting.key] ? 'Activado' : 'Desactivado' }}
+                        </span>
+                      </label>
+                    </div>
+                  }
+
+                  <!-- Input Type: Array -->
+                  @if (getInputType(setting) === 'array') {
+                    <textarea
+                      rows="3"
+                      [value]="formatArrayValue(localSettings()[setting.key])"
+                      (input)="onInputChange(setting.key, $any($event.target).value, 'array')"
+                      placeholder="Valores separados por comas"
+                      class="w-full border text-sm rounded-lg p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500"
+                    ></textarea>
+                    <p class="text-xs text-white/50">Separa los valores con comas</p>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Save Button -->
+            <div class="mt-8 flex justify-end gap-3">
+              <button
+                (click)="loadSettings()"
+                type="button"
+                class="px-4 py-2 text-sm font-medium text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                (click)="saveSettings()"
+                [disabled]="isSaving()"
+                class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                @if (isSaving()) {
+                  <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Guardando...</span>
+                } @else {
+                  <span>Guardar Cambios</span>
+                }
+              </button>
+            </div>
+          } @else {
+            <div class="text-center py-12 text-white/60">
+              <p>No hay configuraciones en este grupo</p>
+              <button
+                (click)="initializeDefaults()"
+                class="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+              >
+                Inicializar Configuraciones
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

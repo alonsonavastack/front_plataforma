@@ -51,13 +51,13 @@ export class SaleService {
   // Computed para estadísticas
   public stats = computed<SalesStats>(() => {
     const salesData = this.sales();
-    
+
     const totalIngresos = salesData
       .filter(s => s.status === 'Pagado')
       .reduce((sum, sale) => sum + sale.total, 0);
-    
+
     const totalVentas = salesData.length;
-    
+
     const porEstado = {
       pagado: salesData.filter(s => s.status === 'Pagado').length,
       pendiente: salesData.filter(s => s.status === 'Pendiente').length,
@@ -85,10 +85,11 @@ export class SaleService {
       if (sale.status !== 'Pagado') return;
 
       sale.detail?.forEach(item => {
+        // Filtrar solo cursos que tienen información del instructor
         if (item.product_type === 'course' && item.product?.user) {
           // Verificar si user es un objeto o un string
           const productUser = item.product.user;
-          
+
           let instructorId: string;
           let instructorName: string;
 
@@ -99,8 +100,8 @@ export class SaleService {
           } else {
             // Es un objeto poblado
             instructorId = productUser._id || '';
-            instructorName = productUser.name 
-              ? `${productUser.name} ${productUser.surname || ''}`
+            instructorName = productUser.name
+              ? `${productUser.name} ${productUser.surname || ''}`.trim()
               : 'Instructor';
           }
 
@@ -124,8 +125,7 @@ export class SaleService {
 
     return Array.from(instructorMap.values()).sort((a, b) => b.totalIngresos - a.totalIngresos);
   });
-
-  constructor() {
+constructor() {
     // Carga inicial de ventas
     this.listSales().subscribe();
   }
@@ -156,3 +156,6 @@ export class SaleService {
     );
   }
 }
+
+
+

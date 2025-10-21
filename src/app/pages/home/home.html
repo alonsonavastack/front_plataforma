@@ -171,20 +171,7 @@
         @if (courses().length > 0) {
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             @for (c of courses(); track c._id) {
-              <div class="flex flex-col rounded-xl border border-white/10 bg-slate-800/50 hover:bg-slate-700/50 transition-colors group">
-                <div (click)="navigateToCourse(c, $event)" class="cursor-pointer">
-                  <course-card [course]="c"></course-card>
-                </div>
-                <div class="px-4 pb-4 mt-auto">
-                  @if (isCourseEnrolled(c._id)) {
-                    <button class="w-full h-9 px-4 rounded-lg bg-sky-600/50 text-sky-300 text-sm font-semibold cursor-not-allowed" disabled>Comprado</button>
-                  } @else if (isCourseInCart(c._id)) {
-                    <button (click)="cartService.toggleDrawer()" class="w-full h-9 px-4 rounded-lg bg-slate-700 text-white/80 text-sm font-semibold hover:bg-slate-600 transition">Ver en el carrito</button>
-                  } @else {
-                    <button (click)="addCourseToCart(c, $event)" [disabled]="!authService.isLoggedIn()" class="w-full h-9 px-4 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed">Añadir al carrito</button>
-                  }
-                </div>
-              </div>
+              <course-card [course]="c"></course-card>
             }
           </div>
         } @else {

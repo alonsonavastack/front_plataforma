@@ -30,26 +30,33 @@ export class PurchasesService {
       return;
     }
 
-    this.http.get<any>(`${environment.url}profile-student/courses`, {
+    this.http.get<any>(`${environment.url}profile-student/client`, {
       headers: this.getHeaders()
     }).pipe(
       tap((response) => {
         const productIds = new Set<string>();
-        
-        // Agregar IDs de cursos
-        if (response.courses) {
-          response.courses.forEach((course: any) => {
-            productIds.add(course._id);
+
+        // Agregar IDs de cursos inscritos
+        if (response.enrolled_courses) {
+          response.enrolled_courses.forEach((enrollment: any) => {
+            const courseId = enrollment.course?._id || enrollment.course;
+            if (courseId) {
+              productIds.add(courseId);
+            }
           });
         }
-        
+
         // Agregar IDs de proyectos comprados
         if (response.projects) {
           response.projects.forEach((project: any) => {
-            productIds.add(project._id);
+            const projectId = project._id || project.project?._id;
+            if (projectId) {
+              productIds.add(projectId);
+            }
           });
         }
-        
+
+        console.log('Productos comprados cargados:', productIds);
         this.purchasedProducts.set(productIds);
       })
     ).subscribe({
