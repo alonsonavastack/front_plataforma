@@ -1,4 +1,4 @@
-<div class="bg-slate-950 text-white lg:flex">
+<div class="bg-slate-950 text-white lg:flex min-h-screen">
   <!-- DRAWER LATERAL (Flowbite) -->
   <aside id="dashboard-drawer"
          class="fixed top-0 left-0 z-40 h-screen transition-transform -translate-x-full
@@ -30,7 +30,7 @@
   <div data-drawer-backdrop="dashboard-drawer" class="bg-gray-900/80 fixed inset-0 z-30 lg:hidden hidden"></div>
 
   <!-- CONTENIDO PRINCIPAL -->
-  <main class="flex-1 relative lg:h-screen lg:overflow-y-auto">
+  <main class="flex-1 relative min-h-screen overflow-y-auto touch-pan-y overscroll-contain">
     <!-- TOPBAR (Ahora dentro del main) -->
     <app-topbar
       [isSidebarCollapsed]="isSidebarCollapsed()"
@@ -39,19 +39,325 @@
 
     <!-- Contenido de la sección -->
     <div class="p-4 md:p-6 lg:p-8 space-y-8">
-      <!-- KPIs -->
-      <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4"> @for (k of dashboardService.kpis(); track k.label) {
-        <div class="rounded-2xl border border-white/10 bg-slate-900/50 p-5 backdrop-blur-sm">
-          <p class="text-sm font-medium text-white/60">{{ k.label }}</p>
-          <p class="mt-2 text-3xl font-extrabold tracking-tight text-lime-300"> @if (k.isPct) { {{ k.value }}% } @else { $ {{ k.value | number }} } </p>
-          <p class="text-xs mt-1 @if (k.delta >= 0) { text-lime-400 } @else { text-red-400 }">
-            <span class="font-semibold">@if (k.delta >= 0) { ▲ } @else { ▼ } {{ k.delta }}%</span> vs. mes anterior
-          </p>
-        </div> } </div>
-      <!-- Sección activa -->
-      <div class="rounded-2xl border border-white/10 bg-slate-900/50 p-6 backdrop-blur-sm"> @switch (active) {
-        @case ('overview') { <div class="h-96 grid place-items-center text-white/70">[Resumen general]</div> }
+
+      @switch (active) {
+        @case ('overview') {
+          <!-- VISTA OVERVIEW MEJORADA -->
+
+          <!-- Header del Dashboard -->
+          <div class="mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">
+              Bienvenido de nuevo,
+              <span class="bg-gradient-to-r from-lime-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                {{ authService.user()?.name }}
+              </span>
+            </h1>
+            <p class="text-slate-400 text-lg">Aquí está un resumen de tu rendimiento</p>
+          </div>
+
+          <!-- KPIs Cards Mejoradas -->
+          <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+            @for (k of dashboardService.kpis(); track k.label; let idx = $index) {
+              <div (animate.enter)="animate.animateFadeInDashboard($event)"
+                   class="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/50 p-6 backdrop-blur-xl hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-lime-500/10">
+
+                <!-- Gradient Overlay -->
+                <div class="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-300"
+                     [ngClass]="{
+                       'from-lime-500 to-emerald-500': idx === 0,
+                       'from-cyan-500 to-blue-500': idx === 1,
+                       'from-purple-500 to-pink-500': idx === 2,
+                       'from-orange-500 to-red-500': idx === 3
+                     }"></div>
+
+                <!-- Icon -->
+                <div class="flex items-center justify-between mb-4">
+                  <div class="w-14 h-14 rounded-xl flex items-center justify-center backdrop-blur-sm"
+                       [ngClass]="{
+                         'bg-lime-500/10 text-lime-400 ring-1 ring-lime-500/20': idx === 0,
+                         'bg-cyan-500/10 text-cyan-400 ring-1 ring-cyan-500/20': idx === 1,
+                         'bg-purple-500/10 text-purple-400 ring-1 ring-purple-500/20': idx === 2,
+                         'bg-orange-500/10 text-orange-400 ring-1 ring-orange-500/20': idx === 3
+                       }">
+                    @if (idx === 0) {
+                      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                    } @else if (idx === 1) {
+                      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                      </svg>
+                    } @else if (idx === 2) {
+                      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                      </svg>
+                    } @else {
+                      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                      </svg>
+                    }
+                  </div>
+
+                  <!-- Trend Badge -->
+                  <div class="px-3 py-1 rounded-full text-xs font-bold"
+                       [ngClass]="k.delta >= 0 ? 'bg-lime-500/10 text-lime-400 ring-1 ring-lime-500/20' : 'bg-red-500/10 text-red-400 ring-1 ring-red-500/20'">
+                    @if (k.delta >= 0) { ↑ } @else { ↓ } {{ k.delta }}%
+                  </div>
+                </div>
+
+                <!-- Label -->
+                <p class="text-sm font-medium text-slate-400 mb-2">{{ k.label }}</p>
+
+                <!-- Value -->
+                <p class="text-4xl font-extrabold tracking-tight mb-2"
+                   [ngClass]="{
+                     'text-lime-300': idx === 0,
+                     'text-cyan-400': idx === 1,
+                     'text-purple-400': idx === 2,
+                     'text-orange-400': idx === 3
+                   }">
+                  @if (k.isPct) {
+                    {{ k.value }}%
+                  } @else {
+                    ${{ k.value | number:'1.0-0' }}
+                  }
+                </p>
+
+                <!-- Subtitle -->
+                <p class="text-xs text-slate-500"
+                   [ngClass]="k.delta >= 0 ? 'text-lime-400/60' : 'text-red-400/60'">
+                  <span class="font-semibold">{{ k.delta >= 0 ? '+' : '' }}{{ k.delta | number:'1.1-1' }}%</span> vs. mes anterior
+                </p>
+
+                <!-- Decorative Element -->
+                <div class="absolute -bottom-6 -right-6 w-24 h-24 rounded-full blur-2xl opacity-20 group-hover:opacity-30 transition-opacity"
+                     [ngClass]="{
+                       'bg-lime-500': idx === 0,
+                       'bg-cyan-500': idx === 1,
+                       'bg-purple-500': idx === 2,
+                       'bg-orange-500': idx === 3
+                     }"></div>
+              </div>
+            }
+          </div>
+
+          <!-- Charts Section -->
+          <div class="grid lg:grid-cols-3 gap-6 mb-8">
+            <!-- Chart 1: Ingresos por Mes -->
+            <div class="lg:col-span-2 rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/50 p-6 backdrop-blur-xl">
+              <div class="flex items-center justify-between mb-6">
+                <div>
+                  <h3 class="text-xl font-bold text-white mb-1">Ingresos Mensuales</h3>
+                  <p class="text-sm text-slate-400">Últimos 12 meses</p>
+                </div>
+                <div class="flex gap-2">
+                  <button class="px-3 py-1.5 rounded-lg bg-lime-500/10 text-lime-400 text-xs font-medium hover:bg-lime-500/20 transition">
+                    12M
+                  </button>
+                  <button class="px-3 py-1.5 rounded-lg bg-white/5 text-slate-400 text-xs font-medium hover:bg-white/10 transition">
+                    6M
+                  </button>
+                  <button class="px-3 py-1.5 rounded-lg bg-white/5 text-slate-400 text-xs font-medium hover:bg-white/10 transition">
+                    3M
+                  </button>
+                </div>
+              </div>
+              <div class="h-80 flex items-end justify-around gap-4 px-4">
+                <!-- 🔥 SOLUCIÓN: justify-around y gap-4 para distribuir mejor -->
+                @for (item of dashboardService.monthlyIncome(); track item.month) {
+                  <div class="group cursor-pointer flex flex-col items-center" style="flex: 0 0 auto; width: 60px;">
+                    <!-- Barra -->
+                    <div class="relative w-full h-72 flex items-end justify-center mb-2">
+                      <div class="w-full rounded-t-lg bg-gradient-to-t from-lime-500 via-lime-400 to-lime-300 hover:from-lime-400 hover:via-lime-300 hover:to-lime-200 transition-all duration-300 shadow-lg shadow-lime-500/50"
+                           [style.height.%]="Math.max(15 + (item.percentage * 0.85), 15)">
+                        <!-- Tooltip -->
+                        <div class="absolute -top-14 left-1/2 -translate-x-1/2 px-3 py-2 rounded-lg bg-slate-900 border border-lime-500/30 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                          <p class="text-sm font-bold text-lime-300">${{item.amount | number:'1.0-0'}}</p>
+                          <p class="text-xs text-slate-400">{{ item.month }}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Etiqueta del mes -->
+                    <span class="text-xs text-slate-400 font-medium">{{ item.month }}</span>
+                  </div>
+                }
+
+                <!-- Fallback si no hay datos -->
+                @if (dashboardService.monthlyIncome().length === 0) {
+                  <div class="w-full h-full flex items-center justify-center">
+                    <p class="text-slate-500 text-sm">No hay datos disponibles</p>
+                  </div>
+                }
+              </div>
+              <!-- Etiquetas de meses (ocultas porque mostramos dinámicamente arriba) -->
+              <div class="hidden flex justify-between mt-4 text-xs text-slate-500">
+                <span>Ene</span>
+                <span>Feb</span>
+                <span>Mar</span>
+                <span>Abr</span>
+                <span>May</span>
+                <span>Jun</span>
+                <span>Jul</span>
+                <span>Ago</span>
+                <span>Sep</span>
+                <span>Oct</span>
+                <span>Nov</span>
+                <span>Dic</span>
+              </div>
+            </div>
+
+            <!-- Chart 2: Distribución -->
+            <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/50 p-6 backdrop-blur-xl">
+              <h3 class="text-xl font-bold text-white mb-1">Distribución</h3>
+              <p class="text-sm text-slate-400 mb-6">Por tipo de producto</p>
+
+              <!-- Donut Chart Placeholder -->
+              <div class="relative w-48 h-48 mx-auto mb-6">
+                @if (dashboardService.distribution(); as dist) {
+                  <svg class="w-full h-full" viewBox="0 0 100 100">
+                    <!-- Background Circle -->
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#1e293b" stroke-width="20"/>
+                    <!-- Courses -->
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#a3e635" stroke-width="20"
+                            [attr.stroke-dasharray]="(dist.courses / (dist.courses + dist.projects)) * 251.3 + ' 251.3'"
+                            stroke-dashoffset="0" transform="rotate(-90 50 50)"
+                            class="transition-all duration-1000"/>
+                    <!-- Projects -->
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#22d3ee" stroke-width="20"
+                            [attr.stroke-dasharray]="(dist.projects / (dist.courses + dist.projects)) * 251.3 + ' 251.3'"
+                            [attr.stroke-dashoffset]="-((dist.courses / (dist.courses + dist.projects)) * 251.3)"
+                            transform="rotate(-90 50 50)"
+                            class="transition-all duration-1000"/>
+                  </svg>
+                  <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="text-center">
+                      <p class="text-3xl font-bold text-white">{{ dist.courses + dist.projects }}</p>
+                      <p class="text-xs text-slate-400">Total</p>
+                    </div>
+                  </div>
+                } @else {
+                  <svg class="w-full h-full" viewBox="0 0 100 100">
+                    <!-- Background Circle -->
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#1e293b" stroke-width="20"/>
+                    <!-- Courses - 60% -->
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#a3e635" stroke-width="20"
+                            stroke-dasharray="150.8 251.3" stroke-dashoffset="0" transform="rotate(-90 50 50)"
+                            class="transition-all duration-1000"/>
+                    <!-- Projects - 40% -->
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#22d3ee" stroke-width="20"
+                            stroke-dasharray="100.5 251.3" stroke-dashoffset="-150.8" transform="rotate(-90 50 50)"
+                            class="transition-all duration-1000"/>
+                  </svg>
+                  <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="text-center">
+                      <p class="text-3xl font-bold text-white">100%</p>
+                      <p class="text-xs text-slate-400">Total</p>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <!-- Legend -->
+              <div class="space-y-3">
+                @if (dashboardService.distribution(); as dist) {
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <div class="w-3 h-3 rounded-full bg-lime-400"></div>
+                      <span class="text-sm text-slate-300">Cursos</span>
+                    </div>
+                    <span class="text-sm font-bold text-white">{{ ((dist.courses / (dist.courses + dist.projects)) * 100) | number:'1.0-0' }}%</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <div class="w-3 h-3 rounded-full bg-cyan-400"></div>
+                      <span class="text-sm text-slate-300">Proyectos</span>
+                    </div>
+                    <span class="text-sm font-bold text-white">{{ ((dist.projects / (dist.courses + dist.projects)) * 100) | number:'1.0-0' }}%</span>
+                  </div>
+                } @else {
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <div class="w-3 h-3 rounded-full bg-lime-400"></div>
+                      <span class="text-sm text-slate-300">Cursos</span>
+                    </div>
+                    <span class="text-sm font-bold text-white">60%</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <div class="w-3 h-3 rounded-full bg-cyan-400"></div>
+                      <span class="text-sm text-slate-300">Proyectos</span>
+                    </div>
+                    <span class="text-sm font-bold text-white">40%</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/50 p-6 backdrop-blur-xl">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h3 class="text-xl font-bold text-white mb-1">Actividad Reciente</h3>
+                <p class="text-sm text-slate-400">Últimas transacciones y eventos</p>
+              </div>
+              <button class="px-4 py-2 rounded-lg bg-white/5 text-white text-sm font-medium hover:bg-white/10 transition">
+                Ver todo
+              </button>
+            </div>
+
+            <div class="space-y-4">
+              @for (activity of [
+                { type: 'sale', user: 'Carlos Ruiz', amount: 131, time: '2 min ago', color: 'lime' },
+                { type: 'enrollment', user: 'Ana Martínez', course: 'React Avanzado', time: '15 min ago', color: 'cyan' },
+                { type: 'sale', user: 'Luis González', amount: 999, time: '1 hora ago', color: 'lime' },
+                { type: 'review', user: 'María Silva', rating: 5, time: '2 horas ago', color: 'orange' }
+              ]; track $index) {
+                <div class="flex items-center gap-4 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition group">
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center"
+                       [ngClass]="{
+                         'bg-lime-500/10 text-lime-400': activity.color === 'lime',
+                         'bg-cyan-500/10 text-cyan-400': activity.color === 'cyan',
+                         'bg-orange-500/10 text-orange-400': activity.color === 'orange'
+                       }">
+                    @if (activity.type === 'sale') {
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                    } @else if (activity.type === 'enrollment') {
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                      </svg>
+                    } @else {
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                      </svg>
+                    }
+                  </div>
+
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-white truncate">{{ activity.user }}</p>
+                    <p class="text-xs text-slate-400">
+                      @if (activity.type === 'sale') {
+                        Compró por ${{ activity.amount }}
+                      } @else if (activity.type === 'enrollment') {
+                        Se inscribió en {{ activity.course }}
+                      } @else {
+                        Dejó una reseña de {{ activity.rating }} ⭐
+                      }
+                    </p>
+                  </div>
+
+                  <span class="text-xs text-slate-500">{{ activity.time }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Otras secciones del dashboard -->
         @case ('users') { <app-users /> }
+        @case ('carousel-dashboard') { <app-carousel-dashboard></app-carousel-dashboard> }
         @case ('categories') { <app-categories /> }
         @case ('courses') { <app-courses /> }
         @case ('discounts') { <app-discounts /> }
@@ -67,7 +373,7 @@
         @case ('admin-instructor-payments') { <app-admin-instructor-payments /> }
         @case ('admin-payment-history') { <app-admin-payment-history /> }
         @case ('admin-commission-settings') { <app-admin-commission-settings /> }
-      } </div>
+      }
     </div>
   </main>
 </div>

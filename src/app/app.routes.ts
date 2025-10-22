@@ -75,6 +75,14 @@ export const routes: Routes = [
     canActivate: [roleGuard(["admin", "instructor"])],
   },
   {
+    path: "carousel-dashboard",
+    loadComponent: () =>
+      import("./pages/carousel-dashboard/carousel-dashboard").then(
+        (m) => m.CarouselDashboard
+      ),
+    canActivate: [roleGuard(["admin", "instructor"])],
+  },
+  {
     path: "learning/:slug",
     loadComponent: () =>
       import("./pages/learning/learning.component").then(

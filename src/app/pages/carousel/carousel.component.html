@@ -1,0 +1,43 @@
+<!-- Banner / carrusel dinámico -->
+<div id="dynamic-carousel" class="relative w-full h-56 md:h-64 lg:h-72" data-carousel="slide" data-carousel-interval="5000">
+  <!-- Carousel wrapper -->
+  <div class="relative h-full overflow-hidden rounded-2xl border border-white/10">
+    @if (isLoading() && images().length === 0) {
+      <!-- Skeleton Loader mientras se cargan las imágenes por primera vez -->
+      <div class="w-full h-full bg-slate-800 animate-pulse"></div>
+    } @else {
+      @for (item of images(); track item._id; let i = $index) {
+        <div class="hidden duration-700 ease-in-out" data-carousel-item>
+          <a [href]="item.linkUrl || '#'" [target]="item.linkUrl ? '_blank' : '_self'" rel="noopener noreferrer">
+            <img [src]="imagesUrl() + item.imageUrl" class="absolute block w-full h-full object-cover top-0 left-0" [alt]="item.title">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+            <span class="absolute bottom-4 left-4 text-white font-bold text-lg">{{ item.title }}</span>
+            @if (item.subtitle) {
+              <span class="absolute bottom-1 left-4 text-white/80 text-sm">{{ item.subtitle }}</span>
+            }
+          </a>
+        </div>
+      } @empty {
+        <!-- Mensaje si no hay imágenes para mostrar -->
+        <div class="flex items-center justify-center h-full text-white/50 bg-slate-800">
+          No hay imágenes de carrusel disponibles.
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Slider indicators (puntos) -->
+  <div class="absolute z-30 flex -translate-x-1/2 bottom-5 left-1/2 space-x-3 rtl:space-x-reverse">
+    @for (item of images(); track item._id; let i = $index) {
+      <button type="button" class="w-3 h-3 rounded-full bg-white/50 hover:bg-white" [attr.aria-current]="i === 0" [attr.aria-label]="'Slide ' + (i + 1)" [attr.data-carousel-slide-to]="i"></button>
+    }
+  </div>
+
+  <!-- Slider controls (flechas) -->
+  <button type="button" class="absolute top-0 start-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none" data-carousel-prev>
+    <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/10 group-hover:bg-white/20 transition"><svg class="w-4 h-4 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 1 1 5l4 4"/></svg><span class="sr-only">Previous</span></span>
+  </button>
+  <button type="button" class="absolute top-0 end-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none" data-carousel-next>
+    <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/10 group-hover:bg-white/20 transition"><svg class="w-4 h-4 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/></svg><span class="sr-only">Next</span></span>
+  </button>
+</div>

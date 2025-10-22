@@ -18,9 +18,9 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-4">
             <img
-              [src]="instructor().avatar || 'https://ui-avatars.com/api/?name=' + instructor().name"
+              [src]="getInstructorAvatarUrl(instructor())"
               [alt]="instructor().name"
-              class="w-16 h-16 rounded-full object-cover"
+              class="w-16 h-16 rounded-full object-cover border-2 border-slate-600"
             />
             <div>
               <h1 class="text-2xl font-bold text-slate-100">{{instructor().name}} {{instructor().surname}}</h1>
@@ -211,11 +211,12 @@
                     <div class="flex items-center">
                       @if (earning.product) {
                         <img
-                          [src]="earning.product?.imagen || earning.product?.image || 'https://via.placeholder.com/40'"
+                          [src]="getProductImageUrl(earning.product, earning.product_type)"
                           class="h-10 w-10 rounded-lg object-cover border border-slate-600"
+                          [alt]="earning.product.title"
                         />
                         <div class="ml-4">
-                          <div class="text-sm font-medium text-slate-200">{{earning.product?.title}}</div>
+                          <div class="text-sm font-medium text-slate-200">{{earning.product.title}}</div>
                           <div class="text-xs text-slate-400">
                             @if (earning.product_type === 'project') {
                               <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-500/20 text-purple-300">

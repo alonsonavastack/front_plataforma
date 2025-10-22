@@ -1,6 +1,7 @@
 export type NavId =
   | 'overview'
   | 'users'
+  | 'carousel-dashboard'
   | 'categories'
   | 'courses'
   | 'discounts'
@@ -8,14 +9,17 @@ export type NavId =
   | 'projects'
   | 'students'
   | 'reports'
-  | 'settings'
   | 'appearance'
-  // Nuevas secciones de pagos
-  | 'instructor-earnings'
-  | 'instructor-payment-history'
-  | 'instructor-payment-config'
+  | 'settings'
   | 'admin-instructor-payments'
   | 'admin-payment-history'
-  | 'admin-commission-settings';
+  | 'admin-commission-settings'
+  | 'instructor-earnings'
+  | 'instructor-payment-history'
+  | 'instructor-payment-config';
 
-export type NavItem = { id: NavId; label: string; icon: string; };
+export interface NavItem {
+  id: NavId;
+  label: string;
+  icon: string;
+}

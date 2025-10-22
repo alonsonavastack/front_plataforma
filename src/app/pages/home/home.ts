@@ -27,6 +27,7 @@ import { CategoriesService } from "../../core/services/categories";
 import { ProjectsCard } from "../../shared/projects-card/projects-card";
 import { DiscountService } from "../../core/services/discount.service";
 import { SearchService } from "../../core/services/search";
+import { CarouselComponent } from "../carousel/carousel.component";
 import { PurchasesService } from "../../core/services/purchases.service";
 
 @Component({
@@ -38,6 +39,7 @@ import { PurchasesService } from "../../core/services/purchases.service";
     PillFilterComponent,
     HeaderComponent,
     ProjectsCard,
+    CarouselComponent,
   ],
   templateUrl: "./home.html",
 })
@@ -171,7 +173,6 @@ export class HomeComponent implements OnInit {
 
     return items;
   });
-
   constructor() {
     // Imprime el arreglo completo de proyectos destacados cuando se cargan.
     effect(() => {
@@ -469,13 +470,8 @@ export class HomeComponent implements OnInit {
 
   selectCategorie(id?: string): void {
     this.selectedCategorie.set(id);
-    // Si se selecciona "Todas" (id es undefined), reseteamos los resultados de búsqueda
-    // para volver a mostrar los cursos destacados.
-    if (!id) {
-      this.clearSearch();
-    } else {
-      this.runSearch(true); // Si se selecciona una categoría específica, ejecutamos la búsqueda.
-    }
+    // Siempre ejecutar la búsqueda después de cambiar la categoría, permitiendo búsqueda de 1+ carácter.
+    this.runSearch(true);
   }
 
   // ---------- Recargar ----------
@@ -489,9 +485,16 @@ export class HomeComponent implements OnInit {
 
   // --- Métodos para el panel de búsqueda ---
 
-  // Oculta el panel de resultados con un pequeño retraso para permitir el clic en los resultados
+  // Oculta el panel de resultados con un retraso mayor para permitir interacción
   hideResultsPanel() {
-    setTimeout(() => this.isResultsVisible.set(false), 200);
+    setTimeout(() => this.isResultsVisible.set(false), 300);
+  }
+
+  // Cierra el panel cuando se hace clic fuera
+  onClickOutsideSearch(event: MouseEvent) {
+    if (this.isResultsVisible()) {
+      this.isResultsVisible.set(false);
+    }
   }
 
   // Navega al detalle y oculta el panel
@@ -536,16 +539,12 @@ export class HomeComponent implements OnInit {
     this.showCatalogFilters.update((v) => !v);
   }
 
-  // Método temporal para depurar navegación
+  // Navega a la página de detalle del curso
   navigateToCourse(course: any, event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    console.log("Intentando navegar a:", course);
-    console.log("Slug:", course.slug);
     if (course.slug) {
       this.router.navigate(["/course-detail", course.slug]);
-    } else {
-      console.error("El curso no tiene slug:", course);
     }
   }
 }

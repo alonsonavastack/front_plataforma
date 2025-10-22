@@ -217,4 +217,39 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
   formatCurrency(amount: number, currency: string = 'USD'): string {
     return new Intl.NumberFormat('es-MX', { style: 'currency', currency }).format(amount);
   }
+
+  /**
+   * Obtener URL completa de la imagen del producto (curso o proyecto)
+   */
+  getProductImageUrl(product: any, productType?: string): string {
+    if (!product) {
+      return 'https://via.placeholder.com/40?text=No+Image';
+    }
+
+    // Los proyectos usan 'imagen', los cursos pueden usar 'image' o 'imagen'
+    const imageName = product.imagen || product.image;
+    
+    if (!imageName) {
+      return 'https://via.placeholder.com/40?text=No+Image';
+    }
+
+    // Construir URL basada en el tipo de producto
+    if (productType === 'project') {
+      // URL para proyectos
+      return `http://localhost:3000/api/project/imagen-project/${imageName}`;
+    } else {
+      // URL para cursos (por defecto)
+      return `http://localhost:3000/api/course/imagen-course/${imageName}`;
+    }
+  }
+
+  /**
+   * Obtener URL del avatar del instructor
+   */
+  getInstructorAvatarUrl(instructor: any): string {
+    if (!instructor || !instructor.avatar) {
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(instructor?.name || 'User')}&background=667eea&color=fff`;
+    }
+    return `http://localhost:3000/api/users/imagen-usuario/${instructor.avatar}`;
+  }
 }

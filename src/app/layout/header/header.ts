@@ -30,9 +30,22 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     }
 
     if (!this.isOnAuthPage()) {
+      // 🔥 SOLUCIÓN: Envolver en try-catch para evitar errores de Flowbite
       setTimeout(() => {
-        initFlowbite();
-      }, 0);
+        try {
+          initFlowbite();
+        } catch (error) {
+          console.warn('Flowbite initialization warning:', error);
+          // Reintentar después de 1 segundo si falla
+          setTimeout(() => {
+            try {
+              initFlowbite();
+            } catch (retryError) {
+              // Silenciar error en segundo intento
+            }
+          }, 1000);
+        }
+      }, 100); // Aumentar el delay a 100ms para dar tiempo al DOM
     }
 
     const drawer = document.getElementById('drawer-navigation');

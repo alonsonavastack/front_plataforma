@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal, AfterViewInit, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, AfterViewInit, computed, Renderer2, effect } from '@angular/core';
 import { AnimateService } from '../../core/animate.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { TopbarComponent } from './topbar';
@@ -23,6 +23,8 @@ import { AdminInstructorPaymentsComponent } from '../admin-instructor-payments/a
 import { AdminPaymentHistoryComponent } from '../admin-payment-history/admin-payment-history';
 import { AdminCommissionSettingsComponent } from '../admin-commission-settings/admin-commission-settings';
 import { InstructorPaymentConfigComponent } from '../instructor-payment-config/instructor-payment-config';
+import { CarouselDashboard } from '../carousel-dashboard/carousel-dashboard';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { NavId, NavItem } from './nav.types';
 
@@ -48,7 +50,8 @@ import { NavId, NavItem } from './nav.types';
     AdminInstructorPaymentsComponent,
     AdminPaymentHistoryComponent,
     AdminCommissionSettingsComponent,
-    InstructorPaymentConfigComponent
+    InstructorPaymentConfigComponent,
+    CarouselDashboard
   ],
   templateUrl: './dashboard.html',
 })
@@ -56,12 +59,38 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   animate = inject(AnimateService);
   dashboardService = inject(DashboardService);
   authService = inject(AuthService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
+  // 🔥 SOLUCIÓN: Exponer Math para usarlo en el template
+  Math = Math;
+  // Inicializar sidebar cerrado en móvil, abierto en desktop
+  isSidebarOpen = signal(typeof window !== 'undefined' && window.innerWidth >= 1024);
   isSidebarCollapsed = signal(false);
-  toggleSidebar() { this.isSidebarCollapsed.update(v => !v); }
+  toggleSidebar() {
+    this.isSidebarOpen.update(v => !v);
+    this.isSidebarCollapsed.update(v => !v);
+  }
 
   active: NavId = 'overview';
-  setActive(s: NavId) { this.active = s; }
+  setActive(s: NavId) {
+    this.active = s;
+    // 🔥 SOLUCIÓN: Actualizar la URL con query param para mantener estado
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { section: s },
+      queryParamsHandling: 'merge'
+    });
+    // 🔥 Cerrar sidebar en móvil después de navegar
+    if (window.innerWidth < 1024) {
+      this.isSidebarOpen.set(false);
+      // Ocultar el drawer de Flowbite
+      const drawer = document.getElementById('dashboard-drawer');
+      if (drawer) {
+        drawer.classList.add('-translate-x-full');
+      }
+    }
+  }
 
   private allItems: NavItem[] = [
     { id: 'overview', label: 'Resumen',      icon: 'M4 6h16M4 12h12M4 18h8' },
@@ -72,6 +101,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     { id: 'sales', label: 'Ventas', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
     { id: 'projects', label: 'Proyectos',    icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' },
     { id: 'students', label: 'Estudiantes',  icon: 'M15 11a3 3 0 1 0-6 0m10 10a7 7 0 0 0-14 0' },
+    { id: 'carousel-dashboard', label: 'Carrusel', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' },
     { id: 'reports',  label: 'Reportes',     icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
     { id: 'appearance', label: 'Apariencia', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' },
     { id: 'settings', label: 'Destacados',   icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z' },
@@ -96,18 +126,64 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         'users',
         'discounts',
         'categories',
-        'courses',
+        'settings',
         'appearance'
       ].includes(item.id)
     );
   });
 
+  constructor(private renderer: Renderer2) {
+  // 🔥 SOLUCIÓN: Solo aplicar overflow-hidden en móvil cuando el sidebar está abierto
+  effect(() => {
+    // Verificar si estamos en móvil (< 1024px que es el breakpoint lg de Tailwind)
+    const isMobile = window.innerWidth < 1024;
+
+    if (this.isSidebarOpen() && isMobile) {
+      this.renderer.addClass(document.body, 'overflow-hidden');
+    } else {
+      this.renderer.removeClass(document.body, 'overflow-hidden');
+    }
+  });
+}
+
   ngOnInit(): void {
+    // 🔥 SOLUCIÓN: Leer el query param para restaurar la sección activa
+    this.route.queryParams.subscribe(params => {
+      if (params['section']) {
+        this.active = params['section'] as NavId;
+      }
+    });
+    
     // Cargamos los KPIs cuando el componente se inicializa
     this.dashboardService.reloadKpis();
+    this.dashboardService.loadMonthlyIncome(); // 🔥 SOLUCIÓN: Cargar datos para la gráfica
   }
 
   ngAfterViewInit(): void {
     initFlowbite();
+
+    // 🔥 SOLUCIÓN: Sincronizar estado del drawer con isSidebarOpen
+    const drawer = document.getElementById('dashboard-drawer');
+    if (drawer) {
+      // Listener para cuando Flowbite abre el drawer
+      drawer.addEventListener('transitionend', () => {
+        if (!drawer.classList.contains('-translate-x-full')) {
+          this.isSidebarOpen.set(true);
+        } else {
+          this.isSidebarOpen.set(false);
+        }
+      });
+    }
+
+    // Listener para cerrar el drawer cuando se hace clic en el overlay
+    const overlay = document.querySelector('[data-drawer-backdrop="dashboard-drawer"]');
+    if (overlay) {
+      overlay.addEventListener('click', () => {
+        this.isSidebarOpen.set(false);
+        if (drawer) {
+          drawer.classList.add('-translate-x-full');
+        }
+      });
+    }
   }
 }

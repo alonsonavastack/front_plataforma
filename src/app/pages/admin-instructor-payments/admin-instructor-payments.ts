@@ -139,4 +139,14 @@ export class AdminInstructorPaymentsComponent implements OnInit {
       this.router.navigate(['/admin-instructor-payments', instructorId]);
     }
   }
+
+  /**
+   * Obtener URL del avatar del instructor
+   */
+  getInstructorAvatarUrl(instructor: any): string {
+    if (!instructor || !instructor.avatar) {
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(instructor?.name || 'User')}&background=667eea&color=fff`;
+    }
+    return `http://localhost:3000/api/users/imagen-usuario/${instructor.avatar}`;
+  }
 }

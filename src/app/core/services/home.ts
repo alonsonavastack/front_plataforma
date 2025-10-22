@@ -219,7 +219,7 @@ export class HomeService {
       if (!slug) return;
 
       state.update(s => ({ ...s, isLoading: true }));
-      const url = `${this.base}home/show_course/${slug}${toQuery({ TIME_NOW: Date.now() })}`;
+      const url = `${this.base}home/landing-curso/${slug}${toQuery({ TIME_NOW: Date.now() })}`;
 
       this.http.get<CourseDetailResponse>(url).subscribe({
         next: (data) => state.set({ value: data, isLoading: false, error: null }),

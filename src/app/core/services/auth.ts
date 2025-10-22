@@ -196,13 +196,19 @@ export class AuthService {
             purchasesService.loadPurchasedProducts();
           });
 
-          // Navegación basada en rol
+          // Navegación basada en rol SOLO en login exitoso
+          // NO redirigir en refresh, solo en login manual
           setTimeout(() => {
-            if (user.rol === 'admin' || user.rol === 'instructor') {
-              this.router.navigate(['/dashboard']);
-            } else {
-              this.router.navigate(['/']);
+            const currentUrl = this.router.url;
+            // Solo redirigir si estamos en login o en la raíz
+            if (currentUrl === '/login' || currentUrl === '/' || currentUrl === '') {
+              if (user.rol === 'admin' || user.rol === 'instructor') {
+                this.router.navigate(['/dashboard']);
+              } else {
+                this.router.navigate(['/']);
+              }
             }
+            // Si el usuario está en otra ruta, dejarlo ahí
           }, 100);
         }),
         catchError(error => {
