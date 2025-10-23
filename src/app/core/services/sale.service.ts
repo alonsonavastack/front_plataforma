@@ -155,6 +155,20 @@ constructor() {
       })
     );
   }
+
+  /**
+   * Obtiene todas las transacciones del usuario actual
+   */
+  getMyTransactions(): Observable<{ transactions: Sale[] }> {
+    return this.http.get<{ transactions: Sale[] }>(`${this.API_URL}checkout/my-transactions`);
+  }
+
+  /**
+   * Busca una transacción específica por número de transacción
+   */
+  getTransactionByNumber(nTransaccion: string): Observable<{ transaction: Sale }> {
+    return this.http.get<{ transaction: Sale }>(`${this.API_URL}checkout/transaction/${nTransaccion}`);
+  }
 }
 
 

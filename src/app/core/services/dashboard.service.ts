@@ -24,14 +24,26 @@ export interface Distribution {
   projects: number;
 }
 
+export interface RecentActivity {
+  type: string;
+  user: string;
+  amount?: number;
+  course?: string;
+  rating?: number;
+  time: string;
+  color: string;
+}
+
 // Interfaz para el estado del servicio
 interface DashboardState {
   kpis: Kpi[];
   monthlyIncome: MonthlyIncome[];
   distribution: Distribution | null;
+  recentActivity: RecentActivity[];
   isLoadingKpis: boolean;
   isLoadingMonthlyIncome: boolean;
   isLoadingDistribution: boolean;
+  isLoadingRecentActivity: boolean;
   error: any;
 }
 
@@ -45,9 +57,11 @@ export class DashboardService {
     kpis: [],
     monthlyIncome: [],
     distribution: null,
+    recentActivity: [],
     isLoadingKpis: false,
     isLoadingMonthlyIncome: false,
     isLoadingDistribution: false,
+    isLoadingRecentActivity: false,
     error: null,
   });
 
@@ -55,9 +69,11 @@ export class DashboardService {
   kpis = computed(() => this.state().kpis);
   monthlyIncome = computed(() => this.state().monthlyIncome);
   distribution = computed(() => this.state().distribution);
+  recentActivity = computed(() => this.state().recentActivity);
   isLoadingKpis = computed(() => this.state().isLoadingKpis);
   isLoadingMonthlyIncome = computed(() => this.state().isLoadingMonthlyIncome);
   isLoadingDistribution = computed(() => this.state().isLoadingDistribution);
+  isLoadingRecentActivity = computed(() => this.state().isLoadingRecentActivity);
   error = computed(() => this.state().error);
 
   // --- MÉTODOS PARA CARGAR DATOS ---
@@ -91,6 +107,18 @@ export class DashboardService {
       tap(dist => this.state.update(s => ({ ...s, distribution: dist, isLoadingDistribution: false }))),
       catchError(err => {
         this.state.update(s => ({ ...s, error: err, isLoadingDistribution: false }));
+        return throwError(() => err);
+      })
+    ).subscribe();
+  }
+
+  // 🆕 NUEVO: Cargar actividad reciente
+  loadRecentActivity() {
+    this.state.update(s => ({ ...s, isLoadingRecentActivity: true }));
+    this.http.get<RecentActivity[]>(`${this.base}dashboard/recentActivity`).pipe(
+      tap(activity => this.state.update(s => ({ ...s, recentActivity: activity, isLoadingRecentActivity: false }))),
+      catchError(err => {
+        this.state.update(s => ({ ...s, error: err, isLoadingRecentActivity: false }));
         return throwError(() => err);
       })
     ).subscribe();

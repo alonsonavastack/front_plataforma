@@ -56,6 +56,26 @@ export interface ProfileData {
   enrolled_course_count: number;
   actived_course_count: number;
   termined_course_count: number;
+  transactions?: Transaction[]; // Agregamos las transacciones
+}
+
+export interface Transaction {
+  _id: string;
+  n_transaccion: string;
+  method_payment: string;
+  total: number;
+  currency_total: string;
+  status: string;
+  items: {
+    product: {
+      _id: string;
+      title: string;
+      imagen?: string;
+    };
+    product_type: 'course' | 'project';
+    price: number;
+  }[];
+  createdAt: string;
 }
 
 @Injectable({
@@ -83,5 +103,10 @@ export class ProfileStudentService {
         error: err => this.state.set({ data: null, isLoading: false, error: err }),
       })
     );
+  }
+
+  // Método para cargar solo las transacciones
+  loadTransactions(): Observable<{ transactions: Transaction[] }> {
+    return this.http.get<{ transactions: Transaction[] }>(`${this.API_URL}/transactions`);
   }
 }

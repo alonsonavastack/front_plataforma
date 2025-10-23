@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal, AfterViewInit, computed, Renderer2, effect } from '@angular/core';
 import { AnimateService } from '../../core/animate.service';
+import { Drawer, DrawerInterface } from 'flowbite';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { TopbarComponent } from './topbar';
 import { SidebarComponent } from './sidebar';
@@ -62,6 +63,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
+  private drawer: DrawerInterface | null = null;
   // 🔥 SOLUCIÓN: Exponer Math para usarlo en el template
   Math = Math;
   // Inicializar sidebar cerrado en móvil, abierto en desktop
@@ -82,13 +84,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       queryParamsHandling: 'merge'
     });
     // 🔥 Cerrar sidebar en móvil después de navegar
-    if (window.innerWidth < 1024) {
+    if (window.innerWidth < 1024 && this.drawer) {
       this.isSidebarOpen.set(false);
-      // Ocultar el drawer de Flowbite
-      const drawer = document.getElementById('dashboard-drawer');
-      if (drawer) {
-        drawer.classList.add('-translate-x-full');
-      }
+      this.drawer.hide();
     }
   }
 
@@ -127,7 +125,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         'discounts',
         'categories',
         'settings',
-        'appearance'
+        'appearance',
+        'carousel-dashboard',
+        'courses',
       ].includes(item.id)
     );
   });
@@ -153,37 +153,20 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         this.active = params['section'] as NavId;
       }
     });
-    
+
     // Cargamos los KPIs cuando el componente se inicializa
     this.dashboardService.reloadKpis();
     this.dashboardService.loadMonthlyIncome(); // 🔥 SOLUCIÓN: Cargar datos para la gráfica
+    this.dashboardService.loadRecentActivity(); // 🆕 NUEVO: Cargar actividad reciente
   }
 
   ngAfterViewInit(): void {
     initFlowbite();
 
-    // 🔥 SOLUCIÓN: Sincronizar estado del drawer con isSidebarOpen
-    const drawer = document.getElementById('dashboard-drawer');
-    if (drawer) {
-      // Listener para cuando Flowbite abre el drawer
-      drawer.addEventListener('transitionend', () => {
-        if (!drawer.classList.contains('-translate-x-full')) {
-          this.isSidebarOpen.set(true);
-        } else {
-          this.isSidebarOpen.set(false);
-        }
-      });
-    }
-
-    // Listener para cerrar el drawer cuando se hace clic en el overlay
-    const overlay = document.querySelector('[data-drawer-backdrop="dashboard-drawer"]');
-    if (overlay) {
-      overlay.addEventListener('click', () => {
-        this.isSidebarOpen.set(false);
-        if (drawer) {
-          drawer.classList.add('-translate-x-full');
-        }
-      });
+    // 🔥 SOLUCIÓN: Obtener la instancia del Drawer de Flowbite
+    const drawerElement = document.getElementById('drawer-navigation'); // Asegúrate que este es el ID de tu sidebar/drawer
+    if (drawerElement) {
+      this.drawer = new Drawer(drawerElement);
     }
   }
 }

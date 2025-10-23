@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -12,7 +12,7 @@ import { AuthService } from '../../core/services/auth';
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './checkout.component.html',
 })
-export class CheckoutComponent implements OnInit {
+export class CheckoutComponent implements OnInit, OnDestroy {
   cartService = inject(CartService);
   checkoutService = inject(CheckoutService);
   authService = inject(AuthService);
@@ -22,13 +22,13 @@ export class CheckoutComponent implements OnInit {
   selectedPaymentMethod = signal<string>('');
   isProcessing = signal(false);
   showSuccess = signal(false);
+  showWarningModal = signal(false); // 🔥 Nuevo modal de advertencia
   errorMessage = signal<string>('');
   transactionNumber = signal<string>(''); // Para guardar el número de referencia
 
   // Computed values
   cartItems = computed(() => {
     const items = this.cartService.items();
-
     return items;
   });
   subtotal = computed(() => this.cartService.subtotal());
@@ -53,9 +53,19 @@ export class CheckoutComponent implements OnInit {
       const items = this.cartItems();
       const isLoading = this.cartService.isLoading();
 
-      // Solo actuamos cuando la carga ha terminado y no hay items.
-      if (!isLoading && items.length === 0) {
+      // Solo actuamos cuando la carga ha terminado, no hay items Y NO se está mostrando el modal de éxito
+      if (!isLoading && items.length === 0 && !this.showSuccess() && !this.showWarningModal()) {
         this.router.navigate(['/']);
+      }
+    });
+
+    // 🔥 Effect para controlar el scroll del body cuando los modales están abiertos
+    effect(() => {
+      const isModalOpen = this.showSuccess() || this.showWarningModal();
+      if (isModalOpen) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
       }
     });
   }
@@ -80,12 +90,23 @@ export class CheckoutComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    // 🔥 Asegurar que el scroll se restaure al salir del componente
+    document.body.style.overflow = '';
+  }
+
   selectPaymentMethod(methodId: string): void {
     this.selectedPaymentMethod.set(methodId);
     this.errorMessage.set('');
   }
 
   processPayment(): void {
+    // 🔥 Prevenir múltiples clics - Si ya está procesando o ya se mostró éxito, no hacer nada
+    if (this.isProcessing() || this.showSuccess()) {
+      console.log('⚠️ Pago ya en proceso o completado. Ignorando clic adicional.');
+      return;
+    }
+
     if (!this.selectedPaymentMethod()) {
       this.errorMessage.set('Por favor selecciona un método de pago');
       return;
@@ -99,6 +120,7 @@ export class CheckoutComponent implements OnInit {
       return;
     }
 
+    console.log('🚀 Iniciando proceso de pago...');
     this.isProcessing.set(true);
     this.errorMessage.set('');
 
@@ -109,21 +131,23 @@ export class CheckoutComponent implements OnInit {
       currency_payment: 'USD',
       total: this.subtotal(),
       // Generamos el número de transacción y lo guardamos en la señal
-      n_transaccion: this.checkoutService.generateTransactionNumber(), price_dolar: this.checkoutService.getExchangeRate(),
+      n_transaccion: this.checkoutService.generateTransactionNumber(), 
+      price_dolar: this.checkoutService.getExchangeRate(),
     };
     this.transactionNumber.set(checkoutData.n_transaccion);
 
     // Procesar la venta
     this.checkoutService.processSale(checkoutData).subscribe({
       next: (response) => {
-        console.log('Venta exitosa:', response);
+        console.log('✅ Venta exitosa:', response);
+        this.isProcessing.set(false);
         this.showSuccess.set(true);
 
-        // Limpiar el carrito
-        this.cartService.reloadCart();
+        // NO limpiar el carrito aquí, lo haremos cuando el usuario cierre el modal
+        // Esto permite que el modal permanezca visible con toda la información
       },
       error: (error) => {
-        console.error('Error al procesar la venta:', error);
+        console.error('❌ Error al procesar la venta:', error);
         this.errorMessage.set('Hubo un error al procesar tu pago. Por favor intenta de nuevo.');
         this.isProcessing.set(false);
       }
@@ -132,13 +156,22 @@ export class CheckoutComponent implements OnInit {
 
   closeSuccessModalAndRedirect(): void {
     this.showSuccess.set(false);
-    this.router.navigate(['/profile-student']);
+    // 🔥 Mostrar el modal de advertencia después de cerrar el modal de éxito
+    this.showWarningModal.set(true);
+  }
+
+  // 🔥 Nuevo método para cerrar el modal de advertencia y redirigir
+  closeWarningAndRedirect(): void {
+    this.showWarningModal.set(false);
+    // Limpiar el carrito DESPUÉS de que el usuario cierre el modal de advertencia
+    this.cartService.reloadCart();
+    // Redirigir al perfil del estudiante directamente a la sección de Mis Compras
+    this.router.navigate(['/profile-student'], { fragment: 'purchases' });
   }
 
   // El backend ya devuelve la URL completa de la imagen, solo necesitamos devolverla
   buildImageUrl(imagen: string): string {
     if (!imagen) {
-
       return 'https://via.placeholder.com/150x100?text=Sin+Imagen';
     }
 

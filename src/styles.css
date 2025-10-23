@@ -22,3 +22,17 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgb(148 163 184 / 0.7);
 }
+
+/* Animación pulse lento para el modal de advertencia */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

@@ -1,16 +1,16 @@
-import { Component, inject, effect, signal, OnInit, computed, HostListener } from '@angular/core';
+import { Component, inject, effect, signal, OnInit, OnDestroy, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink, ActivatedRoute } from '@angular/router';
+import { HeaderComponent } from '../../layout/header/header';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ProfileService } from '../../core/services/profile';
-import { HeaderComponent } from '../../layout/header/header';
-import { RouterLink } from '@angular/router';
+
 import { ProfileStudentService, EnrolledCourse, Sale, Project, ProjectFile } from '../../core/services/profile-student.service';
 import { ProjectService } from '../../core/services/project.service';
 import { environment } from '../../../environments/environment';
-
 type ProfileSection = 'courses' | 'projects' | 'purchases' | 'edit';
 
 // Validador personalizado para confirmar que las contraseñas coinciden
@@ -21,10 +21,10 @@ export const passwordsMatchValidator: ValidatorFn = (control: AbstractControl): 
 @Component({
   standalone: true,
   selector: 'app-profile-student',
-  imports: [CommonModule, ReactiveFormsModule, HeaderComponent, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, HeaderComponent],
   templateUrl: './profile-student.html',
 })
-export class ProfileStudentComponent implements OnInit {
+export class ProfileStudentComponent implements OnInit, OnDestroy {
   // Usamos ProfileService para las acciones de 'update', pero no para leer el estado.
   profileService = inject(ProfileService);
   profileStudentService = inject(ProfileStudentService);
@@ -32,9 +32,15 @@ export class ProfileStudentComponent implements OnInit {
   authService = inject(AuthService);
   private sanitizer = inject(DomSanitizer);
   private http = inject(HttpClient);
+  private route = inject(ActivatedRoute);
 
-  // Señal para manejar la pestaña activa
-  activeSection = signal<ProfileSection>('courses');
+  // Exponer Math para usarlo en el template
+  Math = Math;
+
+  // Señal para manejar la pestaña activa (inicializada desde localStorage si existe)
+  activeSection = signal<ProfileSection>(
+    (typeof window !== 'undefined' && localStorage.getItem('profile-active-section') as ProfileSection) || 'courses'
+  );
 
   // Señal para el estado de envío del formulario
   isSubmitting = signal(false);
@@ -44,6 +50,83 @@ export class ProfileStudentComponent implements OnInit {
 
   // Señal para mostrar un indicador de carga en el archivo que se está descargando
   downloadingFileId = signal<string | null>(null);
+
+  // Señales para la paginación de compras
+  purchasesCurrentPage = signal(1);
+  purchasesPerPage = signal(10);
+
+  // Señales para la paginación de proyectos
+  projectsCurrentPage = signal(1);
+  projectsPerPage = signal(10);
+
+  // Señales para la paginación de cursos
+  coursesCurrentPage = signal(1);
+  coursesPerPage = signal(10);
+
+  // Computed para las compras paginadas
+  paginatedSales = computed(() => {
+    const sales = this.studentProfile()?.sales || [];
+    const page = this.purchasesCurrentPage();
+    const perPage = this.purchasesPerPage();
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    return sales.slice(start, end);
+  });
+
+  // Computed para los proyectos paginados
+  paginatedProjects = computed(() => {
+    const projects = this.studentProfile()?.projects || [];
+    const page = this.projectsCurrentPage();
+    const perPage = this.projectsPerPage();
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    return projects.slice(start, end);
+  });
+
+  // Computed para los cursos paginados
+  paginatedCourses = computed(() => {
+    const courses = this.studentProfile()?.enrolled_courses || [];
+    const page = this.coursesCurrentPage();
+    const perPage = this.coursesPerPage();
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    return courses.slice(start, end);
+  });
+
+  // Computed para el total de páginas
+  totalPurchasesPages = computed(() => {
+    const sales = this.studentProfile()?.sales || [];
+    const perPage = this.purchasesPerPage();
+    return Math.ceil(sales.length / perPage);
+  });
+
+  totalProjectsPages = computed(() => {
+    const projects = this.studentProfile()?.projects || [];
+    const perPage = this.projectsPerPage();
+    return Math.ceil(projects.length / perPage);
+  });
+
+  totalCoursesPages = computed(() => {
+    const courses = this.studentProfile()?.enrolled_courses || [];
+    const perPage = this.coursesPerPage();
+    return Math.ceil(courses.length / perPage);
+  });
+
+  // Computed para el array de números de página
+  purchasesPageNumbers = computed(() => {
+    const total = this.totalPurchasesPages();
+    return Array.from({ length: total }, (_, i) => i + 1);
+  });
+
+  projectsPageNumbers = computed(() => {
+    const total = this.totalProjectsPages();
+    return Array.from({ length: total }, (_, i) => i + 1);
+  });
+
+  coursesPageNumbers = computed(() => {
+    const total = this.totalCoursesPages();
+    return Array.from({ length: total }, (_, i) => i + 1);
+  });
 
   // --- Lógica para el modal de video ---
   showVideoModal = signal(false);
@@ -92,15 +175,46 @@ export class ProfileStudentComponent implements OnInit {
         });
       }
     });
+
+    // 🔥 Effect para controlar el scroll del body cuando el modal de video está abierto
+    effect(() => {
+      if (this.showVideoModal()) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
+    });
   }
 
   ngOnInit(): void {
     this.profileStudentService.loadProfile().subscribe();
+    console.log('📍 Sección actual al iniciar:', this.activeSection());
   }
 
-  // Cambia la sección activa
+  ngOnDestroy(): void {
+    // 🔥 Asegurar que el scroll se restaure al salir del componente
+    document.body.style.overflow = '';
+  }
+
+  // Cambia la sección activa y la guarda en localStorage
   setActiveSection(section: ProfileSection) {
+    // Validar que la sección sea válida
+    if (!['courses', 'projects', 'purchases', 'edit'].includes(section)) {
+      console.error('❌ Sección inválida:', section);
+      return;
+    }
+    
+    console.log('📦 Guardando sección:', section);
     this.activeSection.set(section);
+    
+    // 🔥 Guardar en localStorage para persistir entre recargas
+    try {
+      localStorage.setItem('profile-active-section', section);
+      console.log('✅ Sección guardada exitosamente');
+      console.log('📍 Verificando localStorage:', localStorage.getItem('profile-active-section'));
+    } catch (error) {
+      console.error('❌ Error al guardar en localStorage:', error);
+    }
   }
 
   // Envía los datos del formulario para actualizar el perfil
@@ -269,6 +383,93 @@ export class ProfileStudentComponent implements OnInit {
       this.expandedPurchases.delete(saleId);
     } else {
       this.expandedPurchases.add(saleId);
+    }
+  }
+
+  // Métodos de paginación para compras
+  changePurchasesPage(page: number): void {
+    this.purchasesCurrentPage.set(page);
+    const purchasesSection = document.querySelector('.purchases-section');
+    if (purchasesSection) {
+      purchasesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  changePurchasesPerPage(perPage: number): void {
+    this.purchasesPerPage.set(perPage);
+    this.purchasesCurrentPage.set(1);
+  }
+
+  previousPurchasesPage(): void {
+    const current = this.purchasesCurrentPage();
+    if (current > 1) {
+      this.changePurchasesPage(current - 1);
+    }
+  }
+
+  nextPurchasesPage(): void {
+    const current = this.purchasesCurrentPage();
+    const total = this.totalPurchasesPages();
+    if (current < total) {
+      this.changePurchasesPage(current + 1);
+    }
+  }
+
+  // Métodos de paginación para proyectos
+  changeProjectsPage(page: number): void {
+    this.projectsCurrentPage.set(page);
+    const projectsSection = document.querySelector('.projects-section');
+    if (projectsSection) {
+      projectsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  changeProjectsPerPage(perPage: number): void {
+    this.projectsPerPage.set(perPage);
+    this.projectsCurrentPage.set(1);
+  }
+
+  previousProjectsPage(): void {
+    const current = this.projectsCurrentPage();
+    if (current > 1) {
+      this.changeProjectsPage(current - 1);
+    }
+  }
+
+  nextProjectsPage(): void {
+    const current = this.projectsCurrentPage();
+    const total = this.totalProjectsPages();
+    if (current < total) {
+      this.changeProjectsPage(current + 1);
+    }
+  }
+
+  // Métodos de paginación para cursos
+  changeCoursesPage(page: number): void {
+    this.coursesCurrentPage.set(page);
+    const coursesSection = document.querySelector('.courses-section');
+    if (coursesSection) {
+      coursesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  changeCoursesPerPage(perPage: number): void {
+    this.coursesPerPage.set(perPage);
+    this.coursesCurrentPage.set(1);
+  }
+
+  previousCoursesPage(): void {
+    const current = this.coursesCurrentPage();
+    if (current > 1) {
+      this.changeCoursesPage(current - 1);
+    }
+  }
+
+  nextCoursesPage(): void {
+    const current = this.coursesCurrentPage();
+    const total = this.totalCoursesPages();
+    if (current < total) {
+      this.changeCoursesPage(current + 1);
     }
   }
 

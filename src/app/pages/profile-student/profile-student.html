@@ -4,7 +4,7 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <div class="grid md:grid-cols-[1fr_3fr] gap-8">
 
-      <!-- Columna Izquierda: Perfil y Navegación -->
+      <!-- Columna Izquierda: Perfil y NavegaciÃ³n -->
       <aside class="space-y-6">
         <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm text-center">
           @if (studentProfile(); as profile) {
@@ -33,21 +33,34 @@
           <ul class="space-y-1">
             <li>
               <button (click)="setActiveSection('courses')" [class.bg-lime-400/10]="activeSection() === 'courses'" [class.text-lime-300]="activeSection() === 'courses'" class="w-full text-left flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-slate-700 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
                 <span>Mis Cursos</span>
               </button>
             </li>
             <li>
               <button (click)="setActiveSection('projects')" [class.bg-lime-400/10]="activeSection() === 'projects'" [class.text-lime-300]="activeSection() === 'projects'" class="w-full text-left flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-slate-700 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                </svg>
                 <span>Mis Proyectos</span>
               </button>
             </li>
+
             <li>
               <button (click)="setActiveSection('purchases')" [class.bg-lime-400/10]="activeSection() === 'purchases'" [class.text-lime-300]="activeSection() === 'purchases'" class="w-full text-left flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-slate-700 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
                 <span>Mis Compras</span>
               </button>
             </li>
             <li>
               <button (click)="setActiveSection('edit')" [class.bg-lime-400/10]="activeSection() === 'edit'" [class.text-lime-300]="activeSection() === 'edit'" class="w-full text-left flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-slate-700 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
                 <span>Editar Perfil</span>
               </button>
             </li>
@@ -55,12 +68,29 @@
         </nav>
       </aside>
 
-      <!-- Columna Derecha: Contenido de la Pestaña -->
+      <!-- Columna Derecha: Contenido de la PestaÃ±a -->
       <main>
         @switch (activeSection()) {
           @case ('courses') {
-            <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm">
-              <h3 class="text-2xl font-bold mb-6">Mis Cursos</h3> @if (studentProfile(); as profile) {
+            <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm courses-section">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold">Mis Cursos</h3>
+                @if (studentProfile()?.enrolled_courses && studentProfile()!.enrolled_courses.length > 0) {
+                  <div class="flex items-center gap-2">
+                    <label class="text-sm text-slate-400">Mostrar:</label>
+                    <select
+                      [value]="coursesPerPage()"
+                      (change)="changeCoursesPerPage(+$any($event.target).value)"
+                      class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-1.5 focus:ring-lime-400 focus:border-lime-400"
+                    >
+                      <option [value]="10">10</option>
+                      <option [value]="15">15</option>
+                      <option [value]="20">20</option>
+                    </select>
+                  </div>
+                }
+              </div>
+              @if (studentProfile(); as profile) {
                 <div class="mb-4 grid grid-cols-3 gap-4">
                   <div class="p-4 rounded-lg bg-slate-800/50 border border-white/10">
                     <p class="text-sm text-slate-400">Total Inscritos</p>
@@ -80,7 +110,7 @@
                     <svg class="w-16 h-16 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                     </svg>
-                    <p class="text-slate-400 text-lg">Aún no te has inscrito a ningún curso.</p>
+                    <p class="text-slate-400 text-lg">AÃºn no te has inscrito a ningÃºn curso.</p>
                     <a routerLink="/" class="inline-block mt-4 px-6 py-3 bg-lime-400 text-slate-900 rounded-lg font-semibold hover:bg-lime-300 transition">Explorar Cursos</a>
                   </div>
                 } @else if (profile.enrolled_courses) {
@@ -108,6 +138,63 @@
                       </div>
                     }
                   </div>
+
+                  <!-- Controles de Paginación -->
+                  @if (totalPurchasesPages() > 1) {
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-6 border-t border-slate-700">
+                      <!-- Info de página actual -->
+                      <div class="text-sm text-slate-400">
+                        Mostrando {{ (purchasesCurrentPage() - 1) * purchasesPerPage() + 1 }} -
+                        {{ Math.min(purchasesCurrentPage() * purchasesPerPage(), profile.sales.length) }}
+                        de {{ profile.sales.length }} compras
+                      </div>
+
+                      <!-- Botones de paginación -->
+                      <div class="flex items-center gap-2">
+                        <!-- Botón Anterior -->
+                        <button
+                          (click)="previousPurchasesPage()"
+                          [disabled]="purchasesCurrentPage() === 1"
+                          class="px-3 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                          </svg>
+                        </button>
+
+                        <!-- Números de página -->
+                        <div class="flex items-center gap-1">
+                          @for (pageNum of purchasesPageNumbers(); track pageNum) {
+                            @if (pageNum === 1 || pageNum === totalPurchasesPages() || (pageNum >= purchasesCurrentPage() - 1 && pageNum <= purchasesCurrentPage() + 1)) {
+                              <button
+                                (click)="changePurchasesPage(pageNum)"
+                                [class.bg-lime-400]="pageNum === purchasesCurrentPage()"
+                                [class.text-slate-900]="pageNum === purchasesCurrentPage()"
+                                [class.bg-slate-800]="pageNum !== purchasesCurrentPage()"
+                                [class.text-white]="pageNum !== purchasesCurrentPage()"
+                                class="min-w-[40px] px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 transition-colors font-medium text-sm"
+                              >
+                                {{ pageNum }}
+                              </button>
+                            } @else if (pageNum === purchasesCurrentPage() - 2 || pageNum === purchasesCurrentPage() + 2) {
+                              <span class="px-2 text-slate-500">…</span>
+                            }
+                          }
+                        </div>
+
+                        <!-- Botón Siguiente -->
+                        <button
+                          (click)="nextPurchasesPage()"
+                          [disabled]="purchasesCurrentPage() === totalPurchasesPages()"
+                          class="px-3 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  }
                 }
               } @else {
                 <div class="flex items-center justify-center py-12">
@@ -126,7 +213,7 @@
                     <svg class="w-16 h-16 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>
-                    <p class="text-slate-400 text-lg">Aún no has adquirido ningún proyecto.</p>
+                    <p class="text-slate-400 text-lg">AÃºn no has adquirido ningÃºn proyecto.</p>
                     <a routerLink="/" class="inline-block mt-4 px-6 py-3 bg-lime-400 text-slate-900 rounded-lg font-semibold hover:bg-lime-300 transition">Explorar Proyectos</a>
                   </div>
                 } @else if (profile.projects) {
@@ -252,9 +339,26 @@
               }
             </div>
           }
+
           @case ('purchases') {
-            <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm">
-              <h3 class="text-2xl font-bold mb-6">Historial de Compras</h3>
+            <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm purchases-section">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold">Historial de Compras</h3>
+                @if (studentProfile()?.sales && studentProfile()!.sales.length > 0) {
+                  <div class="flex items-center gap-2">
+                    <label class="text-sm text-slate-400">Mostrar:</label>
+                    <select
+                      [value]="purchasesPerPage()"
+                      (change)="changePurchasesPerPage(+$any($event.target).value)"
+                      class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-1.5 focus:ring-lime-400 focus:border-lime-400"
+                    >
+                      <option [value]="10">10</option>
+                      <option [value]="15">15</option>
+                      <option [value]="20">20</option>
+                    </select>
+                  </div>
+                }
+              </div>
               @if (studentProfile(); as profile) {
                 @if (profile.sales && profile.sales.length === 0) {
                   <div class="text-center py-12">
@@ -265,62 +369,87 @@
                     <a routerLink="/" class="inline-block mt-4 px-6 py-3 bg-lime-400 text-slate-900 rounded-lg font-semibold hover:bg-lime-300 transition">Explorar Cursos</a>
                   </div>
                 } @else if (profile.sales) {
-                  <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-white/10">
-                    <table class="w-full text-sm text-left text-slate-300">
-                      <thead class="text-xs uppercase bg-slate-800/50 text-slate-400">
-                        <tr>
-                          <th scope="col" class="px-6 py-3">Detalles</th>
-                          <th scope="col" class="px-6 py-3">Fecha</th>
-                          <th scope="col" class="px-6 py-3">Total</th>
-                          <th scope="col" class="px-6 py-3">Transacción</th>
-                          <th scope="col" class="px-6 py-3 text-center">Estado</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (sale of profile.sales; track sale._id) {
-                          <tr class="border-b border-slate-800 bg-slate-900/50 hover:bg-slate-800/50">
-                            <td class="px-6 py-4">
-                              <button (click)="togglePurchaseDetails(sale._id)" class="text-lime-400 hover:text-lime-300 font-medium text-sm">
-                                {{ isPurchaseDetailsVisible(sale._id) ? 'Ocultar' : 'Ver' }}
-                              </button>
-                            </td>
-                            <td class="px-6 py-4">{{ sale.createdAt | date:'dd/MM/yyyy' }}</td>
-                            <td class="px-6 py-4 font-semibold text-lime-400">{{ sale.total | currency:sale.currency_total:'symbol':'1.2-2' }}</td>
-                            <td class="px-6 py-4 text-slate-500 font-mono">{{ sale.n_transaccion }}</td>
-                            <td class="px-6 py-4 text-center">
-                              <span [ngClass]="{
-                                'bg-green-500/10 text-green-400': sale.status === 'Pagado',
-                                'bg-yellow-500/10 text-yellow-400': sale.status === 'Pendiente',
-                                'bg-red-500/10 text-red-400': sale.status === 'Anulado'
-                              }" class="py-1 px-3 rounded-full text-xs font-medium">
-                                {{ sale.status }}
-                              </span>
-                            </td>
-                          </tr>
-                          <!-- Fila de detalles desplegable -->
-                          @if (isPurchaseDetailsVisible(sale._id)) {
-                            <tr class="bg-slate-800/50">
-                              <td colspan="5" class="p-4 border-t border-slate-700">
-                                <div class="space-y-2">
-                                  @for (item of sale.detail; track item.product._id) {
-                                    <div class="flex items-center p-3 bg-slate-900 rounded-lg border border-slate-700">
-                                      <img [src]="item.product_type === 'project' ? buildProjectImageUrl(item.product.imagen) : buildImageUrl(item.product.imagen)" alt="{{ item.title }}" class="w-24 h-16 object-cover rounded-md mr-4" />
-                                      <div class="flex-grow">
-                                        <p class="font-bold text-white">{{ item.title }}</p>
-                                        <p class="text-sm text-slate-400">{{ getProductTypeName(item.product_type) }}</p>
-                                      </div>
-                                      <div class="text-right font-semibold text-lime-400">
-                                        {{ item.price_unit | currency:'USD' }}
-                                      </div>
-                                    </div>
-                                  }
+                  <!-- Cards responsive para móviles -->
+                  <div class="space-y-4">
+                    @for (sale of paginatedSales(); track sale._id) {
+                      <div class="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden hover:bg-slate-800 transition-colors">
+                        <!-- Header del card -->
+                        <div class="p-4 space-y-3">
+                          <!-- Fila 1: Fecha y Estado -->
+                          <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2 text-sm text-slate-400">
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                              </svg>
+                              <span>{{ sale.createdAt | date:'dd/MM/yyyy' }}</span>
+                            </div>
+                            <span [ngClass]="{
+                              'bg-green-500/10 text-green-400 border-green-500/30': sale.status === 'Pagado',
+                              'bg-yellow-500/10 text-yellow-400 border-yellow-500/30': sale.status === 'Pendiente',
+                              'bg-red-500/10 text-red-400 border-red-500/30': sale.status === 'Anulado'
+                            }" class="py-1 px-3 rounded-full text-xs font-semibold border">
+                              {{ sale.status }}
+                            </span>
+                          </div>
+
+                          <!-- Fila 2: Total -->
+                          <div class="flex items-baseline gap-2">
+                            <span class="text-3xl font-bold text-lime-400">{{ sale.total | currency:sale.currency_total:'symbol':'1.2-2' }}</span>
+                            <span class="text-sm text-slate-500">{{ sale.currency_total }}</span>
+                          </div>
+
+                          <!-- Fila 3: Número de transacción -->
+                          <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
+                            </svg>
+                            <span class="text-xs text-slate-500 font-mono">{{ sale.n_transaccion }}</span>
+                          </div>
+
+                          <!-- Botón Ver Detalles -->
+                          <button
+                            (click)="togglePurchaseDetails(sale._id)"
+                            class="w-full flex items-center justify-between px-4 py-2.5 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition-colors text-sm font-medium text-lime-300 border border-slate-600 hover:border-lime-400/50"
+                          >
+                            <span>{{ isPurchaseDetailsVisible(sale._id) ? 'Ocultar' : 'Ver' }} detalles</span>
+                            <svg
+                              class="w-4 h-4 transition-transform duration-200"
+                              [class.rotate-180]="isPurchaseDetailsVisible(sale._id)"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                          </button>
+                        </div>
+
+                        <!-- Detalles desplegables -->
+                        @if (isPurchaseDetailsVisible(sale._id)) {
+                          <div class="border-t border-slate-700 p-4 bg-slate-900/50">
+                            <p class="text-xs font-semibold text-slate-400 uppercase mb-3">Productos comprados:</p>
+                            <div class="space-y-2">
+                              @for (item of sale.detail; track item.product._id) {
+                                <div class="flex items-center gap-3 p-3 bg-slate-800 rounded-lg border border-slate-700">
+                                  <img
+                                    [src]="item.product_type === 'project' ? buildProjectImageUrl(item.product.imagen) : buildImageUrl(item.product.imagen)"
+                                    alt="{{ item.title }}"
+                                    class="w-16 h-12 sm:w-20 sm:h-14 object-cover rounded-md flex-shrink-0"
+                                  />
+                                  <div class="flex-1 min-w-0">
+                                    <p class="font-semibold text-white text-sm line-clamp-2">{{ item.title }}</p>
+                                    <p class="text-xs text-slate-400 mt-0.5">{{ getProductTypeName(item.product_type) }}</p>
+                                  </div>
+                                  <div class="text-right flex-shrink-0">
+                                    <p class="font-bold text-lime-400 text-sm">{{ item.price_unit | currency:'USD':'symbol':'1.2-2' }}</p>
+                                  </div>
                                 </div>
-                              </td>
-                            </tr>
-                          }
+                              }
+                            </div>
+                          </div>
                         }
-                      </tbody>
-                    </table>
+                      </div>
+                    }
                   </div>
                 }
               } @else {
@@ -346,15 +475,15 @@
                   </div>
                 </div>
                 <div>
-                  <label for="email" class="block mb-2 text-sm font-medium text-slate-300">Correo Electrónico</label>
+                  <label for="email" class="block mb-2 text-sm font-medium text-slate-300">Correo ElectrÃ³nico</label>
                   <input type="email" id="email" formControlName="email" class="w-full bg-slate-700/50 border border-slate-600 text-slate-400 text-sm rounded-lg block p-2.5 cursor-not-allowed">
                 </div>
                 <div>
-                  <label for="profession" class="block mb-2 text-sm font-medium text-slate-300">Profesión</label>
+                  <label for="profession" class="block mb-2 text-sm font-medium text-slate-300">ProfesiÃ³n</label>
                   <input type="text" id="profession" formControlName="profession" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5" />
                 </div>
                 <div>
-                  <label for="description" class="block mb-2 text-sm font-medium text-slate-300">Sobre mí</label>
+                  <label for="description" class="block mb-2 text-sm font-medium text-slate-300">Sobre mÃ­</label>
                   <textarea id="description" formControlName="description" rows="4" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"></textarea>
                 </div>
                 <div>
@@ -368,26 +497,26 @@
                 </div>
               </form>
 
-              <!-- Sección para cambiar contraseña -->
+              <!-- SecciÃ³n para cambiar contraseÃ±a -->
               <div class="border-t border-white/10 mt-8 pt-8">
-                <h4 class="text-xl font-bold mb-6">Cambiar Contraseña</h4>
+                <h4 class="text-xl font-bold mb-6">Cambiar ContraseÃ±a</h4>
                 <form [formGroup]="passwordForm" (ngSubmit)="onSubmitPassword()" class="space-y-4 max-w-lg">
                   <div>
-                    <label for="currentPassword" class="block mb-2 text-sm font-medium text-slate-300">Contraseña Actual</label>
+                    <label for="currentPassword" class="block mb-2 text-sm font-medium text-slate-300">ContraseÃ±a Actual</label>
                     <input type="password" id="currentPassword" formControlName="currentPassword" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5">
                   </div>
                   <div>
-                    <label for="newPassword" class="block mb-2 text-sm font-medium text-slate-300">Nueva Contraseña</label>
+                    <label for="newPassword" class="block mb-2 text-sm font-medium text-slate-300">Nueva ContraseÃ±a</label>
                     <input type="password" id="newPassword" formControlName="newPassword" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5">
                     @if (passwordForm.get('newPassword')?.hasError('minlength')) {
-                      <p class="text-xs text-red-400 mt-1">La contraseña debe tener al menos 6 caracteres.</p>
+                      <p class="text-xs text-red-400 mt-1">La contraseÃ±a debe tener al menos 6 caracteres.</p>
                     }
                   </div>
                   <div>
-                    <label for="confirmPassword" class="block mb-2 text-sm font-medium text-slate-300">Confirmar Nueva Contraseña</label>
+                    <label for="confirmPassword" class="block mb-2 text-sm font-medium text-slate-300">Confirmar Nueva ContraseÃ±a</label>
                     <input type="password" id="confirmPassword" formControlName="confirmPassword" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5">
                     @if (passwordForm.hasError('passwordsMismatch') && passwordForm.get('confirmPassword')?.touched) {
-                      <p class="text-xs text-red-400 mt-1">Las contraseñas no coinciden.</p>
+                      <p class="text-xs text-red-400 mt-1">Las contraseÃ±as no coinciden.</p>
                     }
                   </div>
                   <div>
@@ -395,7 +524,7 @@
                       @if (isPasswordSubmitting()) {
                         <span class="animate-spin h-5 w-5 border-2 border-slate-900 border-t-transparent rounded-full"></span>
                       } @else {
-                        <span>Cambiar Contraseña</span>
+                        <span>Cambiar ContraseÃ±a</span>
                       }
                     </button>
                   </div>
