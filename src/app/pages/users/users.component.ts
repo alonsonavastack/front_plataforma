@@ -15,6 +15,9 @@ import { HeaderComponent } from '../../layout/header/header';
 export class UsersComponent implements OnInit {
   usersService = inject(UsersService);
 
+  // Exponer Math para usarlo en el template
+  Math = Math;
+
   // Signals del servicio
   users = this.usersService.filteredUsers;
   isLoading = this.usersService.isLoading;
@@ -41,6 +44,62 @@ export class UsersComponent implements OnInit {
   // Avatar file
   selectedFile = signal<File | null>(null);
   previewUrl = signal<string | null>(null);
+
+  // --- INICIO: Lógica de paginación ---
+
+  currentPage = signal(1);
+  itemsPerPage = signal(10); // Valor inicial
+
+  paginatedUsers = computed(() => {
+    const users = this.users();
+    const page = this.currentPage();
+    const perPage = this.itemsPerPage();
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    return users.slice(start, end);
+  });
+
+  totalPages = computed(() => {
+    const totalUsers = this.users()?.length || 0;
+    return Math.ceil(totalUsers / this.itemsPerPage());
+  });
+
+  pageNumbers = computed(() => {
+    const total = this.totalPages();
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+
+    const current = this.currentPage();
+    const pages: (number | string)[] = [1];
+
+    if (current > 3) pages.push('...');
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+      pages.push(i);
+    }
+    if (current < total - 2) pages.push('...');
+
+    pages.push(total);
+    return pages;
+  });
+
+  changePage(page: number): void {
+    if (page < 1 || page > this.totalPages()) return;
+    this.currentPage.set(page);
+  }
+
+  previousPage(): void {
+    this.changePage(this.currentPage() - 1);
+  }
+
+  nextPage(): void {
+    this.changePage(this.currentPage() + 1);
+  }
+
+  changePerPage(perPage: number): void {
+    this.itemsPerPage.set(perPage);
+    this.currentPage.set(1);
+  }
 
   // Template reference for modals
   @ViewChild('modals') modals!: TemplateRef<any>;
@@ -86,18 +145,21 @@ export class UsersComponent implements OnInit {
   onSearch(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this.searchTerm.set(value);
+    this.currentPage.set(1);
     this.usersService.setSearchTerm(value);
   }
 
   onRoleFilter(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     this.roleFilter.set(value);
+    this.currentPage.set(1);
     this.usersService.setRoleFilter(value);
   }
 
   onStateFilter(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     this.stateFilter.set(value);
+    this.currentPage.set(1);
     this.usersService.setStateFilter(value === '' ? '' : value === 'true');
   }
 

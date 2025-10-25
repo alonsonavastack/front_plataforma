@@ -27,6 +27,43 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   hasInstructors = computed(() => this.instructors().length > 0);
   totalEarnings = computed(() => Number(this.summary()?.totalEarnings) || 0);
 
+  // Paginación
+  currentPage = signal(1);
+  itemsPerPage = signal(10);
+  Math = Math;
+
+  paginatedInstructors = computed(() => {
+    const instructors = this.instructors();
+    const page = this.currentPage();
+    const perPage = this.itemsPerPage();
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    return instructors.slice(start, end);
+  });
+
+  totalPages = computed(() => {
+    const total = this.instructors().length;
+    return Math.ceil(total / this.itemsPerPage());
+  });
+
+  pageNumbers = computed(() => {
+    const total = this.totalPages();
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    const current = this.currentPage();
+    const pages: (number | string)[] = [1];
+
+    if (current > 3) pages.push('...');
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+      pages.push(i);
+    }
+    if (current < total - 2) pages.push('...');
+
+    pages.push(total);
+    return pages;
+  });
+
   ngOnInit() {
     console.log('🔵 AdminInstructorPaymentsComponent initialized');
     this.loadInstructors();
@@ -76,6 +113,7 @@ export class AdminInstructorPaymentsComponent implements OnInit {
 
   onFilterChange() {
     console.log('🔵 Filter changed');
+    this.currentPage.set(1); // Reset a primera página
     this.loadInstructors();
   }
 
@@ -85,7 +123,27 @@ export class AdminInstructorPaymentsComponent implements OnInit {
       status: 'available',
       minAmount: 0
     });
+    this.currentPage.set(1);
     this.loadInstructors();
+  }
+
+  changePage(page: number): void {
+    if (page < 1 || page > this.totalPages()) return;
+    this.currentPage.set(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  previousPage(): void {
+    this.changePage(this.currentPage() - 1);
+  }
+
+  nextPage(): void {
+    this.changePage(this.currentPage() + 1);
+  }
+
+  changePerPage(perPage: number): void {
+    this.itemsPerPage.set(perPage);
+    this.currentPage.set(1);
   }
 
   formatCurrency(amount: number): string {

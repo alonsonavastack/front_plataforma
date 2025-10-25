@@ -37,6 +37,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   // Payment methods
   paymentMethods = this.checkoutService.paymentMethods;
 
+  // 🔥 Datos bancarios desde el servicio
+  bankDetails = this.checkoutService.bankDetails;
+
   // Formulario para información adicional
   checkoutForm = new FormGroup({
     acceptTerms: new FormControl(false, [Validators.requiredTrue]),
@@ -131,7 +134,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       currency_payment: 'USD',
       total: this.subtotal(),
       // Generamos el número de transacción y lo guardamos en la señal
-      n_transaccion: this.checkoutService.generateTransactionNumber(), 
+      n_transaccion: this.checkoutService.generateTransactionNumber(),
       price_dolar: this.checkoutService.getExchangeRate(),
     };
     this.transactionNumber.set(checkoutData.n_transaccion);
@@ -188,5 +191,17 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
   getProductTypeName(type: string): string {
     return type === 'course' ? 'Curso' : 'Proyecto';
+  }
+
+  // 📋 Función para copiar al portapapeles
+  copyToClipboard(text: string, type: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      console.log(`✅ ${type} copiado al portapapeles:`, text);
+      // Podrías agregar una notificación toast aquí
+      alert(`✅ ${type === 'cuenta' ? 'Número de cuenta' : type === 'clabe' ? 'CLABE' : 'Número de transacción'} copiado al portapapeles`);
+    }).catch(err => {
+      console.error('❌ Error al copiar:', err);
+      alert('❌ No se pudo copiar. Por favor, copia manualmente.');
+    });
   }
 }

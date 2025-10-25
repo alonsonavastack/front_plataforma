@@ -239,9 +239,8 @@
   @if (!isLoading() && featuredProjects().length > 0) {
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl md:text-2xl font-bold text-white">Proyectos Destacados</h2>
-        <!-- Puedes agregar un enlace a una página de todos los proyectos si existe -->
-        <!-- <a routerLink="/projects" class="text-sm text-lime-400 hover:underline">Ver todos</a> -->
+        <h2 class="text-white/90 font-semibold">Proyectos Destacados</h2>
+        <div class="text-xs text-white/50">{{ featuredProjects().length }} proyectos</div>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -396,10 +395,23 @@
       <!-- RESULTADOS -->
       <div class="lg:col-span-3">
         <!-- Header de resultados -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <div class="text-white/90">
-            <span class="font-semibold">{{ catalogResults().length }}</span>
-            <span class="text-white/60 text-sm ml-1">resultados encontrados</span>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <p class="text-sm text-slate-400">
+            Mostrando <span class="font-bold text-white">{{ catalogResultsPaginated().length }}</span> de
+            <span class="font-bold text-white">{{ catalogTotalItems() }}</span> resultados
+          </p>
+
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-slate-400">Mostrar:</label>
+            <select
+              [value]="catalogItemsPerPage()"
+              (change)="changeItemsPerPage(+$any($event.target).value)"
+              class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-1.5 focus:ring-lime-400 focus:border-lime-400"
+            >
+              <option [value]="10">10</option>
+              <option [value]="15">15</option>
+              <option [value]="20">20</option>
+            </select>
           </div>
           <select
             [value]="catalogSortBy()"
@@ -415,7 +427,7 @@
 
         <!-- Lista de resultados -->
         <div class="space-y-4">
-          @for (item of catalogResults(); track item._id) {
+          @for (item of catalogResultsPaginated(); track item._id) {
             <div class="rounded-xl border border-white/10 bg-slate-800/50 hover:bg-slate-700/50 transition-all group">
               <div class="flex flex-col sm:flex-row gap-4 p-4">
                 <!-- Imagen -->
@@ -571,6 +583,55 @@
             </div>
           }
         </div>
+
+        <!-- Controles de Paginación -->
+        @if (catalogTotalPages() > 1) {
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-6 border-t border-slate-700">
+            <!-- Info de página actual -->
+            <div class="text-sm text-slate-400">
+              Página {{ catalogPage() }} de {{ catalogTotalPages() }}
+            </div>
+
+            <!-- Botones de paginación -->
+            <div class="flex items-center gap-2">
+              <!-- Botón Anterior -->
+              <button
+                (click)="prevPage()"
+                [disabled]="catalogPage() === 1"
+                class="px-3 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+              </button>
+
+              <!-- Números de página -->
+              <div class="flex items-center gap-1">
+                @for (pageNum of visiblePages(); track pageNum) {
+                  @if (pageNum !== '...') {
+                    <button
+                      (click)="goToPage(+pageNum)"
+                      [class.bg-lime-400]="+pageNum === catalogPage()"
+                      [class.text-slate-900]="+pageNum === catalogPage()"
+                      [class.bg-slate-800]="+pageNum !== catalogPage()"
+                      [class.text-white]="+pageNum !== catalogPage()"
+                      class="min-w-[40px] px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 transition-colors font-medium text-sm"
+                    >
+                      {{ pageNum }}
+                    </button>
+                  } @else {
+                    <span class="px-2 text-slate-500">…</span>
+                  }
+                }
+              </div>
+
+              <!-- Botón Siguiente -->
+              <button (click)="nextPage()" [disabled]="catalogPage() === catalogTotalPages()" class="px-3 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+              </button>
+            </div>
+          </div>
+        }
       </div>
     </div>
   </section>

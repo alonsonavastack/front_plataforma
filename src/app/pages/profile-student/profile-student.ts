@@ -7,6 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ProfileService } from '../../core/services/profile';
+import { CheckoutService } from '../../core/services/checkout.service';
 
 import { ProfileStudentService, EnrolledCourse, Sale, Project, ProjectFile } from '../../core/services/profile-student.service';
 import { ProjectService } from '../../core/services/project.service';
@@ -29,6 +30,7 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
   profileService = inject(ProfileService);
   profileStudentService = inject(ProfileStudentService);
   projectService = inject(ProjectService);
+  checkoutService = inject(CheckoutService);
   authService = inject(AuthService);
   private sanitizer = inject(DomSanitizer);
   private http = inject(HttpClient);
@@ -36,6 +38,9 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
 
   // Exponer Math para usarlo en el template
   Math = Math;
+
+  // Exponer datos bancarios para la plantilla
+  bankDetails = this.checkoutService.bankDetails;
 
   // Señal para manejar la pestaña activa (inicializada desde localStorage si existe)
   activeSection = signal<ProfileSection>(
@@ -203,10 +208,10 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
       console.error('❌ Sección inválida:', section);
       return;
     }
-    
+
     console.log('📦 Guardando sección:', section);
     this.activeSection.set(section);
-    
+
     // 🔥 Guardar en localStorage para persistir entre recargas
     try {
       localStorage.setItem('profile-active-section', section);
@@ -548,4 +553,22 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
     this.showVideoModal.set(false);
     this.videoUrl.set(null);
   }
+
+  // 📋 Función para copiar al portapapeles
+  copyToClipboard(text: string, type: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      console.log(`✅ ${type} copiado al portapapeles:`, text);
+      // Podrías agregar una notificación toast aquí
+      let message = '';
+      if (type === 'cuenta') message = 'Número de cuenta copiado';
+      else if (type === 'clabe') message = 'CLABE copiada';
+      else if (type === 'transaccion') message = 'Número de transacción copiado';
+      else message = `${type} copiado`;
+      alert(`✅ ${message} al portapapeles`);
+    }).catch(err => {
+      console.error('❌ Error al copiar:', err);
+      alert('❌ No se pudo copiar. Por favor, copia manualmente.');
+    });
+  }
+
 }

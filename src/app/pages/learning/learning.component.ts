@@ -49,12 +49,35 @@ export class LearningComponent implements OnInit {
     return c?.malla_curricular || c?.malla || [];
   });
 
-  // Construye la URL segura para el iframe de Vimeo
+  // Construye la URL segura para el iframe (YouTube o Vimeo)
   videoUrl = computed<SafeResourceUrl | null>(() => {
-    const vimeoId = this.activeClass()?.vimeo_id;
-    if (!vimeoId) return null;
-    const url = `https://player.vimeo.com/video/${vimeoId}?badge=0&autopause=0&player_id=0&app_id=58479`;
-    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+    const clase = this.activeClass();
+    if (!clase) return null;
+
+    // Priorizar los nuevos campos video_platform y video_id
+    if (clase.video_platform && clase.video_id) {
+      let url: string;
+      
+      if (clase.video_platform === 'youtube') {
+        // URL de YouTube
+        url = `https://www.youtube.com/embed/${clase.video_id}?rel=0&modestbranding=1&autohide=1&showinfo=0`;
+      } else if (clase.video_platform === 'vimeo') {
+        // URL de Vimeo
+        url = `https://player.vimeo.com/video/${clase.video_id}?badge=0&autopause=0&player_id=0&app_id=58479`;
+      } else {
+        return null;
+      }
+      
+      return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+    }
+
+    // Fallback: soporte legacy para vimeo_id (compatibilidad con datos antiguos)
+    if (clase.vimeo_id) {
+      const url = `https://player.vimeo.com/video/${clase.vimeo_id}?badge=0&autopause=0&player_id=0&app_id=58479`;
+      return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+    }
+
+    return null;
   });
 
   constructor() {

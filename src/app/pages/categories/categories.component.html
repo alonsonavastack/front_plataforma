@@ -6,10 +6,73 @@
     </button>
   </div>
 
+  <!-- Buscador -->
+  <div class="bg-slate-800 p-4 rounded-lg border border-white/10">
+    <div class="flex items-center gap-4">
+      <div class="relative flex-grow">
+        <label for="search-category" class="sr-only">Buscar categoría</label>
+        <input
+          type="text"
+          id="search-category"
+          placeholder="Buscar por título..."
+          [value]="searchTerm()"
+          (input)="onSearch($event)"
+          class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-lime-400 text-white placeholder-slate-500">
+        <svg class="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+      </div>
+
+      @if (searchTerm()) {
+        <button
+          (click)="clearSearch()"
+          class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-2 border border-slate-600">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Limpiar
+        </button>
+      }
+    </div>
+
+    @if (searchTerm()) {
+      <div class="mt-3 flex flex-wrap gap-2 text-sm">
+        <span class="text-slate-400">Búsqueda activa:</span>
+        <span class="px-2 py-1 bg-lime-400/10 text-lime-400 rounded border border-lime-400/20">
+          "{{ searchTerm() }}"
+        </span>
+      </div>
+    }
+  </div>
+
+  <!-- Controles de Paginación y Contador (Arriba) -->
+  @if (filteredCategories().length > 0) {
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="text-sm text-slate-400">
+        Mostrando {{ (currentPage() - 1) * itemsPerPage() + 1 }} -
+        {{ Math.min(currentPage() * itemsPerPage(), filteredCategories().length) }}
+        de {{ filteredCategories().length }} categorías
+      </div>
+      <div class="flex items-center gap-2">
+        <label for="items-per-page" class="text-sm text-slate-400">Mostrar:</label>
+        <select
+          id="items-per-page"
+          [value]="itemsPerPage()"
+          (change)="changePerPage(+$any($event.target).value)"
+          class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-1.5 focus:ring-lime-400 focus:border-lime-400">
+          <option [value]="5">5</option>
+          <option [value]="10">10</option>
+          <option [value]="15">15</option>
+          <option [value]="20">20</option>
+        </select>
+      </div>
+    </div>
+  }
+
   <!-- Tabla de Categorías -->
   <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-white/10">
     <table class="w-full text-sm text-left text-gray-400">
-      <thead class="text-xs uppercase bg-slate-700/50 text-gray-400">
+      <thead class="text-xs uppercase bg-slate-900 text-gray-400">
         <tr>
           <th scope="col" class="px-6 py-3">Imagen</th>
           <th scope="col" class="px-6 py-3">Título</th>
@@ -19,23 +82,66 @@
       <tbody>
         @if (categoriesService.isLoading()) {
           <tr class="border-b bg-slate-800/50 border-gray-700">
-            <td colspan="3" class="px-6 py-4 text-center">Cargando categorías...</td>
+            <td colspan="3" class="px-6 py-8 text-center text-gray-500">
+              <div class="flex items-center justify-center gap-2">
+                <svg class="animate-spin h-5 w-5 text-lime-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Cargando categorías...</span>
+              </div>
+            </td>
+          </tr>
+        } @else if (paginatedCategories().length === 0 && searchTerm()) {
+          <tr class="border-b bg-slate-800/50 border-gray-700">
+            <td colspan="3" class="px-6 py-8 text-center text-slate-500">
+              No se encontraron categorías con el término "{{ searchTerm() }}"
+            </td>
+          </tr>
+        } @else if (paginatedCategories().length === 0) {
+          <tr class="border-b bg-slate-800/50 border-gray-700">
+            <td colspan="3" class="px-6 py-8 text-center text-slate-400">
+              <div class="flex flex-col items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                <p>No hay categorías registradas</p>
+                <p class="text-xs text-slate-500">Crea la primera categoría para comenzar</p>
+              </div>
+            </td>
           </tr>
         } @else {
-          @for (category of categoriesService.categories(); track category._id) {
-            <tr class="border-b bg-slate-800/50 border-gray-700 hover:bg-slate-700/50">
-              <td class="px-6 py-4">
-                <img [src]="buildImageUrl(category.imagen)" alt="{{ category.title }}" class="w-16 h-10 object-cover rounded-md">
+          @for (category of paginatedCategories(); track category._id) {
+            <tr class="border-b bg-slate-800/50 border-gray-700 hover:bg-slate-700/50 transition-colors">
+              <td class="px-6 py-4 align-middle">
+                <div class="relative w-16 h-10 rounded-md overflow-hidden border border-slate-600">
+                  <img
+                    [src]="buildImageUrl(category.imagen)"
+                    [alt]="category.title"
+                    class="w-full h-full object-cover"
+                    (error)="$any($event.target).src='https://i.pravatar.cc/80?u=' + category._id"
+                    loading="lazy">
+                </div>
               </td>
-              <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white">
+              <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white align-middle">
                 {{ category.title }}
               </th>
-              <td class="px-6 py-4 text-right">
+              <td class="px-6 py-4 text-right align-middle">
                 @if (authService.user()?.rol === 'admin') {
                   <div class="space-x-2">
-                    <button (click)="openEditModal(category)" class="font-medium text-lime-400 hover:underline">Editar</button>
-                    <button (click)="deleteCategory(category._id)" class="font-medium text-red-400 hover:underline">Eliminar</button>
+                    <button
+                      (click)="openEditModal(category)"
+                      class="font-medium text-lime-400 hover:text-lime-300 hover:underline transition-colors">
+                      Editar
+                    </button>
+                    <button
+                      (click)="deleteCategory(category._id)"
+                      class="font-medium text-red-400 hover:text-red-300 hover:underline transition-colors">
+                      Eliminar
+                    </button>
                   </div>
+                } @else {
+                  <span class="text-slate-500 text-xs">Sin permisos</span>
                 }
               </td>
             </tr>
@@ -44,40 +150,158 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Controles de Paginación (Abajo) -->
+  @if (totalPages() > 1) {
+    <div class="flex items-center justify-center gap-4 mt-6">
+      <!-- Botón Anterior -->
+      <button
+        (click)="previousPage()"
+        [disabled]="currentPage() === 1"
+        class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        <span>Anterior</span>
+      </button>
+
+      <!-- Números de página -->
+      <div class="hidden md:flex items-center gap-1">
+        @for (pageNum of pageNumbers(); track pageNum) {
+          @if (typeof pageNum === 'number') {
+            <button
+              (click)="changePage(pageNum)"
+              [class.bg-lime-400]="pageNum === currentPage()"
+              [class.text-slate-900]="pageNum === currentPage()"
+              [class.bg-slate-800]="pageNum !== currentPage()"
+              [class.text-white]="pageNum !== currentPage()"
+              class="min-w-[40px] px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 transition-colors font-medium text-sm">
+              {{ pageNum }}
+            </button>
+          } @else {
+            <span class="px-2 text-slate-500">…</span>
+          }
+        }
+      </div>
+
+      <!-- Botón Siguiente -->
+      <button
+        (click)="nextPage()"
+        [disabled]="currentPage() === totalPages()"
+        class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <span>Siguiente</span>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </button>
+    </div>
+  }
 </div>
 
 <!-- Modal para Crear/Editar Categoría -->
 <!-- Backdrop -->
-<div (click)="closeModal()" [class.hidden]="!isModalOpen()"  class="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm"></div>
+<div
+  (click)="closeModal()"
+  [class.hidden]="!isModalOpen()"
+  class="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm transition-opacity"></div>
 
 <!-- Modal -->
-<div id="category-modal" tabindex="-1" aria-hidden="true" [class.hidden]="!isModalOpen()" class="fixed top-0 right-0 left-0 z-50 justify-center items-start w-full md:inset-0 h-modal md:h-full flex pt-8">
+<div
+  id="category-modal"
+  tabindex="-1"
+  aria-hidden="true"
+  [class.hidden]="!isModalOpen()"
+  class="fixed top-0 right-0 left-0 z-50 justify-center items-start w-full md:inset-0 h-modal md:h-full flex pt-8">
   <div class="relative p-4 w-full max-w-md h-full md:h-auto">
-    <div class="relative rounded-lg shadow bg-slate-800 border border-white/10">
-      <button (click)="closeModal()" type="button" class="absolute top-3 right-2.5 text-gray-400 bg-transparent rounded-lg text-sm p-1.5 ml-auto inline-flex items-center hover:bg-gray-600 hover:text-white">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+    <div class="relative rounded-lg shadow-xl bg-slate-800 border border-white/10">
+      <!-- Botón cerrar -->
+      <button
+        (click)="closeModal()"
+        type="button"
+        class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-slate-700 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center transition-colors z-10">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+        </svg>
         <span class="sr-only">Cerrar modal</span>
       </button>
+
       <div class="py-6 px-6 lg:px-8">
         <h3 class="mb-4 text-xl font-medium text-white">
           {{ isEditing() ? 'Editar Categoría' : 'Nueva Categoría' }}
         </h3>
+
         <form class="space-y-6" [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
+          <!-- Campo Título -->
           <div>
-            <label for="title" class="block mb-2 text-sm font-medium text-gray-300">Título de la categoría</label>
-            <input type="text" id="title" formControlName="title" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500" required>
+            <label for="title" class="block mb-2 text-sm font-medium text-gray-300">
+              Título de la categoría <span class="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              id="title"
+              formControlName="title"
+              placeholder="Ej: Programación Web"
+              class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-500 text-white focus:ring-2 focus:ring-lime-500 focus:border-lime-500 transition-colors"
+              required>
+            @if (categoryForm.get('title')?.invalid && categoryForm.get('title')?.touched) {
+              <p class="mt-1 text-xs text-red-400">El título es obligatorio</p>
+            }
           </div>
+
+          <!-- Campo Imagen -->
           <div>
-            <label for="imagen" class="block mb-2 text-sm font-medium text-gray-300">Imagen</label>
-            <input (change)="onFileSelected($event)" class="block w-full text-sm border rounded-lg cursor-pointer text-gray-400 focus:outline-none bg-slate-700 border-slate-600 placeholder-gray-400" id="imagen" type="file" accept="image/*">
+            <label for="imagen" class="block mb-2 text-sm font-medium text-gray-300">
+              Imagen {{ isEditing() ? '(opcional - dejar vacío para mantener actual)' : '' }}
+            </label>
+            <input
+              (change)="onFileSelected($event)"
+              class="block w-full text-sm border rounded-lg cursor-pointer text-gray-400 focus:outline-none bg-slate-700 border-slate-600 placeholder-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-semibold file:bg-lime-500/10 file:text-lime-400 hover:file:bg-lime-500/20 transition-colors"
+              id="imagen"
+              type="file"
+              accept="image/png, image/jpeg, image/jpg, image/webp">
+            <p class="mt-1 text-xs text-gray-500">PNG, JPG o WEBP (MAX. 5MB)</p>
+
+            <!-- Preview de la imagen -->
             @if (imagePreview()) {
-              <div class="mt-4">
-                <img [src]="imagePreview()" alt="Vista previa" class="w-full h-32 object-cover rounded-lg">
+              <div class="mt-4 relative">
+                <p class="text-xs text-gray-400 mb-2">Vista previa:</p>
+                <div class="relative rounded-lg overflow-hidden border-2 border-slate-600 bg-slate-900">
+                  <img
+                    [src]="imagePreview()"
+                    alt="Vista previa"
+                    class="w-full h-40 object-cover">
+                  <div class="absolute top-2 right-2">
+                    <span class="bg-lime-500/80 text-slate-900 text-xs px-2 py-1 rounded-full font-semibold">
+                      ✓ Imagen cargada
+                    </span>
+                  </div>
+                </div>
+              </div>
+            } @else if (isEditing()) {
+              <div class="mt-4 p-3 bg-slate-900/50 border border-slate-700 rounded-lg">
+                <p class="text-xs text-gray-400">
+                  ℹ️ No hay imagen de preview. Si no seleccionas una nueva imagen, se mantendrá la actual.
+                </p>
               </div>
             }
           </div>
-          <button type="submit" [disabled]="categoryForm.invalid" class="w-full text-slate-900 bg-lime-400 hover:bg-lime-500 focus:ring-4 focus:outline-none focus:ring-lime-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:bg-slate-600 disabled:cursor-not-allowed">
-            {{ isEditing() ? 'Guardar Cambios' : 'Crear Categoría' }}
+
+          <!-- Botón Submit -->
+          <button
+            type="submit"
+            [disabled]="categoryForm.invalid || isSaving()"
+            class="w-full text-slate-900 bg-lime-400 hover:bg-lime-500 focus:ring-4 focus:outline-none focus:ring-lime-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:bg-slate-600 disabled:cursor-not-allowed disabled:text-gray-400 transition-all">
+            @if (isSaving()) {
+              <span class="flex items-center justify-center gap-2">
+                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Guardando...
+              </span>
+            } @else {
+              {{ isEditing() ? 'Guardar Cambios' : 'Crear Categoría' }}
+            }
           </button>
         </form>
       </div>

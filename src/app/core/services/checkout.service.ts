@@ -10,6 +10,12 @@ export interface PaymentMethod {
   description: string;
 }
 
+export interface BankDetails {
+  bankName: string;
+  accountNumber: string;
+  clabe: string;
+}
+
 export interface CheckoutData {
   method_payment: string;
   currency_total: string;
@@ -58,6 +64,13 @@ export class CheckoutService {
       description: 'Transferencia directa a cuenta bancaria'
     }
   ];
+
+  // 🔥 Datos bancarios centralizados para transferencia (solo frontend)
+  readonly bankDetails: BankDetails = {
+    bankName: 'BBVA Bancomer',
+    accountNumber: '1167021895',
+    clabe: '01242611670218951'
+  };
 
   /**
    * Procesa el pago y crea la orden de venta

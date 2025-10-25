@@ -10,6 +10,113 @@
       }
     </div>
 
+    <!-- Filtros de Búsqueda -->
+    <div class="bg-slate-800 p-4 rounded-lg my-6 border border-white/10">
+      <div class="flex flex-wrap gap-4 items-center">
+        <!-- Búsqueda por título -->
+        <div class="relative flex-grow min-w-[250px]">
+          <label for="search-course" class="sr-only">Buscar curso</label>
+          <input
+            type="text"
+            id="search-course"
+            placeholder="Buscar por título..."
+            [value]="searchTerm()"
+            (input)="onSearch($event)"
+            class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-lime-400 text-white placeholder-slate-500">
+          <svg class="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+        </div>
+
+        <!-- Filtro de Categoría -->
+        <div class="min-w-[200px]">
+          <select
+            (change)="onCategoryFilter($event)"
+            [value]="categoryFilter()"
+            class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400 text-white">
+            <option value="">Todas las categorías</option>
+            @for(cat of coursesService.config().categories; track cat._id) {
+              <option [value]="cat._id">{{ cat.title }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Filtro de Instructor (solo para admin) -->
+        @if (authService.user()?.rol === 'admin') {
+          <div class="min-w-[200px]">
+            <select
+              (change)="onInstructorFilter($event)"
+              [value]="instructorFilter()"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400 text-white">
+              <option value="">Todos los instructores</option>
+              @for(instructor of coursesService.config().users; track instructor._id) {
+                <option [value]="instructor._id">{{ instructor.name }} {{ instructor.surname }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        <!-- Botón para limpiar filtros -->
+        @if (searchTerm() || categoryFilter() || instructorFilter()) {
+          <button
+            (click)="clearAllFilters()"
+            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Limpiar Filtros
+          </button>
+        }
+      </div>
+
+      <!-- Indicador de filtros activos -->
+      @if (searchTerm() || categoryFilter() || instructorFilter()) {
+        <div class="mt-4 p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+          <div class="flex flex-wrap items-center gap-2 text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-lime-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span class="text-slate-300 font-medium">Filtrando por:</span>
+            @if (searchTerm()) {
+              <span class="px-3 py-1.5 bg-lime-500/20 text-lime-300 rounded-full border border-lime-500/30 font-medium">
+                🔍 "{{ searchTerm() }}"
+              </span>
+            }
+            @if (categoryFilter()) {
+              <span class="px-3 py-1.5 bg-cyan-500/20 text-cyan-300 rounded-full border border-cyan-500/30 font-medium">
+                📂 Categoría: {{ selectedCategoryName() }}
+              </span>
+            }
+            @if (instructorFilter() && authService.user()?.rol === 'admin') {
+              <span class="px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30 font-medium">
+                👨‍🏫 Instructor: {{ selectedInstructorName() }}
+              </span>
+            }
+            <span class="text-slate-400 ml-2">• {{ filteredCourses().length }} resultado(s)</span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Controles de Paginación y Selector -->
+    @if (filteredCourses().length > 0) {
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 my-6">
+        <div class="text-sm text-slate-400">
+          Mostrando {{ (currentPage() - 1) * itemsPerPage() + 1 }} -
+          {{ Math.min(currentPage() * itemsPerPage(), filteredCourses().length) }}
+          de {{ filteredCourses().length }} cursos
+        </div>
+        <div class="flex items-center gap-2">
+          <label for="items-per-page" class="text-sm text-slate-400">Mostrar:</label>
+          <select id="items-per-page" [value]="itemsPerPage()" (change)="changePerPage(+$any($event.target).value)" class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-1.5 focus:ring-lime-400 focus:border-lime-400">
+            <option [value]="10">10</option>
+            <option [value]="15">15</option>
+            <option [value]="20">20</option>
+          </select>
+        </div>
+      </div>
+    }
+
     <!-- Tabla de Cursos -->
     <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-white/10">
       <table class="w-full text-sm text-left text-gray-400">
@@ -27,8 +134,17 @@
             <tr class="border-b bg-slate-800/50 border-gray-700">
               <td colspan="5" class="px-6 py-8 text-center text-gray-500">Cargando cursos...</td>
             </tr>
+          } @else if (paginatedCourses().length === 0 && (searchTerm() || categoryFilter() || instructorFilter())) {
+            <tr class="border-b bg-slate-800/50 border-gray-700">
+              <td colspan="5" class="px-6 py-8 text-center text-slate-500">No se encontraron cursos con los filtros aplicados.</td>
+            </tr>
+          } @else if (paginatedCourses().length === 0) {
+            <tr class="border-b bg-slate-800/50 border-gray-700">
+              <td colspan="5" class="px-6 py-8 text-center text-slate-500">No se encontraron cursos.</td>
+            </tr>
           } @else {
-            @for (course of coursesService.courses(); track course._id) {
+          <!-- Bucle actualizado para usar los cursos paginados -->
+          @for (course of paginatedCourses(); track course._id) {
               <tr class="border-b bg-slate-800/50 border-gray-700 hover:bg-slate-700/50">
                 <td class="px-6 py-4 align-middle">
                   <img [src]="buildImageUrl(course.imagen)" alt="{{ course.title }}" class="w-24 h-14 object-cover rounded-md">
@@ -49,29 +165,69 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Controles de Paginación (Abajo) -->
+    @if (totalPages() > 1) {
+      <div class="flex items-center justify-center gap-4 mt-8">
+        <!-- Botón Anterior -->
+        <button (click)="previousPage()" [disabled]="currentPage() === 1"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+          <span>Anterior</span>
+        </button>
+
+        <!-- Números de página -->
+        <div class="hidden md:flex items-center gap-1">
+          @for (pageNum of pageNumbers(); track pageNum) {
+            @if (typeof pageNum === 'number') {
+              <button (click)="changePage(pageNum)"
+                      [class.bg-lime-400]="pageNum === currentPage()"
+                      [class.text-slate-900]="pageNum === currentPage()"
+                      [class.bg-slate-800]="pageNum !== currentPage()"
+                      [class.text-white]="pageNum !== currentPage()"
+                      class="min-w-[40px] px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 transition-colors font-medium text-sm">
+                {{ pageNum }}
+              </button>
+            } @else {
+              <span class="px-2 text-slate-500">…</span>
+            }
+          }
+        </div>
+
+        <!-- Botón Siguiente -->
+        <button (click)="nextPage()" [disabled]="currentPage() === totalPages()"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+          <span>Siguiente</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </button>
+      </div>
+    }
   </div>
 
   <!-- Modal para Crear/Editar Curso -->
-  <!-- Backdrop -->
-  <div (click)="closeModal()" [class.hidden]="!isModalOpen()" class="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm"></div>
+  @if (isModalOpen()) {
+    <!-- Backdrop -->
+    <div (click)="closeModal()" class="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm"></div>
 
-  <!-- Modal -->
-  <div id="course-modal" tabindex="-1" aria-hidden="true" [class.hidden]="!isModalOpen()" class="fixed top-0 right-0 left-0 z-50 justify-center items-start w-full md:inset-0 h-modal md:h-full flex pt-8">
-    <div class="relative p-4 w-full max-w-2xl max-h-[90vh]">
-      <div class="relative rounded-lg shadow bg-slate-800 border border-white/10 flex flex-col h-full">
-        <button (click)="closeModal()" type="button" class="absolute top-3 right-2.5 text-gray-400 bg-transparent rounded-lg text-sm p-1.5 ml-auto inline-flex items-center hover:bg-gray-600 hover:text-white">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-          <span class="sr-only">Cerrar modal</span>
-        </button>
-        <!-- Modal header -->
-        <div class="py-6 px-6 lg:px-8 border-b border-slate-700">
-          <h3 class="text-xl font-medium text-white">
-            {{ isEditing() ? 'Editar Curso' : 'Nuevo Curso' }}
-          </h3>
+    <!-- Modal -->
+    <div class="fixed inset-0 z-[101] flex items-center justify-center p-4 overflow-y-auto">
+      <div (click)="$event.stopPropagation()" class="relative w-full max-w-2xl my-8 bg-slate-800 rounded-xl shadow-2xl border border-white/20">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center py-5 px-6 border-b border-slate-700 bg-slate-800 rounded-t-xl">
+          <h3 class="text-xl font-bold text-white">{{ isEditing() ? 'Editar Curso' : 'Nuevo Curso' }}</h3>
+          <!-- ✨ NUEVO BOTÓN DE CERRAR ✨ -->
+          <button (click)="closeModal()" type="button" class="text-gray-400 bg-transparent hover:bg-slate-700 hover:text-white rounded-lg text-sm p-1.5 inline-flex items-center transition-colors">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="sr-only">Cerrar modal</span>
+          </button>
         </div>
-        <!-- Modal body -->
-        <div class="flex-grow overflow-y-auto p-6 lg:p-8">
-          <form id="course-form" class="space-y-6" [formGroup]="courseForm" (ngSubmit)="onSubmit()">
+
+        <!-- Body con scroll -->
+        <div class="max-h-[60vh] overflow-y-auto p-6">
+          <form id="course-form" class="space-y-4" [formGroup]="courseForm" (ngSubmit)="onSubmit()">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label for="title" class="block mb-2 text-sm font-medium text-gray-300">Título del curso</label>
@@ -149,15 +305,16 @@
             </div>
           </form>
         </div>
-        <!-- Modal footer -->
-        <div class="p-6 border-t border-slate-700">
-          <button type="submit" form="course-form" [disabled]="courseForm.invalid" class="w-full text-slate-900 bg-lime-400 hover:bg-lime-500 focus:ring-4 focus:outline-none focus:ring-lime-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:bg-slate-600 disabled:cursor-not-allowed">
-            {{ isEditing() ? 'Guardar Cambios' : 'Crear Curso' }}
-          </button>
+
+        <!-- Footer -->
+        <div class="p-4 border-t border-slate-700 bg-slate-800 rounded-b-xl flex gap-3">
+          <button type="button" (click)="closeModal()" class="flex-1 px-5 py-3 rounded-lg border-2 border-slate-600 text-white font-medium hover:bg-slate-700 transition-all">Cancelar</button>
+          <button type="submit" form="course-form" [disabled]="courseForm.invalid" class="flex-1 px-5 py-3 rounded-lg bg-lime-400 hover:bg-lime-500 text-slate-900 font-bold transition-all disabled:bg-slate-600 disabled:text-slate-400 disabled:cursor-not-allowed disabled:opacity-50">{{ isEditing() ? 'Guardar Cambios' : 'Crear Curso' }}</button>
         </div>
       </div>
     </div>
-  </div>
+  }
+
 } @else if (viewMode() === 'content' && selectedCourse()) {
   <!-- VISTA: GESTIÓN DE CONTENIDO DEL CURSO -->
   <div class="space-y-6">
@@ -212,12 +369,17 @@
   <div (click)="closeSectionModal()" [class.hidden]="!isSectionModalOpen()" class="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm"></div>
   <div id="section-modal" tabindex="-1" aria-hidden="true" [class.hidden]="!isSectionModalOpen()" class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-modal md:h-full flex">
     <div class="relative p-4 w-full max-w-md h-full md:h-auto">
-      <div class="relative rounded-lg shadow bg-slate-800 border border-white/10">
-        <button (click)="closeSectionModal()" type="button" class="absolute top-3 right-2.5 text-gray-400 bg-transparent rounded-lg text-sm p-1.5 ml-auto inline-flex items-center hover:bg-gray-600 hover:text-white">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-        </button>
+      <div class="relative rounded-lg shadow-xl bg-slate-800 border border-white/10">
+        <!-- Header -->
+        <div class="flex justify-between items-center py-6 px-6 lg:px-8 border-b border-slate-700">
+          <h3 class="text-xl font-medium text-white">{{ isEditingSection() ? 'Editar Sección' : 'Nueva Sección' }}</h3>
+          <button (click)="closeSectionModal()" type="button" class="text-gray-400 bg-transparent hover:bg-slate-700 hover:text-white rounded-lg text-sm p-1.5 -mr-2 inline-flex items-center transition-colors">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+            <span class="sr-only">Cerrar modal</span>
+          </button>
+        </div>
+        <!-- Body -->
         <div class="py-6 px-6 lg:px-8">
-          <h3 class="mb-4 text-xl font-medium text-white">{{ isEditingSection() ? 'Editar Sección' : 'Nueva Sección' }}</h3>
           <form class="space-y-6" [formGroup]="sectionForm" (ngSubmit)="onSectionSubmit()">
             <div>
               <label for="section-title" class="block mb-2 text-sm font-medium text-gray-300">Título de la sección</label>
@@ -275,8 +437,30 @@
                 <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white align-middle">{{ clase.title }}</th>
                 <td class="px-6 py-4 text-gray-400 line-clamp-1 align-middle">{{ clase.description || 'Sin descripción' }}</td>
                 <td class="px-6 py-4 align-middle">
-                  @if (clase.vimeo_id) {
-                    <a [href]="'https://player.vimeo.com/video/' + clase.vimeo_id" target="_blank" class="text-cyan-400 hover:underline text-xs">Ver Video</a>
+                  @if (clase.video_platform && clase.video_id) {
+                    @if (clase.video_platform === 'youtube') {
+                      <a [href]="'https://www.youtube.com/watch?v=' + clase.video_id" target="_blank" class="text-red-400 hover:underline text-xs flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                        </svg>
+                        YouTube
+                      </a>
+                    } @else {
+                      <a [href]="'https://player.vimeo.com/video/' + clase.video_id" target="_blank" class="text-cyan-400 hover:underline text-xs flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M23.977 6.416c-.105 2.338-1.739 5.543-4.894 9.609-3.268 4.247-6.026 6.37-8.29 6.37-1.409 0-2.578-1.294-3.553-3.881L5.322 11.4C4.603 8.816 3.834 7.522 3.01 7.522c-.179 0-.806.378-1.881 1.132L0 7.197c1.185-1.044 2.351-2.084 3.501-3.128C5.08 2.701 6.266 1.984 7.055 1.91c1.867-.18 3.016 1.1 3.447 3.838.465 2.953.789 4.789.971 5.507.539 2.45 1.131 3.674 1.776 3.674.502 0 1.256-.796 2.265-2.385 1.004-1.589 1.54-2.797 1.612-3.628.144-1.371-.395-2.061-1.614-2.061-.574 0-1.167.121-1.777.391 1.186-3.868 3.434-5.757 6.762-5.637 2.473.06 3.628 1.664 3.493 4.797l-.013.01z"/>
+                        </svg>
+                        Vimeo
+                      </a>
+                    }
+                  } @else if (clase.vimeo_id) {
+                    <!-- Soporte legacy para vimeo_id -->
+                    <a [href]="'https://player.vimeo.com/video/' + clase.vimeo_id" target="_blank" class="text-cyan-400 hover:underline text-xs flex items-center gap-1">
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M23.977 6.416c-.105 2.338-1.739 5.543-4.894 9.609-3.268 4.247-6.026 6.37-8.29 6.37-1.409 0-2.578-1.294-3.553-3.881L5.322 11.4C4.603 8.816 3.834 7.522 3.01 7.522c-.179 0-.806.378-1.881 1.132L0 7.197c1.185-1.044 2.351-2.084 3.501-3.128C5.08 2.701 6.266 1.984 7.055 1.91c1.867-.18 3.016 1.1 3.447 3.838.465 2.953.789 4.789.971 5.507.539 2.45 1.131 3.674 1.776 3.674.502 0 1.256-.796 2.265-2.385 1.004-1.589 1.54-2.797 1.612-3.628.144-1.371-.395-2.061-1.614-2.061-.574 0-1.167.121-1.777.391 1.186-3.868 3.434-5.757 6.762-5.637 2.473.06 3.628 1.664 3.493 4.797l-.013.01z"/>
+                      </svg>
+                      Vimeo
+                    </a>
                   } @else {
                     <span class="text-gray-500 text-xs">Sin video</span>
                   }
@@ -300,13 +484,14 @@
   <div (click)="closeClassModal()" [class.hidden]="!isClassModalOpen()" class="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm"></div>
   <div id="class-modal" tabindex="-1" aria-hidden="true" [class.hidden]="!isClassModalOpen()" class="fixed top-0 right-0 left-0 z-50 justify-center items-start w-full md:inset-0 h-modal md:h-full flex pt-8">
     <div class="relative p-4 w-full max-w-2xl max-h-[90vh]">
-      <div class="relative rounded-lg shadow bg-slate-800 border border-white/10 flex flex-col h-full">
-        <button (click)="closeClassModal()" type="button" class="absolute top-3 right-2.5 text-gray-400 bg-transparent rounded-lg text-sm p-1.5 ml-auto inline-flex items-center hover:bg-gray-600 hover:text-white">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-        </button>
+      <div class="relative rounded-lg shadow-xl bg-slate-800 border border-white/10 flex flex-col h-full">
         <!-- Modal header -->
-        <div class="py-6 px-6 lg:px-8 border-b border-slate-700">
-          <h3 class="mb-4 text-xl font-medium text-white">{{ isEditingClass() ? 'Editar Clase' : 'Nueva Clase' }}</h3>
+        <div class="flex justify-between items-center py-6 px-6 lg:px-8 border-b border-slate-700">
+          <h3 class="text-xl font-medium text-white">{{ isEditingClass() ? 'Editar Clase' : 'Nueva Clase' }}</h3>
+          <button (click)="closeClassModal()" type="button" class="text-gray-400 bg-transparent hover:bg-slate-700 hover:text-white rounded-lg text-sm p-1.5 -mr-2 inline-flex items-center transition-colors">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+            <span class="sr-only">Cerrar modal</span>
+          </button>
         </div>
         <!-- Modal body -->
         <div class="flex-grow overflow-y-auto p-6 lg:p-8">
@@ -320,16 +505,46 @@
               <textarea id="class-description" formControlName="description" rows="4" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500"></textarea>
             </div>
             <div>
-              <label for="vimeo-link" class="block mb-2 text-sm font-medium text-gray-300">Enlace del video (Vimeo)</label>
-              <input type="url" id="vimeo-link" formControlName="vimeo_link" placeholder="https://vimeo.com/123456789" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500">
+              <label for="video-platform" class="block mb-2 text-sm font-medium text-gray-300">🎬 Plataforma de Video</label>
+              <select id="video-platform" formControlName="video_platform" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500">
+                <option value="vimeo">Vimeo</option>
+                <option value="youtube">YouTube</option>
+              </select>
             </div>
             <div>
-              <label for="class-time" class="block mb-2 text-sm font-medium text-gray-300">Duración (minutos)</label>
+              <label for="video-link" class="block mb-2 text-sm font-medium text-gray-300">
+                🔗 Enlace del video ({{ classForm.get('video_platform')?.value === 'youtube' ? 'YouTube' : 'Vimeo' }})
+              </label>
+              <input
+                type="url"
+                id="video-link"
+                formControlName="video_link"
+                [placeholder]="classForm.get('video_platform')?.value === 'youtube'
+                  ? 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+                  : 'https://vimeo.com/123456789'"
+                class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500">
+              <p class="text-xs text-gray-500 mt-1">
+                @if (classForm.get('video_platform')?.value === 'youtube') {
+                  Acepta formatos: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/...
+                } @else {
+                  Acepta formatos: vimeo.com/123456789, player.vimeo.com/video/...
+                }
+              </p>
+            </div>
+            <div>
+              <label for="class-time" class="block mb-2 text-sm font-medium text-gray-300">⏱️ Duración (minutos)</label>
               <div class="relative">
-                <input type="number" id="class-time" [value]="(classForm.get('time')?.value || 0) / 60 | number:'1.0-2'" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-900 border-slate-700 placeholder-gray-400 text-gray-400 cursor-not-allowed" readonly>
+                <input
+                  type="number"
+                  id="class-time"
+                  [value]="(classForm.get('time')?.value || 0) / 60 | number:'1.0-2'"
+                  class="border text-sm rounded-lg block w-full p-2.5 bg-slate-900 border-slate-700 placeholder-gray-400 text-gray-400 cursor-not-allowed"
+                  readonly>
                 <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">min</span>
               </div>
-              <p class="text-xs text-gray-500 mt-1">La duración se obtiene automáticamente del video de Vimeo.</p>
+              <p class="text-xs text-lime-400 mt-1">
+                ✨ La duración se obtiene automáticamente al pegar el enlace del video
+              </p>
             </div>
           </form>
         </div>

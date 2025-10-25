@@ -16,14 +16,14 @@
     <!-- Modal de Compra Exitosa - ARREGLADO -->
     <!-- ================================================================== -->
     @if (showSuccess()) {
-      <div 
-        class="fixed inset-0 z-50 overflow-y-auto" 
-        aria-labelledby="modal-title" 
-        role="dialog" 
+      <div
+        class="fixed inset-0 z-50 overflow-y-auto"
+        aria-labelledby="modal-title"
+        role="dialog"
         aria-modal="true">
-        
+
         <!-- Backdrop con click para cerrar -->
-        <div 
+        <div
           class="fixed inset-0 bg-black/75 transition-opacity"
           (click)="closeSuccessModalAndRedirect()">
         </div>
@@ -31,10 +31,10 @@
         <!-- Contenedor del modal -->
         <div class="flex min-h-full items-center justify-center p-4">
           <!-- Contenido del modal - DETENER PROPAGACIÓN -->
-          <div 
+          <div
             class="relative transform overflow-hidden rounded-lg bg-slate-800 text-left shadow-xl transition-all w-full max-w-md border border-lime-400/50"
             (click)="$event.stopPropagation()">
-            
+
             <div class="bg-slate-800 px-6 py-6">
               <!-- Icono de éxito -->
               <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-lime-100">
@@ -51,7 +51,7 @@
 
                 <!-- Mensaje -->
                 <div class="mt-4 text-sm text-gray-300">
-                  @if (selectedPaymentMethod() === 'transferencia') {
+                  @if (selectedPaymentMethod() === 'transfer') {
                     <p class="mb-3">Hemos recibido tu pedido. Por favor, realiza la transferencia bancaria utilizando el siguiente concepto de pago:</p>
                     <div class="p-3 bg-slate-900 rounded-md border border-lime-400/30">
                       <p class="text-lime-300 font-mono text-lg tracking-wider font-bold">
@@ -72,9 +72,9 @@
 
               <!-- Botón de Aceptar -->
               <div class="mt-6">
-                <button 
-                  (click)="closeSuccessModalAndRedirect()" 
-                  type="button" 
+                <button
+                  (click)="closeSuccessModalAndRedirect()"
+                  type="button"
                   class="w-full inline-flex justify-center rounded-md bg-lime-500 px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm hover:bg-lime-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500 focus:ring-offset-slate-800 transition-colors">
                   Aceptar
                 </button>
@@ -86,28 +86,28 @@
     }
 
     <!-- ================================================================== -->
-    <!-- 🔥 NUEVO MODAL DE ADVERTENCIA - NÚMERO DE TRANSACCIÓN -->
+    <!-- 🔥 MODAL DE ADVERTENCIA - NÚMERO DE TRANSACCIÓN -->
     <!-- ================================================================== -->
     @if (showWarningModal()) {
-      <div 
-        class="fixed inset-0 z-50 overflow-y-auto" 
-        aria-labelledby="warning-modal-title" 
-        role="dialog" 
+      <div
+        class="fixed inset-0 z-50 overflow-y-auto"
+        aria-labelledby="warning-modal-title"
+        role="dialog"
         aria-modal="true">
-        
+
         <!-- Backdrop oscuro -->
         <div class="fixed inset-0 bg-black/90 transition-opacity"></div>
 
         <!-- Contenedor del modal -->
         <div class="flex min-h-full items-center justify-center p-4">
           <!-- Contenido del modal -->
-          <div 
-            class="relative transform overflow-hidden rounded-2xl bg-gradient-to-br from-red-900/90 to-orange-900/90 text-left shadow-2xl transition-all w-full max-w-2xl border-4 border-red-500 animate-pulse-slow"
+          <div
+            class="relative transform overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-900/95 to-purple-900/95 text-left shadow-2xl transition-all w-full max-w-2xl border-4 border-indigo-400 animate-pulse-slow"
             (click)="$event.stopPropagation()">
-            
+
             <div class="px-8 py-10">
               <!-- Icono de advertencia grande -->
-              <div class="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-red-500 mb-6 animate-bounce">
+              <div class="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 mb-6 animate-bounce shadow-lg shadow-indigo-500/50">
                 <svg class="h-16 w-16 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                 </svg>
@@ -115,40 +115,98 @@
 
               <!-- Mensaje IMPORTANTE en letras grandes -->
               <div class="text-center space-y-6">
-                <h2 class="text-4xl md:text-5xl font-black text-white leading-tight uppercase tracking-wide">
+                <h2 class="text-4xl md:text-5xl font-black text-white leading-tight uppercase tracking-wide drop-shadow-lg">
                   ¡IMPORTANTE!
                 </h2>
-                
-                <div class="bg-black/40 rounded-xl p-6 border-2 border-yellow-400">
-                  <p class="text-2xl md:text-3xl font-bold text-yellow-300 leading-relaxed">
+
+                <div class="bg-gradient-to-r from-indigo-600/40 to-purple-600/40 rounded-xl p-6 border-2 border-indigo-300 backdrop-blur-sm">
+                  <p class="text-2xl md:text-3xl font-bold text-indigo-100 leading-relaxed">
                     POR FAVOR NO OLVIDES APUNTAR COMO REFERENCIA ESTE NÚMERO
                   </p>
                 </div>
 
                 <!-- Número de transacción MUY GRANDE -->
-                <div class="bg-white rounded-xl p-8 shadow-2xl border-4 border-lime-400">
+                <div class="bg-white rounded-xl p-8 shadow-2xl border-4 border-indigo-400">
                   <p class="text-sm font-semibold text-slate-600 mb-2">NÚMERO DE TRANSACCIÓN:</p>
                   <p class="text-4xl md:text-6xl font-black text-slate-900 tracking-widest font-mono break-all">
                     {{ transactionNumber() }}
                   </p>
                 </div>
 
-                <div class="bg-red-500/20 rounded-xl p-6 border-2 border-red-400">
-                  <p class="text-xl md:text-2xl font-bold text-red-200 leading-relaxed">
+                <div class="bg-gradient-to-r from-purple-600/30 to-pink-600/30 rounded-xl p-6 border-2 border-purple-300 backdrop-blur-sm">
+                  <p class="text-xl md:text-2xl font-bold text-purple-100 leading-relaxed">
                     DE LO CONTRARIO NO SE PODRÁ CAMBIAR A PAGADO
                   </p>
                 </div>
 
-                <p class="text-lg text-gray-300 max-w-xl mx-auto">
+                <p class="text-lg text-indigo-100 max-w-xl mx-auto">
                   Este número es esencial para procesar tu pago. Guárdalo en un lugar seguro o tómale una captura de pantalla.
                 </p>
+
+                <!-- 🏦 DATOS BANCARIOS EN EL MODAL -->
+                @if (selectedPaymentMethod() === 'transfer') {
+                  <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border-2 border-white/30 text-left">
+                    <div class="flex items-center gap-2 mb-4">
+                      <svg class="w-6 h-6 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                      </svg>
+                      <h3 class="text-xl font-bold text-white">Datos para Transferencia</h3>
+                    </div>
+
+                    <div class="space-y-3">
+                      <!-- Banco -->
+                      <div class="bg-slate-900/50 rounded-lg p-3">
+                        <p class="text-xs text-gray-300 mb-1">Banco:</p>
+                        <p class="text-base font-semibold text-white">{{ bankDetails.bankName }}</p>
+                      </div>
+
+                      <!-- Número de Cuenta -->
+                      <div class="bg-slate-900/50 rounded-lg p-3">
+                        <div class="flex items-center justify-between gap-3">
+                          <div class="flex-1 min-w-0">
+                            <p class="text-xs text-gray-300 mb-1">Número de Cuenta:</p>
+                            <p class="text-xl font-mono font-bold text-lime-300 break-all">{{ bankDetails.accountNumber }}</p>
+                          </div>
+                          <button
+                            type="button"
+                            (click)="copyToClipboard(bankDetails.accountNumber, 'cuenta')"
+                            class="flex-shrink-0 px-3 py-2 bg-lime-400/20 hover:bg-lime-400/30 text-lime-300 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            Copiar
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- CLABE -->
+                      <div class="bg-slate-900/50 rounded-lg p-3">
+                        <div class="flex items-center justify-between gap-3">
+                          <div class="flex-1 min-w-0">
+                            <p class="text-xs text-gray-300 mb-1">CLABE Interbancaria:</p>
+                            <p class="text-xl font-mono font-bold text-lime-300 break-all">{{ bankDetails.clabe }}</p>
+                          </div>
+                          <button
+                            type="button"
+                            (click)="copyToClipboard(bankDetails.clabe, 'clabe')"
+                            class="flex-shrink-0 px-3 py-2 bg-lime-400/20 hover:bg-lime-400/30 text-lime-300 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            Copiar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                }
               </div>
 
               <!-- Botón de Aceptar grande -->
               <div class="mt-8">
-                <button 
-                  (click)="closeWarningAndRedirect()" 
-                  type="button" 
+                <button
+                  (click)="closeWarningAndRedirect()"
+                  type="button"
                   class="w-full inline-flex items-center justify-center rounded-xl bg-lime-500 px-8 py-5 text-2xl font-black text-slate-900 shadow-2xl hover:bg-lime-400 focus:outline-none focus:ring-4 focus:ring-lime-300 transition-all transform hover:scale-105">
                   <svg class="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -180,7 +238,7 @@
         <!-- Métodos de Pago -->
         <div class="bg-slate-800/50 rounded-lg border border-white/10 p-6">
           <h2 class="text-xl font-semibold text-white mb-4">Método de Pago</h2>
-          
+
           <div class="space-y-3">
             @for (method of paymentMethods; track method.id) {
               <button
@@ -206,14 +264,85 @@
           </div>
 
           <!-- Información adicional según el método seleccionado -->
-          @if (selectedPaymentMethod() === 'transferencia') {
-            <div class="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-              <p class="text-sm text-blue-300 font-medium mb-2">📋 Información importante:</p>
-              <ul class="text-xs text-gray-300 space-y-1">
-                <li>• Recibirás un número de referencia para tu transferencia</li>
-                <li>• Realiza el pago dentro de las próximas 24 horas</li>
-                <li>• Tu pedido se activará una vez confirmado el pago</li>
-              </ul>
+          @if (selectedPaymentMethod() === 'transfer') {
+            <div class="mt-4 space-y-4">
+              <!-- Instrucciones -->
+              <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <p class="text-sm text-blue-300 font-medium mb-2">📋 Información importante:</p>
+                <ul class="text-xs text-gray-300 space-y-1">
+                  <li>• Recibirás un número de referencia para tu transferencia</li>
+                  <li>• Realiza el pago dentro de las próximas 24 horas</li>
+                  <li>• Tu pedido se activará una vez confirmado el pago</li>
+                </ul>
+              </div>
+
+              <!-- 🏦 DATOS BANCARIOS -->
+              <div class="p-6 bg-gradient-to-br from-blue-900/50 to-indigo-900/50 border-2 border-blue-400/50 rounded-xl">
+                <div class="flex items-center gap-2 mb-4">
+                  <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                  </svg>
+                  <h3 class="text-lg font-bold text-white">Datos para Transferencia</h3>
+                </div>
+
+                <div class="space-y-4">
+                  <!-- Banco -->
+                  <div class="bg-slate-800/50 rounded-lg p-3">
+                    <p class="text-xs text-gray-400 mb-1">Banco:</p>
+                    <p class="text-sm font-semibold text-white">{{ bankDetails.bankName }}</p>
+                  </div>
+
+                  <!-- Número de Cuenta -->
+                  <div class="bg-slate-800/50 rounded-lg p-3">
+                    <div class="flex items-center justify-between">
+                      <div class="flex-1">
+                        <p class="text-xs text-gray-400 mb-1">Número de Cuenta:</p>
+                        <p class="text-lg font-mono font-bold text-lime-400" id="account-number">{{ bankDetails.accountNumber }}</p>
+                      </div>
+                      <button
+                        type="button"
+                        (click)="copyToClipboard(bankDetails.accountNumber, 'cuenta')"
+                        class="ml-2 px-3 py-2 bg-lime-400/20 hover:bg-lime-400/30 text-lime-400 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                        Copiar
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- CLABE -->
+                  <div class="bg-slate-800/50 rounded-lg p-3">
+                    <div class="flex items-center justify-between">
+                      <div class="flex-1">
+                        <p class="text-xs text-gray-400 mb-1">CLABE Interbancaria:</p>
+                        <p class="text-lg font-mono font-bold text-lime-400" id="clabe-number">{{ bankDetails.clabe }}</p>
+                      </div>
+                      <button
+                        type="button"
+                        (click)="copyToClipboard(bankDetails.clabe, 'clabe')"
+                        class="ml-2 px-3 py-2 bg-lime-400/20 hover:bg-lime-400/30 text-lime-400 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                        Copiar
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Alerta importante -->
+                  <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+                    <div class="flex gap-2">
+                      <svg class="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                      </svg>
+                      <p class="text-xs text-yellow-200">
+                        <span class="font-bold">Importante:</span> Al realizar la transferencia, <span class="font-bold">agrega el número de transacción en la referencia</span> para que podamos identificar tu pago.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           }
         </div>
@@ -221,7 +350,7 @@
         <!-- Formulario de información de facturación -->
         <div class="bg-slate-800/50 rounded-lg border border-white/10 p-6">
           <h2 class="text-xl font-semibold text-white mb-4">Información de Facturación</h2>
-          
+
           <form [formGroup]="checkoutForm" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-2">Nombre Completo *</label>

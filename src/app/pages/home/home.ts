@@ -68,6 +68,24 @@ export class HomeComponent implements OnInit {
   // Proyectos comprados del usuario
   purchasedProjects = this.profileService.purchasedProjects;
 
+  // ---------- PAGINACIÓN ----------
+  catalogPage = signal<number>(1);
+  catalogItemsPerPage = signal<number>(10); // Opciones: 10, 15, 20
+  catalogTotalItems = computed(() => this.catalogResults().length);
+  catalogTotalPages = computed(() =>
+    Math.ceil(this.catalogTotalItems() / this.catalogItemsPerPage())
+  );
+
+  // Resultados paginados
+  catalogResultsPaginated = computed(() => {
+    const results = this.catalogResults();
+    const page = this.catalogPage();
+    const perPage = this.catalogItemsPerPage();
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    return results.slice(start, end);
+  });
+
   // ---------- Catálogo con filtros ----------
   catalogShowCourses = signal<boolean>(true);
   catalogShowProjects = signal<boolean>(true);
@@ -166,13 +184,78 @@ export class HomeComponent implements OnInit {
     } else if (sortBy === "price-high") {
       items.sort((a, b) => (b.price_usd || 0) - (a.price_usd || 0));
     } else if (sortBy === "popular") {
-      // Ordenar por rating o número de estudiantes si está disponible
       items.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
     }
-    // 'recent' es el orden por defecto
 
     return items;
   });
+
+  // Métodos de paginación
+  goToPage(page: number): void {
+    if (page < 1 || page > this.catalogTotalPages()) return;
+    this.catalogPage.set(page);
+    // Scroll to top del catálogo
+    const catalogSection = document.getElementById('catalog-section');
+    if (catalogSection) {
+      catalogSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  nextPage(): void {
+    if (this.catalogPage() < this.catalogTotalPages()) {
+      this.goToPage(this.catalogPage() + 1);
+    }
+  }
+
+  prevPage(): void {
+    if (this.catalogPage() > 1) {
+      this.goToPage(this.catalogPage() - 1);
+    }
+  }
+
+  changeItemsPerPage(count: number): void {
+    this.catalogItemsPerPage.set(count);
+    this.catalogPage.set(1); // Reset a la primera página
+  }
+
+  // Computed para generar el array de páginas a mostrar
+  visiblePages = computed(() => {
+    const current = this.catalogPage();
+    const total = this.catalogTotalPages();
+    const pages: (number | string)[] = [];
+
+    if (total <= 7) {
+      // Mostrar todas las páginas si son 7 o menos
+      for (let i = 1; i <= total; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Siempre mostrar primera página
+      pages.push(1);
+
+      if (current > 3) {
+        pages.push('...');
+      }
+
+      // Páginas alrededor de la actual
+      const start = Math.max(2, current - 1);
+      const end = Math.min(total - 1, current + 1);
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      if (current < total - 2) {
+        pages.push('...');
+      }
+
+      // Siempre mostrar última página
+      pages.push(total);
+    }
+
+    return pages;
+  });
+
   constructor() {
     // Imprime el arreglo completo de proyectos destacados cuando se cargan.
     effect(() => {
@@ -205,7 +288,6 @@ export class HomeComponent implements OnInit {
       this.api.home();
       return "";
     } catch (e: any) {
-      // Mensaje genérico sin exponer detalles técnicos como URLs o endpoints
       return "No se pudo cargar el contenido. Por favor, verifica tu conexión a internet e intenta de nuevo.";
     }
   }
@@ -250,7 +332,6 @@ export class HomeComponent implements OnInit {
     if (!url) return null;
 
     let embedUrl = "";
-    // Regex para extraer el ID de video de varias URLs de YouTube (youtube.com/watch, youtu.be/, etc.)
     const youtubeRegex =
       /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
     const youtubeMatch = url.match(youtubeRegex);
@@ -259,7 +340,6 @@ export class HomeComponent implements OnInit {
       const videoId = youtubeMatch[1];
       embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
     }
-    // Vimeo: https://vimeo.com/VIDEO_ID -> https://player.vimeo.com/video/VIDEO_ID
     else if (url.includes("vimeo.com/")) {
       const videoId = url.split("vimeo.com/")[1].split(/[\/?]/)[0];
       embedUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1`;
@@ -302,7 +382,6 @@ export class HomeComponent implements OnInit {
   }
 
   addCourseToCart(course: CoursePublic, event: MouseEvent): void {
-    // Usamos preventDefault en lugar de stopPropagation porque el botón está fuera del enlace <a>
     event.preventDefault();
     if (!this.authService.isLoggedIn()) {
       this.router.navigate(["/login"]);
@@ -316,8 +395,6 @@ export class HomeComponent implements OnInit {
     if (!this.authService.isLoggedIn()) {
       return false;
     }
-    // La respuesta del perfil tiene el curso anidado.
-    // enrolled_courses: [{ course: { _id: '...' } }]
     return this.enrolledCourses().some(
       (enrollment: Enrollment) => enrollment.course?._id === courseId
     );
@@ -328,7 +405,6 @@ export class HomeComponent implements OnInit {
     if (!this.authService.isLoggedIn()) {
       return false;
     }
-    // Verifica si el proyecto está en la lista de proyectos comprados
     return this.purchasedProjects().some(
       (project: any) =>
         project._id === projectId || project.project?._id === projectId
@@ -337,26 +413,16 @@ export class HomeComponent implements OnInit {
 
   // ---------- Búsqueda pro ----------
   private debounceId: any = null;
-  // Permite buscar con 1 caracter si el usuario presiona Enter (submit manual),
-  // y con 3+ caracteres en auto-búsqueda (debounce).
   minLen = 2;
   searching = signal<boolean>(false);
-  isSearchLoading = this.searchService.isLoading; // Estado de carga desde el servicio
-  isResultsVisible = signal<boolean>(false); // Controla la visibilidad del panel de resultados
-  searchRows = this.searchService.results; // resultados de GET /home/general_search
+  isSearchLoading = this.searchService.isLoading;
+  isResultsVisible = signal<boolean>(false);
+  searchRows = this.searchService.results;
 
-  // Lista efectiva para pintar (featured o searchRows) con filtros locales
   courses = computed<CoursePublic[]>(() => {
-    const isSearchActive = this.q().trim().length > 0 && (this.searchRows()?.length ?? 0) > 0;
-
-    // La sección de "Cursos destacados" ahora solo mostrará los cursos que vienen de la API,
-    // sin ser afectada por el buscador, que es independiente.
-    // La búsqueda se maneja en el panel flotante a través de `searchRows`.
-    // La lógica de filtrado por categoría se mantiene para la sección de catálogo.
     return this.featuredSafe();
   });
 
-  // Botón Buscar deshabilitado si: ya está buscando, o no hay categoría y el término es < minLen
   searchDisabled = computed<boolean>(() => {
     const term = this.q().trim();
     const hasCat = !!this.selectedCategorie();
@@ -366,17 +432,13 @@ export class HomeComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    // Inicia la carga de datos para la página de inicio.
     this.api.reloadHome();
-    this.api.reloadAllCourses(); // Carga todos los cursos para el catálogo
-    this.api.reloadAllProjects(); // Carga todos los proyectos para el catálogo
-    // Si el usuario está logueado, carga su perfil para obtener los cursos.
+    this.api.reloadAllCourses();
+    this.api.reloadAllProjects();
     if (this.authService.isLoggedIn()) {
       this.profileService.reloadProfile();
-      // Cargar las compras del usuario
       this.purchasesService.loadPurchasedProducts();
     }
-    // Cargamos las categorías para los filtros.
     this.categoriesService.reload();
   }
 
@@ -388,14 +450,13 @@ export class HomeComponent implements OnInit {
   onSearchInput(raw: string): void {
     const v = this.sanitizeTerm(raw);
     this.q.set(v);
-    this.isResultsVisible.set(true); // Muestra el panel al empezar a escribir
+    this.isResultsVisible.set(true);
 
     if (v.trim().length === 0) {
-      this.clearSearch(); // Limpia los resultados del servicio
+      this.clearSearch();
       return;
     }
 
-    // Auto-buscar solo si hay >= 3 chars
     clearTimeout(this.debounceId);
     this.debounceId = setTimeout(() => {
       if (this.q().trim().length >= 3) this.runSearch();
@@ -405,38 +466,30 @@ export class HomeComponent implements OnInit {
   onSearchKeydown(ev: KeyboardEvent): void {
     if (ev.key === "Enter") {
       this.submitSearch();
-      this.isResultsVisible.set(false); // Oculta el panel al presionar Enter
+      this.isResultsVisible.set(false);
     }
     else if (ev.key === "Escape") {
       this.clearSearch();
-      this.isResultsVisible.set(false); // Oculta el panel al presionar Escape
+      this.isResultsVisible.set(false);
     }
   }
 
   submitSearch(): void {
     const term = this.q().trim();
-    // Si no hay término ni categoría, solo limpiamos resultados
     if (!term && !this.selectedCategorie()) {
-      this.clearSearch(); // Usamos clearSearch para limpiar los resultados en el servicio
+      this.clearSearch();
       return;
     }
-    this.runSearch(true); // true = submit manual (permite 1+ char)
+    this.runSearch(true);
   }
 
   clearSearch(): void {
     clearTimeout(this.debounceId);
     this.q.set("");
-    this.isResultsVisible.set(false); // Oculta el panel
-    // El servicio ya maneja la limpieza si la query está vacía, no es necesaria una suscripción aquí.
+    this.isResultsVisible.set(false);
     this.searchService.runSearch({ q: '' });
   }
 
-  /**
-   * Ejecuta búsqueda:
-   * - si manual = true, permite 1+ caracter
-   * - si manual = false (debounce), exige 3+ caracteres
-   * Además, hace fallback local: si el API devuelve vacío, filtramos los featured.
-   */
   private runSearch(manual = false): void {
     const term = this.q().trim();
 
@@ -446,66 +499,40 @@ export class HomeComponent implements OnInit {
       if (term.length < 1 && !this.selectedCategorie()) return;
     }
 
-    // Usamos el nuevo SearchService
     this.searchService.runSearch({
       q: term || undefined,
       categoryId: this.selectedCategorie() || undefined,
-    }).subscribe(); // La suscripción es necesaria para que la petición se ejecute
+    }).subscribe();
   }
-
-  // El fallback local ya no es necesario, el servicio de búsqueda es la única fuente de verdad.
-  /*
-  private getLocalFallback(term: string): CoursePublic[] {
-    const localTerm = term.toLowerCase();
-    const cat = this.selectedCategorie();
-    return this.featuredSafe().filter((c: any) => {
-      const byTitle = (c?.title || "").toLowerCase().includes(localTerm);
-      const catId =
-        typeof c?.categorie === "string" ? c.categorie : c?.categorie?._id;
-      const byCat = !cat || catId === cat;
-      return byTitle && byCat;
-    });
-  }
-  */
 
   selectCategorie(id?: string): void {
     this.selectedCategorie.set(id);
-    // Siempre ejecutar la búsqueda después de cambiar la categoría, permitiendo búsqueda de 1+ carácter.
     this.runSearch(true);
   }
 
   // ---------- Recargar ----------
   reload(): void {
     clearTimeout(this.debounceId);
-    this.api.reloadHome(); // revalida httpResource
+    this.api.reloadHome();
     this.clearSearch();
-    // Si prefieres limpiar también el input:
-    // this.q.set('');
   }
 
   // --- Métodos para el panel de búsqueda ---
-
-  // Oculta el panel de resultados con un retraso mayor para permitir interacción
   hideResultsPanel() {
     setTimeout(() => this.isResultsVisible.set(false), 300);
   }
 
-  // Cierra el panel cuando se hace clic fuera
   onClickOutsideSearch(event: MouseEvent) {
     if (this.isResultsVisible()) {
       this.isResultsVisible.set(false);
     }
   }
 
-  // Navega al detalle y oculta el panel
   navigateToDetail(item: any) {
     this.isResultsVisible.set(false);
     if (item.item_type === 'course') {
-      // Si es un curso, navegamos a su página de detalle.
       this.router.navigate(['/course-detail', item.slug]);
     } else if (item.item_type === 'project') {
-      // Si es un proyecto, abrimos el modal de video.
-      // La función openVideoModal ya comprueba si la URL existe.
       this.openVideoModal(item.url_video);
     }
   }
@@ -533,13 +560,13 @@ export class HomeComponent implements OnInit {
     this.catalogPriceRange.set("");
     this.catalogLevel.set("");
     this.catalogSortBy.set("recent");
+    this.catalogPage.set(1);
   }
 
   toggleCatalogFilters(): void {
     this.showCatalogFilters.update((v) => !v);
   }
 
-  // Navega a la página de detalle del curso
   navigateToCourse(course: any, event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();

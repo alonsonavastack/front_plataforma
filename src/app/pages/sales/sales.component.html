@@ -1,6 +1,6 @@
 <div class="bg-slate-950 text-white min-h-screen">
   <div class="container mx-auto p-4 sm:p-6 lg:p-8">
-    
+
     <!-- Header -->
     <header class="mb-8">
       <div class="flex items-center justify-between">
@@ -177,7 +177,7 @@
     <!-- Filtros -->
     <div class="bg-slate-900/50 border border-white/10 rounded-2xl p-6 mb-8">
       <h2 class="text-lg font-bold text-white mb-4">Filtros de Búsqueda</h2>
-      
+
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
         <!-- Búsqueda -->
         <div class="lg:col-span-2">
@@ -244,6 +244,25 @@
       </button>
     </div>
 
+    <!-- Controles de Paginación y Selector -->
+    @if (sales().length > 0) {
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+        <div class="text-sm text-slate-400">
+          Mostrando {{ (currentPage() - 1) * itemsPerPage() + 1 }} -
+          {{ Math.min(currentPage() * itemsPerPage(), sales().length) }}
+          de {{ sales().length }} ventas
+        </div>
+        <div class="flex items-center gap-2">
+          <label for="items-per-page" class="text-sm text-slate-400">Mostrar:</label>
+          <select id="items-per-page" [value]="itemsPerPage()" (change)="changePerPage(+$any($event.target).value)" class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-1.5 focus:ring-lime-400 focus:border-lime-400">
+            <option [value]="10">10</option>
+            <option [value]="15">15</option>
+            <option [value]="20">20</option>
+          </select>
+        </div>
+      </div>
+    }
+
     <!-- Indicador de carga principal -->
     @if (isLoading()) {
       <div class="flex justify-center items-center py-20">
@@ -253,7 +272,7 @@
     }
 
     <!-- Tabla de ventas -->
-    @if (!isLoading() && sales().length > 0) {
+    @if (!isLoading() && paginatedSales().length > 0) {
       <div class="bg-slate-900/50 border border-white/10 rounded-2xl overflow-x-auto">
         <table class="min-w-full leading-normal">
           <thead>
@@ -270,8 +289,10 @@
             </tr>
           </thead>
           <tbody class="text-slate-300">
-            @for (sale of sales(); track sale._id) {
-              <tr class="border-b border-slate-800 hover:bg-slate-800/70">
+            @for (sale of paginatedSales(); track sale._id) {
+              <tr 
+                id="sale-{{ sale._id }}"
+                class="border-b border-slate-800 hover:bg-slate-800/70 transition-all duration-300">
                 <td class="px-5 py-4">
                   <button (click)="toggleDetails(sale._id)" class="text-lime-400 hover:text-lime-300 font-medium text-sm">
                     {{ isDetailsVisible(sale._id) ? 'Ocultar' : 'Ver' }}
@@ -352,10 +373,55 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Controles de Paginación (Abajo) -->
+      @if (totalPages() > 1) {
+        <div class="flex items-center justify-center gap-4 mt-8">
+          <!-- Botón Anterior -->
+          <button (click)="previousPage()" [disabled]="currentPage() === 1"
+                  class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            <span>Anterior</span>
+          </button>
+
+          <!-- Números de página -->
+          <div class="hidden md:flex items-center gap-1">
+            @for (pageNum of pageNumbers(); track pageNum) {
+              @if (typeof pageNum === 'number') {
+                <button (click)="changePage(pageNum)"
+                        [class.bg-lime-400]="pageNum === currentPage()"
+                        [class.text-slate-900]="pageNum === currentPage()"
+                        [class.bg-slate-800]="pageNum !== currentPage()"
+                        [class.text-white]="pageNum !== currentPage()"
+                        class="min-w-[40px] px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 transition-colors font-medium text-sm">
+                  {{ pageNum }}
+                </button>
+              } @else {
+                <span class="px-2 text-slate-500">…</span>
+              }
+            }
+          </div>
+
+          <!-- Botón Siguiente -->
+          <button (click)="nextPage()" [disabled]="currentPage() === totalPages()"
+                  class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            <span>Siguiente</span>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          </button>
+        </div>
+      }
     }
 
     <!-- Mensaje si no hay ventas -->
-    @if (!isLoading() && sales().length === 0) {
+    @if (!isLoading() && sales().length === 0 && (searchTerm() || statusFilter() || selectedMonth())) {
+      <div class="text-center py-20 bg-slate-900/50 border border-white/10 rounded-2xl">
+        <h3 class="mt-2 text-sm font-medium text-slate-300">No se encontraron ventas con los filtros aplicados</h3>
+        <p class="mt-1 text-sm text-slate-500">Intenta ajustar o limpiar los filtros para ver más resultados.</p>
+        <button (click)="clearFilters()" class="mt-4 px-4 py-2 bg-lime-400 text-slate-900 font-semibold rounded-lg hover:bg-lime-300 transition">
+          Limpiar filtros
+        </button>
+      </div>
+    } @else if (!isLoading() && sales().length === 0) {
       <div class="text-center py-20 bg-slate-900/50 border border-white/10 rounded-2xl">
         <svg class="mx-auto h-12 w-12 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
           <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -368,9 +434,6 @@
             Aún no se ha registrado ninguna transacción.
           }
         </p>
-        @if (isInstructor() && (searchTerm() || statusFilter() || selectedMonth())) {
-          <p class="mt-2 text-xs text-slate-400">Intenta ajustar o limpiar los filtros</p>
-        }
       </div>
     }
   </div>

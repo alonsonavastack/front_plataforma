@@ -1,93 +1,198 @@
-<div
-  (click)="project.url_video ? onOpenVideo($event) : null"
-  [routerLink]="!project.url_video ? ['/project-detail', project._id] : null"
-  [class.cursor-pointer]="project.url_video"
-  class="flex flex-col h-full rounded-xl border border-white/10 bg-slate-800/50 hover:bg-slate-700/50 transition-colors group relative"
->
+<!-- src/app/shared/projects-card/projects-card.html -->
+<div class="group relative h-full flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-sm transition-all duration-300 hover:border-lime-400/40 hover:shadow-xl hover:shadow-lime-500/10 hover:-translate-y-1">
+  
   <!-- Badge de Ya Comprado -->
   @if (isPurchased()) {
-    <div class="absolute top-2 right-2 z-10 px-3 py-1 rounded-full text-xs font-bold
-                bg-green-500 text-white shadow-lg flex items-center gap-1">
-      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+    <div class="absolute top-3 left-3 z-20 px-3 py-1.5 rounded-xl text-xs font-bold
+                bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg 
+                flex items-center gap-1.5 backdrop-blur-sm">
+      <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
       </svg>
       Comprado
     </div>
   }
-
-  <!-- Imagen del proyecto -->
-  <div class="h-40 bg-slate-900 overflow-hidden rounded-t-xl relative">
-    <img 
-      [src]="imageUrl()" 
-      [alt]="project.title" 
-      [class.opacity-60]="isPurchased()"
-      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-
-    <!-- Badge de descuento -->
+  
+  <!-- Imagen con efecto overlay -->
+  <div 
+    class="relative overflow-hidden cursor-pointer"
+    (click)="project.url_video ? onOpenVideo($event) : null">
+    <!-- Overlay gradient -->
+    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent opacity-60 z-10 group-hover:opacity-40 transition-opacity duration-300"></div>
+    
+    <!-- Imagen -->
+    <div class="aspect-video overflow-hidden">
+      <img
+        [src]="imageUrl()"
+        [alt]="project.title"
+        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        [class.opacity-50]="isPurchased()"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
+    
+    <!-- Badge de descuento flotante -->
     @if (project.discount_active && !isPurchased()) {
-      <div class="absolute top-2 left-2 px-3 py-1 rounded-lg bg-lime-500 text-slate-900 text-sm font-bold shadow-lg">
-        -{{ project.discount_active.discount }}{{ project.discount_active.type_discount === 1 ? '%' : ' USD' }}
+      <div class="absolute top-3 right-3 z-20">
+        <div class="relative">
+          <!-- Círculo con animación de pulso -->
+          <div class="absolute inset-0 rounded-full bg-lime-400 animate-ping opacity-75"></div>
+          <div class="relative px-3 py-1.5 rounded-full text-xs font-black
+                      bg-gradient-to-br from-lime-400 to-yellow-400 text-slate-900 
+                      shadow-lg flex items-center gap-1">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"/>
+            </svg>
+            -{{ project.discount_active.discount }}{{ project.discount_active.type_discount === 1 ? '%' : ' USD' }}
+          </div>
+        </div>
       </div>
     }
 
     <!-- Icono de Play si hay video -->
     @if (project.url_video) {
-      <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
-        </svg>
+      <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+        <div class="relative">
+          <div class="absolute inset-0 bg-lime-400 rounded-full blur-xl opacity-50 animate-pulse"></div>
+          <svg class="relative w-16 h-16 text-white drop-shadow-2xl" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+          </svg>
+        </div>
+      </div>
+    }
+
+    <!-- Categoría flotante en la parte inferior -->
+    @if (project.categorie.title) {
+      <div class="absolute bottom-3 left-3 z-20">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg 
+                     bg-slate-900/80 backdrop-blur-md border border-white/10
+                     text-xs font-medium text-white/90">
+          <svg class="w-3.5 h-3.5 text-lime-400" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path>
+          </svg>
+          {{ project.categorie.title }}
+        </span>
       </div>
     }
   </div>
 
   <!-- Contenido de la tarjeta -->
-  <div class="p-4 flex flex-col flex-grow">
-    <h3 class="font-semibold text-white line-clamp-2">{{ project.title }}</h3>
-    <p class="text-sm text-white/60 mt-1 line-clamp-2">{{ project.subtitle }}</p>
-
-    <!-- Precios -->
-    <div class="flex items-baseline justify-between mt-3">
-      <div class="flex items-baseline gap-2">
-        @if (project.discount_active && project.final_price_usd !== undefined) {
-          <div class="text-xl font-bold text-lime-300">${{ project.final_price_usd | number:'1.0-2' }}</div>
-          <div class="text-sm text-white/50 line-through">${{ project.price_usd | number:'1.0-2' }}</div>
-        } @else {
-          <div class="text-xl font-bold text-lime-300">${{ project.price_usd | number:'1.0-2' }}</div>
-        }
-        <span class="text-white/60 text-sm">USD</span>
-      </div>
-      @if (project.discount_active) {
-        <span class="px-2 py-0.5 rounded bg-lime-500/20 text-lime-300 text-xs font-bold border border-lime-500/30">
-          -{{ project.discount_active.discount }}{{ project.discount_active.type_discount === 1 ? '%' : ' USD' }}
-        </span>
-      }
+  <div class="flex-1 flex flex-col p-5 space-y-3">
+    <!-- Título del proyecto -->
+    <div class="block group/title">
+      <h3 class="text-base font-bold text-white leading-tight line-clamp-2 
+                 group-hover/title:text-lime-300 transition-colors duration-200">
+        {{ project.title }}
+      </h3>
     </div>
 
-    <!-- Botones de acción -->
-    <div class="mt-auto pt-4">
+    <!-- Instructor -->
+    @if (instructor()) {
+      <div class="flex items-center gap-2 text-xs text-white/60">
+        <svg class="w-4 h-4 text-lime-400/60" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+        </svg>
+        <span class="truncate">{{ instructor() }}</span>
+      </div>
+    }
+
+    <!-- Subtítulo/Descripción -->
+    @if (project.subtitle) {
+      <p class="text-sm text-white/60 line-clamp-2">
+        {{ project.subtitle }}
+      </p>
+    }
+
+    <!-- Spacer para empujar el precio y botón hacia abajo -->
+    <div class="flex-1"></div>
+
+    <!-- Línea divisoria sutil -->
+    <div class="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+
+    <!-- Precio con diseño destacado -->
+    <div class="flex items-center justify-between">
+      <div class="flex items-baseline gap-2">
+        @if (project.discount_active && project.final_price_usd !== undefined) {
+          <span class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-lime-400 to-emerald-400">
+            ${{ project.final_price_usd | number:'1.0-2' }}
+          </span>
+          <span class="text-sm text-white/40 line-through font-medium">
+            ${{ project.price_usd | number:'1.0-2' }}
+          </span>
+        } @else {
+          <span class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-lime-400 to-emerald-400">
+            ${{ project.price_usd | number:'1.0-2' }}
+          </span>
+        }
+      </div>
+      <span class="text-xs text-white/50 font-medium">USD</span>
+    </div>
+    
+    <!-- Botón de acción con estados -->
+    <div class="pt-2">
       @if (isPurchased()) {
         <a 
           [routerLink]="['/project-detail', project._id]"
           (click)="$event.stopPropagation()"
-          class="block w-full text-center px-4 py-2 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg font-medium hover:bg-green-500/30 transition-colors">
-          Ver Proyecto
+          class="group/btn relative block w-full text-center px-4 py-3 rounded-xl 
+                 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 
+                 border border-emerald-500/40
+                 text-emerald-400 font-bold text-sm
+                 overflow-hidden
+                 hover:from-emerald-500/30 hover:to-teal-500/30 
+                 hover:border-emerald-400/60
+                 transition-all duration-300">
+          <span class="relative z-10 flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+            </svg>
+            Ver Proyecto
+          </span>
+          <!-- Shine effect -->
+          <div class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full 
+                      bg-gradient-to-r from-transparent via-white/10 to-transparent 
+                      transition-transform duration-700 ease-out"></div>
         </a>
       } @else if (isInCart()) {
-        <button 
+        <button
           disabled
-          class="w-full px-4 py-2 bg-slate-600 text-slate-400 rounded-lg font-medium cursor-not-allowed">
+          class="w-full px-4 py-3 rounded-xl font-bold text-sm
+                 bg-slate-700/50 border border-slate-600/50
+                 text-slate-400 
+                 cursor-not-allowed
+                 flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
           En el Carrito
         </button>
       } @else {
-        <button 
-          (click)="addToCart($event)" 
-          class="w-full px-4 py-2 bg-lime-400 hover:bg-lime-500 text-slate-900 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+        <button
+          (click)="addToCart($event)"
+          class="group/btn relative w-full px-4 py-3 rounded-xl font-bold text-sm
+                 bg-gradient-to-r from-lime-400 to-emerald-400
+                 text-slate-900
+                 overflow-hidden
+                 hover:from-lime-300 hover:to-emerald-300
+                 hover:shadow-lg hover:shadow-lime-500/30
+                 active:scale-95
+                 transition-all duration-200
+                 flex items-center justify-center gap-2">
+          <svg class="w-5 h-5 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
           </svg>
-          Añadir al Carrito
+          <span class="relative z-10">Agregar al Carrito</span>
+          <!-- Shine effect on hover -->
+          <div class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full 
+                      bg-gradient-to-r from-transparent via-white/30 to-transparent 
+                      transition-transform duration-500 ease-out"></div>
         </button>
       }
     </div>
   </div>
+
+  <!-- Efecto de brillo en hover (borde superior) -->
+  <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-lime-400/0 to-transparent 
+              group-hover:via-lime-400/60 transition-all duration-300"></div>
 </div>

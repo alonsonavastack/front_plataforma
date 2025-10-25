@@ -82,8 +82,22 @@ export class CoursesService {
   reloadConfig() {
     this.configState.update(s => ({ ...s, isLoading: true }));
     this.http.get<CourseConfigResponse>(`${this.base}courses/config_all`).subscribe({
-      next: (data) => this.configState.set({ data, isLoading: false, error: null }),
-      error: (err) => this.configState.set({ data: { categories: [], users: [] }, isLoading: false, error: err }),
+      next: (data) => {
+        console.log('⚙️ Configuración cargada:', data);
+        console.log('  - Categorías:', data.categories.length);
+        console.log('  - Usuarios:', data.users.length);
+        if (data.categories.length > 0) {
+          console.log('  - Primera categoría:', data.categories[0]);
+        }
+        if (data.users.length > 0) {
+          console.log('  - Primer usuario:', data.users[0]);
+        }
+        this.configState.set({ data, isLoading: false, error: null });
+      },
+      error: (err) => {
+        console.error('❌ Error al cargar config:', err);
+        this.configState.set({ data: { categories: [], users: [] }, isLoading: false, error: err });
+      },
     });
   }
 
@@ -159,7 +173,12 @@ export class CoursesService {
   }
 
   getVimeoData(url: string) {
-    return this.http.get<{ duration: number }>(`${this.base}course_clase/vimeo-data?url=${encodeURIComponent(url)}`);
+    return this.http.get<{ duration: number; video_id: string }>(`${this.base}course_clase/vimeo-data?url=${encodeURIComponent(url)}`);
+  }
+
+  // 🎬 NUEVO: Obtener datos de YouTube
+  getYoutubeData(url: string) {
+    return this.http.get<{ duration: number; video_id: string; title: string }>(`${this.base}course_clase/youtube-data?url=${encodeURIComponent(url)}`);
   }
 
   updateLocalClassOrder(previousIndex: number, currentIndex: number) {

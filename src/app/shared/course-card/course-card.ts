@@ -16,6 +16,8 @@ type AnyObj = Record<string, any>;
   templateUrl: './course-card.html',
 })
 export class CourseCardComponent {
+  // Hacer Math disponible en el template
+  Math = Math;
   course = input.required<AnyObj>();
 
   private purchasesService = inject(PurchasesService);

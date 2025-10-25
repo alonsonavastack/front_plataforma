@@ -55,7 +55,14 @@ export interface CourseClase {
   section: string; // ID de la sección
   state?: boolean;
   time?: number; // Duración en segundos
-  vimeo_id?: string; // ID del video de Vimeo
+  
+  // 🎬 NUEVOS CAMPOS para soporte de múltiples plataformas
+  video_platform?: 'vimeo' | 'youtube'; // Plataforma del video
+  video_id?: string; // ID genérico del video
+  
+  // CAMPO LEGACY (compatibilidad con datos antiguos)
+  vimeo_id?: string; // ID del video de Vimeo (deprecado)
+  
   order?: number;
 }
 

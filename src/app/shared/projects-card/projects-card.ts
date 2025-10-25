@@ -33,6 +33,15 @@ export class ProjectsCard implements OnInit {
     return `${environment.url}project/imagen-project/${this.project.imagen}`;
   });
 
+  // Obtener nombre del instructor
+  instructor = computed(() => {
+    const u = this.project?.user;
+    const name = (u && typeof u === 'object')
+      ? [u['name'], u['surname']].filter(Boolean).join(' ')
+      : '';
+    return name || undefined;
+  });
+
   // Verificar si ya fue comprado
   isPurchased = computed(() => {
     return this.project?._id ? this.purchasesService.isPurchased(this.project._id) : false;

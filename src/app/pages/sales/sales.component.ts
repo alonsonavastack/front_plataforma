@@ -1,6 +1,7 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { SaleService } from '../../core/services/sale.service';
 import { Sale, SaleDetailItem } from '../../core/models/sale.model';
 import { environment } from '../../../environments/environment';
@@ -13,9 +14,14 @@ import { AuthService } from '../../core/services/auth';
   templateUrl: './sales.component.html',
   styleUrls: ['./sales.component.css']
 })
-export class SalesComponent {
+export class SalesComponent implements OnInit {
   saleService = inject(SaleService);
   authService = inject(AuthService);
+  route = inject(ActivatedRoute);
+  router = inject(Router);
+
+  // Exponer Math para usarlo en el template
+  Math = Math;
 
   // Conectamos directamente a las señales del servicio
   sales = this.saleService.sales;
@@ -66,9 +72,130 @@ export class SalesComponent {
   // Vista de estadísticas expandida
   showInstructorStats = signal(false);
 
+  // --- INICIO: Lógica de paginación ---
+
+  currentPage = signal(1);
+  itemsPerPage = signal(10); // Valor inicial
+
+  // Computed para obtener las ventas de la página actual
+  paginatedSales = computed(() => {
+    const allSales = this.sales() || [];
+    const page = this.currentPage();
+    const perPage = this.itemsPerPage();
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    return allSales.slice(start, end);
+  });
+
+  totalPages = computed(() => {
+    const total = this.sales()?.length || 0;
+    return Math.ceil(total / this.itemsPerPage());
+  });
+
+  pageNumbers = computed(() => {
+    const total = this.totalPages();
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    const current = this.currentPage();
+    const pages: (number | string)[] = [1];
+
+    if (current > 3) pages.push('...');
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+      pages.push(i);
+    }
+    if (current < total - 2) pages.push('...');
+
+    pages.push(total);
+    return pages;
+  });
+
+  // Métodos para cambiar de página
+  changePage(page: number): void {
+    if (page < 1 || page > this.totalPages()) return;
+    this.currentPage.set(page);
+  }
+
+  previousPage(): void {
+    this.changePage(this.currentPage() - 1);
+  }
+
+  nextPage(): void {
+    this.changePage(this.currentPage() + 1);
+  }
+
+  changePerPage(perPage: number): void {
+    this.itemsPerPage.set(perPage);
+    this.currentPage.set(1); // Resetear a la primera página
+  }
+
   constructor() {
-    // Aplicar filtro inicial
-    this.applyFilters();
+    // Effect para aplicar filtros cuando cambien los query params
+    effect(() => {
+      // Este effect se ejecutará cuando cambien los query params
+      const params = this.route.snapshot.queryParams;
+      if (params['status']) {
+        console.log('🔍 Query param detectado - Status:', params['status'], 'ID:', params['saleId']);
+        this.applyFilterFromNotification(params['status'], params['saleId']);
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    // Verificar query params en la inicialización
+    this.route.queryParams.subscribe(params => {
+      if (params['status']) {
+        console.log('🔔 Aplicando filtro desde notificación:', params);
+        this.applyFilterFromNotification(params['status'], params['saleId']);
+      } else {
+        // Aplicar filtro inicial normal
+        this.applyFilters();
+      }
+    });
+  }
+
+  /**
+   * Aplica filtro desde una notificación
+   */
+  private applyFilterFromNotification(status: string, saleId?: string): void {
+    console.log('🎯 Aplicando filtro desde notificación:', { status, saleId });
+    
+    // Aplicar el filtro de estado
+    this.statusFilter.set(status);
+    
+    // Cargar las ventas con el filtro
+    this.saleService.listSales(
+      undefined,
+      status,
+      undefined,
+      undefined
+    ).subscribe(() => {
+      this.currentPage.set(1);
+      
+      // Si hay un saleId específico, expandir sus detalles automáticamente
+      if (saleId) {
+        setTimeout(() => {
+          this.expandedSales.add(saleId);
+          // Scroll hacia la venta específica
+          const element = document.getElementById(`sale-${saleId}`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Highlight temporal
+            element.classList.add('ring-2', 'ring-lime-400', 'ring-offset-2', 'ring-offset-slate-900');
+            setTimeout(() => {
+              element.classList.remove('ring-2', 'ring-lime-400', 'ring-offset-2', 'ring-offset-slate-900');
+            }, 2000);
+          }
+        }, 300);
+      }
+      
+      // Limpiar los query params después de aplicar el filtro
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: {},
+        replaceUrl: true
+      });
+    });
   }
 
   /**
@@ -80,7 +207,7 @@ export class SalesComponent {
       this.statusFilter() || undefined,
       this.selectedMonth() || undefined,
       this.selectedYear() || undefined
-    ).subscribe();
+    ).subscribe(() => this.currentPage.set(1)); // Resetear a la página 1 al filtrar
   }
 
   /**
