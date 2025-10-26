@@ -285,6 +285,8 @@
               <th class="px-5 py-3">Fecha</th>
               @if (isAdmin()) {
                 <th class="px-5 py-3 text-center">Acciones</th>
+              } @else {
+                <!-- DEBUG: isAdmin is false, user role: {{ currentUser()?.rol }} -->
               }
             </tr>
           </thead>

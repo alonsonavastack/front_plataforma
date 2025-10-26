@@ -51,6 +51,15 @@ export class ProjectService {
     return this.http.delete<{ message: string }>(`${this.url}/remove/${id}`);
   }
 
+  /**
+   * Verificar si un proyecto tiene ventas (para habilitar/deshabilitar eliminación)
+   * @param id ID del proyecto
+   * @returns Observable con información de ventas
+   */
+  checkSales(id: string): Observable<{ hasSales: boolean; saleCount: number; canDelete: boolean }> {
+    return this.http.get<{ hasSales: boolean; saleCount: number; canDelete: boolean }>(`${this.url}/check-sales/${id}`);
+  }
+
   // ===== NUEVOS MÉTODOS PARA GESTIÓN DE ARCHIVOS ZIP =====
 
   /**

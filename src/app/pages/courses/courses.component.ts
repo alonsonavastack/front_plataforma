@@ -22,6 +22,16 @@ export class CoursesComponent implements OnInit, OnDestroy {
   // Exponer Math para usarlo en el template
   Math = Math;
 
+  // 🔥 NUEVO: Signal para almacenar el estado de ventas y estudiantes de cada curso
+  courseSalesStatus = signal<Map<string, { 
+    hasSales: boolean; 
+    hasStudents: boolean; 
+    canDelete: boolean; 
+    isChecking: boolean;
+    saleCount?: number;
+    studentCount?: number;
+  }>>(new Map());
+
   // --- State Management ---
   viewMode = signal<'list' | 'content' | 'classes'>('list'); // 'list', 'content' (secciones), 'classes' (clases de una sección)
   selectedCourse = signal<CourseAdmin | null>(null);
@@ -38,7 +48,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
     subtitle: new FormControl('', [Validators.required]),
     description: new FormControl(''),
     price_usd: new FormControl(0, [Validators.required, Validators.min(0)]),
-    price_mxn: new FormControl(0, [Validators.required, Validators.min(0)]),
     categorie: new FormControl('', [Validators.required]),
     user: new FormControl('', [Validators.required]),
     level: new FormControl('Basico', [Validators.required]),
@@ -226,6 +235,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
   // --- FIN: Lógica de paginación ---
 
   constructor() {
+    // Effect 1: Auto-filtrar instructores
     effect(() => {
       const user = this.authService.user();
       const userControl = this.courseForm.get('user');
@@ -252,6 +262,15 @@ export class CoursesComponent implements OnInit, OnDestroy {
         filteredCourses: this.filteredCourses().length
       });
     });
+
+    // 🔥 Effect 3: Verificar ventas cuando se cargan los cursos
+    effect(() => {
+      const courses = this.coursesService.courses();
+      if (courses.length > 0) {
+        // Usar setTimeout para ejecutar fuera del ciclo de detección de cambios
+        setTimeout(() => this.checkCoursesSales(courses), 0);
+      }
+    }, { allowSignalWrites: true });
   }
 
   ngOnInit(): void {
@@ -271,7 +290,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
       level: 'Basico',
       idioma: 'Español',
       price_usd: 0,
-      price_mxn: 0,
       state: 1, // Borrador por defecto
     });
     this.imagePreview.set(null);
@@ -346,10 +364,241 @@ export class CoursesComponent implements OnInit, OnDestroy {
     }
   }
 
-  deleteCourse(id: string): void {
-    if (confirm('¿Estás seguro? Esta acción eliminará el curso y todo su contenido.')) {
-      this.coursesService.remove(id).subscribe(() => this.coursesService.reloadList());
+  deleteCourse(course: CourseAdmin): void {
+    console.log('\n🗑️ INTENTO DE ELIMINACIÓN');
+    console.log('=====================================');
+    console.log('Curso:', course.title);
+    console.log('ID:', course._id);
+    
+    // Obtener estado de ventas y estudiantes del curso
+    const salesStatus = this.courseSalesStatus().get(course._id);
+    console.log('Estado de ventas/estudiantes:', salesStatus);
+    
+    // VALIDACIÓN 1: Verificar si aún se está checando
+    if (!salesStatus || salesStatus.isChecking) {
+      console.log('⏳ Aún verificando estado...');
+      alert('⏳ Por favor espera, estamos verificando el estado del curso...');
+      return;
     }
+    
+    // VALIDACIÓN 2: Si tiene ventas, bloquear eliminación
+    if (salesStatus.hasSales) {
+      console.log('🚫 BLOQUEADO: Curso tiene ventas');
+      alert(
+        `🚫 No se puede eliminar "${course.title}"\n\n` +
+        `Este curso tiene estudiantes que ya lo compraron.\n` +
+        `Ventas registradas: ${salesStatus.saleCount || 0}\n` +
+        `No se puede eliminar para proteger la integridad de los datos.`
+      );
+      return;
+    }
+
+    // VALIDACIÓN 3: Si tiene estudiantes inscritos, bloquear eliminación
+    if (salesStatus.hasStudents) {
+      console.log('🚫 BLOQUEADO: Curso tiene estudiantes inscritos');
+      alert(
+        `🚫 No se puede eliminar "${course.title}"\n\n` +
+        `Este curso tiene estudiantes inscritos actualmente.\n` +
+        `Estudiantes: ${salesStatus.studentCount || 0}\n` +
+        `No se puede eliminar para proteger el acceso de los estudiantes.`
+      );
+      return;
+    }
+
+    console.log('✅ No tiene ventas ni estudiantes, permitiendo eliminación');
+
+    // Confirmación del usuario
+    const confirmDelete = confirm(
+      `⚠️ ¿Estás seguro de eliminar "${course.title}"?\n\n` +
+      `Esta acción eliminará:\n` +
+      `- El curso y su portada\n` +
+      `- Todas las secciones\n` +
+      `- Todas las clases\n` +
+      `- Todos los archivos asociados\n\n` +
+      `Esta acción es permanente y no se puede deshacer.`
+    );
+    
+    if (!confirmDelete) {
+      console.log('❌ Usuario canceló la eliminación');
+      return;
+    }
+
+    console.log('🔄 Enviando petición de eliminación al backend...');
+
+    this.coursesService.remove(course._id).subscribe({
+      next: (response: any) => {
+        console.log('📬 Respuesta del backend:', response);
+        console.log('=====================================\n');
+        
+        // Verificar si el backend bloqueó por ventas o estudiantes
+        if (response.code === 403) {
+          console.warn('⚠️ Backend bloqueó: Curso tiene ventas o estudiantes');
+          alert(`🚫 ${response.message}`);
+        } 
+        // Eliminación exitosa
+        else if (response.code === 200 || response.message?.includes('ELIMINÓ')) {
+          console.log('✅ Curso eliminado exitosamente');
+          alert('✅ Curso eliminado exitosamente');
+          this.coursesService.reloadList(); // Recargar lista
+        }
+        // Respuesta inesperada
+        else {
+          console.log('⚠️ Respuesta sin code explícito, asumiendo éxito');
+          alert('✅ Curso eliminado');
+          this.coursesService.reloadList();
+        }
+      },
+      error: (error) => {
+        console.error('❌ ERROR al eliminar:', error);
+        console.log('=====================================\n');
+        
+        const errorMsg = error.error?.message || 'Error al eliminar el curso';
+        alert(`❌ ${errorMsg}`);
+      }
+    });
+  }
+
+  /**
+   * Verificar si el usuario actual puede eliminar un curso específico
+   * @param course Curso a verificar
+   * @returns true si puede eliminar, false si no
+   */
+  canDeleteCourse(course: CourseAdmin): boolean {
+    const user = this.authService.user();
+    if (!user) {
+      return false;
+    }
+
+    // Obtener estado de ventas del Map
+    const salesStatus = this.courseSalesStatus().get(course._id);
+    
+    // Si aún se está verificando, no mostrar botón activo
+    if (!salesStatus || salesStatus.isChecking) {
+      return false;
+    }
+    
+    // 🔒 VALIDACIÓN CRÍTICA: Si tiene ventas o estudiantes, NADIE puede eliminar
+    if (salesStatus.hasSales || salesStatus.hasStudents) {
+      return false;
+    }
+
+    // Si NO tiene ventas ni estudiantes, verificar permisos de usuario:
+    
+    // 1. Admin puede eliminar cualquier curso (sin ventas ni estudiantes)
+    if (user.rol === 'admin') {
+      return true;
+    }
+
+    // 2. Instructor solo puede eliminar SUS PROPIOS cursos (sin ventas ni estudiantes)
+    if (user.rol === 'instructor') {
+      const courseUserId = typeof course.user === 'object' ? course.user._id : course.user;
+      return courseUserId === user._id;
+    }
+
+    // 3. Cualquier otro rol no puede eliminar
+    return false;
+  }
+
+  /**
+   * Verificar el estado de ventas y estudiantes de todos los cursos
+   * MEJORADO: Fuerza actualización del template con cada verificación
+   */
+  private checkCoursesSales(courses: CourseAdmin[]): void {
+    console.log('🔍 Verificando ventas y estudiantes de', courses.length, 'cursos...');
+    
+    if (courses.length === 0) {
+      console.log('⚠️ No hay cursos para verificar');
+      return;
+    }
+    
+    // Inicializar TODOS los cursos como "verificando"
+    const statusMap = new Map<string, { 
+      hasSales: boolean; 
+      hasStudents: boolean; 
+      canDelete: boolean; 
+      isChecking: boolean;
+      saleCount?: number;
+      studentCount?: number;
+    }>();
+    
+    courses.forEach(course => {
+      statusMap.set(course._id, { 
+        hasSales: false, 
+        hasStudents: false, 
+        canDelete: false, 
+        isChecking: true 
+      });
+    });
+    
+    // Forzar actualización inicial
+    this.courseSalesStatus.set(new Map(statusMap));
+    console.log('📊 Estado inicial (todos verificando):', statusMap.size, 'cursos');
+    
+    // Verificar cada curso individualmente
+    let completed = 0;
+    const total = courses.length;
+    
+    courses.forEach((course, index) => {
+      console.log(`🔎 [${index + 1}/${total}] Verificando: "${course.title}" (ID: ${course._id})`);
+      
+      this.coursesService.checkSales(course._id).subscribe({
+        next: (response) => {
+          console.log(`✅ [${index + 1}/${total}] "${course.title}":`, {
+            hasSales: response.hasSales,
+            hasStudents: response.hasStudents,
+            canDelete: response.canDelete,
+            saleCount: response.saleCount || 0,
+            studentCount: response.studentCount || 0
+          });
+          
+          // Actualizar el estado de este curso específico
+          statusMap.set(course._id, {
+            hasSales: response.hasSales,
+            hasStudents: response.hasStudents,
+            canDelete: response.canDelete,
+            isChecking: false,
+            saleCount: response.saleCount,
+            studentCount: response.studentCount
+          });
+          
+          completed++;
+          
+          // CRÍTICO: Crear NUEVO Map para forzar detección de cambios en Angular
+          this.courseSalesStatus.set(new Map(statusMap));
+          
+          console.log(`📈 Progreso: ${completed}/${total} verificados`);
+          
+          if (completed === total) {
+            console.log('✅ ¡Verificación completada!\n', '📋 Resumen:');
+            statusMap.forEach((status, courseId) => {
+              const crs = courses.find(p => p._id === courseId);
+              const canDeleteStr = status.canDelete ? '✅ PUEDE ELIMINAR' : '🚫 NO PUEDE ELIMINAR';
+              console.log(`   - ${crs?.title || courseId}:`, canDeleteStr, `(ventas: ${status.hasSales}, estudiantes: ${status.hasStudents})`);
+            });
+          }
+        },
+        error: (err) => {
+          console.error(`❌ [${index + 1}/${total}] Error al verificar "${course.title}":`, err);
+          
+          // En caso de error, asumir que tiene ventas/estudiantes (por seguridad)
+          statusMap.set(course._id, { 
+            hasSales: true,  // Por seguridad
+            hasStudents: true, // Por seguridad
+            canDelete: false, 
+            isChecking: false 
+          });
+          
+          completed++;
+          
+          // CRÍTICO: Crear NUEVO Map
+          this.courseSalesStatus.set(new Map(statusMap));
+          
+          if (completed === total) {
+            console.log('⚠️ Verificación completada con errores');
+          }
+        }
+      });
+    });
   }
 
   buildImageUrl(imageName?: string): string {

@@ -4,6 +4,19 @@
 @plugin "flowbite/plugin";
 @source "../node_modules/flowbite";
 
+/* ===== FIX SCROLL EN MÓVILES ===== */
+html, body {
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* Smooth scroll en iOS */
+  height: 100%;
+  width: 100%;
+}
+
+/* Evitar zoom en inputs en iOS (Safari no hace zoom si font-size >= 16px) */
+input, select, textarea {
+  font-size: 16px;
+}
+
 /* Custom scrollbar para el buscador */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
@@ -17,4 +30,16 @@
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgb(100 116 139 / 0.5);
   border-radius: 3px;
+}
+
+/* Prevenir rebote en scroll (overscroll) en iOS */
+.overscroll-contain {
+  overscroll-behavior: contain;
+}
+
+/* Fix para modales en móvil */
+.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
 }

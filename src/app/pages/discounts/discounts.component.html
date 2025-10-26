@@ -1,6 +1,6 @@
 <div class="min-h-screen bg-slate-950 p-6">
   <div class="max-w-7xl mx-auto">
-    
+
     <!-- Header -->
     <div class="mb-8">
       <div class="flex items-center justify-between">
@@ -8,7 +8,7 @@
           <h1 class="text-3xl font-bold text-white mb-2">Gestión de Descuentos</h1>
           <p class="text-slate-400">Administra descuentos para cursos, proyectos y categorías</p>
         </div>
-        <button 
+        <button
           (click)="openCreateModal()"
           class="flex items-center gap-2 px-4 py-2 bg-lime-400 text-slate-900 font-semibold rounded-lg hover:bg-lime-300 transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -250,7 +250,7 @@
   <div class="fixed inset-0 z-50 overflow-y-auto" (click)="isCreateModalOpen() ? closeCreateModal() : closeEditModal()">
     <div class="flex items-center justify-center min-h-screen px-4 py-8">
       <div class="fixed inset-0 bg-black/70 backdrop-blur-sm"></div>
-      
+
       <div class="relative bg-slate-800 rounded-2xl p-6 w-full max-w-4xl border border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
         <div class="mb-6">
           <h3 class="text-2xl font-bold text-white">
@@ -355,10 +355,10 @@
           <div class="mb-6">
             <div class="flex items-center justify-between mb-4">
               <h4 class="text-lg font-semibold text-white">
-                Seleccionar 
+                Seleccionar
                 {{ discountForm.value.type_segment == 1 ? 'Cursos' : discountForm.value.type_segment == 2 ? 'Categorías' : 'Proyectos' }}
               </h4>
-              
+
               <!-- Contador y botones de selección masiva -->
               <div class="flex items-center gap-3">
                 <span class="text-slate-400 text-sm">
@@ -411,15 +411,15 @@
               @if (discountForm.value.type_segment == 1 && config()) {
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   @for (course of filteredCourses(); track course._id) {
-                    <label 
+                    <label
                       class="group relative flex flex-col bg-slate-800 rounded-lg border-2 cursor-pointer hover:border-lime-500/50 transition overflow-hidden has-[:checked]:border-lime-500 has-[:checked]:bg-lime-500/5"
                       [class.border-lime-500]="selectedCourses().includes(course._id)"
                       [class.border-slate-700]="!selectedCourses().includes(course._id)"
                     >
                       <!-- Imagen -->
                       <div class="relative w-full h-32 bg-slate-900 overflow-hidden">
-                        <img 
-                          [src]="getImageUrl(course.imagen, 'course')" 
+                        <img
+                          [src]="getImageUrl(course.imagen, 'course')"
                           [alt]="course.title"
                           class="w-full h-full object-cover"
                           (error)="$any($event.target).src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMjMzYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5NGEzYjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5TaW4gSW1hZ2VuPC90ZXh0Pjwvc3ZnPg=='"
@@ -439,7 +439,7 @@
                           </span>
                         </div>
                       </div>
-                      
+
                       <!-- Info -->
                       <div class="p-3">
                         <p class="text-white text-sm font-medium line-clamp-2 mb-2">{{ course.title }}</p>
@@ -451,7 +451,7 @@
                     </label>
                   }
                 </div>
-                
+
                 @if (filteredCourses().length === 0) {
                   <div class="text-center py-8">
                     <p class="text-slate-400">No se encontraron cursos</p>
@@ -463,15 +463,15 @@
               @if (discountForm.value.type_segment == 2 && config()) {
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                   @for (category of filteredCategories(); track category._id) {
-                    <label 
+                    <label
                       class="group relative flex flex-col bg-slate-800 rounded-lg border-2 cursor-pointer hover:border-lime-500/50 transition overflow-hidden has-[:checked]:border-lime-500 has-[:checked]:bg-lime-500/5"
                       [class.border-lime-500]="selectedCategories().includes(category._id)"
                       [class.border-slate-700]="!selectedCategories().includes(category._id)"
                     >
                       <!-- Imagen -->
                       <div class="relative w-full h-32 bg-slate-900 overflow-hidden">
-                        <img 
-                          [src]="getImageUrl(category.imagen, 'category')" 
+                        <img
+                          [src]="getImageUrl(category.imagen, 'category')"
                           [alt]="category.title"
                           class="w-full h-full object-cover"
                           (error)="$any($event.target).src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMjMzYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5NGEzYjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5TaW4gSW1hZ2VuPC90ZXh0Pjwvc3ZnPg=='"
@@ -485,7 +485,7 @@
                           />
                         </div>
                       </div>
-                      
+
                       <!-- Info -->
                       <div class="p-3">
                         <p class="text-white text-sm font-medium line-clamp-2 text-center">{{ category.title }}</p>
@@ -493,7 +493,7 @@
                     </label>
                   }
                 </div>
-                
+
                 @if (filteredCategories().length === 0) {
                   <div class="text-center py-8">
                     <p class="text-slate-400">No se encontraron categorías</p>
@@ -505,15 +505,15 @@
               @if (discountForm.value.type_segment == 3 && config()) {
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   @for (project of filteredProjects(); track project._id) {
-                    <label 
+                    <label
                       class="group relative flex flex-col bg-slate-800 rounded-lg border-2 cursor-pointer hover:border-lime-500/50 transition overflow-hidden has-[:checked]:border-lime-500 has-[:checked]:bg-lime-500/5"
                       [class.border-lime-500]="selectedProjects().includes(project._id)"
                       [class.border-slate-700]="!selectedProjects().includes(project._id)"
                     >
                       <!-- Imagen -->
                       <div class="relative w-full h-32 bg-slate-900 overflow-hidden">
-                        <img 
-                          [src]="getImageUrl(project.imagen, 'project')" 
+                        <img
+                          [src]="getImageUrl(project.imagen, 'project')"
                           [alt]="project.title"
                           class="w-full h-full object-cover"
                           (error)="$any($event.target).src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMjMzYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5NGEzYjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5TaW4gSW1hZ2VuPC90ZXh0Pjwvc3ZnPg=='"
@@ -533,7 +533,7 @@
                           </span>
                         </div>
                       </div>
-                      
+
                       <!-- Info -->
                       <div class="p-3">
                         <p class="text-white text-sm font-medium line-clamp-2 mb-2">{{ project.title }}</p>
@@ -545,7 +545,7 @@
                     </label>
                   }
                 </div>
-                
+
                 @if (filteredProjects().length === 0) {
                   <div class="text-center py-8">
                     <p class="text-slate-400">No se encontraron proyectos</p>

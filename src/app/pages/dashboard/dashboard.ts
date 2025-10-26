@@ -127,7 +127,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         'settings',
         'appearance',
         'carousel-dashboard',
-        'courses',
+        // 'courses',
       ].includes(item.id)
     );
   });

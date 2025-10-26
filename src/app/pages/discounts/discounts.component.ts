@@ -13,7 +13,7 @@ import { environment } from '../../../environments/environment';
 })
 export class DiscountsComponent implements OnInit {
   discountService = inject(DiscountService);
-  
+
   discounts = this.discountService.discounts;
   config = this.discountService.config;
   isLoading = this.discountService.isLoading;
@@ -31,7 +31,7 @@ export class DiscountsComponent implements OnInit {
     const now = Date.now();
 
     if (search) {
-      discountsData = discountsData.filter(d => 
+      discountsData = discountsData.filter(d =>
         d.discount.toString().includes(search)
       );
     }
@@ -60,18 +60,18 @@ export class DiscountsComponent implements OnInit {
   selectedCourses = signal<string[]>([]);
   selectedProjects = signal<string[]>([]);
   selectedCategories = signal<string[]>([]);
-  
+
   itemSearchTerm = signal('');
 
   // Computed signals para filtrado eficiente
   filteredCourses = computed(() => {
     const courses = this.config()?.courses;
     if (!courses) return [];
-    
+
     const search = this.itemSearchTerm().toLowerCase();
     if (!search) return courses;
-    
-    return courses.filter(course => 
+
+    return courses.filter(course =>
       course.title.toLowerCase().includes(search) ||
       course.categorie.title.toLowerCase().includes(search)
     );
@@ -80,11 +80,11 @@ export class DiscountsComponent implements OnInit {
   filteredProjects = computed(() => {
     const projects = this.config()?.projects;
     if (!projects) return [];
-    
+
     const search = this.itemSearchTerm().toLowerCase();
     if (!search) return projects;
-    
-    return projects.filter(project => 
+
+    return projects.filter(project =>
       project.title.toLowerCase().includes(search) ||
       project.categorie.title.toLowerCase().includes(search)
     );
@@ -93,11 +93,11 @@ export class DiscountsComponent implements OnInit {
   filteredCategories = computed(() => {
     const categories = this.config()?.categories;
     if (!categories) return [];
-    
+
     const search = this.itemSearchTerm().toLowerCase();
     if (!search) return categories;
-    
-    return categories.filter(category => 
+
+    return categories.filter(category =>
       category.title.toLowerCase().includes(search)
     );
   });
@@ -129,16 +129,27 @@ export class DiscountsComponent implements OnInit {
   }
 
   openCreateModal(): void {
+    // Obtener la fecha y hora actual
+    const now = new Date();
+    const startDateLocal = this.toDatetimeLocalString(now);
+    
+    // Fecha de fin: 7 días después
+    const endDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const endDateLocal = this.toDatetimeLocalString(endDate);
+
     this.discountForm.reset({
       type_campaign: 1,
       type_discount: 1,
       discount: 0,
       type_segment: 1,
       state: true,
+      start_date: startDateLocal,
+      end_date: endDateLocal
     });
     this.selectedCourses.set([]);
     this.selectedProjects.set([]);
     this.selectedCategories.set([]);
+    this.itemSearchTerm.set('');
     this.isCreateModalOpen.set(true);
   }
 
@@ -151,12 +162,14 @@ export class DiscountsComponent implements OnInit {
       Object.keys(this.discountForm.controls).forEach(key => {
         this.discountForm.get(key)?.markAsTouched();
       });
+      alert('Por favor completa todos los campos requeridos');
       return;
     }
 
-    const formValue = this.discountForm.value;
-    const typeSegment = formValue.type_segment!;
+    const formValue = this.discountForm.getRawValue();
+    const typeSegment = Number(formValue.type_segment);
 
+    // Validar selección de items
     if (typeSegment === 1 && this.selectedCourses().length === 0) {
       alert('Debes seleccionar al menos un curso');
       return;
@@ -170,34 +183,56 @@ export class DiscountsComponent implements OnInit {
       return;
     }
 
+    // ✅ FIX: Crear objetos Date desde las cadenas datetime-local
     const startDate = new Date(formValue.start_date!);
     const endDate = new Date(formValue.end_date!);
 
+    // Validar fechas
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      alert('Las fechas proporcionadas no son válidas');
+      return;
+    }
+
+    if (endDate <= startDate) {
+      alert('La fecha de fin debe ser posterior a la fecha de inicio');
+      return;
+    }
+
+    // ✅ FIX: Preparar los datos correctamente
+    const selectedItems = typeSegment === 1 
+      ? this.selectedCourses() 
+      : typeSegment === 2 
+        ? this.selectedCategories() 
+        : this.selectedProjects();
+
     const data = {
-      type_campaign: formValue.type_campaign!,
-      type_discount: formValue.type_discount!,
-      discount: formValue.discount!,
+      type_campaign: Number(formValue.type_campaign),
+      type_discount: Number(formValue.type_discount),
+      discount: Number(formValue.discount),
       start_date: startDate.toISOString(),
       end_date: endDate.toISOString(),
       start_date_num: startDate.getTime(),
       end_date_num: endDate.getTime(),
       type_segment: typeSegment,
-      state: formValue.state!,
-      courses: typeSegment === 1 ? this.selectedCourses() : [],
-      projects: typeSegment === 3 ? this.selectedProjects() : [],
-      categories: typeSegment === 2 ? this.selectedCategories() : [],
-      courses_s: typeSegment === 1 ? this.selectedCourses() : [],
-      projects_s: typeSegment === 3 ? this.selectedProjects() : [],
-      categories_s: typeSegment === 2 ? this.selectedCategories() : [],
+      state: Boolean(formValue.state),
+      // ✅ FIX: Enviar los arrays correctamente según el tipo de segmento
+      courses: typeSegment === 1 ? selectedItems : [],
+      projects: typeSegment === 3 ? selectedItems : [],
+      categories: typeSegment === 2 ? selectedItems : [],
+      courses_s: typeSegment === 1 ? selectedItems : [],
+      projects_s: typeSegment === 3 ? selectedItems : [],
+      categories_s: typeSegment === 2 ? selectedItems : [],
     };
+
+    console.log('📤 Datos a enviar al crear descuento:', data);
 
     this.discountService.createDiscount(data).subscribe({
       next: () => {
-        alert('Descuento creado exitosamente');
+        alert('✅ Descuento creado exitosamente');
         this.closeCreateModal();
       },
       error: (err) => {
-        console.error('Error:', err);
+        console.error('❌ Error al crear descuento:', err);
         alert(err.error?.message_text || 'Error al crear descuento');
       }
     });
@@ -205,13 +240,20 @@ export class DiscountsComponent implements OnInit {
 
   openEditModal(discount: Discount): void {
     this.currentDiscount.set(discount);
-    
+
+    // Convertir fechas ISO a formato datetime-local (YYYY-MM-DDTHH:mm)
+    const startDate = new Date(discount.start_date);
+    const endDate = new Date(discount.end_date);
+
+    const startDateLocal = this.toDatetimeLocalString(startDate);
+    const endDateLocal = this.toDatetimeLocalString(endDate);
+
     this.discountForm.patchValue({
       type_campaign: discount.type_campaign,
       type_discount: discount.type_discount,
       discount: discount.discount,
-      start_date: new Date(discount.start_date).toISOString().slice(0, 16),
-      end_date: new Date(discount.end_date).toISOString().slice(0, 16),
+      start_date: startDateLocal,
+      end_date: endDateLocal,
       type_segment: discount.type_segment,
       state: discount.state,
     });
@@ -219,6 +261,7 @@ export class DiscountsComponent implements OnInit {
     this.selectedCourses.set(discount.courses || []);
     this.selectedProjects.set(discount.projects || []);
     this.selectedCategories.set(discount.categories || []);
+    this.itemSearchTerm.set('');
 
     this.isEditModalOpen.set(true);
   }
@@ -229,39 +272,48 @@ export class DiscountsComponent implements OnInit {
   }
 
   saveEdit(): void {
-    if (this.discountForm.invalid) return;
+    if (this.discountForm.invalid) {
+      alert('Por favor completa todos los campos requeridos');
+      return;
+    }
 
     const discount = this.currentDiscount();
     if (!discount) return;
 
-    const formValue = this.discountForm.value;
-    const typeSegment = formValue.type_segment!;
+    const formValue = this.discountForm.getRawValue();
+    const typeSegment = Number(formValue.type_segment);
 
     const startDate = new Date(formValue.start_date!);
     const endDate = new Date(formValue.end_date!);
 
+    const selectedItems = typeSegment === 1 
+      ? this.selectedCourses() 
+      : typeSegment === 2 
+        ? this.selectedCategories() 
+        : this.selectedProjects();
+
     const data = {
       _id: discount._id,
-      type_campaign: formValue.type_campaign!,
-      type_discount: formValue.type_discount!,
-      discount: formValue.discount!,
+      type_campaign: Number(formValue.type_campaign),
+      type_discount: Number(formValue.type_discount),
+      discount: Number(formValue.discount),
       start_date: startDate.toISOString(),
       end_date: endDate.toISOString(),
       start_date_num: startDate.getTime(),
       end_date_num: endDate.getTime(),
       type_segment: typeSegment,
-      state: formValue.state!,
-      courses: typeSegment === 1 ? this.selectedCourses() : [],
-      projects: typeSegment === 3 ? this.selectedProjects() : [],
-      categories: typeSegment === 2 ? this.selectedCategories() : [],
-      courses_s: typeSegment === 1 ? this.selectedCourses() : [],
-      projects_s: typeSegment === 3 ? this.selectedProjects() : [],
-      categories_s: typeSegment === 2 ? this.selectedCategories() : [],
+      state: Boolean(formValue.state),
+      courses: typeSegment === 1 ? selectedItems : [],
+      projects: typeSegment === 3 ? selectedItems : [],
+      categories: typeSegment === 2 ? selectedItems : [],
+      courses_s: typeSegment === 1 ? selectedItems : [],
+      projects_s: typeSegment === 3 ? selectedItems : [],
+      categories_s: typeSegment === 2 ? selectedItems : [],
     };
 
     this.discountService.updateDiscount(data).subscribe({
       next: () => {
-        alert('Descuento actualizado exitosamente');
+        alert('✅ Descuento actualizado exitosamente');
         this.closeEditModal();
       },
       error: (err) => {
@@ -275,10 +327,10 @@ export class DiscountsComponent implements OnInit {
 
     this.discountService.deleteDiscount(discount._id!).subscribe({
       next: () => {
-        alert('Descuento eliminado exitosamente');
+        alert('✅ Descuento eliminado exitosamente');
       },
       error: () => {
-        alert('Error al eliminar descuento');
+        alert('❌ Error al eliminar descuento');
       }
     });
   }
@@ -373,26 +425,38 @@ export class DiscountsComponent implements OnInit {
 
   getImageUrl(imagen: string, type: 'course' | 'project' | 'category'): string {
     if (!imagen) {
-      // Imagen placeholder en base64 (1x1 pixel gris)
       return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMjMzYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5NGEzYjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5TaW4gSW1hZ2VuPC90ZXh0Pjwvc3ZnPg==';
     }
     const paths: Record<string, string> = {
       course: 'courses/imagen-course',
       project: 'project/imagen-project',
-      category: 'categorie/imagen-categorie',
+      category: 'categories/imagen-categorie',
     };
     return `${environment.url}${paths[type]}/${imagen}`;
   }
 
-  // Nuevas funciones para mejorar la UI
+  // Función auxiliar para convertir Date a formato datetime-local
+  private toDatetimeLocalString(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
   onSegmentChange(): void {
-    // Resetear búsqueda al cambiar de segmento
     this.itemSearchTerm.set('');
+    // Limpiar selecciones cuando cambie el segmento
+    this.selectedCourses.set([]);
+    this.selectedProjects.set([]);
+    this.selectedCategories.set([]);
   }
 
   selectAllItems(): void {
     const typeSegment = this.discountForm.value.type_segment;
-    
+
     if (typeSegment === 1 && this.config()?.courses) {
       const filtered = this.filteredCourses();
       const allIds = filtered.map(c => c._id);
@@ -410,7 +474,7 @@ export class DiscountsComponent implements OnInit {
 
   clearAllItems(): void {
     const typeSegment = this.discountForm.value.type_segment;
-    
+
     if (typeSegment === 1) {
       this.selectedCourses.set([]);
     } else if (typeSegment === 2) {

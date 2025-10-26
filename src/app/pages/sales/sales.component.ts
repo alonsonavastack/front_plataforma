@@ -31,7 +31,11 @@ export class SalesComponent implements OnInit {
 
   // Usuario actual
   currentUser = this.authService.user;
-  isAdmin = computed(() => this.currentUser()?.rol === 'admin');
+  isAdmin = computed(() => {
+    const user = this.currentUser();
+    console.log('🔍 Sales - User role:', user?.rol, 'Is admin:', user?.rol === 'admin');
+    return user?.rol === 'admin';
+  });
   isInstructor = computed(() => this.currentUser()?.rol === 'instructor');
 
   // Filtros

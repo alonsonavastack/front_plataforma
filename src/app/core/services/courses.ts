@@ -117,6 +117,19 @@ export class CoursesService {
       .pipe(catchError(err => throwError(() => err)));
   }
 
+  // 🔥 NUEVO: Verificar ventas y estudiantes de un curso
+  checkSales(courseId: string) {
+    return this.http.get<{
+      hasSales: boolean;
+      hasStudents: boolean;
+      saleCount: number;
+      studentCount: number;
+      uniqueStudents: number;
+      canDelete: boolean;
+    }>(`${this.base}courses/check-sales/${courseId}`)
+      .pipe(catchError(err => throwError(() => err)));
+  }
+
   // --- Section Methods ---
   private _currentCourseIdForSections = signal<string | undefined>(undefined);
 

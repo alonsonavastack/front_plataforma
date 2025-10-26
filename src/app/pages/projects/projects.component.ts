@@ -24,7 +24,7 @@ interface ProjectFile {
 export class ProjectsComponent implements OnInit {
   projectService = inject(ProjectService);
   coursesService = inject(CoursesService);
-  public authService = inject(AuthService); // <-- ¡AQUÍ ESTÁ LA SOLUCIÓN!
+  public authService = inject(AuthService);
 
   // --- State Management with Signals ---
   private projectsState = signal<{
@@ -40,6 +40,9 @@ export class ProjectsComponent implements OnInit {
   // Computed signals
   projects = computed(() => this.projectsState().projects);
   isLoading = computed(() => this.projectsState().isLoading);
+
+  // Map para almacenar el estado de ventas de cada proyecto
+  projectSalesStatus = signal<Map<string, { hasSales: boolean; canDelete: boolean; isChecking: boolean }>>(new Map());
 
   // Filter signals
   searchTerm = signal('');
@@ -71,7 +74,6 @@ export class ProjectsComponent implements OnInit {
     subtitle: new FormControl('', [Validators.required]),
     description: new FormControl('', [Validators.required]),
     price_usd: new FormControl(0, [Validators.required, Validators.min(0)]),
-    price_mxn: new FormControl(0, [Validators.required, Validators.min(0)]),
     categorie: new FormControl('', [Validators.required]),
     state: new FormControl(1, [Validators.required]),
     portada: new FormControl<File | null>(null),
@@ -94,6 +96,9 @@ export class ProjectsComponent implements OnInit {
           isLoading: false,
           error: null,
         });
+
+        // Verificar ventas de cada proyecto
+        this.checkProjectsSales(response.projects);
       },
       error: (err) => {
         this.projectsState.set({
@@ -103,6 +108,88 @@ export class ProjectsComponent implements OnInit {
         });
         console.error('Error al cargar proyectos:', err);
       }
+    });
+  }
+
+  /**
+   * Verificar el estado de ventas de todos los proyectos
+   * MEJORADO: Fuerza actualización del template con cada verificación
+   */
+  private checkProjectsSales(projects: Project[]): void {
+    console.log('🔍 Verificando ventas de', projects.length, 'proyectos...');
+
+    if (projects.length === 0) {
+      console.log('⚠️ No hay proyectos para verificar');
+      return;
+    }
+
+    // Inicializar TODOS los proyectos como "verificando"
+    const statusMap = new Map<string, { hasSales: boolean; canDelete: boolean; isChecking: boolean }>();
+    projects.forEach(project => {
+      statusMap.set(project._id, { hasSales: false, canDelete: false, isChecking: true });
+    });
+
+    // Forzar actualización inicial
+    this.projectSalesStatus.set(new Map(statusMap));
+    console.log('📊 Estado inicial (todos verificando):', statusMap.size, 'proyectos');
+
+    // Verificar cada proyecto individualmente
+    let completed = 0;
+    const total = projects.length;
+
+    projects.forEach((project, index) => {
+      console.log(`🔎 [${index + 1}/${total}] Verificando: "${project.title}" (ID: ${project._id})`);
+
+      this.projectService.checkSales(project._id).subscribe({
+        next: (response) => {
+          console.log(`✅ [${index + 1}/${total}] "${project.title}":`, {
+            hasSales: response.hasSales,
+            canDelete: response.canDelete,
+            saleCount: response.saleCount || 0
+          });
+
+          // Actualizar el estado de este proyecto específico
+          statusMap.set(project._id, {
+            hasSales: response.hasSales,
+            canDelete: response.canDelete,
+            isChecking: false
+          });
+
+          completed++;
+
+          // CRÍTICO: Crear NUEVO Map para forzar detección de cambios en Angular
+          this.projectSalesStatus.set(new Map(statusMap));
+
+          console.log(`📈 Progreso: ${completed}/${total} verificados`);
+
+          if (completed === total) {
+            console.log('✅ ¡Verificación completada!\n', '📋 Resumen:');
+            statusMap.forEach((status, projectId) => {
+              const proj = projects.find(p => p._id === projectId);
+              console.log(`   - ${proj?.title || projectId}:`, status.canDelete ? '✅ PUEDE ELIMINAR' : '🚫 NO PUEDE ELIMINAR', `(ventas: ${status.hasSales})`);
+            });
+          }
+        },
+        error: (err) => {
+          console.error(`❌ [${index + 1}/${total}] Error al verificar "${project.title}":`, err);
+
+          // En caso de error, asumir que tiene ventas (por seguridad)
+          statusMap.set(project._id, {
+            hasSales: true,  // Por seguridad
+            canDelete: false,
+            isChecking: false
+          });
+
+          completed++;
+
+          // CRÍTICO: Crear NUEVO Map
+          this.projectSalesStatus.set(new Map(statusMap));
+
+          if (completed === total) {
+            console.log('⚠️ Verificación completada con errores');
+          }
+        }
+      });
     });
   }
 
@@ -125,7 +212,6 @@ export class ProjectsComponent implements OnInit {
       subtitle: '',
       description: '',
       price_usd: 0,
-      price_mxn: 0,
       categorie: '',
       state: 1,
       portada: null,
@@ -148,7 +234,6 @@ export class ProjectsComponent implements OnInit {
       subtitle: project.subtitle,
       description: project.description,
       price_usd: project.price_usd,
-      price_mxn: project.price_mxn,
       categorie: categoryId,
       state: project.state || 1,
       url_video: project.url_video || '',
@@ -195,7 +280,6 @@ export class ProjectsComponent implements OnInit {
     formData.append('subtitle', formValue.subtitle || '');
     formData.append('description', formValue.description || '');
     formData.append('price_usd', formValue.price_usd?.toString() || '0');
-    formData.append('price_mxn', formValue.price_mxn?.toString() || '0');
     formData.append('categorie', formValue.categorie || '');
     formData.append('state', formValue.state?.toString() || '1');
     formData.append('url_video', formValue.url_video || '');
@@ -246,27 +330,133 @@ export class ProjectsComponent implements OnInit {
     });
   }
 
+  /**
+   * Eliminar proyecto con validaciones de seguridad
+   * - Instructores pueden eliminar sus propios proyectos sin ventas
+   * - Admins pueden eliminar cualquier proyecto sin ventas
+   * - NO se puede eliminar si tiene ventas asociadas
+   */
   deleteProject(project: Project): void {
-    const confirmDelete = confirm(`¿Estás seguro de eliminar el proyecto "${project.title}"?`);
-    if (!confirmDelete) return;
+    console.log('\n🗑️ INTENTO DE ELIMINACIÓN');
+    console.log('=====================================');
+    console.log('Proyecto:', project.title);
+    console.log('ID:', project._id);
 
+    // Obtener estado de ventas del proyecto
+    const salesStatus = this.projectSalesStatus().get(project._id);
+    console.log('Estado de ventas:', salesStatus);
+
+    // VALIDACIÓN 1: Verificar si aún se está checando
+    if (!salesStatus || salesStatus.isChecking) {
+      console.log('⏳ Aún verificando estado...');
+      alert('⏳ Por favor espera, estamos verificando el estado del proyecto...');
+      return;
+    }
+
+    // VALIDACIÓN 2: Si tiene ventas, bloquear eliminación
+    if (salesStatus.hasSales) {
+      console.log('🚫 BLOQUEADO: Proyecto tiene ventas');
+      alert(
+        `🚫 No se puede eliminar "${project.title}"\n\n` +
+        `Este proyecto tiene estudiantes que ya lo compraron.\n` +
+        `No se puede eliminar para proteger la integridad de los datos.`
+      );
+      return;
+    }
+
+    console.log('✅ No tiene ventas, permitiendo eliminación');
+
+    // Confirmación del usuario
+    const confirmDelete = confirm(
+      `⚠️ ¿Estás seguro de eliminar "${project.title}"?\n\n` +
+      `Esta acción es permanente y no se puede deshacer.`
+    );
+
+    if (!confirmDelete) {
+      console.log('❌ Usuario canceló la eliminación');
+      return;
+    }
+
+    console.log('🔄 Enviando petición de eliminación al backend...');
     this.projectsState.update(s => ({ ...s, isLoading: true }));
 
     this.projectService.delete(project._id).subscribe({
-      next: (response) => {
-        alert('Proyecto eliminado exitosamente');
-        this.loadProjects();
+      next: (response: any) => {
+        console.log('📬 Respuesta del backend:', response);
+        console.log('=====================================\n');
+
+        // Verificar si el backend bloqueó por ventas
+        if (response.code === 403) {
+          console.warn('⚠️ Backend bloqueó: Proyecto tiene ventas');
+          alert(`🚫 ${response.message}`);
+          this.projectsState.update(s => ({ ...s, isLoading: false }));
+        }
+        // Eliminación exitosa
+        else if (response.code === 200 || response.message?.includes('ELIMINÓ')) {
+          console.log('✅ Proyecto eliminado exitosamente');
+          alert('✅ Proyecto eliminado exitosamente');
+          this.loadProjects(); // Recargar lista
+        }
+        // Respuesta inesperada
+        else {
+          console.log('⚠️ Respuesta sin code explícito, asumiendo éxito');
+          alert('✅ Proyecto eliminado');
+          this.loadProjects();
+        }
       },
       error: (error) => {
-        console.error('Error al eliminar proyecto:', error);
-        alert('Error al eliminar el proyecto');
+        console.error('❌ ERROR al eliminar:', error);
+        console.log('=====================================\n');
+
+        const errorMsg = error.error?.message || 'Error al eliminar el proyecto';
+        alert(`❌ ${errorMsg}`);
         this.projectsState.update(s => ({ ...s, isLoading: false }));
       }
     });
   }
 
+  /**
+   * Verificar si el usuario actual puede eliminar un proyecto específico
+   * @param project Proyecto a verificar
+   * @returns true si puede eliminar, false si no
+   */
+  canDeleteProject(project: Project): boolean {
+    const user = this.authService.user();
+    if (!user) {
+      return false;
+    }
+
+    // Obtener estado de ventas del Map
+    const salesStatus = this.projectSalesStatus().get(project._id);
+
+    // Si aún se está verificando, no mostrar botón activo
+    if (!salesStatus || salesStatus.isChecking) {
+      return false;
+    }
+
+    // 🔒 VALIDACIÓN CRÍTICA: Si tiene ventas, NADIE puede eliminar
+    if (salesStatus.hasSales) {
+      return false;
+    }
+
+    // Si NO tiene ventas, verificar permisos de usuario:
+
+    // 1. Admin puede eliminar cualquier proyecto (sin ventas)
+    if (user.rol === 'admin') {
+      return true;
+    }
+
+    // 2. Instructor solo puede eliminar SUS PROPIOS proyectos (sin ventas)
+    if (user.rol === 'instructor') {
+      const projectUserId = typeof project.user === 'object' ? project.user._id : project.user;
+      return projectUserId === user._id;
+    }
+
+    // 3. Cualquier otro rol no puede eliminar
+    return false;
+  }
+
   buildImageUrl(imagen: string): string {
-    // Corregido: La ruta base es 'project' (singular) para coincidir con el backend.
     return `${environment.url}project/imagen-project/${imagen}`;
   }
 
