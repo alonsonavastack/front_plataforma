@@ -4,42 +4,72 @@
 @plugin "flowbite/plugin";
 @source "../node_modules/flowbite";
 
-/* ===== FIX SCROLL EN MÓVILES ===== */
-html, body {
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch; /* Smooth scroll en iOS */
-  height: 100%;
-  width: 100%;
+/* ===== FIX SCROLL EN MÓVILES CON TAILWIND CSS V4 ===== */
+@layer base {
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  html {
+    height: 100%;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+  }
+
+  body {
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    position: relative;
+  }
+
+  app-root {
+    display: block;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
 }
 
-/* Evitar zoom en inputs en iOS (Safari no hace zoom si font-size >= 16px) */
-input, select, textarea {
-  font-size: 16px;
-}
+@layer utilities {
+  .-webkit-overflow-scrolling-touch {
+    -webkit-overflow-scrolling: touch;
+  }
 
-/* Custom scrollbar para el buscador */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
+  .touch-pan-y {
+    touch-action: pan-y;
+  }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: rgb(30 41 59 / 0.5);
-  border-radius: 3px;
-}
+  .overscroll-contain {
+    overscroll-behavior: contain;
+  }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgb(100 116 139 / 0.5);
-  border-radius: 3px;
-}
+  /* Fix específico para móviles */
+  @media (max-width: 768px) {
+    body {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
 
-/* Prevenir rebote en scroll (overscroll) en iOS */
-.overscroll-contain {
-  overscroll-behavior: contain;
-}
-
-/* Fix para modales en móvil */
-.modal-open {
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
+    app-root {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
 }

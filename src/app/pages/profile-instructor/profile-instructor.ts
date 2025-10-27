@@ -13,12 +13,13 @@ import {
 import { AuthService } from "../../core/services/auth";
 import { ProfileService } from "../../core/services/profile";
 import { HeaderComponent } from "../../layout/header/header";
+import { CountryCodeSelectorComponent, CountryCode } from "../../shared/country-code-selector/country-code-selector";
 import { environment } from "../../../environments/environment";
 
 @Component({
   selector: "app-profile-instructor",
   standalone: true,
-  imports: [CommonModule, HeaderComponent, ReactiveFormsModule],
+  imports: [CommonModule, HeaderComponent, ReactiveFormsModule, CountryCodeSelectorComponent],
   templateUrl: "./profile-instructor.html",
 })
 export class ProfileInstructorComponent {
@@ -29,10 +30,14 @@ export class ProfileInstructorComponent {
   isSubmitting = signal(false);
   isPasswordSubmitting = signal(false);
 
+  // Señal para el código de país seleccionado
+  selectedCountryCode = signal('+52'); // Por defecto México
+
   profileForm = new FormGroup({
     name: new FormControl(""),
     surname: new FormControl(""),
     email: new FormControl({ value: "", disabled: true }),
+    phone: new FormControl(""),
     profession: new FormControl(""),
     description: new FormControl(""),
   });
@@ -72,15 +77,39 @@ export class ProfileInstructorComponent {
       const profileData = this.authService.user();
 
       if (profileData?.email) {
+        // Separar código de país del número de teléfono
+        let phoneNumber = profileData.phone || '';
+        let countryCode = '+52'; // Por defecto México
+
+        if (phoneNumber && phoneNumber.startsWith('+')) {
+          // Buscar el código de país más largo que coincida
+          const possibleCodes = ['+52', '+1', '+34', '+54', '+57', '+51', '+56', '+58', '+593', '+502', '+53', '+591', '+504', '+595', '+503', '+505', '+506', '+507', '+598', '+55', '+33'];
+          for (const code of possibleCodes) {
+            if (phoneNumber.startsWith(code)) {
+              countryCode = code;
+              phoneNumber = phoneNumber.substring(code.length);
+              break;
+            }
+          }
+        }
+
+        this.selectedCountryCode.set(countryCode);
+
         this.profileForm.patchValue({
           name: profileData.name || "",
           surname: profileData.surname || "",
           email: profileData.email || "",
+          phone: phoneNumber,
           profession: profileData.profession || "",
           description: profileData.description || "",
         });
       }
     });
+  }
+
+  // Maneja la selección de país
+  onCountrySelected(country: any) {
+    this.selectedCountryCode.set(country.dialCode);
   }
 
   onSubmitProfile() {
@@ -91,8 +120,16 @@ export class ProfileInstructorComponent {
     this.isSubmitting.set(true);
     const formData = this.profileForm.getRawValue();
 
+    // Combinar código de país con número de teléfono
+    const fullPhoneNumber = formData.phone ? this.selectedCountryCode() + formData.phone : '';
+
+    const updateData = {
+      ...formData,
+      phone: fullPhoneNumber
+    };
+
     // Usamos el `update` del ProfileService que ya apunta al endpoint correcto
-    this.profileService.update(formData).subscribe({
+    this.profileService.update(updateData).subscribe({
       next: (response) => {
         alert("¡Perfil actualizado con éxito!");
         this.isSubmitting.set(false);

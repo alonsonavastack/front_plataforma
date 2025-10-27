@@ -52,6 +52,16 @@ export const routes: Routes = [
       import("./pages/auth/register").then((m) => m.RegisterComponent),
   },
   {
+    path: "verify-otp",
+    loadComponent: () =>
+      import("./pages/auth/verify-otp").then((m) => m.VerifyOtpComponent),
+  },
+  {
+    path: "forgot-password",
+    loadComponent: () =>
+      import("./pages/auth/forgot-password").then((m) => m.ForgotPasswordComponent),
+  },
+  {
     path: "course-detail/:slug",
     loadComponent: () =>
       import("./pages/course-detail/course-detail").then(

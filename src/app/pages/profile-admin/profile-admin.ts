@@ -1,4 +1,4 @@
-import { Component, inject, effect, signal, OnInit } from '@angular/core';
+import { Component, inject, effect, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { HeaderComponent } from '../../layout/header/header';
@@ -6,11 +6,13 @@ import { AuthService } from '../../core/services/auth';
 import { HttpClient } from '@angular/common/http';
 import { ProfileService } from '../../core/services/profile';
 import { AdminService } from '../../core/services/admin.service';
+import { CountryCodeSelectorComponent, CountryCode } from '../../shared/country-code-selector/country-code-selector';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-profile-admin',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, ReactiveFormsModule],
+  imports: [CommonModule, HeaderComponent, ReactiveFormsModule, CountryCodeSelectorComponent],
   templateUrl: './profile-admin.html',
 })
 export class ProfileAdminComponent implements OnInit {
@@ -22,10 +24,14 @@ export class ProfileAdminComponent implements OnInit {
   isSubmitting = signal(false);
   isPasswordSubmitting = signal(false);
 
+  // Señal para el código de país seleccionado
+  selectedCountryCode = signal('+52'); // Por defecto México
+
   profileForm = new FormGroup({
     name: new FormControl(''),
     surname: new FormControl(''),
     email: new FormControl({ value: '', disabled: true }),
+    phone: new FormControl(''),
     profession: new FormControl(''),
     description: new FormControl(''),
   });
@@ -39,12 +45,37 @@ export class ProfileAdminComponent implements OnInit {
   });
 
   constructor() {
+    // Rellenar formulario cuando los datos lleguen
     effect(() => {
-      // Leemos los datos del perfil desde AdminService
-      const profileResponse = this.adminService.profile();
-      if (profileResponse?.profile?.email) {
-        // La respuesta contiene un objeto 'profile', lo usamos para rellenar el formulario.
-        this.profileForm.patchValue(profileResponse.profile as any);
+      const profileData = this.authService.user();
+
+      if (profileData?.email) {
+        // Separar código de país del número de teléfono
+        let phoneNumber = profileData.phone || '';
+        let countryCode = '+52'; // Por defecto México
+
+        if (phoneNumber && phoneNumber.startsWith('+')) {
+          // Buscar el código de país más largo que coincida
+          const possibleCodes = ['+52', '+1', '+34', '+54', '+57', '+51', '+56', '+58', '+593', '+502', '+53', '+591', '+504', '+595', '+503', '+505', '+506', '+507', '+598', '+55', '+33'];
+          for (const code of possibleCodes) {
+            if (phoneNumber.startsWith(code)) {
+              countryCode = code;
+              phoneNumber = phoneNumber.substring(code.length);
+              break;
+            }
+          }
+        }
+
+        this.selectedCountryCode.set(countryCode);
+
+        this.profileForm.patchValue({
+          name: profileData.name || "",
+          surname: profileData.surname || "",
+          email: profileData.email || "",
+          phone: phoneNumber,
+          profession: profileData.profession || "",
+          description: profileData.description || "",
+        });
       }
     });
   }
@@ -57,13 +88,26 @@ export class ProfileAdminComponent implements OnInit {
     }
   }
 
+  // Maneja la selección de país
+  onCountrySelected(country: any) {
+    this.selectedCountryCode.set(country.dialCode);
+  }
+
   onSubmitProfile() {
     if (this.profileForm.invalid) return;
 
     this.isSubmitting.set(true);
     const formData = this.profileForm.getRawValue();
 
-    this.profileService.update(formData).subscribe({
+    // Combinar código de país con número de teléfono
+    const fullPhoneNumber = formData.phone ? this.selectedCountryCode() + formData.phone : '';
+
+    const updateData = {
+      ...formData,
+      phone: fullPhoneNumber
+    };
+
+    this.profileService.update(updateData).subscribe({
       next: () => {
         alert('¡Perfil actualizado con éxito!');
         // En lugar de actualizar la señal manualmente, le pedimos al servicio que recargue los datos.

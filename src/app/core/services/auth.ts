@@ -240,6 +240,41 @@ export class AuthService {
     return this.http.post(`${environment.url}users/register`, userData);
   }
 
+  // Métodos de verificación OTP
+  verifyOtp(userId: string, code: string) {
+    return this.http.post<LoginResponse>(`${environment.url}users/verify-otp`, { userId, code })
+      .pipe(
+        tap(response => {
+          if (response.USER) {
+            const { token, user, profile } = response.USER;
+            const fullUser = { ...user, ...profile };
+
+            this.token.set(token);
+            this.user.set(fullUser as User);
+
+            // Cargar las compras del usuario después de verificar
+            import('./purchases.service').then(module => {
+              const purchasesService = this.injector.get(module.PurchasesService);
+              purchasesService.loadPurchasedProducts();
+            });
+
+            // Navegar según el rol
+            setTimeout(() => {
+              if (user.rol === 'admin' || user.rol === 'instructor') {
+                this.router.navigate(['/dashboard']);
+              } else {
+                this.router.navigate(['/']);
+              }
+            }, 100);
+          }
+        })
+      );
+  }
+
+  resendOtp(userId: string) {
+    return this.http.post(`${environment.url}users/resend-otp`, { userId });
+  }
+
   // Helper para verificar rol
   hasRole(role: string): boolean {
     return this.user()?.rol === role;

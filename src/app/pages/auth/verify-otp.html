@@ -1,0 +1,198 @@
+<!-- pages/auth/verify-otp.html -->
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+
+    <!-- Card Principal -->
+    <div class="bg-slate-800 border border-white/10 rounded-2xl shadow-2xl p-8">
+
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 bg-lime-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-white mb-2">Verificación de Cuenta</h1>
+        <p class="text-slate-300 text-sm">
+          Ingresa el código de 6 dígitos enviado a tu Telegram
+        </p>
+
+        @if (maskedPhone()) {
+          <p class="text-lime-400 font-mono text-sm mt-2">
+            📱 {{ maskedPhone() }}
+          </p>
+        }
+      </div>
+
+      <!-- Mensajes de Error/Éxito -->
+      @if (errorMessage()) {
+        <div class="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+          <p class="text-red-400 text-sm flex items-center gap-2">
+            <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+            <span>{{ errorMessage() }}</span>
+          </p>
+        </div>
+      }
+
+      @if (successMessage()) {
+        <div class="mb-4 p-4 bg-lime-500/10 border border-lime-500/30 rounded-lg">
+          <p class="text-lime-400 text-sm flex items-center gap-2">
+            <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            <span>{{ successMessage() }}</span>
+          </p>
+        </div>
+      }
+
+      <!-- Input del Código OTP -->
+      <div class="mb-6">
+        <label class="block text-slate-300 text-sm font-medium mb-3">
+          Código de Verificación
+        </label>
+
+        <input
+          type="text"
+          inputmode="numeric"
+          maxlength="6"
+          [value]="otpCode()"
+          (input)="onOtpInput($event)"
+          placeholder="000000"
+          class="w-full px-4 py-3 bg-slate-900/50 border rounded-lg text-white text-center text-2xl font-mono tracking-widest
+                 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent
+                 transition-all"
+          [class.border-slate-700]="!errorMessage()"
+          [class.border-red-500]="errorMessage()"
+          [disabled]="isVerifying() || countdown() === 0"
+          autofocus
+        />
+
+        <!-- Indicador de intentos restantes -->
+        @if (attemptsRemaining() < 3 && attemptsRemaining() > 0) {
+          <p class="text-yellow-400 text-xs mt-2 text-center">
+            ⚠️ Te quedan {{ attemptsRemaining() }} {{ attemptsRemaining() === 1 ? 'intento' : 'intentos' }}
+          </p>
+        }
+      </div>
+
+      <!-- Timer de Expiración -->
+      @if (countdown() > 0) {
+        <div class="mb-6 text-center">
+          <p class="text-slate-400 text-sm flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Expira en: <strong class="text-white font-mono">{{ timeRemaining() }}</strong></span>
+          </p>
+        </div>
+      } @else {
+        <div class="mb-6 text-center">
+          <p class="text-red-400 text-sm font-medium">
+            ⏰ El código ha expirado
+          </p>
+        </div>
+      }
+
+      <!-- Botón Verificar -->
+      <button
+        type="button"
+        (click)="verifyCode()"
+        [disabled]="!isCodeValid() || isVerifying() || countdown() === 0"
+        class="w-full py-3 px-4 rounded-lg font-medium transition-all
+               focus:outline-none focus:ring-2 focus:ring-lime-400 focus:ring-offset-2 focus:ring-offset-slate-800
+               disabled:opacity-50 disabled:cursor-not-allowed"
+        [class.bg-lime-500]="isCodeValid() && !isVerifying() && countdown() > 0"
+        [class.hover:bg-lime-600]="isCodeValid() && !isVerifying() && countdown() > 0"
+        [class.text-slate-900]="isCodeValid() && !isVerifying() && countdown() > 0"
+        [class.bg-slate-700]="!isCodeValid() || isVerifying() || countdown() === 0"
+        [class.text-slate-400]="!isCodeValid() || isVerifying() || countdown() === 0"
+      >
+        @if (isVerifying()) {
+          <span class="flex items-center justify-center gap-2">
+            <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Verificando...</span>
+          </span>
+        } @else {
+          <span>Verificar Código</span>
+        }
+      </button>
+
+      <!-- Divider -->
+      <div class="relative my-6">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-slate-700"></div>
+        </div>
+        <div class="relative flex justify-center text-sm">
+          <span class="px-2 bg-slate-800 text-slate-400">¿No recibiste el código?</span>
+        </div>
+      </div>
+
+      <!-- Botón Reenviar Código -->
+      <!-- Botón destacado cuando hay error inicial de envío -->
+      <button
+        type="button"
+        (click)="resendCode()"
+        [disabled]="isResending() || (!canResend() && resendCountdown() > 0)"
+        class="w-full py-3 px-4 rounded-lg font-medium transition-all border-2
+               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800
+               disabled:opacity-50 disabled:cursor-not-allowed"
+        [class.border-cyan-500]="canResend() || resendCountdown() === 0"
+        [class.text-cyan-400]="canResend() || resendCountdown() === 0"
+        [class.hover:bg-cyan-500/10]="canResend() || resendCountdown() === 0"
+        [class.focus:ring-cyan-400]="canResend() || resendCountdown() === 0"
+        [class.border-slate-700]="!canResend() && resendCountdown() > 0"
+        [class.text-slate-500]="!canResend() && resendCountdown() > 0"
+        [class.focus:ring-slate-400]="!canResend() && resendCountdown() > 0"
+        [class.animate-pulse]="canResend() && errorMessage()?.includes('inicial')"
+      >
+        @if (isResending()) {
+          <span class="flex items-center justify-center gap-2">
+            <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Reenviando...</span>
+          </span>
+        } @else if (!canResend() && resendCountdown() > 0) {
+          <span>Reenviar en {{ resendTimeRemaining() }}</span>
+        } @else {
+          <span class="flex items-center justify-center gap-2">
+            @if (canResend() && errorMessage()?.includes('inicial')) {
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+            }
+            <span>Reenviar Código</span>
+          </span>
+        }
+      </button>
+
+      <!-- Volver al Registro -->
+      <div class="mt-6 text-center">
+        <button
+          type="button"
+          (click)="goToRegister()"
+          class="text-slate-400 hover:text-white text-sm transition-colors"
+        >
+          ← Volver al registro
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Footer Info -->
+    <div class="mt-6 text-center">
+      <p class="text-slate-500 text-xs">
+        Si no recibes el código, verifica que tu Telegram esté activo
+      </p>
+    </div>
+
+  </div>
+</div>

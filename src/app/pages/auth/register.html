@@ -110,33 +110,49 @@
           />
         </div>
 
-        <!-- Campos opcionales -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label for="profession" class="block mb-2 text-sm font-medium text-slate-300">
-              Profesión
-            </label>
-            <input
-              type="text"
-              id="profession"
-              formControlName="profession"
-              class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
-              placeholder="Desarrollador, Diseñador..."
-            />
-          </div>
-
-          <div>
-            <label for="phone" class="block mb-2 text-sm font-medium text-slate-300">
-              Teléfono
-            </label>
+        <!-- Campo de teléfono (OBLIGATORIO para OTP) -->
+        <div>
+          <label for="phone" class="block mb-2 text-sm font-medium text-slate-300">
+            <span class="flex items-center gap-2">
+              📱 Teléfono (Telegram) <span class="text-red-400">*</span>
+            </span>
+          </label>
+          <div class="flex gap-2">
+            <div class="w-32">
+              <app-country-code-selector
+                [selectedDialCode]="selectedCountryCode()"
+                (countrySelected)="onCountrySelected($event)"
+              ></app-country-code-selector>
+            </div>
             <input
               type="tel"
               id="phone"
               formControlName="phone"
-              class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
-              placeholder="+52 123 456 7890"
+              class="flex-1 bg-slate-900/70 border border-slate-700 text-white text-base rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
+              placeholder="Número de teléfono"
+              required
             />
           </div>
+          <p class="text-xs text-lime-400 mt-1 flex items-center gap-1">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+            </svg>
+            <span>Selecciona tu país y ingresa tu número de teléfono</span>
+          </p>
+        </div>
+
+        <!-- Campo de profesión (opcional) -->
+        <div>
+          <label for="profession" class="block mb-2 text-sm font-medium text-slate-300">
+            Profesión (Opcional)
+          </label>
+          <input
+            type="text"
+            id="profession"
+            formControlName="profession"
+            class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
+            placeholder="Desarrollador, Diseñador..."
+          />
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

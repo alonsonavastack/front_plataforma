@@ -27,6 +27,7 @@ export interface CourseAdmin {
   description?: string;
   price_usd: number;
   price_mxn: number;
+  isFree?: boolean; // Indica si el curso es gratuito
   categorie: Category; // Objeto Category poblado
   user: User; // Objeto User poblado
   level: 'Basico' | 'Intermedio' | 'Avanzado';
@@ -89,6 +90,7 @@ export interface CoursePublic {
   imagen?: string;
   price_usd: number; // Precio original USD
   price_mxn: number; // Precio original MXN
+  isFree?: boolean; // Indica si el curso es gratuito
   final_price_usd?: number; // Precio con descuento aplicado USD
   final_price_mxn?: number; // Precio con descuento aplicado MXN
   level: string;
@@ -182,6 +184,7 @@ export interface Project {
   categorie: Category;
   price_mxn: number;
   price_usd: number;
+  isFree?: boolean; // Indica si el proyecto es gratuito
   final_price_mxn?: number; // Precio con descuento aplicado
   final_price_usd?: number; // Precio con descuento aplicado
   state?: number; // 1: borrador, 2: publico, 3: anulado

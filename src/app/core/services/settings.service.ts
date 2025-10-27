@@ -12,6 +12,7 @@ export interface SettingsCourse {
   subtitle: string;
   imagen?: string;
   price_usd: number;
+  isFree?: boolean;
   featured?: boolean;
   slug?: string;
 }
@@ -22,6 +23,7 @@ export interface SettingsProject {
   subtitle: string;
   imagen?: string;
   price_usd: number;
+  isFree?: boolean;
   featured?: boolean;
 }
 

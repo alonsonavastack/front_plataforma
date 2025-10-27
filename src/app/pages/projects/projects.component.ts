@@ -74,6 +74,7 @@ export class ProjectsComponent implements OnInit {
     subtitle: new FormControl('', [Validators.required]),
     description: new FormControl('', [Validators.required]),
     price_usd: new FormControl(0, [Validators.required, Validators.min(0)]),
+    isFree: new FormControl(false), // Indica si el proyecto es gratuito
     categorie: new FormControl('', [Validators.required]),
     state: new FormControl(1, [Validators.required]),
     portada: new FormControl<File | null>(null),
@@ -212,6 +213,7 @@ export class ProjectsComponent implements OnInit {
       subtitle: '',
       description: '',
       price_usd: 0,
+      isFree: false, // ✅ AGREGAR: Checkbox de gratuito por defecto false
       categorie: '',
       state: 1,
       portada: null,
@@ -234,6 +236,7 @@ export class ProjectsComponent implements OnInit {
       subtitle: project.subtitle,
       description: project.description,
       price_usd: project.price_usd,
+      isFree: project.isFree || false, // Agregar campo isFree
       categorie: categoryId,
       state: project.state || 1,
       url_video: project.url_video || '',
@@ -280,6 +283,8 @@ export class ProjectsComponent implements OnInit {
     formData.append('subtitle', formValue.subtitle || '');
     formData.append('description', formValue.description || '');
     formData.append('price_usd', formValue.price_usd?.toString() || '0');
+    // 🔥 NUEVO: Enviar isFree explícitamente
+    formData.append('isFree', formValue.isFree ? 'true' : 'false');
     formData.append('categorie', formValue.categorie || '');
     formData.append('state', formValue.state?.toString() || '1');
     formData.append('url_video', formValue.url_video || '');

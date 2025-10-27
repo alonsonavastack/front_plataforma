@@ -29,7 +29,7 @@ export class CategoriesService {
   // --- Métodos para interactuar con el servicio ---
   reload() {
     this.state.update((s: CategoriesState) => ({ ...s, isLoading: true }));
-    this.http.get<CategoriesListResponse>(`${this.API_URL}categories/list`).subscribe({
+    this.http.get<CategoriesListResponse>(`${this.API_URL}categories/list-public`).subscribe({
       next: (response) => {
         this.state.update((s: CategoriesState) => ({ ...s, categories: response.categories, isLoading: false }));
       },

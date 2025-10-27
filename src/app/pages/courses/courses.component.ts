@@ -48,6 +48,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
     subtitle: new FormControl('', [Validators.required]),
     description: new FormControl(''),
     price_usd: new FormControl(0, [Validators.required, Validators.min(0)]),
+    isFree: new FormControl(false), // Indica si el curso es gratuito
     categorie: new FormControl('', [Validators.required]),
     user: new FormControl('', [Validators.required]),
     level: new FormControl('Basico', [Validators.required]),
@@ -290,6 +291,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
       level: 'Basico',
       idioma: 'Español',
       price_usd: 0,
+      isFree: false, // ✅ AGREGAR: Checkbox de gratuito por defecto false
       state: 1, // Borrador por defecto
     });
     this.imagePreview.set(null);
@@ -306,6 +308,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
     this.currentCourseId.set(course._id);
     this.courseForm.patchValue({
       ...course,
+      isFree: course.isFree || false, // Agregar campo isFree
       categorie: course.categorie._id,
       user: course.user._id,
     });
@@ -339,11 +342,15 @@ export class CoursesComponent implements OnInit, OnDestroy {
     const formData = new FormData();
     const formValue = this.courseForm.getRawValue();
 
+    // ✅ IMPORTANTE: Convertir boolean isFree a string para FormData
     Object.keys(formValue).forEach(key => {
       const value = formValue[key as keyof typeof formValue];
       if (value !== null && value !== undefined) {
         if (key === 'portada' && value instanceof File) {
           formData.append(key, value);
+        } else if (key === 'isFree') {
+          // 🔥 NUEVO: Enviar isFree explícitamente como 'true' o 'false'
+          formData.append(key, value ? 'true' : 'false');
         } else if (key !== 'portada') {
           formData.append(key, String(value));
         }

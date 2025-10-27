@@ -4,7 +4,7 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <div class="grid md:grid-cols-[1fr_3fr] gap-8">
 
-      <!-- Columna Izquierda: Perfil y NavegaciÃ³n -->
+      <!-- Columna Izquierda: Perfil y Navegación -->
       <aside class="space-y-6">
         <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm text-center">
           @if (studentProfile(); as profile) {
@@ -20,6 +20,21 @@
             </div>
             <h2 class="mt-4 text-xl font-bold text-white">{{ profile.profile.name }} {{ profile.profile.surname }}</h2>
             <p class="text-sm text-slate-400">{{ profile.profile.email }}</p>
+            @if (profile.profile.phone || user()?.phone) {
+              <p class="text-sm text-slate-400 mt-1 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                </svg>
+                {{ profile.profile.phone || user()?.phone }}
+              </p>
+            } @else {
+              <p class="text-sm text-slate-400 mt-1 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                </svg>
+                <span class="text-slate-500">Sin teléfono registrado</span>
+              </p>
+            }
           } @else {
             <!-- Skeleton Loader mientras se cargan los datos -->
             <div class="w-24 h-24 rounded-full bg-slate-700 animate-pulse mx-auto"></div>
@@ -68,7 +83,7 @@
         </nav>
       </aside>
 
-      <!-- Columna Derecha: Contenido de la PestaÃ±a -->
+      <!-- Columna Derecha: Contenido de la Pestaña -->
       <main>
         @switch (activeSection()) {
           @case ('courses') {
@@ -110,7 +125,7 @@
                     <svg class="w-16 h-16 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                     </svg>
-                    <p class="text-slate-400 text-lg">AÃºn no te has inscrito a ningÃºn curso.</p>
+                    <p class="text-slate-400 text-lg">Aún no te has inscrito a ningún curso.</p>
                     <a routerLink="/" class="inline-block mt-4 px-6 py-3 bg-lime-400 text-slate-900 rounded-lg font-semibold hover:bg-lime-300 transition">Explorar Cursos</a>
                   </div>
                 } @else if (profile.enrolled_courses) {
@@ -631,15 +646,40 @@
                   </div>
                 </div>
                 <div>
-                  <label for="email" class="block mb-2 text-sm font-medium text-slate-300">Correo ElectrÃ³nico</label>
+                  <label for="email" class="block mb-2 text-sm font-medium text-slate-300">Correo Electrónico</label>
                   <input type="email" id="email" formControlName="email" class="w-full bg-slate-700/50 border border-slate-600 text-slate-400 text-sm rounded-lg block p-2.5 cursor-not-allowed">
                 </div>
                 <div>
-                  <label for="profession" class="block mb-2 text-sm font-medium text-slate-300">ProfesiÃ³n</label>
+                  <label for="phone" class="block mb-2 text-sm font-medium text-slate-300">Teléfono</label>
+                  <div class="flex gap-2">
+                    <div class="w-32">
+                      <app-country-code-selector
+                        [selectedDialCode]="selectedCountryCode()"
+                        (countrySelected)="onCountrySelected($event)"
+                      ></app-country-code-selector>
+                    </div>
+                    <input
+                      type="tel"
+                      id="phone"
+                      formControlName="phone"
+                      class="flex-1 bg-slate-900/70 border border-slate-700 text-white text-base rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
+                      placeholder="Número de teléfono"
+                      required
+                    />
+                  </div>
+                  <p class="text-xs text-lime-400 mt-1 flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Selecciona tu país y ingresa tu número de teléfono</span>
+                  </p>
+                </div>
+                <div>
+                  <label for="profession" class="block mb-2 text-sm font-medium text-slate-300">Profesión</label>
                   <input type="text" id="profession" formControlName="profession" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5" />
                 </div>
                 <div>
-                  <label for="description" class="block mb-2 text-sm font-medium text-slate-300">Sobre mÃ­</label>
+                  <label for="description" class="block mb-2 text-sm font-medium text-slate-300">Sobre mí</label>
                   <textarea id="description" formControlName="description" rows="4" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"></textarea>
                 </div>
                 <div>
@@ -653,26 +693,26 @@
                 </div>
               </form>
 
-              <!-- SecciÃ³n para cambiar contraseÃ±a -->
+              <!-- Sección para cambiar contraseña -->
               <div class="border-t border-white/10 mt-8 pt-8">
-                <h4 class="text-xl font-bold mb-6">Cambiar ContraseÃ±a</h4>
+                <h4 class="text-xl font-bold mb-6">Cambiar Contraseña</h4>
                 <form [formGroup]="passwordForm" (ngSubmit)="onSubmitPassword()" class="space-y-4 max-w-lg">
                   <div>
-                    <label for="currentPassword" class="block mb-2 text-sm font-medium text-slate-300">ContraseÃ±a Actual</label>
+                    <label for="currentPassword" class="block mb-2 text-sm font-medium text-slate-300">Contraseña Actual</label>
                     <input type="password" id="currentPassword" formControlName="currentPassword" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5">
                   </div>
                   <div>
-                    <label for="newPassword" class="block mb-2 text-sm font-medium text-slate-300">Nueva ContraseÃ±a</label>
+                    <label for="newPassword" class="block mb-2 text-sm font-medium text-slate-300">Nueva Contraseña</label>
                     <input type="password" id="newPassword" formControlName="newPassword" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5">
                     @if (passwordForm.get('newPassword')?.hasError('minlength')) {
-                      <p class="text-xs text-red-400 mt-1">La contraseÃ±a debe tener al menos 6 caracteres.</p>
+                      <p class="text-xs text-red-400 mt-1">La contraseña debe tener al menos 6 caracteres.</p>
                     }
                   </div>
                   <div>
-                    <label for="confirmPassword" class="block mb-2 text-sm font-medium text-slate-300">Confirmar Nueva ContraseÃ±a</label>
+                    <label for="confirmPassword" class="block mb-2 text-sm font-medium text-slate-300">Confirmar Nueva Contraseña</label>
                     <input type="password" id="confirmPassword" formControlName="confirmPassword" class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5">
                     @if (passwordForm.hasError('passwordsMismatch') && passwordForm.get('confirmPassword')?.touched) {
-                      <p class="text-xs text-red-400 mt-1">Las contraseÃ±as no coinciden.</p>
+                      <p class="text-xs text-red-400 mt-1">Las contraseñas no coinciden.</p>
                     }
                   </div>
                   <div>
@@ -680,7 +720,7 @@
                       @if (isPasswordSubmitting()) {
                         <span class="animate-spin h-5 w-5 border-2 border-slate-900 border-t-transparent rounded-full"></span>
                       } @else {
-                        <span>Cambiar ContraseÃ±a</span>
+                        <span>Cambiar Contraseña</span>
                       }
                     </button>
                   </div>

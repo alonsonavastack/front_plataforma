@@ -8,6 +8,7 @@ import { AuthService } from '../../core/services/auth';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ProfileService } from '../../core/services/profile';
 import { CheckoutService } from '../../core/services/checkout.service';
+import { CountryCodeSelectorComponent, CountryCode } from '../../shared/country-code-selector/country-code-selector';
 
 import { ProfileStudentService, EnrolledCourse, Sale, Project, ProjectFile } from '../../core/services/profile-student.service';
 import { ProjectService } from '../../core/services/project.service';
@@ -22,7 +23,7 @@ export const passwordsMatchValidator: ValidatorFn = (control: AbstractControl): 
 @Component({
   standalone: true,
   selector: 'app-profile-student',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, HeaderComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, HeaderComponent, CountryCodeSelectorComponent],
   templateUrl: './profile-student.html',
 })
 export class ProfileStudentComponent implements OnInit, OnDestroy {
@@ -55,6 +56,9 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
 
   // Señal para mostrar un indicador de carga en el archivo que se está descargando
   downloadingFileId = signal<string | null>(null);
+
+  // Señal para el código de país seleccionado
+  selectedCountryCode = signal('+52'); // Por defecto México
 
   // Señales para la paginación de compras
   purchasesCurrentPage = signal(1);
@@ -147,6 +151,7 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
     name: new FormControl(''),
     surname: new FormControl(''),
     email: new FormControl({ value: '', disabled: true }), // El email no se puede cambiar
+    phone: new FormControl(''),
     profession: new FormControl(''),
     description: new FormControl(''),
   });
@@ -171,10 +176,29 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
       const dataToUse = studentProfileData?.profile || authUser;
 
       if (dataToUse?.email) {
+        // Buscar el teléfono en ambos lugares (studentProfileData.profile o authUser)
+        let phoneNumber = studentProfileData?.profile?.phone || authUser?.phone || '';
+        let countryCode = '+52'; // Por defecto México
+
+        if (phoneNumber && phoneNumber.startsWith('+')) {
+          // Buscar el código de país más largo que coincida
+          const possibleCodes = ['+52', '+1', '+34', '+54', '+57', '+51', '+56', '+58', '+593', '+502', '+53', '+591', '+504', '+595', '+503', '+505', '+506', '+507', '+598', '+55', '+33'];
+          for (const code of possibleCodes) {
+            if (phoneNumber.startsWith(code)) {
+              countryCode = code;
+              phoneNumber = phoneNumber.substring(code.length);
+              break;
+            }
+          }
+        }
+
+        this.selectedCountryCode.set(countryCode);
+
         this.profileForm.patchValue({
           name: dataToUse.name || '',
           surname: dataToUse.surname || '',
           email: dataToUse.email || '',
+          phone: phoneNumber,
           profession: dataToUse.profession || '',
           description: dataToUse.description || '',
         });
@@ -222,7 +246,13 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Maneja la selección de país
+  onCountrySelected(country: CountryCode) {
+    this.selectedCountryCode.set(country.dialCode);
+  }
+
   // Envía los datos del formulario para actualizar el perfil
+
   onSubmitProfile() {
     if (this.profileForm.invalid) {
       return;
@@ -231,11 +261,20 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
     this.isSubmitting.set(true);
     const formData = this.profileForm.getRawValue();
 
-    this.profileService.update(formData).subscribe({
+    // Combinar código de país con número de teléfono
+    const fullPhoneNumber = formData.phone ? this.selectedCountryCode() + formData.phone : '';
+
+    const updateData = {
+      ...formData,
+      phone: fullPhoneNumber
+    };
+
+    this.profileService.update(updateData).subscribe({
       next: (response) => {
         // Después de actualizar, recargamos los datos para reflejar los cambios.
         // Y reseteamos el formulario con los nuevos datos para que vuelva al estado 'pristine'.
         const updatedUser = response.user || response.profile || response;
+
         this.profileForm.reset(updatedUser);
 
         this.profileStudentService.loadProfile().subscribe();

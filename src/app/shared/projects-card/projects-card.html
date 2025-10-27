@@ -112,21 +112,29 @@
 
     <!-- Precio con diseño destacado -->
     <div class="flex items-center justify-between">
-      <div class="flex items-baseline gap-2">
-        @if (project.discount_active && project.final_price_usd !== undefined) {
-          <span class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-lime-400 to-emerald-400">
-            ${{ project.final_price_usd | number:'1.0-2' }}
-          </span>
-          <span class="text-sm text-white/40 line-through font-medium">
-            ${{ project.price_usd | number:'1.0-2' }}
-          </span>
-        } @else {
-          <span class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-lime-400 to-emerald-400">
-            ${{ project.price_usd | number:'1.0-2' }}
-          </span>
-        }
-      </div>
-      <span class="text-xs text-white/50 font-medium">USD</span>
+      @if (project['isFree'] || project.price_usd === 0) {
+        <!-- Mostrar badge de GRATUITO si isFree es true O si el precio es 0 -->
+        <span class="inline-flex items-center px-3 py-1.5 text-sm font-bold text-green-400 bg-green-500/10 border border-green-500/30 rounded-lg">
+          🎁 GRATUITO
+        </span>
+      } @else {
+        <!-- Mostrar precio normal -->
+        <div class="flex items-baseline gap-2">
+          @if (project.discount_active && project.final_price_usd !== undefined) {
+            <span class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-lime-400 to-emerald-400">
+              ${{ project.final_price_usd | number:'1.0-2' }}
+            </span>
+            <span class="text-sm text-white/40 line-through font-medium">
+              ${{ project.price_usd | number:'1.0-2' }}
+            </span>
+          } @else {
+            <span class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-lime-400 to-emerald-400">
+              ${{ project.price_usd | number:'1.0-2' }}
+            </span>
+          }
+        </div>
+        <span class="text-xs text-white/50 font-medium">USD</span>
+      }
     </div>
     
     <!-- Botón de acción con estados -->

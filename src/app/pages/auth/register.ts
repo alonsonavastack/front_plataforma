@@ -10,6 +10,7 @@ import {
 } from '@angular/forms';
 import { AuthService } from '../../core/services/auth';
 import { HeaderComponent } from '../../layout/header/header';
+import { CountryCodeSelectorComponent } from '../../shared/country-code-selector/country-code-selector';
 
 @Component({
   selector: 'app-register',
@@ -19,6 +20,7 @@ import { HeaderComponent } from '../../layout/header/header';
     RouterLink,
     ReactiveFormsModule,
     HeaderComponent,
+    CountryCodeSelectorComponent,
   ],
   templateUrl: './register.html',
 })
@@ -30,6 +32,14 @@ export class RegisterComponent {
   successMessage = signal<string | null>(null);
   isLoading = signal<boolean>(false);
 
+  // Señal para el código de país seleccionado
+  selectedCountryCode = signal('+52');
+
+  // Maneja la selección del código de país
+  onCountrySelected(country: any) {
+    this.selectedCountryCode.set(country.dialCode);
+  }
+
   registerForm = new FormGroup({
     name: new FormControl('', [Validators.required, Validators.minLength(2)]),
     surname: new FormControl('', [Validators.required, Validators.minLength(2)]),
@@ -38,7 +48,7 @@ export class RegisterComponent {
     confirmPassword: new FormControl('', [Validators.required]),
     rol: new FormControl('cliente', [Validators.required]), // Default: cliente (estudiante)
     profession: new FormControl(''),
-    phone: new FormControl(''),
+    phone: new FormControl('', [Validators.required, Validators.minLength(10)]), // REQUERIDO para OTP
   });
 
   onSubmit() {
@@ -50,15 +60,24 @@ export class RegisterComponent {
       return;
     }
 
-    const { password, confirmPassword } = this.registerForm.value;
-    
+    const { password, confirmPassword, phone } = this.registerForm.value;
+
     if (password !== confirmPassword) {
       this.errorMessage.set('Las contraseñas no coinciden');
       return;
     }
 
+    // Combinar código de país con número de teléfono
+    const fullPhoneNumber = phone ? this.selectedCountryCode() + phone : '';
+
+    // Validar formato de teléfono (debe ser E.164 sin '+')
+    if (!phone || phone.length < 10) {
+      this.errorMessage.set('El teléfono debe tener al menos 10 dígitos (formato: 52155XXXXXXX)');
+      return;
+    }
+
     this.isLoading.set(true);
-    
+
     const userData = {
       name: this.registerForm.value.name!,
       surname: this.registerForm.value.surname!,
@@ -66,22 +85,51 @@ export class RegisterComponent {
       password: this.registerForm.value.password!,
       rol: this.registerForm.value.rol!,
       profession: this.registerForm.value.profession || '',
-      phone: this.registerForm.value.phone || '',
+      phone: fullPhoneNumber, // Requerido para OTP
     };
 
     this.authService.register(userData).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         this.isLoading.set(false);
-        this.successMessage.set('¡Registro exitoso! Redirigiendo al inicio de sesión...');
-        setTimeout(() => {
-          this.router.navigate(['/login']);
-        }, 2000);
+
+        console.log('✅ Respuesta de registro:', response);
+
+        // Verificar si el OTP fue enviado
+        if (response.otpSent) {
+          this.successMessage.set('¡Registro exitoso! Redirigiendo a verificación...');
+
+          // Redirigir a la página de verificación OTP
+          setTimeout(() => {
+            this.router.navigate(['/verify-otp'], {
+              queryParams: {
+                userId: response.user._id,
+                phone: phone
+              }
+            });
+          }, 1500);
+        } else {
+          // Si hubo error al enviar OTP pero el usuario se creó
+          // IMPORTANTE: Redirigir a verificación de todas formas
+          // El usuario podrá solicitar reenvío desde allí
+          this.successMessage.set('Usuario creado. Redirigiendo a verificación...');
+
+          setTimeout(() => {
+            this.router.navigate(['/verify-otp'], {
+              queryParams: {
+                userId: response.user._id,
+                phone: phone,
+                error: 'otp_not_sent' // Flag para mostrar mensaje
+              }
+            });
+          }, 1500);
+        }
       },
       error: (err) => {
         this.isLoading.set(false);
+        console.error('❌ Error en registro:', err);
         this.errorMessage.set(
-          err.error?.message_text || 
-          err.error?.message || 
+          err.error?.message_text ||
+          err.error?.message ||
           'Error al registrarse. Por favor intenta nuevamente.'
         );
       }
