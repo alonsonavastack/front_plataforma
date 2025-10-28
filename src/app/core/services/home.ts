@@ -1,7 +1,7 @@
 // src/app/core/services/home.service.ts
 import { HttpClient } from "@angular/common/http";
 import { computed, inject, Injectable, signal, effect } from "@angular/core";
-import { environment } from "../../../environments/environment.development";
+import { environment } from "../../../environments/environment";
 import { CoursePublic, Project, SearchCourseBody } from "../models/home.models";
 import { toQuery } from "../utils/resource-helpers";
 import { map, catchError, throwError, tap } from "rxjs";
@@ -229,7 +229,7 @@ export class HomeService {
 
     effect(() => {
       reload();
-    }, { allowSignalWrites: true });
+    });
 
     return {
       value: computed(() => {

@@ -61,7 +61,7 @@ export class CoursesService {
 
     effect(() => {
       reload();
-    }, { allowSignalWrites: true });
+    });
 
     return {
       course: computed(() => state().course),

@@ -1,30 +1,34 @@
 // src/app/pages/course-detail/course-detail.ts
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, inject, signal, effect } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Subscription } from 'rxjs';
 
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 import { HeaderComponent } from '../../layout/header/header';
 import { AuthService } from '../../core/services/auth';
 import { HomeService } from '../../core/services/home';
 import { CartService } from '../../core/services/cart.service';
+import { CourseReviewsComponent } from '../../shared/course-reviews/course-reviews.component';
+import { Review } from '../../core/services/review.service';
 
 type TabType = 'overview' | 'curriculum' | 'instructor' | 'reviews';
 
 @Component({
   standalone: true,
   selector: 'app-course-detail',
-  imports: [CommonModule, RouterLink, HeaderComponent],
+  imports: [CommonModule, RouterLink, HeaderComponent, CourseReviewsComponent],
   templateUrl: './course-detail.html',
 })
-export class CourseDetailComponent implements OnInit {
+export class CourseDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private api = inject(HomeService);
   private cartService = inject(CartService);
   private authService = inject(AuthService);
   private router = inject(Router);
   private sanitizer = inject(DomSanitizer);
+  private routeSubscription?: Subscription;
 
   // Estado de tabs
   activeTab = signal<TabType>('overview');
@@ -66,7 +70,8 @@ export class CourseDetailComponent implements OnInit {
   safeDetail(): any {
     try {
       return this.detailRes.value();
-    } catch {
+    } catch (error) {
+      console.error('Error loading course detail:', error);
       return {
         course: undefined,
         reviews: [],
@@ -181,39 +186,39 @@ export class CourseDetailComponent implements OnInit {
 
   // métricas superiores
   metaStudents(): number {
-    return Number(this.course()?.['n_students'] ?? 0);
+    return Number(this.course()?.['N_STUDENTS'] ?? 0);
   }
   metaReviews(): number {
-    return Number(this.course()?.['n_reviews'] ?? 0);
+    return Number(this.course()?.['N_REVIEWS'] ?? 0);
   }
   metaRating(): string {
-    return String(this.course()?.['avg_rating'] ?? '0.0');
+    return String(this.course()?.['AVG_RATING'] ?? '0.0');
   }
   totalTime(): string {
-    const totalSeconds = Number(this.course()?.['time_total'] ?? 0);
+    const totalSeconds = Number(this.course()?.['time_total_course'] ?? 0);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     return `${hours}h ${minutes}m de contenido`;
   }
   totalClasses(): number {
-    return Number(this.course()?.['num_clases_total'] ?? 0);
+    return Number(this.course()?.['N_CLASES'] ?? 0);
   }
   totalFiles(): number {
-    return Number(this.course()?.['files_total'] ?? 0);
+    return Number(this.course()?.['files_total_sections'] ?? 0);
   }
 
   // Instructor meta
   instructorCourses(): number {
-    return Number(this.course()?.['count_course_instructor'] ?? 0);
+    return Number(this.course()?.['instructor_info']?.['count_course_instructor'] ?? 0);
   }
   instructorStudents(): number {
-    return Number(this.course()?.['n_students_instructor'] ?? 0);
+    return Number(this.course()?.['instructor_info']?.['n_students_sum_total'] ?? 0);
   }
   instructorRating(): string {
-    return String(this.course()?.['avg_rating_instructor'] ?? '0.0');
+    return String(this.course()?.['instructor_info']?.['avg_rating_instructor'] ?? '0.0');
   }
   instructorReviews(): number {
-    return Number(this.course()?.['num_review_instructor'] ?? 0);
+    return Number(this.course()?.['instructor_info']?.['num_review_sum_total'] ?? 0);
   }
 
   // Requirements y Who is it for
@@ -282,8 +287,42 @@ export class CourseDetailComponent implements OnInit {
     this.detailRes.reload();
   }
 
+  // Métodos para manejar eventos del componente de reviews
+  onReviewAdded(review: Review) {
+    console.log('Review added:', review);
+    // Aquí podrías actualizar las métricas del curso si es necesario
+    // o mostrar una notificación de éxito
+  }
+
+  onReviewUpdated(review: Review) {
+    console.log('Review updated:', review);
+    // Aquí podrías actualizar las métricas del curso si es necesario
+    // o mostrar una notificación de éxito
+  }
+
+  // Método para navegar a otro curso
+  navigateToCourse(slug: string) {
+    if (slug) {
+      this.router.navigate(['/course-detail', slug]);
+    }
+  }
+
   ngOnInit(): void {
-    const s = this.route.snapshot.paramMap.get('slug') ?? '';
-    this.slug.set(s);
+    // Suscribirse a cambios en los parámetros de la ruta
+    this.routeSubscription = this.route.paramMap.subscribe(params => {
+      const slug = params.get('slug') ?? '';
+      if (slug && slug !== this.slug()) {
+        this.slug.set(slug);
+        // Recargar los datos del curso
+        this.reload();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    // Limpiar la suscripción para evitar memory leaks
+    if (this.routeSubscription) {
+      this.routeSubscription.unsubscribe();
+    }
   }
 }

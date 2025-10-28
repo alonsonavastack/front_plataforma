@@ -30,6 +30,14 @@ export class ProfileInstructorComponent {
   isSubmitting = signal(false);
   isPasswordSubmitting = signal(false);
 
+  // Señal para controlar la sección activa del perfil
+  activeSection = signal<'profile' | 'courses' | 'projects' | 'stats'>('profile');
+
+  // Método para cambiar la sección activa
+  setActiveSection(section: 'profile' | 'courses' | 'projects' | 'stats'): void {
+    this.activeSection.set(section);
+  }
+
   // Señal para el código de país seleccionado
   selectedCountryCode = signal('+52'); // Por defecto México
 

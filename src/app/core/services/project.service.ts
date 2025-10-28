@@ -123,7 +123,7 @@ export class ProjectService {
 
     effect(() => {
       reload();
-    }, { allowSignalWrites: true });
+    });
 
     return {
       projects: computed(() => state().projects),

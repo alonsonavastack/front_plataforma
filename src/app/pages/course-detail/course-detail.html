@@ -101,7 +101,7 @@
                 </div>
               }
               <div class="text-xs text-white/50">
-                Acceso de por vida • Actualizaciones incluidas • Certificado
+                Acceso de por vida • Actualizaciones incluidas
               </div>
             </div>
           </div>
@@ -167,37 +167,12 @@
 
   <!-- RESEÑAS -->
   <section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-    <h2 class="text-white/90 font-semibold mb-4">Reseñas</h2>
-    @if (isLoading()) {
-      <div class="grid sm:grid-cols-2 gap-4">
-        @for (i of [1,2,3,4]; track i) {
-          <div class="h-28 rounded-xl border border-white/10 bg-white/5 animate-pulse"></div>
-        }
-      </div>
-    } @else {
-      @if (reviews().length === 0) {
-        <div class="rounded-xl border border-white/10 bg-white/5 p-4 text-white/70">
-          Aún no hay reseñas.
-        </div>
-      } @else {
-        <div class="grid sm:grid-cols-2 gap-4">
-          @for (r of reviews(); track r._id) {
-            <div class="rounded-xl border border-white/10 bg-white/5 p-4 space-y-2">
-              <div class="flex items-center gap-3">
-                <img [src]="r.user_info?.avatar || 'https://i.pravatar.cc/48'"
-                     alt="avatar" class="w-8 h-8 rounded-full object-cover">
-                <div class="text-sm">
-                  <div class="text-white">{{ r.user_info?.full_name || 'Alumno' }}</div>
-                  <div class="text-white/50">{{ r.createdAt | date:'mediumDate' }}</div>
-                </div>
-                <div class="ml-auto text-lime-300 text-sm font-semibold">{{ r.rating }}/5</div>
-              </div>
-              <p class="text-sm text-white/80">{{ r.review }}</p>
-            </div>
-          }
-        </div>
-      }
-    }
+    <app-course-reviews
+      [productId]="course()?._id"
+      [productType]="'course'"
+      (reviewAdded)="onReviewAdded($event)"
+      (reviewUpdated)="onReviewUpdated($event)">
+    </app-course-reviews>
   </section>
 
   <!-- MÁS DEL INSTRUCTOR / RELACIONADOS -->
@@ -216,8 +191,8 @@
         } @else {
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             @for (c of moreFromInstructor(); track c._id) {
-              <a [routerLink]="['/course-detail', c.slug]"
-                 class="rounded-xl border border-white/10 bg-white/5 hover:border-lime-400/40 transition overflow-hidden">
+              <div (click)="navigateToCourse(c.slug)"
+                   class="rounded-xl border border-white/10 bg-white/5 hover:border-lime-400/40 transition overflow-hidden cursor-pointer">
                 <div class="relative">
                   <img [src]="c.imagen ? buildImage(c.imagen) : 'https://picsum.photos/seed/inst/600/360'"
                        [alt]="c.title" class="w-full h-32 object-cover border-b border-white/10">
@@ -236,7 +211,7 @@
                     }
                   </div>
                 </div>
-              </a>
+              </div>
             }
           </div>
         }
@@ -257,8 +232,8 @@
         } @else {
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             @for (c of relatedCourses(); track c._id) {
-              <a [routerLink]="['/course-detail', c.slug]"
-                 class="rounded-xl border border-white/10 bg-white/5 hover:border-lime-400/40 transition overflow-hidden">
+              <div (click)="navigateToCourse(c.slug)"
+                   class="rounded-xl border border-white/10 bg-white/5 hover:border-lime-400/40 transition overflow-hidden cursor-pointer">
                 <div class="relative">
                   <img [src]="c.imagen ? buildImage(c.imagen) : 'https://picsum.photos/seed/rel/600/360'"
                        [alt]="c.title" class="w-full h-32 object-cover border-b border-white/10">
@@ -277,7 +252,7 @@
                     }
                   </div>
                 </div>
-              </a>
+              </div>
             }
           </div>
         }

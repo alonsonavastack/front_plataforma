@@ -57,34 +57,55 @@ export class CarouselComponent implements AfterViewInit, OnDestroy {
       clearTimeout(this.initializationTimeout);
     }
 
-    // Esperamos a que el DOM esté completamente actualizado
-    this.initializationTimeout = setTimeout(() => {
-      try {
-        // Verificamos que el elemento del carousel exista en el DOM
-        const carouselElement = document.querySelector('[data-carousel="slide"]');
-        
-        if (!carouselElement) {
-          console.warn('Carousel element not found in DOM');
-          return;
-        }
+    // 🔧 FIX SAFARI: Usamos requestAnimationFrame para evitar parpadeo
+    // Safari necesita que las transiciones CSS se apliquen después del paint
+    requestAnimationFrame(() => {
+      // Esperamos un frame adicional para asegurar que Safari ha renderizado
+      requestAnimationFrame(() => {
+        this.initializationTimeout = setTimeout(() => {
+          try {
+            // Verificamos que el elemento del carousel exista en el DOM
+            const carouselElement = document.querySelector('[data-carousel="slide"]');
+            
+            if (!carouselElement) {
+              console.warn('Carousel element not found in DOM');
+              return;
+            }
 
-        // Verificamos que tenga items
-        const carouselItems = carouselElement.querySelectorAll('[data-carousel-item]');
-        if (carouselItems.length === 0) {
-          console.warn('No carousel items found');
-          return;
-        }
+            // 🔧 FIX SAFARI: Ocultamos temporalmente para evitar parpadeo
+            const carouselContainer = carouselElement as HTMLElement;
+            carouselContainer.style.opacity = '0';
 
-        // Inicializamos Flowbite solo si todo está correcto
-        if (typeof initFlowbite === 'function') {
-          initFlowbite();
-          this.isInitialized = true;
-          console.log('✅ Flowbite carousel initialized successfully');
-        }
-      } catch (error) {
-        console.warn('⚠️ Flowbite carousel initialization warning:', error);
-        // No lanzamos el error para no romper la aplicación
-      }
-    }, 300); // Delay suficiente para asegurar que el DOM esté renderizado
+            // Verificamos que tenga items
+            const carouselItems = carouselElement.querySelectorAll('[data-carousel-item]');
+            if (carouselItems.length === 0) {
+              console.warn('No carousel items found');
+              carouselContainer.style.opacity = '1';
+              return;
+            }
+
+            // Inicializamos Flowbite solo si todo está correcto
+            if (typeof initFlowbite === 'function') {
+              initFlowbite();
+              this.isInitialized = true;
+              
+              // 🔧 FIX SAFARI: Mostramos con fade suave después de inicializar
+              setTimeout(() => {
+                carouselContainer.style.transition = 'opacity 0.3s ease-in-out';
+                carouselContainer.style.opacity = '1';
+                console.log('✅ Flowbite carousel initialized (Safari-safe)');
+              }, 50);
+            }
+          } catch (error) {
+            console.warn('⚠️ Flowbite carousel initialization warning:', error);
+            // Aseguramos que el carousel sea visible incluso si falla
+            const carouselElement = document.querySelector('[data-carousel="slide"]') as HTMLElement;
+            if (carouselElement) {
+              carouselElement.style.opacity = '1';
+            }
+          }
+        }, 100); // Reducido de 300ms a 100ms con requestAnimationFrame
+      });
+    });
   }
 }

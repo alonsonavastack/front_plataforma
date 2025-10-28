@@ -23,10 +23,10 @@ export class CoursesComponent implements OnInit, OnDestroy {
   Math = Math;
 
   // 🔥 NUEVO: Signal para almacenar el estado de ventas y estudiantes de cada curso
-  courseSalesStatus = signal<Map<string, { 
-    hasSales: boolean; 
-    hasStudents: boolean; 
-    canDelete: boolean; 
+  courseSalesStatus = signal<Map<string, {
+    hasSales: boolean;
+    hasStudents: boolean;
+    canDelete: boolean;
     isChecking: boolean;
     saleCount?: number;
     studentCount?: number;
@@ -89,7 +89,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
   selectedCategoryName = computed(() => {
     const categoryId = this.categoryFilter();
     if (!categoryId) return null;
-    
+
     const category = this.coursesService.config().categories.find(
       c => c._id?.toString() === categoryId
     );
@@ -99,7 +99,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
   selectedInstructorName = computed(() => {
     const instructorId = this.instructorFilter();
     if (!instructorId) return null;
-    
+
     const instructor = this.coursesService.config().users.find(
       u => u._id?.toString() === instructorId
     );
@@ -271,7 +271,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
         // Usar setTimeout para ejecutar fuera del ciclo de detección de cambios
         setTimeout(() => this.checkCoursesSales(courses), 0);
       }
-    }, { allowSignalWrites: true });
+    });
   }
 
   ngOnInit(): void {
@@ -376,18 +376,18 @@ export class CoursesComponent implements OnInit, OnDestroy {
     console.log('=====================================');
     console.log('Curso:', course.title);
     console.log('ID:', course._id);
-    
+
     // Obtener estado de ventas y estudiantes del curso
     const salesStatus = this.courseSalesStatus().get(course._id);
     console.log('Estado de ventas/estudiantes:', salesStatus);
-    
+
     // VALIDACIÓN 1: Verificar si aún se está checando
     if (!salesStatus || salesStatus.isChecking) {
       console.log('⏳ Aún verificando estado...');
       alert('⏳ Por favor espera, estamos verificando el estado del curso...');
       return;
     }
-    
+
     // VALIDACIÓN 2: Si tiene ventas, bloquear eliminación
     if (salesStatus.hasSales) {
       console.log('🚫 BLOQUEADO: Curso tiene ventas');
@@ -424,7 +424,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
       `- Todos los archivos asociados\n\n` +
       `Esta acción es permanente y no se puede deshacer.`
     );
-    
+
     if (!confirmDelete) {
       console.log('❌ Usuario canceló la eliminación');
       return;
@@ -436,12 +436,12 @@ export class CoursesComponent implements OnInit, OnDestroy {
       next: (response: any) => {
         console.log('📬 Respuesta del backend:', response);
         console.log('=====================================\n');
-        
+
         // Verificar si el backend bloqueó por ventas o estudiantes
         if (response.code === 403) {
           console.warn('⚠️ Backend bloqueó: Curso tiene ventas o estudiantes');
           alert(`🚫 ${response.message}`);
-        } 
+        }
         // Eliminación exitosa
         else if (response.code === 200 || response.message?.includes('ELIMINÓ')) {
           console.log('✅ Curso eliminado exitosamente');
@@ -458,7 +458,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('❌ ERROR al eliminar:', error);
         console.log('=====================================\n');
-        
+
         const errorMsg = error.error?.message || 'Error al eliminar el curso';
         alert(`❌ ${errorMsg}`);
       }
@@ -478,19 +478,19 @@ export class CoursesComponent implements OnInit, OnDestroy {
 
     // Obtener estado de ventas del Map
     const salesStatus = this.courseSalesStatus().get(course._id);
-    
+
     // Si aún se está verificando, no mostrar botón activo
     if (!salesStatus || salesStatus.isChecking) {
       return false;
     }
-    
+
     // 🔒 VALIDACIÓN CRÍTICA: Si tiene ventas o estudiantes, NADIE puede eliminar
     if (salesStatus.hasSales || salesStatus.hasStudents) {
       return false;
     }
 
     // Si NO tiene ventas ni estudiantes, verificar permisos de usuario:
-    
+
     // 1. Admin puede eliminar cualquier curso (sin ventas ni estudiantes)
     if (user.rol === 'admin') {
       return true;
@@ -512,42 +512,42 @@ export class CoursesComponent implements OnInit, OnDestroy {
    */
   private checkCoursesSales(courses: CourseAdmin[]): void {
     console.log('🔍 Verificando ventas y estudiantes de', courses.length, 'cursos...');
-    
+
     if (courses.length === 0) {
       console.log('⚠️ No hay cursos para verificar');
       return;
     }
-    
+
     // Inicializar TODOS los cursos como "verificando"
-    const statusMap = new Map<string, { 
-      hasSales: boolean; 
-      hasStudents: boolean; 
-      canDelete: boolean; 
+    const statusMap = new Map<string, {
+      hasSales: boolean;
+      hasStudents: boolean;
+      canDelete: boolean;
       isChecking: boolean;
       saleCount?: number;
       studentCount?: number;
     }>();
-    
+
     courses.forEach(course => {
-      statusMap.set(course._id, { 
-        hasSales: false, 
-        hasStudents: false, 
-        canDelete: false, 
-        isChecking: true 
+      statusMap.set(course._id, {
+        hasSales: false,
+        hasStudents: false,
+        canDelete: false,
+        isChecking: true
       });
     });
-    
+
     // Forzar actualización inicial
     this.courseSalesStatus.set(new Map(statusMap));
     console.log('📊 Estado inicial (todos verificando):', statusMap.size, 'cursos');
-    
+
     // Verificar cada curso individualmente
     let completed = 0;
     const total = courses.length;
-    
+
     courses.forEach((course, index) => {
       console.log(`🔎 [${index + 1}/${total}] Verificando: "${course.title}" (ID: ${course._id})`);
-      
+
       this.coursesService.checkSales(course._id).subscribe({
         next: (response) => {
           console.log(`✅ [${index + 1}/${total}] "${course.title}":`, {
@@ -557,7 +557,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
             saleCount: response.saleCount || 0,
             studentCount: response.studentCount || 0
           });
-          
+
           // Actualizar el estado de este curso específico
           statusMap.set(course._id, {
             hasSales: response.hasSales,
@@ -567,14 +567,14 @@ export class CoursesComponent implements OnInit, OnDestroy {
             saleCount: response.saleCount,
             studentCount: response.studentCount
           });
-          
+
           completed++;
-          
+
           // CRÍTICO: Crear NUEVO Map para forzar detección de cambios en Angular
           this.courseSalesStatus.set(new Map(statusMap));
-          
+
           console.log(`📈 Progreso: ${completed}/${total} verificados`);
-          
+
           if (completed === total) {
             console.log('✅ ¡Verificación completada!\n', '📋 Resumen:');
             statusMap.forEach((status, courseId) => {
@@ -586,20 +586,20 @@ export class CoursesComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error(`❌ [${index + 1}/${total}] Error al verificar "${course.title}":`, err);
-          
+
           // En caso de error, asumir que tiene ventas/estudiantes (por seguridad)
-          statusMap.set(course._id, { 
+          statusMap.set(course._id, {
             hasSales: true,  // Por seguridad
             hasStudents: true, // Por seguridad
-            canDelete: false, 
-            isChecking: false 
+            canDelete: false,
+            isChecking: false
           });
-          
+
           completed++;
-          
+
           // CRÍTICO: Crear NUEVO Map
           this.courseSalesStatus.set(new Map(statusMap));
-          
+
           if (completed === total) {
             console.log('⚠️ Verificación completada con errores');
           }

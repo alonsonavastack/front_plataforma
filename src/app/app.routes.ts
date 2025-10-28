@@ -42,6 +42,14 @@ export const routes: Routes = [
     canActivate: [roleGuard(["admin"])],
   },
   {
+    path: "admin-bank-verification",
+    loadComponent: () =>
+      import("./pages/admin-bank-verification/admin-bank-verification").then(
+        (m) => m.AdminBankVerificationComponent
+      ),
+    canActivate: [roleGuard(["admin"])],
+  },
+  {
     path: "login",
     loadComponent: () =>
       import("./pages/auth/login").then((m) => m.LoginComponent),

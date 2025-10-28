@@ -9,7 +9,6 @@ import { AuthService } from "../../core/services/auth";
 import { CartService } from "../../core/services/cart.service";
 
 import { CourseCardComponent } from "../../shared/course-card/course-card";
-import { PillFilterComponent } from "../../shared/pill-filter/pill-filter";
 import { environment } from "../../../environments/environment";
 import { HeaderComponent } from "../../layout/header/header";
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
@@ -36,7 +35,6 @@ import { PurchasesService } from "../../core/services/purchases.service";
   imports: [
     CommonModule,
     CourseCardComponent,
-    PillFilterComponent,
     HeaderComponent,
     ProjectsCard,
     CarouselComponent,
@@ -572,6 +570,38 @@ export class HomeComponent implements OnInit {
     event.stopPropagation();
     if (course.slug) {
       this.router.navigate(["/course-detail", course.slug]);
+    }
+  }
+
+  // Métodos para el carrusel de cursos destacados
+  scrollFeaturedCourses(direction: 'left' | 'right'): void {
+    const container = document.getElementById('featured-courses-carousel');
+    if (container) {
+      const scrollAmount = 350; // px a desplazar
+      const scrollTo = direction === 'right'
+        ? container.scrollLeft + scrollAmount
+        : container.scrollLeft - scrollAmount;
+
+      container.scrollTo({
+        left: scrollTo,
+        behavior: 'smooth'
+      });
+    }
+  }
+
+  // Métodos para el carrusel de proyectos destacados
+  scrollFeaturedProjects(direction: 'left' | 'right'): void {
+    const container = document.getElementById('featured-projects-carousel');
+    if (container) {
+      const scrollAmount = 350; // px a desplazar
+      const scrollTo = direction === 'right'
+        ? container.scrollLeft + scrollAmount
+        : container.scrollLeft - scrollAmount;
+
+      container.scrollTo({
+        left: scrollTo,
+        behavior: 'smooth'
+      });
     }
   }
 }

@@ -72,4 +72,19 @@
       -webkit-overflow-scrolling: touch;
     }
   }
+
+  /* Ocultar scrollbar pero mantener scroll funcional */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+
+  /* Animación para los botones del carrusel */
+  .arrow-button {
+    backdrop-blur: 8px;
+  }
 }
