@@ -4,6 +4,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SettingsService, Setting } from '../../core/services/settings.service';
 
+interface GroupInfo {
+  key: string;
+  title: string;
+  icon: string;
+}
+
 @Component({
   selector: 'app-global-settings',
   standalone: true,
@@ -27,7 +33,7 @@ export class GlobalSettingsComponent implements OnInit {
   localSettings = signal<{ [key: string]: any }>({});
 
   // Lista de grupos disponibles
-  availableGroups = computed(() => {
+  availableGroups = computed<GroupInfo[]>(() => {
     return this.groupedSettings().map(g => ({
       key: g.group,
       title: g.title,
@@ -57,29 +63,29 @@ export class GlobalSettingsComponent implements OnInit {
     this.loadSettings();
   }
 
-  loadSettings() {
+  loadSettings(): void {
     this.settingsService.loadGlobalSettings().subscribe({
-      next: (res) => {
+      next: (res: any) => {
         // Inicializar localSettings con los valores actuales
         const settingsMap: { [key: string]: any } = {};
-        res.settings.forEach(s => {
+        res.settings.forEach((s: Setting) => {
           settingsMap[s.key] = s.value;
         });
         this.localSettings.set(settingsMap);
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error cargando settings:', err);
       }
     });
   }
 
-  setActiveTab(group: string) {
+  setActiveTab(group: string): void {
     this.activeTab.set(group);
     this.saveSuccess.set(false);
     this.saveError.set(null);
   }
 
-  onInputChange(key: string, value: any, type: string) {
+  onInputChange(key: string, value: any, type: string): void {
     // Convertir el valor según el tipo
     let convertedValue = value;
     
@@ -98,7 +104,7 @@ export class GlobalSettingsComponent implements OnInit {
     }));
   }
 
-  saveSettings() {
+  saveSettings(): void {
     this.isSaving.set(true);
     this.saveSuccess.set(false);
     this.saveError.set(null);
@@ -111,7 +117,7 @@ export class GlobalSettingsComponent implements OnInit {
     }));
 
     this.settingsService.updateSettings(settingsToUpdate).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.isSaving.set(false);
         this.saveSuccess.set(true);
         
@@ -120,7 +126,7 @@ export class GlobalSettingsComponent implements OnInit {
           this.saveSuccess.set(false);
         }, 3000);
       },
-      error: (err) => {
+      error: (err: any) => {
         this.isSaving.set(false);
         this.saveError.set(err.error?.message || 'Error al guardar los settings');
         console.error('Error saving settings:', err);
@@ -128,17 +134,17 @@ export class GlobalSettingsComponent implements OnInit {
     });
   }
 
-  initializeDefaults() {
+  initializeDefaults(): void {
     if (!confirm('¿Estás seguro de que quieres inicializar los settings por defecto? Esto creará los settings que no existan.')) {
       return;
     }
 
     this.settingsService.initializeDefaults().subscribe({
-      next: (res) => {
+      next: (res: any) => {
         alert(`Settings inicializados: ${res.count} settings creados/actualizados`);
         this.loadSettings();
       },
-      error: (err) => {
+      error: (err: any) => {
         alert('Error al inicializar settings');
         console.error(err);
       }

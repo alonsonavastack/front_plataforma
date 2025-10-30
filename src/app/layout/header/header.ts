@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
 import { AnimateService } from '../../core/animate.service';
 import { CartService } from '../../core/services/cart.service';
+import { SystemConfigService } from '../../core/services/system-config.service'; // 🔥 NUEVO
 import { initFlowbite } from 'flowbite';
 import { environment } from '../../../environments/environment.development';
 
@@ -19,10 +20,30 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   cartService = inject(CartService);
   router = inject(Router);
   animate = inject(AnimateService);
+  systemConfigService = inject(SystemConfigService); // 🔥 NUEVO
 
   @ViewChild('headerElement') headerEl!: ElementRef<AnimationCallbackEvent>;
 
-  constructor() {}
+  // 🔥 NUEVO: Computed signals para configuración del sistema
+  siteName = computed(() => this.systemConfigService.config()?.siteName || 'Dev-Sharks');
+  siteLogo = computed(() => {
+    const logo = this.systemConfigService.config()?.logo;
+    return logo ? `${environment.url}system-config/logo/${logo}` : null;
+  });
+
+  constructor() {
+    // 🔥 NUEVO: Cargar configuración al iniciar
+    this.systemConfigService.getConfig();
+
+    // 🔍 DEBUG: Verificar qué valor tiene siteName
+    effect(() => {
+      const name = this.siteName();
+      const config = this.systemConfigService.config();
+      console.log('🔍 [HeaderComponent] siteName:', name);
+      console.log('🔍 [HeaderComponent] config completo:', config);
+      console.log('🔍 [HeaderComponent] config.siteName:', config?.siteName);
+    });
+  }
 
   ngAfterViewInit(): void {
     if (this.headerEl) {

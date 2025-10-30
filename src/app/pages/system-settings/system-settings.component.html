@@ -1,0 +1,136 @@
+<div class="min-h-screen bg-slate-900 p-6">
+  <div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+        <span>⚙️</span>
+        <span>Configuración del Sistema</span>
+      </h1>
+      <p class="text-slate-400">
+        Administra la información básica, contacto y redes sociales de tu plataforma
+      </p>
+    </div>
+
+    <!-- Mensaje de éxito -->
+    @if (showSuccess()) {
+      <div class="mb-6 p-4 bg-green-500/20 border border-green-500/50 rounded-lg flex items-center gap-3 animate-pulse">
+        <span class="text-2xl">✅</span>
+        <div>
+          <p class="text-green-400 font-medium">Configuración guardada exitosamente</p>
+          <p class="text-green-300/70 text-sm">Los cambios se han aplicado correctamente</p>
+        </div>
+      </div>
+    }
+
+    <!-- Tabs de Navegación -->
+    <div class="mb-6 bg-slate-800 rounded-lg p-1 border border-white/10">
+      <div class="flex gap-1">
+        <button
+          (click)="setActiveTab('basic')"
+          [class.bg-lime-500]="activeTab() === 'basic'"
+          [class.text-slate-900]="activeTab() === 'basic'"
+          [class.text-slate-300]="activeTab() !== 'basic'"
+          [class.hover:bg-slate-700]="activeTab() !== 'basic'"
+          class="flex-1 px-4 py-3 rounded-lg font-medium transition-all"
+        >
+          🏢 Información Básica
+        </button>
+        
+        <button
+          (click)="setActiveTab('contact')"
+          [class.bg-lime-500]="activeTab() === 'contact'"
+          [class.text-slate-900]="activeTab() === 'contact'"
+          [class.text-slate-300]="activeTab() !== 'contact'"
+          [class.hover:bg-slate-700]="activeTab() !== 'contact'"
+          class="flex-1 px-4 py-3 rounded-lg font-medium transition-all"
+        >
+          📞 Contacto
+        </button>
+        
+        <button
+          (click)="setActiveTab('social')"
+          [class.bg-lime-500]="activeTab() === 'social'"
+          [class.text-slate-900]="activeTab() === 'social'"
+          [class.text-slate-300]="activeTab() !== 'social'"
+          [class.hover:bg-slate-700]="activeTab() !== 'social'"
+          class="flex-1 px-4 py-3 rounded-lg font-medium transition-all"
+        >
+          🌐 Redes Sociales
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="bg-slate-800 rounded-lg p-12 border border-white/10">
+        <div class="flex flex-col items-center justify-center gap-4">
+          <div class="animate-spin rounded-full h-12 w-12 border-4 border-slate-700 border-t-lime-400"></div>
+          <p class="text-slate-400">Cargando configuración...</p>
+        </div>
+      </div>
+    } @else {
+      <!-- Formulario -->
+      <form [formGroup]="configForm" (ngSubmit)="onSubmit()">
+        <!-- Tab: Información Básica -->
+        @if (activeTab() === 'basic') {
+          <app-basic-info
+            [form]="configForm"
+            [systemConfigService]="systemConfigService"
+          />
+        }
+
+        <!-- Tab: Contacto -->
+        @if (activeTab() === 'contact') {
+          <app-contact-info [form]="configForm" />
+        }
+
+        <!-- Tab: Redes Sociales -->
+        @if (activeTab() === 'social') {
+          <app-social-media [form]="configForm" />
+        }
+
+        <!-- Botones de Acción -->
+        <div class="mt-8 flex justify-end gap-4">
+          <button
+            type="button"
+            (click)="loadConfig()"
+            [disabled]="isSaving()"
+            class="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            🔄 Recargar
+          </button>
+
+          <button
+            type="submit"
+            [disabled]="!isFormValid() || isSaving()"
+            class="px-8 py-3 bg-lime-500 hover:bg-lime-600 text-slate-900 font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            @if (isSaving()) {
+              <div class="animate-spin rounded-full h-5 w-5 border-2 border-slate-900 border-t-transparent"></div>
+              <span>Guardando...</span>
+            } @else {
+              <span>💾</span>
+              <span>Guardar Cambios</span>
+            }
+          </button>
+        </div>
+      </form>
+    }
+
+    <!-- Info Card -->
+    <div class="mt-8 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+      <div class="flex gap-3">
+        <span class="text-2xl">💡</span>
+        <div class="flex-1">
+          <p class="text-blue-300 font-medium mb-1">Consejos de configuración</p>
+          <ul class="text-sm text-blue-200/80 space-y-1">
+            <li>• El <strong>nombre del sitio</strong> aparecerá en el título de todas las páginas</li>
+            <li>• El <strong>logo</strong> se mostrará en el header y emails</li>
+            <li>• El <strong>email principal</strong> recibirá notificaciones importantes del sistema</li>
+            <li>• Las <strong>redes sociales</strong> aparecerán en el footer de tu sitio</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

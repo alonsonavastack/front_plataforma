@@ -4,6 +4,9 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
 import { AnimateService } from '../../core/animate.service';
 import { NotificationsService } from '../../core/services/notifications.service';
+import { BankNotificationsService } from '../../core/services/bank-notifications.service';
+import { ReviewNotificationsService } from '../../core/services/review-notifications.service';
+import { SystemConfigService } from '../../core/services/system-config.service'; // 🔥 NUEVO
 import { ClickOutsideDirective } from '../../shared/directives/click-outside.directive';
 import { initFlowbite } from 'flowbite';
 
@@ -18,6 +21,9 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
   router = inject(Router);
   animate = inject(AnimateService);
   notificationsService = inject(NotificationsService);
+  bankNotificationsService = inject(BankNotificationsService);
+  reviewNotificationsService = inject(ReviewNotificationsService);
+  systemConfigService = inject(SystemConfigService); // 🔥 NUEVO
   
   isSidebarCollapsed = input.required<boolean>();
   toggleSidebar = output(); // Making this optional
@@ -25,8 +31,14 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
   // Lógica para el menú de perfil
   isProfileMenuOpen = signal(false);
   
-  // Lógica para el menú de notificaciones
+  // Lógica para el menú de notificaciones de ventas
   isNotificationsMenuOpen = signal(false);
+  
+  // Lógica para el menú de notificaciones bancarias
+  isBankNotificationsMenuOpen = signal(false);
+  
+  // Lógica para el menú de notificaciones de reviews (instructores)
+  isReviewNotificationsMenuOpen = signal(false);
   
   toggleProfileMenu() {
     this.isProfileMenuOpen.update(v => !v);
@@ -38,18 +50,46 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
   
   toggleNotificationsMenu() {
     this.isNotificationsMenuOpen.update(v => !v);
-    // Cerrar perfil si está abierto
-    if (this.isProfileMenuOpen()) {
-      this.isProfileMenuOpen.set(false);
-    }
+    // Cerrar otros menús
+    if (this.isProfileMenuOpen()) this.isProfileMenuOpen.set(false);
+    if (this.isBankNotificationsMenuOpen()) this.isBankNotificationsMenuOpen.set(false);
+    
     // Cargar notificaciones cuando se abre el menú
     if (this.isNotificationsMenuOpen()) {
-      console.log('🔔 Abriendo menú de notificaciones');
+      console.log('🔔 Abriendo menú de notificaciones de ventas');
       this.notificationsService.loadNotifications().subscribe({
         next: () => console.log('✅ Notificaciones cargadas al abrir menú'),
         error: (err) => console.error('❌ Error al cargar notificaciones:', err)
       });
       this.notificationsService.markAllAsRead();
+    }
+  }
+  
+  toggleBankNotificationsMenu() {
+    this.isBankNotificationsMenuOpen.update(v => !v);
+    // Cerrar otros menús
+    if (this.isProfileMenuOpen()) this.isProfileMenuOpen.set(false);
+    if (this.isNotificationsMenuOpen()) this.isNotificationsMenuOpen.set(false);
+    if (this.isReviewNotificationsMenuOpen()) this.isReviewNotificationsMenuOpen.set(false);
+    
+    // Cargar notificaciones bancarias cuando se abre el menú
+    if (this.isBankNotificationsMenuOpen()) {
+      console.log('🏦 Abriendo menú de notificaciones bancarias');
+      this.bankNotificationsService.loadNotifications();
+    }
+  }
+  
+  toggleReviewNotificationsMenu() {
+    this.isReviewNotificationsMenuOpen.update(v => !v);
+    // Cerrar otros menús
+    if (this.isProfileMenuOpen()) this.isProfileMenuOpen.set(false);
+    if (this.isNotificationsMenuOpen()) this.isNotificationsMenuOpen.set(false);
+    if (this.isBankNotificationsMenuOpen()) this.isBankNotificationsMenuOpen.set(false);
+    
+    // Cargar notificaciones de reviews cuando se abre el menú
+    if (this.isReviewNotificationsMenuOpen()) {
+      console.log('💬 Abriendo menú de notificaciones de reviews');
+      this.reviewNotificationsService.loadNotifications();
     }
   }
   
@@ -59,6 +99,23 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
       next: () => console.log('✅ Notificaciones recargadas exitosamente'),
       error: (err) => console.error('❌ Error al recargar notificaciones:', err)
     });
+  }
+  
+  /**
+   * 🔥 NUEVO: Marcar todas las notificaciones de reviews como leídas
+   */
+  markAllReviewsAsRead() {
+    console.log('🧹 Marcando todas las notificaciones de reviews como leídas...');
+    
+    if (confirm('¿Estás seguro de marcar todas las reviews como leídas? Esta acción no se puede deshacer.')) {
+      this.reviewNotificationsService.markAllAsRead();
+      
+      // Mostrar feedback al usuario
+      console.log('✅ Todas las notificaciones marcadas como leídas');
+      
+      // Opcional: Cerrar el menú
+      // this.isReviewNotificationsMenuOpen.set(false);
+    }
   }
 
   /**
@@ -81,26 +138,40 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit(): void {
+    // 🔥 Cargar configuración del sistema
+    this.systemConfigService.getConfig();
+    
     const user = this.authService.user();
     
-    // Solo conectar WebSocket si es admin
+    // Admin: WebSocket ventas + Polling bancario
     if (user?.rol === 'admin') {
-      console.log('👨‍💼 Usuario admin detectado, iniciando WebSocket...');
-      this.notificationsService.startWebSocket(user._id, user.rol);
+      console.log('👨‍💼 Usuario admin detectado, iniciando servicios...');
       
-      // Cargar notificaciones iniciales via HTTP
+      // Iniciar notificaciones de ventas (WebSocket)
+      this.notificationsService.startWebSocket(user._id, user.rol);
       this.notificationsService.loadNotifications().subscribe({
-        next: () => console.log('✅ Notificaciones iniciales cargadas'),
-        error: (err) => console.error('❌ Error al cargar notificaciones iniciales:', err)
+        next: () => console.log('✅ Notificaciones de ventas cargadas'),
+        error: (err) => console.error('❌ Error al cargar notificaciones de ventas:', err)
       });
+      
+      // Iniciar notificaciones bancarias (Polling)
+      this.bankNotificationsService.startPolling();
+    }
+    
+    // Instructor: Polling de reviews sin respuesta
+    if (user?.rol === 'instructor') {
+      console.log('👨‍🏫 Usuario instructor detectado, iniciando notificaciones de reviews...');
+      this.reviewNotificationsService.startPolling();
     }
   }
   
   ngOnDestroy(): void {
     // Desconectar WebSocket y limpiar notificaciones al destruir el componente
-    console.log('🛑 Componente destruido, deteniendo WebSocket...');
+    console.log('🛑 Componente destruido, deteniendo servicios...');
     this.notificationsService.stopWebSocket();
     this.notificationsService.clearNotifications();
+    this.bankNotificationsService.stopPolling();
+    this.reviewNotificationsService.stopPolling();
   }
 
   logout() {

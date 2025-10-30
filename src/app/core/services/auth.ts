@@ -15,6 +15,30 @@ export interface User {
   phone?: string;
   profession?: string;
   description?: string;
+  // ✅ REDES SOCIALES (campos planos desde el backend)
+  facebook?: string;
+  instagram?: string;
+  youtube?: string;
+  tiktok?: string;
+  twitch?: string;
+  website?: string;
+  discord?: string;
+  linkedin?: string;
+  twitter?: string;
+  github?: string;
+  // ✅ REDES SOCIALES (objeto anidado - legacy)
+  socialMedia?: {
+    facebook?: string;
+    instagram?: string;
+    youtube?: string;
+    tiktok?: string;
+    twitch?: string;
+    website?: string;
+    discord?: string;
+    linkedin?: string;
+    twitter?: string;
+    github?: string;
+  };
 }
 
 interface LoginResponse {
@@ -217,13 +241,13 @@ export class AuthService {
   logout() {
     this.token.set(null);
     this.user.set(null);
-    
+
     // Limpiar las compras al cerrar sesión
     import('./purchases.service').then(module => {
       const purchasesService = this.injector.get(module.PurchasesService);
       purchasesService.clearPurchases();
     });
-    
+
     this.router.navigate(['/']);
   }
 

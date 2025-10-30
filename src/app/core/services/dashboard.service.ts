@@ -11,6 +11,7 @@ export interface Kpi {
   value: number;
   delta: number;
   isPct?: boolean;
+  isCurrency?: boolean; // 🔥 NUEVO: Para identificar si es dinero
 }
 
 export interface MonthlyIncome {

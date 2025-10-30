@@ -1,0 +1,62 @@
+<div class="bg-slate-800 rounded-lg p-6 border border-white/10">
+  <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+    <span>📞</span>
+    <span>Información de Contacto</span>
+  </h3>
+
+  <div class="space-y-6" [formGroup]="form">
+    <!-- Email Principal -->
+    <div>
+      <label class="block text-sm font-medium text-slate-300 mb-2">
+        Email Principal <span class="text-red-400">*</span>
+      </label>
+      <input
+        type="email"
+        formControlName="email"
+        placeholder="contacto@Dev-Sharks.com"
+        class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent"
+      />
+      @if (form.get('email')?.invalid && form.get('email')?.touched) {
+        <p class="mt-1 text-sm text-red-400">Por favor ingresa un email válido</p>
+      }
+      <p class="mt-1 text-xs text-slate-400">
+        Email principal de contacto de la plataforma
+      </p>
+    </div>
+
+    <!-- Teléfono -->
+    <div>
+      <label class="block text-sm font-medium text-slate-300 mb-2">
+        Teléfono
+      </label>
+      <input
+        type="tel"
+        formControlName="phone"
+        placeholder="+52 123 456 7890"
+        class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent"
+      />
+      <p class="mt-1 text-xs text-slate-400">
+        Teléfono de contacto (opcional)
+      </p>
+    </div>
+
+    <!-- Email de Soporte -->
+    <div>
+      <label class="block text-sm font-medium text-slate-300 mb-2">
+        Email de Soporte
+      </label>
+      <input
+        type="email"
+        formControlName="supportEmail"
+        placeholder="soporte@Dev-Sharks.com"
+        class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent"
+      />
+      @if (form.get('supportEmail')?.invalid && form.get('supportEmail')?.touched) {
+        <p class="mt-1 text-sm text-red-400">Por favor ingresa un email válido</p>
+      }
+      <p class="mt-1 text-xs text-slate-400">
+        Email dedicado para soporte técnico (opcional)
+      </p>
+    </div>
+  </div>
+</div>

@@ -11,6 +11,7 @@ import { CartService } from "../../core/services/cart.service";
 import { CourseCardComponent } from "../../shared/course-card/course-card";
 import { environment } from "../../../environments/environment";
 import { HeaderComponent } from "../../layout/header/header";
+import { FooterComponent } from "../../layout/footer/footer"; // 🔥 NUEVO
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
 import {
   Component,
@@ -28,6 +29,9 @@ import { DiscountService } from "../../core/services/discount.service";
 import { SearchService } from "../../core/services/search";
 import { CarouselComponent } from "../carousel/carousel.component";
 import { PurchasesService } from "../../core/services/purchases.service";
+import { InstructorCardComponent, Instructor } from '../../shared/instructor-card/instructor-card.component';
+import { HttpClient } from '@angular/common/http';
+import { SystemConfigService } from '../../core/services/system-config.service';
 
 @Component({
   standalone: true,
@@ -36,8 +40,10 @@ import { PurchasesService } from "../../core/services/purchases.service";
     CommonModule,
     CourseCardComponent,
     HeaderComponent,
+    FooterComponent, // 🔥 NUEVO
     ProjectsCard,
     CarouselComponent,
+    InstructorCardComponent,
   ],
   templateUrl: "./home.html",
 })
@@ -52,6 +58,41 @@ export class HomeComponent implements OnInit {
   discountService = inject(DiscountService);
   searchService = inject(SearchService);
   purchasesService = inject(PurchasesService);
+  private http = inject(HttpClient);
+  systemConfigService = inject(SystemConfigService);
+
+  // Signals para instructores
+  instructors = signal<Instructor[]>([]);
+  searchInstructorTerm = signal<string>('');
+
+  // 🔥 System Config
+  systemConfig = computed(() => this.systemConfigService.config());
+  systemLogo = computed(() => {
+    const config = this.systemConfig();
+    if (config?.logo) {
+      return this.systemConfigService.buildLogoUrl(config.logo);
+    }
+    return 'assets/images/logo-default.png'; // Fallback
+  });
+  systemName = computed(() => {
+    const config = this.systemConfig();
+    return config?.siteName || 'Dev-Sharks';
+  });
+
+  // Computed para filtrar instructores
+  filteredInstructors = computed(() => {
+    const search = this.searchInstructorTerm().toLowerCase().trim();
+    const all = this.instructors();
+
+    if (!search) return all;
+
+    return all.filter(instructor => {
+      const name = `${instructor.name} ${instructor.surname}`.toLowerCase();
+      const profession = (instructor.profession || '').toLowerCase();
+
+      return name.includes(search) || profession.includes(search);
+    });
+  });
 
   // ---------- UI state ----------
   q = signal<string>("");
@@ -269,6 +310,17 @@ export class HomeComponent implements OnInit {
         console.log("Descuentos activos (arreglo completo):", discounts);
       }
     });
+    // 🔍 DEBUG: Estado de instructores
+    effect(() => {
+      console.log('🔍 [EFFECT] Estado de Instructores:', {
+        isLoading: this.isLoading(),
+        total: this.instructors().length,
+        filtered: this.filteredInstructors().length,
+        searchTerm: this.searchInstructorTerm(),
+        condition: !this.isLoading() && this.instructors().length > 0,
+        instructors: this.instructors()
+      });
+    });
   }
 
   // ---------- Error-safe helpers ----------
@@ -430,6 +482,9 @@ export class HomeComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // 🔥 Cargar configuración del sistema PRIMERO
+    this.systemConfigService.getConfig();
+
     this.api.reloadHome();
     this.api.reloadAllCourses();
     this.api.reloadAllProjects();
@@ -438,6 +493,7 @@ export class HomeComponent implements OnInit {
       this.purchasesService.loadPurchasedProducts();
     }
     this.categoriesService.reload();
+    this.loadInstructors();
   }
 
   // ---------- Handlers de búsqueda ----------
@@ -603,5 +659,60 @@ export class HomeComponent implements OnInit {
         behavior: 'smooth'
       });
     }
+  }
+
+  // ========== MÉTODOS PARA INSTRUCTORES ==========
+
+  /**
+   * Cargar lista de instructores
+   */
+  private loadInstructors(): void {
+    console.log('🔍 [DEBUG] Iniciando carga de instructores...');
+    this.http.get<any>(`${environment.url}users/list-instructors`)
+      .subscribe({
+        next: (response) => {
+          console.log('✅ Instructores cargados:', response);
+          console.log('📊 Cantidad:', response.users?.length || 0);
+          this.instructors.set(response.users || []);
+          console.log('📊 Signal actualizado:', this.instructors());
+        },
+        error: (error) => {
+          console.error('❌ Error cargando instructores:', error);
+          console.error('📍 URL intentada:', `${environment.url}users/list-instructors`);
+        }
+      });
+  }
+
+  /**
+   * Scroll del carrusel de instructores
+   */
+  scrollInstructors(direction: 'left' | 'right'): void {
+    const carousel = document.getElementById('instructors-carousel');
+    if (!carousel) return;
+
+    const scrollAmount = 340; // Ancho de card + gap
+    const targetScroll = direction === 'left'
+      ? carousel.scrollLeft - scrollAmount
+      : carousel.scrollLeft + scrollAmount;
+
+    carousel.scrollTo({
+      left: targetScroll,
+      behavior: 'smooth'
+    });
+  }
+
+  /**
+   * Buscar instructores
+   */
+  onSearchInstructor(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.searchInstructorTerm.set(input.value);
+  }
+
+  /**
+   * Limpiar búsqueda de instructores
+   */
+  clearInstructorSearch(): void {
+    this.searchInstructorTerm.set('');
   }
 }

@@ -15,7 +15,7 @@ export type NavId =
   | 'admin-payment-history'
   | 'admin-commission-settings'
   | 'admin-bank-verification'
-  | 'instructor-earnings'
+  | 'instructor-earnings' | 'system-settings'
   | 'instructor-payment-history'
   | 'instructor-payment-config';
 

@@ -1,4 +1,4 @@
-import { Component, inject, effect, signal, computed } from "@angular/core";
+import { Component, inject, effect, signal, computed, OnInit, ChangeDetectorRef } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { HttpClient } from "@angular/common/http";
 import {
@@ -22,10 +22,11 @@ import { environment } from "../../../environments/environment";
   imports: [CommonModule, HeaderComponent, ReactiveFormsModule, CountryCodeSelectorComponent],
   templateUrl: "./profile-instructor.html",
 })
-export class ProfileInstructorComponent {
+export class ProfileInstructorComponent implements OnInit {
   authService = inject(AuthService);
   profileService = inject(ProfileService); // Para actualizar
   http = inject(HttpClient);
+  private cdr = inject(ChangeDetectorRef); // 🔥 Para forzar detección de cambios
 
   isSubmitting = signal(false);
   isPasswordSubmitting = signal(false);
@@ -48,6 +49,17 @@ export class ProfileInstructorComponent {
     phone: new FormControl(""),
     profession: new FormControl(""),
     description: new FormControl(""),
+    // ✅ REDES SOCIALES (OPCIONALES)
+    facebook: new FormControl(""),
+    instagram: new FormControl(""),
+    youtube: new FormControl(""),
+    tiktok: new FormControl(""),
+    twitch: new FormControl(""),
+    website: new FormControl(""),
+    discord: new FormControl(""),
+    linkedin: new FormControl(""),
+    twitter: new FormControl(""),
+    github: new FormControl(""),
   });
 
   // Formulario para cambiar la contraseña
@@ -79,10 +91,11 @@ export class ProfileInstructorComponent {
   });
 
   constructor() {
-    // Rellenar formulario cuando los datos lleguen
-    // Ahora usamos el `user` signal directamente desde AuthService
+    // 🔥 Rellenar formulario cuando los datos lleguen o cambien
     effect(() => {
       const profileData = this.authService.user();
+
+      console.log('🔄 [ProfileInstructor] Effect ejecutándose - Usuario actual:', profileData);
 
       if (profileData?.email) {
         // Separar código de país del número de teléfono
@@ -90,7 +103,6 @@ export class ProfileInstructorComponent {
         let countryCode = '+52'; // Por defecto México
 
         if (phoneNumber && phoneNumber.startsWith('+')) {
-          // Buscar el código de país más largo que coincida
           const possibleCodes = ['+52', '+1', '+34', '+54', '+57', '+51', '+56', '+58', '+593', '+502', '+53', '+591', '+504', '+595', '+503', '+505', '+506', '+507', '+598', '+55', '+33'];
           for (const code of possibleCodes) {
             if (phoneNumber.startsWith(code)) {
@@ -103,6 +115,12 @@ export class ProfileInstructorComponent {
 
         this.selectedCountryCode.set(countryCode);
 
+        console.log('📝 [ProfileInstructor] Cargando datos al formulario:', {
+          facebook: profileData.facebook,
+          instagram: profileData.instagram,
+          youtube: profileData.youtube
+        });
+
         this.profileForm.patchValue({
           name: profileData.name || "",
           surname: profileData.surname || "",
@@ -110,9 +128,78 @@ export class ProfileInstructorComponent {
           phone: phoneNumber,
           profession: profileData.profession || "",
           description: profileData.description || "",
+          // ✅ REDES SOCIALES (desde campos directos en la respuesta, NO desde socialMedia)
+          facebook: profileData.facebook || "",
+          instagram: profileData.instagram || "",
+          youtube: profileData.youtube || "",
+          tiktok: profileData.tiktok || "",
+          twitch: profileData.twitch || "",
+          website: profileData.website || "",
+          discord: profileData.discord || "",
+          linkedin: profileData.linkedin || "",
+          twitter: profileData.twitter || "",
+          github: profileData.github || "",
         });
+
+        console.log('✅ [ProfileInstructor] Formulario actualizado con valores:', this.profileForm.value);
       }
     });
+  }
+
+  ngOnInit(): void {
+    // 🔥 CARGAR DATOS DEL USUARIO AL FORMULARIO
+    this.loadUserDataToForm();
+  }
+
+  // 🔥 Método para cargar datos al formulario
+  private loadUserDataToForm(): void {
+    const profileData = this.authService.user();
+
+    console.log('📝 [ProfileInstructor] Cargando datos del usuario al formulario:', profileData);
+
+    if (profileData?.email) {
+      // Separar código de país del número de teléfono
+      let phoneNumber = profileData.phone || '';
+      let countryCode = '+52'; // Por defecto México
+
+      if (phoneNumber && phoneNumber.startsWith('+')) {
+        const possibleCodes = ['+52', '+1', '+34', '+54', '+57', '+51', '+56', '+58', '+593', '+502', '+53', '+591', '+504', '+595', '+503', '+505', '+506', '+507', '+598', '+55', '+33'];
+        for (const code of possibleCodes) {
+          if (phoneNumber.startsWith(code)) {
+            countryCode = code;
+            phoneNumber = phoneNumber.substring(code.length);
+            break;
+          }
+        }
+      }
+
+      this.selectedCountryCode.set(countryCode);
+
+
+      this.profileForm.patchValue({
+        name: profileData.name || "",
+        surname: profileData.surname || "",
+        email: profileData.email || "",
+        phone: phoneNumber,
+        profession: profileData.profession || "",
+        description: profileData.description || "",
+        facebook: profileData.facebook || "",
+        instagram: profileData.instagram || "",
+        youtube: profileData.youtube || "",
+        tiktok: profileData.tiktok || "",
+        twitch: profileData.twitch || "",
+        website: profileData.website || "",
+        discord: profileData.discord || "",
+        linkedin: profileData.linkedin || "",
+        twitter: profileData.twitter || "",
+        github: profileData.github || "",
+      });
+
+      // Forzar detección de cambios
+      this.cdr.detectChanges();
+
+      console.log('✅ [ProfileInstructor] Formulario cargado con valores:', this.profileForm.value);
+    }
   }
 
   // Maneja la selección de país
@@ -133,12 +220,81 @@ export class ProfileInstructorComponent {
 
     const updateData = {
       ...formData,
-      phone: fullPhoneNumber
+      phone: fullPhoneNumber,
+      // 🔥 Enviar campos planos (el backend los mapeará correctamente)
+      facebook: formData.facebook || "",
+      instagram: formData.instagram || "",
+      youtube: formData.youtube || "",
+      tiktok: formData.tiktok || "",
+      twitch: formData.twitch || "",
+      website: formData.website || "",
+      discord: formData.discord || "",
+      linkedin: formData.linkedin || "",
+      twitter: formData.twitter || "",
+      github: formData.github || "",
     };
+
+    // 🔥 Eliminar socialMedia anidado
+    delete (updateData as any).socialMedia;
+
+    console.log('📤 [ProfileInstructor] Enviando datos de perfil:', updateData);
 
     // Usamos el `update` del ProfileService que ya apunta al endpoint correcto
     this.profileService.update(updateData).subscribe({
       next: (response) => {
+        console.log('✅ [ProfileInstructor] Perfil actualizado exitosamente:', response);
+
+        // 🔥 FORZAR actualización del formulario con los datos de la respuesta
+        const updatedUser = response.user;
+        if (updatedUser) {
+          // Extraer número de teléfono
+          let phoneNumber = updatedUser.phone || '';
+          let countryCode = '+52';
+
+          if (phoneNumber && phoneNumber.startsWith('+')) {
+            const possibleCodes = ['+52', '+1', '+34', '+54', '+57', '+51', '+56', '+58', '+593', '+502', '+53', '+591', '+504', '+595', '+503', '+505', '+506', '+507', '+598', '+55', '+33'];
+            for (const code of possibleCodes) {
+              if (phoneNumber.startsWith(code)) {
+                countryCode = code;
+                phoneNumber = phoneNumber.substring(code.length);
+                break;
+              }
+            }
+          }
+
+          this.selectedCountryCode.set(countryCode);
+
+          // Actualizar formulario directamente
+          this.profileForm.patchValue({
+            name: updatedUser.name || "",
+            surname: updatedUser.surname || "",
+            email: updatedUser.email || "",
+            phone: phoneNumber,
+            profession: updatedUser.profession || "",
+            description: updatedUser.description || "",
+            facebook: updatedUser.facebook || "",
+            instagram: updatedUser.instagram || "",
+            youtube: updatedUser.youtube || "",
+            tiktok: updatedUser.tiktok || "",
+            twitch: updatedUser.twitch || "",
+            website: updatedUser.website || "",
+            discord: updatedUser.discord || "",
+            linkedin: updatedUser.linkedin || "",
+            twitter: updatedUser.twitter || "",
+            github: updatedUser.github || "",
+          });
+
+          // 🔥 Marcar como pristine para que el botón se deshabilite
+          this.profileForm.markAsPristine();
+
+          // 🔥 Recargar datos al formulario
+          setTimeout(() => {
+            this.loadUserDataToForm();
+          }, 100);
+
+          console.log('🔄 [ProfileInstructor] Formulario actualizado manualmente:', this.profileForm.value);
+        }
+
         alert("¡Perfil actualizado con éxito!");
         this.isSubmitting.set(false);
       },

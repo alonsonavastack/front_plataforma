@@ -1,62 +1,128 @@
-import { Component, inject, effect, signal, OnInit, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { HeaderComponent } from '../../layout/header/header';
-import { AuthService } from '../../core/services/auth';
-import { HttpClient } from '@angular/common/http';
-import { ProfileService } from '../../core/services/profile';
-import { AdminService } from '../../core/services/admin.service';
-import { CountryCodeSelectorComponent, CountryCode } from '../../shared/country-code-selector/country-code-selector';
-import { environment } from '../../../environments/environment';
+import {
+  Component,
+  inject,
+  effect,
+  signal,
+  OnInit,
+  computed,
+  ChangeDetectorRef,
+} from "@angular/core";
+import { CommonModule } from "@angular/common";
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from "@angular/forms";
+import { HeaderComponent } from "../../layout/header/header";
+import { AuthService } from "../../core/services/auth";
+import { HttpClient } from "@angular/common/http";
+import { ProfileService } from "../../core/services/profile";
+import { AdminService } from "../../core/services/admin.service";
+import {
+  CountryCodeSelectorComponent,
+  CountryCode,
+} from "../../shared/country-code-selector/country-code-selector";
+import { environment } from "../../../environments/environment";
 
 @Component({
-  selector: 'app-profile-admin',
+  selector: "app-profile-admin",
   standalone: true,
-  imports: [CommonModule, HeaderComponent, ReactiveFormsModule, CountryCodeSelectorComponent],
-  templateUrl: './profile-admin.html',
+  imports: [
+    CommonModule,
+    HeaderComponent,
+    ReactiveFormsModule,
+    CountryCodeSelectorComponent,
+  ],
+  templateUrl: "./profile-admin.html",
 })
 export class ProfileAdminComponent implements OnInit {
   authService = inject(AuthService);
   profileService = inject(ProfileService);
   adminService = inject(AdminService); // Inyectamos el servicio correcto
   http = inject(HttpClient); // Inyectamos HttpClient para llamadas específicas
+  private cdr = inject(ChangeDetectorRef); // 🔥 Para forzar detección de cambios
 
   isSubmitting = signal(false);
   isPasswordSubmitting = signal(false);
 
   // Señal para el código de país seleccionado
-  selectedCountryCode = signal('+52'); // Por defecto México
+  selectedCountryCode = signal("+52"); // Por defecto México
 
   profileForm = new FormGroup({
-    name: new FormControl(''),
-    surname: new FormControl(''),
-    email: new FormControl({ value: '', disabled: true }),
-    phone: new FormControl(''),
-    profession: new FormControl(''),
-    description: new FormControl(''),
+    name: new FormControl(""),
+    surname: new FormControl(""),
+    email: new FormControl({ value: "", disabled: true }),
+    phone: new FormControl(""),
+    profession: new FormControl(""),
+    description: new FormControl(""),
+    // ✅ REDES SOCIALES (OPCIONALES)
+    facebook: new FormControl(""),
+    instagram: new FormControl(""),
+    youtube: new FormControl(""),
+    tiktok: new FormControl(""),
+    twitch: new FormControl(""),
+    website: new FormControl(""),
+    discord: new FormControl(""),
+    linkedin: new FormControl(""),
+    twitter: new FormControl(""),
+    github: new FormControl(""),
   });
 
-  passwordForm = new FormGroup({
-    currentPassword: new FormControl('', [Validators.required]),
-    newPassword: new FormControl('', [Validators.required, Validators.minLength(6)]),
-    confirmPassword: new FormControl('', [Validators.required]),
-  }, {
-    validators: passwordsMatchValidator
-  });
+  passwordForm = new FormGroup(
+    {
+      currentPassword: new FormControl("", [Validators.required]),
+      newPassword: new FormControl("", [
+        Validators.required,
+        Validators.minLength(6),
+      ]),
+      confirmPassword: new FormControl("", [Validators.required]),
+    },
+    {
+      validators: passwordsMatchValidator,
+    }
+  );
 
   constructor() {
-    // Rellenar formulario cuando los datos lleguen
+    // 🔥 Rellenar formulario cuando los datos lleguen o cambien
     effect(() => {
       const profileData = this.authService.user();
 
+      console.log("🔄 Effect ejecutándose - Usuario actual:", profileData);
+
       if (profileData?.email) {
         // Separar código de país del número de teléfono
-        let phoneNumber = profileData.phone || '';
-        let countryCode = '+52'; // Por defecto México
+        let phoneNumber = profileData.phone || "";
+        let countryCode = "+52"; // Por defecto México
 
-        if (phoneNumber && phoneNumber.startsWith('+')) {
+        if (phoneNumber && phoneNumber.startsWith("+")) {
           // Buscar el código de país más largo que coincida
-          const possibleCodes = ['+52', '+1', '+34', '+54', '+57', '+51', '+56', '+58', '+593', '+502', '+53', '+591', '+504', '+595', '+503', '+505', '+506', '+507', '+598', '+55', '+33'];
+          const possibleCodes = [
+            "+52",
+            "+1",
+            "+34",
+            "+54",
+            "+57",
+            "+51",
+            "+56",
+            "+58",
+            "+593",
+            "+502",
+            "+53",
+            "+591",
+            "+504",
+            "+595",
+            "+503",
+            "+505",
+            "+506",
+            "+507",
+            "+598",
+            "+55",
+            "+33",
+          ];
           for (const code of possibleCodes) {
             if (phoneNumber.startsWith(code)) {
               countryCode = code;
@@ -68,6 +134,12 @@ export class ProfileAdminComponent implements OnInit {
 
         this.selectedCountryCode.set(countryCode);
 
+        console.log("📝 Cargando datos al formulario:", {
+          facebook: profileData.facebook,
+          instagram: profileData.instagram,
+          youtube: profileData.youtube,
+        });
+
         this.profileForm.patchValue({
           name: profileData.name || "",
           surname: profileData.surname || "",
@@ -75,7 +147,23 @@ export class ProfileAdminComponent implements OnInit {
           phone: phoneNumber,
           profession: profileData.profession || "",
           description: profileData.description || "",
+          // ✅ REDES SOCIALES (desde campos directos en la respuesta)
+          facebook: profileData.facebook || "",
+          instagram: profileData.instagram || "",
+          youtube: profileData.youtube || "",
+          tiktok: profileData.tiktok || "",
+          twitch: profileData.twitch || "",
+          website: profileData.website || "",
+          discord: profileData.discord || "",
+          linkedin: profileData.linkedin || "",
+          twitter: profileData.twitter || "",
+          github: profileData.github || "",
         });
+
+        console.log(
+          "✅ Formulario actualizado con valores:",
+          this.profileForm.value
+        );
       }
     });
   }
@@ -83,8 +171,83 @@ export class ProfileAdminComponent implements OnInit {
   ngOnInit(): void {
     // Asegurarnos de que los datos se carguen cuando el componente se inicialice
     const profileData = this.adminService.profile();
-    if (!profileData && this.authService.user()?.rol === 'admin') {
+    if (!profileData && this.authService.user()?.rol === "admin") {
       this.adminService.reload();
+    }
+
+    // 🔥 CARGAR DATOS DEL USUARIO AL FORMULARIO
+    this.loadUserDataToForm();
+  }
+
+  // 🔥 Método para cargar datos al formulario
+  private loadUserDataToForm(): void {
+    const profileData = this.authService.user();
+
+    console.log("📝 Cargando datos del usuario al formulario:", profileData);
+
+    if (profileData?.email) {
+      // Separar código de país del número de teléfono
+      let phoneNumber = profileData.phone || "";
+      let countryCode = "+52"; // Por defecto México
+
+      if (phoneNumber && phoneNumber.startsWith("+")) {
+        const possibleCodes = [
+          "+52",
+          "+1",
+          "+34",
+          "+54",
+          "+57",
+          "+51",
+          "+56",
+          "+58",
+          "+593",
+          "+502",
+          "+53",
+          "+591",
+          "+504",
+          "+595",
+          "+503",
+          "+505",
+          "+506",
+          "+507",
+          "+598",
+          "+55",
+          "+33",
+        ];
+        for (const code of possibleCodes) {
+          if (phoneNumber.startsWith(code)) {
+            countryCode = code;
+            phoneNumber = phoneNumber.substring(code.length);
+            break;
+          }
+        }
+      }
+
+      this.selectedCountryCode.set(countryCode);
+
+      this.profileForm.patchValue({
+        name: profileData.name || "",
+        surname: profileData.surname || "",
+        email: profileData.email || "",
+        phone: phoneNumber,
+        profession: profileData.profession || "",
+        description: profileData.description || "",
+        facebook: profileData.facebook || "",
+        instagram: profileData.instagram || "",
+        youtube: profileData.youtube || "",
+        tiktok: profileData.tiktok || "",
+        twitch: profileData.twitch || "",
+        website: profileData.website || "",
+        discord: profileData.discord || "",
+        linkedin: profileData.linkedin || "",
+        twitter: profileData.twitter || "",
+        github: profileData.github || "",
+      });
+
+      // Forzar detección de cambios
+      this.cdr.detectChanges();
+
+      console.log("✅ Formulario cargado con valores:", this.profileForm.value);
     }
   }
 
@@ -100,23 +263,117 @@ export class ProfileAdminComponent implements OnInit {
     const formData = this.profileForm.getRawValue();
 
     // Combinar código de país con número de teléfono
-    const fullPhoneNumber = formData.phone ? this.selectedCountryCode() + formData.phone : '';
+    const fullPhoneNumber = formData.phone
+      ? this.selectedCountryCode() + formData.phone
+      : "";
 
     const updateData = {
       ...formData,
-      phone: fullPhoneNumber
+      phone: fullPhoneNumber,
+      // 🔥 Enviar campos planos (el backend los mapeará a socialMedia)
+      facebook: formData.facebook || "",
+      instagram: formData.instagram || "",
+      youtube: formData.youtube || "",
+      tiktok: formData.tiktok || "",
+      twitch: formData.twitch || "",
+      website: formData.website || "",
+      discord: formData.discord || "",
+      linkedin: formData.linkedin || "",
+      twitter: formData.twitter || "",
+      github: formData.github || "",
     };
 
+    // 🔥 Eliminar socialMedia anidado
+    delete (updateData as any).socialMedia;
+
+    console.log("📤 Enviando datos de perfil:", updateData);
+
     this.profileService.update(updateData).subscribe({
-      next: () => {
-        alert('¡Perfil actualizado con éxito!');
-        // En lugar de actualizar la señal manualmente, le pedimos al servicio que recargue los datos.
-        this.adminService.reload();
+      next: (response) => {
+        console.log("✅ Perfil actualizado exitosamente:", response);
+
+        // 🔥 FORZAR actualización del formulario con los datos de la respuesta
+        const updatedUser = response.user;
+        if (updatedUser) {
+          // Extraer número de teléfono
+          let phoneNumber = updatedUser.phone || "";
+          let countryCode = "+52";
+
+          if (phoneNumber && phoneNumber.startsWith("+")) {
+            const possibleCodes = [
+              "+52",
+              "+1",
+              "+34",
+              "+54",
+              "+57",
+              "+51",
+              "+56",
+              "+58",
+              "+593",
+              "+502",
+              "+53",
+              "+591",
+              "+504",
+              "+595",
+              "+503",
+              "+505",
+              "+506",
+              "+507",
+              "+598",
+              "+55",
+              "+33",
+            ];
+            for (const code of possibleCodes) {
+              if (phoneNumber.startsWith(code)) {
+                countryCode = code;
+                phoneNumber = phoneNumber.substring(code.length);
+                break;
+              }
+            }
+          }
+
+          this.selectedCountryCode.set(countryCode);
+
+          // Actualizar formulario directamente
+          this.profileForm.patchValue({
+            name: updatedUser.name || "",
+            surname: updatedUser.surname || "",
+            email: updatedUser.email || "",
+            phone: phoneNumber,
+            profession: updatedUser.profession || "",
+            description: updatedUser.description || "",
+            facebook: updatedUser.facebook || "",
+            instagram: updatedUser.instagram || "",
+            youtube: updatedUser.youtube || "",
+            tiktok: updatedUser.tiktok || "",
+            twitch: updatedUser.twitch || "",
+            website: updatedUser.website || "",
+            discord: updatedUser.discord || "",
+            linkedin: updatedUser.linkedin || "",
+            twitter: updatedUser.twitter || "",
+            github: updatedUser.github || "",
+          });
+
+          // 🔥 Marcar como pristine para que el botón se deshabilite
+          this.profileForm.markAsPristine();
+
+          // 🔥 Recargar datos al formulario
+          setTimeout(() => {
+            this.loadUserDataToForm();
+          }, 100);
+
+          console.log(
+            "🔄 Formulario actualizado manualmente:",
+            this.profileForm.value
+          );
+        }
+
+        alert("¡Perfil actualizado con éxito!");
         this.isSubmitting.set(false);
       },
       error: (err) => {
-        console.error('Error al actualizar el perfil:', err);
-        alert('Ocurrió un error al actualizar tu perfil.');
+        console.error("Error al actualizar el perfil:", err);
+        alert("Ocurrió un error al actualizar tu perfil.");
         this.isSubmitting.set(false);
       },
     });
@@ -129,12 +386,12 @@ export class ProfileAdminComponent implements OnInit {
       this.profileService.updateAvatar(file).subscribe({
         next: (response) => {
           this.authService.updateUser(response.user);
-          alert('¡Avatar actualizado con éxito!');
+          alert("¡Avatar actualizado con éxito!");
         },
         error: (err) => {
-          console.error('Error al subir el avatar:', err);
-          alert('Ocurrió un error al subir tu avatar.');
-        }
+          console.error("Error al subir el avatar:", err);
+          alert("Ocurrió un error al subir tu avatar.");
+        },
       });
     }
   }
@@ -148,24 +405,40 @@ export class ProfileAdminComponent implements OnInit {
     const payload = { newPassword, currentPassword };
 
     // Llamamos directamente al endpoint específico para cambiar la contraseña
-    this.http.put<any>(`${this.profileService.base}profile-admin/update-password`, payload).subscribe({
-      next: () => {
-        alert('¡Contraseña actualizada con éxito! Se cerrará la sesión por seguridad.');
-        this.passwordForm.reset();
-        this.isPasswordSubmitting.set(false);
-        this.authService.logout();
-      },
-      error: (err) => {
-        console.error('Error al actualizar la contraseña:', err);
-        alert(err.error.message_text || 'Ocurrió un error al cambiar tu contraseña.');
-        this.isPasswordSubmitting.set(false);
-      },
-    });
+    this.http
+      .put<any>(
+        `${this.profileService.base}profile-admin/update-password`,
+        payload
+      )
+      .subscribe({
+        next: () => {
+          alert(
+            "¡Contraseña actualizada con éxito! Se cerrará la sesión por seguridad."
+          );
+          this.passwordForm.reset();
+          this.isPasswordSubmitting.set(false);
+          this.authService.logout();
+        },
+        error: (err) => {
+          console.error("Error al actualizar la contraseña:", err);
+          alert(
+            err.error.message_text ||
+              "Ocurrió un error al cambiar tu contraseña."
+          );
+          this.isPasswordSubmitting.set(false);
+        },
+      });
   }
 }
 
-export const passwordsMatchValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
-  const newPassword = control.get('newPassword');
-  const confirmPassword = control.get('confirmPassword');
-  return newPassword && confirmPassword && newPassword.value !== confirmPassword.value ? { passwordsMismatch: true } : null;
+export const passwordsMatchValidator: ValidatorFn = (
+  control: AbstractControl
+): ValidationErrors | null => {
+  const newPassword = control.get("newPassword");
+  const confirmPassword = control.get("confirmPassword");
+  return newPassword &&
+    confirmPassword &&
+    newPassword.value !== confirmPassword.value
+    ? { passwordsMismatch: true }
+    : null;
 };

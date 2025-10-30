@@ -178,19 +178,20 @@ export interface Project {
   _id: string;
   title: string;
   subtitle: string;
-  description: string;
+  description?: string; // ✅ Opcional (puede no venir del backend en algunas vistas)
   imagen: string;
   url_video?: string;
   categorie: Category;
-  price_mxn: number;
+  price_mxn?: number; // ✅ Opcional (campo legacy, ya no requerido)
   price_usd: number;
   isFree?: boolean; // Indica si el proyecto es gratuito
   final_price_mxn?: number; // Precio con descuento aplicado
   final_price_usd?: number; // Precio con descuento aplicado
   state?: number; // 1: borrador, 2: publico, 3: anulado
-  user?: User; // Opcional porque puede no estar poblado
+  user?: User | string; // ✅ Puede ser objeto User o string (ID)
   files?: ProjectFile[]; // Archivos ZIP adjuntos al proyecto
   featured?: boolean; // Añadido para saber si es destacado
+  createdAt?: string; // ✅ Fecha de creación
   // Campos de descuento
   discount_active?: {
     _id: string;

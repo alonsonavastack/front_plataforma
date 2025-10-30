@@ -11,8 +11,23 @@
     <div class="h-full flex flex-col py-4 overflow-y-auto">
       <!-- Branding -->
       <a routerLink="/" class="flex items-center p-2 mb-5 gap-3">
-        <span class="h-8 w-8 rounded-lg bg-gradient-to-br from-lime-400 to-yellow-400 grid place-items-center text-slate-900 font-black shrink-0">NC</span>
-        <span class="self-center text-lg font-semibold whitespace-nowrap" [class.lg:hidden]="isSidebarCollapsed()">NeoCourse</span>
+        <!-- 🔥 NUEVO: Logo dinámico -->
+        @if (systemConfigService.config()?.logo) {
+          <img
+            [src]="'http://localhost:3000/api/system-config/logo/' + systemConfigService.config()?.logo"
+            [alt]="(systemConfigService.config()?.siteName || 'Dev-Sharks') + ' logo'"
+            class="h-8 w-8 rounded-lg object-cover shrink-0"
+            (error)="$event.target.style.display='none'"
+          />
+        } @else {
+          <span class="h-8 w-8 rounded-lg bg-gradient-to-br from-lime-400 to-yellow-400 grid place-items-center text-slate-900 font-black shrink-0">
+            {{ (systemConfigService.config()?.siteName || 'Dev-Sharks').charAt(0).toUpperCase() }}
+          </span>
+        }
+        <!-- 🔥 NUEVO: Nombre dinámico -->
+        <span class="self-center text-lg font-semibold whitespace-nowrap" [class.lg:hidden]="isSidebarCollapsed()">
+          {{ systemConfigService.config()?.siteName || 'Dev-Sharks' }}
+        </span>
       </a>
 
       <!-- Tu menú angular -->
@@ -118,8 +133,10 @@
                    }">
                   @if (k.isPct) {
                     {{ k.value }}%
-                  } @else {
+                  } @else if (k.isCurrency) {
                     ${{ k.value | number:'1.0-0' }}
+                  } @else {
+                    {{ k.value | number:'1.0-0' }}
                   }
                 </p>
 
@@ -384,6 +401,7 @@
         @case ('admin-payment-history') { <app-admin-payment-history /> }
         @case ('admin-commission-settings') { <app-admin-commission-settings /> }
         @case ('admin-bank-verification') { <app-admin-bank-verification /> }
+        @case ('system-settings') { <app-system-settings /> }
       }
     </div>
   </main>

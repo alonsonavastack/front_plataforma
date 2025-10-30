@@ -168,7 +168,7 @@
                 <td class="px-6 py-4 text-right space-x-2 align-middle">
                   <button (click)="switchToContentView(course)" class="font-medium text-cyan-400 hover:underline">Contenido</button>
                   <button (click)="openEditModal(course)" class="font-medium text-lime-400 hover:underline">Editar</button>
-                  
+
                   <!-- Botón Eliminar con validación -->
                   @if (canDeleteCourse(course)) {
                     <button (click)="deleteCourse(course)" class="font-medium text-red-400 hover:underline">
@@ -318,16 +318,18 @@
               }
               <div>
                 <label for="price_usd" class="block mb-2 text-sm font-medium text-gray-300">Precio (USD)</label>
-                <input type="number" id="price_usd" formControlName="price_usd" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500" required>
+                <div (click)="showFreeCourseMessage()">
+                  <input type="number" id="price_usd" formControlName="price_usd" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-900 border-slate-700 placeholder-gray-400 text-slate-500 cursor-not-allowed" readonly>
+                </div>
               </div>
               <!-- Campo: Es Gratuito (Checkbox) -->
               <div class="md:col-span-2">
-                <div class="flex items-center space-x-3 p-4 bg-lime-500/5 rounded-lg border border-lime-500/20">
-                  <input 
-                    type="checkbox" 
-                    id="isFree" 
+                <div (click)="showFreeCourseMessage()" class="flex items-center space-x-3 p-4 bg-lime-500/5 rounded-lg border border-lime-500/20 cursor-not-allowed">
+                  <input
+                    type="checkbox"
+                    id="isFree"
                     formControlName="isFree"
-                    class="w-5 h-5 text-lime-500 bg-slate-700 border-slate-600 rounded focus:ring-lime-500 focus:ring-2"
+                    class="w-5 h-5 text-lime-500 bg-slate-700 border-slate-600 rounded focus:ring-lime-500 focus:ring-2 cursor-not-allowed"
                   >
                   <label for="isFree" class="text-white font-medium cursor-pointer select-none">
                     🎁 Este curso es <span class="text-lime-400">GRATUITO</span>
@@ -606,6 +608,42 @@
             {{ isEditingClass() ? 'Guardar Cambios' : 'Crear Clase' }}
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ✅ INICIO: Modal Informativo para Cursos Gratuitos -->
+@if (isInfoModalOpen()) {
+  <!-- Backdrop -->
+  <div (click)="closeInfoModal()" class="fixed inset-0 z-[102] bg-black/70 backdrop-blur-sm"></div>
+
+  <!-- Modal -->
+  <div class="fixed inset-0 z-[103] flex items-center justify-center p-4">
+    <div (click)="$event.stopPropagation()" class="relative w-full max-w-lg bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl border-2 border-lime-400/30">
+      <!-- Contenido del Modal -->
+      <div class="p-8 text-center">
+        <!-- Icono -->
+        <div class="w-16 h-16 mx-auto mb-5 rounded-full bg-lime-400/10 border-2 border-lime-400/30 flex items-center justify-center">
+          <svg class="w-8 h-8 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+
+        <!-- Título -->
+        <h3 class="text-2xl font-bold text-white mb-3">Aviso Importante</h3>
+
+        <!-- Mensaje -->
+        <p class="text-slate-300 leading-relaxed">
+          Por ahora, todos los cursos que utilizan videos de <strong>YouTube</strong> y <strong>Vimeo</strong> se registrarán como <strong>gratuitos</strong>.
+          <br><br>
+          ¡Tenga paciencia mientras trabajamos en la implementación de los cursos de paga!
+        </p>
+
+        <!-- Botón de Cerrar -->
+        <button (click)="closeInfoModal()" type="button" class="mt-8 w-full sm:w-auto px-8 py-3 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition">
+          Entendido
+        </button>
       </div>
     </div>
   </div>

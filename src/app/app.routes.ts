@@ -185,6 +185,14 @@ export const routes: Routes = [
       ),
     canActivate: [roleGuard(["instructor"])],
   },
+  // PERFIL PÚBLICO DEL INSTRUCTOR
+  {
+    path: "instructor/:id",
+    loadComponent: () =>
+      import("./pages/instructor-profile/instructor-profile.component").then(
+        (m) => m.InstructorProfileComponent
+      ),
+  },
   {
     // Redirige cualquier otra ruta a la página de inicio
     path: "**",

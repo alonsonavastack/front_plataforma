@@ -148,12 +148,23 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
 
   // Formulario para editar el perfil
   profileForm = new FormGroup({
-    name: new FormControl(''),
-    surname: new FormControl(''),
-    email: new FormControl({ value: '', disabled: true }), // El email no se puede cambiar
-    phone: new FormControl(''),
-    profession: new FormControl(''),
-    description: new FormControl(''),
+    name: new FormControl(""),
+    surname: new FormControl(""),
+    email: new FormControl({ value: "", disabled: true }), // El email no se puede cambiar
+    phone: new FormControl(""),
+    profession: new FormControl(""),
+    description: new FormControl(""),
+    // ✅ REDES SOCIALES (OPCIONALES)
+    facebook: new FormControl(""),
+    instagram: new FormControl(""),
+    youtube: new FormControl(""),
+    tiktok: new FormControl(""),
+    twitch: new FormControl(""),
+    website: new FormControl(""),
+    discord: new FormControl(""),
+    linkedin: new FormControl(""),
+    twitter: new FormControl(""),
+    github: new FormControl(""),
   });
 
   // Formulario para cambiar la contraseña
@@ -201,6 +212,17 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
           phone: phoneNumber,
           profession: dataToUse.profession || '',
           description: dataToUse.description || '',
+          // ✅ REDES SOCIALES
+          facebook: dataToUse.facebook || '',
+          instagram: dataToUse.instagram || '',
+          youtube: dataToUse.youtube || '',
+          tiktok: dataToUse.tiktok || '',
+          twitch: dataToUse.twitch || '',
+          website: dataToUse.website || '',
+          discord: dataToUse.discord || '',
+          linkedin: dataToUse.linkedin || '',
+          twitter: dataToUse.twitter || '',
+          github: dataToUse.github || '',
         });
       }
     });
@@ -264,9 +286,21 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
     // Combinar código de país con número de teléfono
     const fullPhoneNumber = formData.phone ? this.selectedCountryCode() + formData.phone : '';
 
+    // 🔥 ENVIAR CAMPOS PLANOS - El backend hace la transformación a socialMedia
     const updateData = {
       ...formData,
-      phone: fullPhoneNumber
+      phone: fullPhoneNumber,
+      // ✅ Enviar redes sociales como campos planos (el backend los agrupa)
+      facebook: formData.facebook || '',
+      instagram: formData.instagram || '',
+      youtube: formData.youtube || '',
+      tiktok: formData.tiktok || '',
+      twitch: formData.twitch || '',
+      website: formData.website || '',
+      discord: formData.discord || '',
+      linkedin: formData.linkedin || '',
+      twitter: formData.twitter || '',
+      github: formData.github || '',
     };
 
     this.profileService.update(updateData).subscribe({

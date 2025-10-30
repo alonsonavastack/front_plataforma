@@ -28,19 +28,34 @@ export class CarouselComponent implements AfterViewInit, OnDestroy {
   private isInitialized = false;
 
   constructor() {
-    // Usamos un 'effect' para reinicializar Flowbite cuando las imágenes cambien
+    // Usamos un 'effect' para inicializar Flowbite cuando lleguen las imágenes
     effect(() => {
       const imagesList = this.images();
-      if (imagesList.length > 0 && this.isInitialized) {
+      const imageCount = imagesList.length;
+      
+      console.log('🔄 [Carousel] Effect triggered - Imágenes:', imageCount, 'Inicializado:', this.isInitialized);
+      
+      // ✅ Inicializar solo cuando:
+      // 1. Hay imágenes disponibles
+      // 2. NO se ha inicializado antes (evita reinicializaciones innecesarias)
+      if (imageCount > 0 && !this.isInitialized) {
+        console.log('✅ [Carousel] Condiciones cumplidas, inicializando...');
         this.safeInitFlowbite();
       }
     });
   }
 
   ngAfterViewInit(): void {
-    // Inicialización inicial después de que la vista esté completamente cargada
-    if (this.images().length > 0) {
+    // ✅ IMPORTANTE: Solo inicializar si hay imágenes
+    // Esto previene el error "Cannot read properties of undefined (reading 'position')"
+    const imageCount = this.images().length;
+    console.log('🎠 [Carousel] ngAfterViewInit - Imágenes disponibles:', imageCount);
+    
+    if (imageCount > 0) {
+      console.log('✅ [Carousel] Iniciando Flowbite...');
       this.safeInitFlowbite();
+    } else {
+      console.log('⏳ [Carousel] Esperando imágenes...');
     }
   }
 
@@ -84,8 +99,17 @@ export class CarouselComponent implements AfterViewInit, OnDestroy {
               return;
             }
 
-            // Inicializamos Flowbite solo si todo está correcto
+            // ✅ DOBLE VERIFICACIÓN: Asegurarnos que hay items antes de inicializar
+            const finalCheck = carouselElement.querySelectorAll('[data-carousel-item]');
+            if (finalCheck.length === 0) {
+              console.warn('⚠️ [Carousel] No hay items en verificación final');
+              carouselContainer.style.opacity = '1';
+              return;
+            }
+
+            // Inicializamos Flowbite solo si TODO está correcto
             if (typeof initFlowbite === 'function') {
+              console.log('🎠 [Carousel] Ejecutando initFlowbite()...');
               initFlowbite();
               this.isInitialized = true;
               
@@ -93,8 +117,11 @@ export class CarouselComponent implements AfterViewInit, OnDestroy {
               setTimeout(() => {
                 carouselContainer.style.transition = 'opacity 0.3s ease-in-out';
                 carouselContainer.style.opacity = '1';
-                console.log('✅ Flowbite carousel initialized (Safari-safe)');
+                console.log('✅ [Carousel] Flowbite inicializado correctamente');
               }, 50);
+            } else {
+              console.error('❌ [Carousel] initFlowbite no está disponible');
+              carouselContainer.style.opacity = '1';
             }
           } catch (error) {
             console.warn('⚠️ Flowbite carousel initialization warning:', error);

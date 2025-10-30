@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReviewService, Review, ReviewStatistics, CanRateResponse } from '../../core/services/review.service';
 import { AuthService } from '../../core/services/auth';
+import { ReviewNotificationsService } from '../../core/services/review-notifications.service';
 
 @Component({
   selector: 'app-course-reviews',
@@ -543,6 +544,7 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
 
   private reviewService = inject(ReviewService);
   public authService = inject(AuthService);
+  private reviewNotificationsService = inject(ReviewNotificationsService); // 🔥 NUEVO
 
   // Estado del componente
   reviews = signal<Review[]>([]);
@@ -939,6 +941,10 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
         console.log('➕ [submitReply] Agregando nueva respuesta...');
         await this.reviewService.addReply(reviewId, this.replyText().trim()).toPromise();
         console.log('✅ [submitReply] Respuesta agregada');
+        
+        // 🔥 AUTO-MARCAR NOTIFICACIÓN COMO LEÍDA
+        this.reviewNotificationsService.markAsReplied(reviewId);
+        console.log('✅ [submitReply] Notificación auto-marcada como leída');
       }
 
       // Recargar reviews para mostrar la respuesta

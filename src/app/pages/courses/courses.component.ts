@@ -40,6 +40,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
   // --- Course Modal State ---
   isModalOpen = signal(false);
   isEditing = signal(false);
+  isInfoModalOpen = signal(false); // ✅ NUEVO: Signal para el modal informativo
   currentCourseId = signal<string | null>(null);
   imagePreview = signal<string | null>(null);
 
@@ -47,8 +48,8 @@ export class CoursesComponent implements OnInit, OnDestroy {
     title: new FormControl('', [Validators.required]),
     subtitle: new FormControl('', [Validators.required]),
     description: new FormControl(''),
-    price_usd: new FormControl(0, [Validators.required, Validators.min(0)]),
-    isFree: new FormControl(false), // Indica si el curso es gratuito
+    price_usd: new FormControl({ value: 0, disabled: true }, [Validators.required, Validators.min(0)]),
+    isFree: new FormControl({ value: true, disabled: true }), // Indica si el curso es gratuito
     categorie: new FormControl('', [Validators.required]),
     user: new FormControl('', [Validators.required]),
     level: new FormControl('Basico', [Validators.required]),
@@ -291,7 +292,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
       level: 'Basico',
       idioma: 'Español',
       price_usd: 0,
-      isFree: false, // ✅ AGREGAR: Checkbox de gratuito por defecto false
+      isFree: true, // ✅ AGREGAR: Checkbox de gratuito por defecto false
       state: 1, // Borrador por defecto
     });
     this.imagePreview.set(null);
@@ -308,7 +309,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
     this.currentCourseId.set(course._id);
     this.courseForm.patchValue({
       ...course,
-      isFree: course.isFree || false, // Agregar campo isFree
+      isFree: course.isFree || true, // Agregar campo isFree
       categorie: course.categorie._id,
       user: course.user._id,
     });
@@ -323,6 +324,12 @@ export class CoursesComponent implements OnInit, OnDestroy {
     this.isModalOpen.set(false);
     // Restaurar scroll del body
     document.body.style.overflow = '';
+  }
+
+  // ✅ NUEVO: Método para cerrar el modal informativo
+  closeInfoModal(): void {
+    this.isInfoModalOpen.set(false);
+    document.body.style.overflow = ''; // Asegurarse de restaurar el scroll
   }
 
   onFileSelected(event: Event): void {
@@ -853,5 +860,11 @@ export class CoursesComponent implements OnInit, OnDestroy {
       return `${h}h ${m}m`;
     }
     return `${m} min`;
+  }
+
+  // ✅ NUEVO: Método para mostrar mensaje sobre cursos gratuitos
+  showFreeCourseMessage(): void {
+    this.isInfoModalOpen.set(true);
+    document.body.style.overflow = 'hidden';
   }
 }

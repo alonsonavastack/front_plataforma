@@ -27,12 +27,16 @@ export class SettingsComponent implements OnInit {
   // Señales computadas para filtrar
   filteredCourses = computed(() => {
     const term = this.courseSearch().toLowerCase();
-    return this.courses().filter(c => c.title.toLowerCase().includes(term));
+    return this.courses().filter((c: SettingsCourse) =>
+      c.title.toLowerCase().includes(term)
+    );
   });
 
   filteredProjects = computed(() => {
     const term = this.projectSearch().toLowerCase();
-    return this.projects().filter(p => p.title.toLowerCase().includes(term));
+    return this.projects().filter((p: SettingsProject) =>
+      p.title.toLowerCase().includes(term)
+    );
   });
 
   ngOnInit(): void {
@@ -50,12 +54,12 @@ export class SettingsComponent implements OnInit {
 
     // 2. Llamamos a la API.
     this.settingsService.toggleCourseFeatured(course._id, newState).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         // La API confirmó el cambio, actualizamos con los datos del servidor (por si acaso).
         this.settingsService.updateLocalCourse(response.course);
         this.homeService.reloadHome();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error al destacar el curso:', err);
         // 3. Si la API falla, revertimos el cambio en el frontend.
         this.settingsService.updateLocalCourse({ ...course, featured: originalState });
@@ -74,11 +78,11 @@ export class SettingsComponent implements OnInit {
 
     // 2. Llamada a la API
     this.settingsService.toggleProjectFeatured(project._id, newState).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         this.settingsService.updateLocalProject(response.project);
         this.homeService.reloadHome();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error al destacar el proyecto:', err);
         alert('Error al actualizar el proyecto.');
         // 3. Reversión en caso de error
@@ -97,11 +101,16 @@ export class SettingsComponent implements OnInit {
     return `${this.settingsService.base}project/imagen-project/${imageName}`;
   }
 
-  setTab(tab: 'courses' | 'projects') {
+  setTab(tab: 'courses' | 'projects'): void {
     this.activeTab.set(tab);
   }
 
   // Stats
-  featuredCoursesCount = computed(() => this.courses().filter(c => c.featured).length);
-  featuredProjectsCount = computed(() => this.projects().filter(p => p.featured).length);
+  featuredCoursesCount = computed(() =>
+    this.courses().filter((c: SettingsCourse) => c.featured).length
+  );
+
+  featuredProjectsCount = computed(() =>
+    this.projects().filter((p: SettingsProject) => p.featured).length
+  );
 }

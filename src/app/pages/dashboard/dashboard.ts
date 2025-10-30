@@ -29,6 +29,8 @@ import { CarouselDashboard } from '../carousel-dashboard/carousel-dashboard';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { NavId, NavItem } from './nav.types';
+import { SystemSettingsComponent } from "../system-settings/system-settings.component";
+import { SystemConfigService } from '../../core/services/system-config.service'; // 🔥 NUEVO
 
 @Component({
   standalone: true,
@@ -54,14 +56,16 @@ import { NavId, NavItem } from './nav.types';
     AdminCommissionSettingsComponent,
     AdminBankVerificationComponent,
     InstructorPaymentConfigComponent,
-    CarouselDashboard
-  ],
+    CarouselDashboard,
+    SystemSettingsComponent
+],
   templateUrl: './dashboard.html',
 })
 export class DashboardComponent implements OnInit, AfterViewInit {
   animate = inject(AnimateService);
   dashboardService = inject(DashboardService);
   authService = inject(AuthService);
+  systemConfigService = inject(SystemConfigService); // 🔥 NUEVO
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -89,6 +93,17 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     if (window.innerWidth < 1024 && this.drawer) {
       this.isSidebarOpen.set(false);
       this.drawer.hide();
+      
+      // 🔥 FIX: Remover foco de elementos del sidebar para evitar warning de accesibilidad
+      setTimeout(() => {
+        const drawerElement = document.getElementById('dashboard-drawer');
+        if (drawerElement) {
+          const focusedElement = drawerElement.querySelector(':focus') as HTMLElement;
+          if (focusedElement) {
+            focusedElement.blur();
+          }
+        }
+      }, 100);
     }
   }
 
@@ -105,6 +120,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     { id: 'reports',  label: 'Reportes',     icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
     { id: 'appearance', label: 'Apariencia', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' },
     { id: 'settings', label: 'Destacados',   icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z' },
+    { id: 'system-settings', label: 'Configuración', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.608 3.292 0z M12 12a3 3 0 100-6 3 3 0 000 6z' },
     // Admin - Pagos
     { id: 'admin-instructor-payments', label: 'Pagos a Instructores', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
     { id: 'admin-payment-history', label: 'Historial de Pagos', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
@@ -150,6 +166,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 }
 
   ngOnInit(): void {
+    // 🔥 NUEVO: Cargar configuración del sistema
+    this.systemConfigService.getConfig();
+    
     // 🔥 SOLUCIÓN: Leer el query param para restaurar la sección activa
     this.route.queryParams.subscribe(params => {
       if (params['section']) {
@@ -170,6 +189,32 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     const drawerElement = document.getElementById('drawer-navigation'); // Asegúrate que este es el ID de tu sidebar/drawer
     if (drawerElement) {
       this.drawer = new Drawer(drawerElement);
+    }
+    
+    // 🔥 FIX: Remover foco cuando se oculta el drawer (accesibilidad)
+    const dashboardDrawer = document.getElementById('dashboard-drawer');
+    if (dashboardDrawer) {
+      // Observer para detectar cuando aria-hidden cambia
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.attributeName === 'aria-hidden') {
+            const isHidden = dashboardDrawer.getAttribute('aria-hidden') === 'true';
+            if (isHidden) {
+              // Remover foco de cualquier elemento enfocado dentro del drawer
+              const focusedElement = dashboardDrawer.querySelector(':focus') as HTMLElement;
+              if (focusedElement) {
+                focusedElement.blur();
+                console.log('🔇 [Accesibilidad] Foco removido del sidebar al ocultarse');
+              }
+            }
+          }
+        });
+      });
+      
+      observer.observe(dashboardDrawer, {
+        attributes: true,
+        attributeFilter: ['aria-hidden']
+      });
     }
   }
 }
