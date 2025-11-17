@@ -1,20 +1,21 @@
 // src/app/pages/users/users.component.ts
-import { Component, inject, OnInit, signal, computed, ViewChild, TemplateRef } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UsersService, AllUser } from '../../core/services/users.service';
 import { environment } from '../../../environments/environment';
-import { HeaderComponent } from '../../layout/header/header';
+import { ToastService } from '../../core/services/toast.service';
+import { UserModalComponent, ModalMode } from './components/user-modal.component';
 
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, ],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, UserModalComponent],
   templateUrl: './users.component.html',
 })
 export class UsersComponent implements OnInit {
   usersService = inject(UsersService);
-
+  private toast = inject(ToastService)
   // Exponer Math para usarlo en el template
   Math = Math;
 
@@ -35,15 +36,9 @@ export class UsersComponent implements OnInit {
   activeUsers = computed(() => this.users().filter(u => this.isUserActive(u)).length);
 
   // Modal states
+  modalMode = signal<ModalMode>('closed');
   isRoleModalOpen = signal(false);
-  isEditModalOpen = signal(false);
-  isCreateModalOpen = signal(false);
-  isViewModalOpen = signal(false);
   currentUser = signal<AllUser | null>(null);
-
-  // Avatar file
-  selectedFile = signal<File | null>(null);
-  previewUrl = signal<string | null>(null);
 
   // --- INICIO: Lógica de paginación ---
 
@@ -101,34 +96,9 @@ export class UsersComponent implements OnInit {
     this.currentPage.set(1);
   }
 
-  // Template reference for modals
-  @ViewChild('modals') modals!: TemplateRef<any>;
-
   // Formularios
   roleForm = new FormGroup({
     rol: new FormControl('', [Validators.required]),
-  });
-
-  editForm = new FormGroup({
-    name: new FormControl('', [Validators.required]),
-    surname: new FormControl('', [Validators.required]),
-    email: new FormControl('', [Validators.required, Validators.email]),
-    profession: new FormControl(''),
-    phone: new FormControl(''),
-    description: new FormControl(''),
-    rol: new FormControl('', [Validators.required]),
-    state: new FormControl(true),
-  });
-
-  createForm = new FormGroup({
-    name: new FormControl('', [Validators.required, Validators.minLength(2)]),
-    surname: new FormControl('', [Validators.required, Validators.minLength(2)]),
-    email: new FormControl('', [Validators.required, Validators.email]),
-    password: new FormControl('', [Validators.required, Validators.minLength(6)]),
-    rol: new FormControl('cliente', [Validators.required]),
-    profession: new FormControl(''),
-    phone: new FormControl(''),
-    description: new FormControl(''),
   });
 
   ngOnInit(): void {
@@ -136,10 +106,7 @@ export class UsersComponent implements OnInit {
   }
 
   loadUsers(): void {
-    this.usersService.loadAllUsers().subscribe({
-      next: () => console.log('Usuarios cargados'),
-      error: (err) => console.error('Error al cargar usuarios:', err)
-    });
+    this.usersService.loadAllUsers().subscribe();
   }
 
   onSearch(event: Event): void {
@@ -191,187 +158,87 @@ export class UsersComponent implements OnInit {
 
     this.usersService.updateUserRole(user._id, newRole).subscribe({
       next: () => {
-        alert('Rol actualizado exitosamente');
+        this.toast.success('Rol actualizado exitosamente');
         this.closeRoleModal();
         this.loadUsers();
       },
       error: (error) => {
-        console.error('Error al actualizar rol:', error);
-        alert(error.error?.message_text || 'Error al actualizar el rol');
+        this.toast.error(error.error?.message_text || 'Error al actualizar el rol del usuario');
       }
     });
   }
 
-  // Modal de edición
+  // --- Métodos para el nuevo UserModalComponent ---
+
   openEditModal(user: AllUser): void {
     this.currentUser.set(user);
-
-    const state = typeof user.state === 'boolean' ? user.state : user.state === 1;
-
-    this.editForm.patchValue({
-      name: user.name,
-      surname: user.surname,
-      email: user.email,
-      profession: user.profession || '',
-      phone: user.phone || '',
-      description: user.description || '',
-      state: state,
-      rol: user.rol,
-    });
-
-    this.isEditModalOpen.set(true);
+    this.modalMode.set('edit');
   }
 
-  closeEditModal(): void {
-    this.isEditModalOpen.set(false);
-    this.currentUser.set(null);
-    this.editForm.reset();
-    this.selectedFile.set(null);
-    this.previewUrl.set(null);
-  }
-
-  onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-      this.selectedFile.set(file);
-
-      // Crear preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this.previewUrl.set(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-
-  saveEdit(): void {
-    if (this.editForm.invalid) {
-      Object.keys(this.editForm.controls).forEach(key => {
-        this.editForm.get(key)?.markAsTouched();
-      });
-      return;
-    }
-
-    const user = this.currentUser();
-    if (!user) return;
-
-    const formValue = this.editForm.value;
-
-    // Si hay archivo, usar FormData
-    if (this.selectedFile()) {
-      const formData = new FormData();
-      formData.append('name', formValue.name || '');
-      formData.append('surname', formValue.surname || '');
-      formData.append('email', formValue.email || '');
-      formData.append('profession', formValue.profession || '');
-      formData.append('phone', formValue.phone || '');
-      formData.append('description', formValue.description || '');
-      formData.append('rol', formValue.rol || '');
-      formData.append('state', formValue.state ? '1' : '0');
-      formData.append('avatar', this.selectedFile()!);
-
-      this.usersService.updateUserWithFile(user._id, formData).subscribe({
-        next: () => {
-          alert('Usuario actualizado exitosamente');
-          this.closeEditModal();
-          this.loadUsers();
-        },
-        error: (error) => {
-          console.error('Error al actualizar usuario:', error);
-          alert(error.error?.message_text || 'Error al actualizar el usuario');
-        }
-      });
-    } else {
-      // Sin archivo, enviar JSON
-      const data: Partial<AllUser> = {
-        name: formValue.name || '',
-        surname: formValue.surname || '',
-        email: formValue.email || '',
-        profession: formValue.profession || '',
-        phone: formValue.phone || '',
-        description: formValue.description || '',
-        rol: (formValue.rol as AllUser['rol']) || 'cliente',
-        state: formValue.state ?? true,
-      };
-
-      this.usersService.updateUser(user._id, data).subscribe({
-        next: () => {
-          alert('Usuario actualizado exitosamente');
-          this.closeEditModal();
-          this.loadUsers();
-        },
-        error: (error) => {
-          console.error('Error al actualizar usuario:', error);
-          alert(error.error?.message_text || 'Error al actualizar el usuario');
-        }
-      });
-    }
-  }
-
-  // Modal de creación
   openCreateModal(): void {
-    this.createForm.reset({
-      rol: 'cliente',
-    });
-    this.selectedFile.set(null);
-    this.previewUrl.set(null);
-    this.isCreateModalOpen.set(true);
+    this.currentUser.set(null);
+    this.modalMode.set('create');
   }
 
-  closeCreateModal(): void {
-    this.isCreateModalOpen.set(false);
-    this.createForm.reset();
-    this.selectedFile.set(null);
-    this.previewUrl.set(null);
-  }
-
-  saveCreate(): void {
-    if (this.createForm.invalid) {
-      Object.keys(this.createForm.controls).forEach(key => {
-        this.createForm.get(key)?.markAsTouched();
-      });
-      return;
-    }
-
-    const formValue = this.createForm.value;
-    const formData = new FormData();
-
-    formData.append('name', formValue.name || '');
-    formData.append('surname', formValue.surname || '');
-    formData.append('email', formValue.email || '');
-    formData.append('password', formValue.password || '');
-    formData.append('rol', formValue.rol || 'cliente');
-    formData.append('profession', formValue.profession || '');
-    formData.append('phone', formValue.phone || '');
-    formData.append('description', formValue.description || '');
-
-    if (this.selectedFile()) {
-      formData.append('avatar', this.selectedFile()!);
-    }
-
-    this.usersService.createUser(formData).subscribe({
-      next: () => {
-        alert('Usuario creado exitosamente');
-        this.closeCreateModal();
-        this.loadUsers();
-      },
-      error: (error) => {
-        console.error('Error al crear usuario:', error);
-        alert(error.error?.message_text || 'Error al crear el usuario');
-      }
-    });
-  }
-
-  // Modal de vista
   openViewModal(user: AllUser): void {
     this.currentUser.set(user);
-    this.isViewModalOpen.set(true);
+    this.modalMode.set('view');
   }
 
-  closeViewModal(): void {
-    this.isViewModalOpen.set(false);
+  closeUserModal(): void {
+    this.modalMode.set('closed');
     this.currentUser.set(null);
+  }
+
+  handleSaveUser(event: { data: any; file: File | null }): void {
+    const { data, file } = event;
+    const mode = this.modalMode();
+
+    if (mode === 'create') {
+      const formData = this.createFormData(data, file);
+      this.usersService.createUser(formData).subscribe({
+        next: () => {
+          this.toast.success('Usuario creado exitosamente');
+          this.closeUserModal();
+          this.loadUsers();
+        },
+        error: (error) => this.toast.error(error.error?.message_text || 'Error al crear el usuario'),
+      });
+    } else if (mode === 'edit' && data._id) {
+      if (file) {
+        const formData = this.createFormData(data, file);
+        this.usersService.updateUserWithFile(data._id, formData).subscribe({
+          next: () => {
+            this.toast.success('Usuario actualizado exitosamente');
+            this.closeUserModal();
+            this.loadUsers();
+          },
+          error: (error) => this.toast.error(error.error?.message_text || 'Error al actualizar el usuario'),
+        });
+      } else {
+        this.usersService.updateUser(data._id, data).subscribe({
+          next: () => {
+            this.toast.success('Usuario actualizado exitosamente');
+            this.closeUserModal();
+            this.loadUsers();
+          },
+          error: (error) => this.toast.error(error.error?.message_text || 'Error al actualizar el usuario'),
+        });
+      }
+    }
+  }
+
+  private createFormData(data: any, file: File | null): FormData {
+      const formData = new FormData();
+      Object.keys(data).forEach(key => {
+        if (key !== '_id' && data[key] !== null && data[key] !== undefined) {
+          formData.append(key, data[key]);
+        }
+      });
+      if (file) {
+        formData.append('avatar', file);
+      }
+      return formData;
   }
 
   // Toggle de estado
@@ -385,12 +252,11 @@ export class UsersComponent implements OnInit {
 
     this.usersService.updateUserState(user._id, newState).subscribe({
       next: () => {
-        alert(`Usuario ${action === 'activar' ? 'activado' : 'desactivado'} exitosamente`);
+        this.toast.success(`Usuario ${action === 'activar' ? 'activado' : 'desactivado'} exitosamente`);
         this.loadUsers();
       },
       error: (error) => {
-        console.error('Error al cambiar estado:', error);
-        alert(error.error?.message_text || 'Error al cambiar el estado del usuario');
+        this.toast.error(error.error?.message_text || 'Error al cambiar el estado del usuario');
       }
     });
   }
@@ -403,14 +269,30 @@ export class UsersComponent implements OnInit {
 
     if (!confirmDelete) return;
 
+
     this.usersService.deleteUser(user._id).subscribe({
-      next: () => {
-        alert('Usuario eliminado exitosamente');
+      next: (response: any) => {
+        this.toast.success('Usuario eliminado exitosamente');
         this.loadUsers();
       },
       error: (error) => {
-        console.error('Error al eliminar usuario:', error);
-        alert(error.error?.message_text || 'Error al eliminar el usuario');
+
+        // Obtener el mensaje de error del backend
+        const errorMessage = error.error?.message_text || error.error?.message || 'Error al eliminar el usuario';
+        const blockedBy = error.error?.blockedBy;
+        const count = error.error?.count;
+
+        // Mostrar toast con el mensaje específico del backend
+        if (error.status === 403) {
+          // Error de validación (usuario tiene datos relacionados)
+          this.toast.error(errorMessage);
+        } else if (error.status === 404) {
+          // Usuario no encontrado
+          this.toast.error('El usuario no existe');
+        } else {
+          // Otros errores
+          this.toast.error('Error al eliminar el usuario. Intenta de nuevo.');
+        }
       }
     });
   }

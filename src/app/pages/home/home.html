@@ -881,8 +881,15 @@
     </div>
   }
 
+  <!-- 📜 LEGAL MODAL -->
+  <app-legal-modal
+    [isOpen]="isLegalModalOpen()"
+    [modalType]="legalModalType()"
+    (close)="closeLegalModal()"
+  ></app-legal-modal>
+
   <!-- 🔥 Footer -->
   <div class="relative z-10 mt-16">
-    <app-footer></app-footer>
+    <app-footer (openLegalModalEvent)="openLegalModal($event)"></app-footer>
   </div>
 </div>

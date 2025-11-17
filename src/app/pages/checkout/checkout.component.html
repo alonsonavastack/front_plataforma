@@ -235,11 +235,82 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <!-- Columna izquierda: Métodos de pago e información -->
       <div class="lg:col-span-2 space-y-6">
+        
+        <!-- 💰 SECCIÓN DE BILLETERA -->
+        @if (walletBalance() > 0) {
+          <div class="bg-gradient-to-r from-lime-500/10 to-green-500/10 rounded-xl p-6 border border-lime-500/30">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <svg class="w-8 h-8 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                  <h3 class="text-lg font-bold text-white">Saldo Disponible en Billetera</h3>
+                  <p class="text-3xl font-bold text-lime-400">\${{ walletBalance() | number:'1.2-2' }} USD</p>
+                </div>
+              </div>
+              
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  [checked]="useWalletBalance()"
+                  (change)="toggleWalletPayment()"
+                  class="sr-only peer"
+                >
+                <div class="w-14 h-7 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-lime-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-lime-500"></div>
+                <span class="ms-3 text-sm font-medium text-white">Usar saldo</span>
+              </label>
+            </div>
+            
+            @if (useWalletBalance()) {
+              <div class="bg-slate-900/50 rounded-lg p-4 space-y-2">
+                <div class="flex justify-between text-sm">
+                  <span class="text-slate-300">Total a pagar:</span>
+                  <span class="text-white font-bold">\${{ subtotal() | number:'1.2-2' }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-lime-300">- Saldo de billetera:</span>
+                  <span class="text-lime-400 font-bold">-\${{ walletAmount() | number:'1.2-2' }}</span>
+                </div>
+                <div class="h-px bg-white/10 my-2"></div>
+                <div class="flex justify-between">
+                  <span class="text-white font-semibold">Restante a pagar:</span>
+                  <span class="text-2xl font-bold text-lime-400">\${{ remainingAmount() | number:'1.2-2' }}</span>
+                </div>
+                
+                @if (remainingAmount() === 0) {
+                  <div class="mt-3 p-3 bg-lime-500/20 border border-lime-500/50 rounded-lg">
+                    <p class="text-lime-300 text-sm text-center font-medium">
+                      ✅ Tu saldo cubre el 100% de la compra
+                    </p>
+                  </div>
+                } @else {
+                  <div class="mt-3 p-3 bg-blue-500/20 border border-blue-500/50 rounded-lg">
+                    <p class="text-blue-300 text-sm text-center">
+                      ℹ️ Selecciona un método de pago adicional para el monto restante
+                    </p>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+        
         <!-- Métodos de Pago -->
         <div class="bg-slate-800/50 rounded-lg border border-white/10 p-6">
-          <h2 class="text-xl font-semibold text-white mb-4">Método de Pago</h2>
+          <h2 class="text-xl font-semibold text-white mb-4">
+            @if (useWalletBalance() && remainingAmount() > 0) {
+              Método de Pago Adicional (para \${{ remainingAmount() | number:'1.2-2' }})
+            } @else if (useWalletBalance() && remainingAmount() === 0) {
+              ✅ Pago Completo con Billetera
+            } @else {
+              Método de Pago
+            }
+          </h2>
 
-          <div class="space-y-3">
+          <!-- 🔥 Solo mostrar métodos de pago si hay un saldo restante -->
+          @if (remainingAmount() > 0 || !useWalletBalance()) {
+            <div class="space-y-3">
             @for (method of paymentMethods; track method.id) {
               <button
                 type="button"
@@ -261,7 +332,21 @@
                 }
               </button>
             }
-          </div>
+            </div>
+          } @else {
+            <!-- Mensaje cuando el saldo cubre el 100% -->
+            <div class="p-4 bg-lime-500/10 border-2 border-lime-400/50 rounded-lg">
+              <div class="flex items-center gap-3">
+                <svg class="w-8 h-8 text-lime-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                  <p class="text-lg font-bold text-lime-300">¡Perfecto! Tu saldo cubre el 100% de la compra</p>
+                  <p class="text-sm text-gray-300 mt-1">No necesitas seleccionar ningún método de pago adicional.</p>
+                </div>
+              </div>
+            </div>
+          }
 
           <!-- Información adicional según el método seleccionado -->
           @if (selectedPaymentMethod() === 'transfer') {
@@ -448,8 +533,8 @@
           <button
             type="button"
             (click)="processPayment()"
-            [disabled]="isProcessing() || showSuccess() || !selectedPaymentMethod() || checkoutForm.invalid"
-            class="w-full bg-lime-400 text-slate-900 font-bold py-3 px-6 rounded-lg hover:bg-lime-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+            [disabled]="isProcessing() || showSuccess() || (remainingAmount() > 0 && !selectedPaymentMethod()) || checkoutForm.invalid"
+            class="w-full bg-lime-400 text-slate-900 font-bold py-3 px-6 rounded-lg hover:bg-lime-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-all flex items-center justify-center"
           >
             @if (isProcessing()) {
               <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
@@ -458,12 +543,31 @@
               </svg>
               <span>Procesando...</span>
             } @else {
-              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
               </svg>
-              <span>Pagar Ahora - ${{ formatPrice(subtotal()) }}</span>
+              @if (useWalletBalance()) {
+                @if (remainingAmount() === 0) {
+                  <span>✅ Confirmar Compra con Billetera</span>
+                } @else {
+                  <span>💳 Pagar ${{ formatPrice(remainingAmount()) }} <small class="opacity-75 text-xs ml-1">(${{ formatPrice(walletAmount()) }} con billetera)</small></span>
+                }
+              } @else {
+                <span>💳 Pagar Ahora - ${{ formatPrice(subtotal()) }}</span>
+              }
             }
           </button>
+
+          <!-- Nota informativa debajo del botón -->
+          @if (useWalletBalance()) {
+            <p class="text-sm text-center text-gray-400 mt-3">
+              @if (remainingAmount() === 0) {
+                🎉 Tu saldo cubre el 100% de la compra
+              } @else {
+                💡 Se usarán ${{ formatPrice(walletAmount()) }} de tu billetera + ${{ formatPrice(remainingAmount()) }} con {{ getPaymentMethodInfo(selectedPaymentMethod())?.name || 'otro método' }}
+              }
+            </p>
+          }
 
           <!-- Seguridad -->
           <div class="mt-4 flex items-center justify-center text-xs text-gray-500">

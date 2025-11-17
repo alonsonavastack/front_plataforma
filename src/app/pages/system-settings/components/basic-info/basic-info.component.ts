@@ -12,7 +12,7 @@ import { SystemConfigService } from '../../../../core/services/system-config.ser
 export class BasicInfoComponent {
   @Input() form!: FormGroup;
   @Input() systemConfigService!: SystemConfigService;
-  
+
   @Output() logoSelected = new EventEmitter<Event>();
   @Output() logoRemoved = new EventEmitter<void>();
 
@@ -25,7 +25,7 @@ export class BasicInfoComponent {
   currentLogoUrl = computed(() => {
     const preview = this.logoPreview();
     if (preview) return preview;
-    
+
     const config = this.systemConfigService.config();
     if (config?.logo) {
       return this.systemConfigService.buildLogoUrl(config.logo);
@@ -68,7 +68,7 @@ export class BasicInfoComponent {
     reader.onload = (e: any) => {
       const previewUrl = e.target.result;
       this.logoPreview.set(previewUrl);
-      
+
       // 🔥 Obtener dimensiones de la imagen
       const img = new Image();
       img.onload = () => {
@@ -78,7 +78,7 @@ export class BasicInfoComponent {
           size: `${(file.size / (1024 * 1024)).toFixed(2)}MB`
         };
         this.logoInfo.set(sizeInfo);
-        
+
         console.log('📊 Dimensiones del logo:', `${img.width}x${img.height}`, sizeInfo.size);
       };
       img.src = previewUrl;

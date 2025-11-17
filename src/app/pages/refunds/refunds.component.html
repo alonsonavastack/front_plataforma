@@ -1,0 +1,274 @@
+<div class="p-6">
+  <!-- Header -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-white mb-2">💸 Gestión de Reembolsos</h1>
+    <p class="text-slate-400">Solicitudes de devolución - Acreditación automática a billetera digital</p>
+  </div>
+
+  <!-- Estadísticas -->
+  <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+    <div class="bg-slate-800 border border-white/10 rounded-lg p-4">
+      <div class="text-slate-400 text-sm mb-1">Total</div>
+      <div class="text-2xl font-bold text-white">{{ stats().total }}</div>
+    </div>
+
+    <div class="bg-slate-800 border border-white/10 rounded-lg p-4">
+      <div class="text-slate-400 text-sm mb-1">Pendientes</div>
+      <div class="text-2xl font-bold text-yellow-300">{{ stats().pending }}</div>
+    </div>
+
+    <div class="bg-slate-800 border border-white/10 rounded-lg p-4">
+      <div class="text-slate-400 text-sm mb-1">Procesando</div>
+      <div class="text-2xl font-bold text-blue-300">{{ stats().processing }}</div>
+    </div>
+
+    <div class="bg-slate-800 border border-white/10 rounded-lg p-4">
+      <div class="text-slate-400 text-sm mb-1">Completados</div>
+      <div class="text-2xl font-bold text-lime-300">{{ stats().completed }}</div>
+    </div>
+
+    <div class="bg-slate-800 border border-white/10 rounded-lg p-4">
+      <div class="text-slate-400 text-sm mb-1">Original Total</div>
+      <div class="text-lg font-bold text-white">{{ formatCurrency(stats().totalOriginal) }}</div>
+    </div>
+
+    <div class="bg-slate-800 border border-white/10 rounded-lg p-4">
+      <div class="text-slate-400 text-sm mb-1">Reembolsado</div>
+      <div class="text-lg font-bold text-lime-300">{{ formatCurrency(stats().totalRefunded) }}</div>
+      <div class="text-xs text-slate-500 mt-1">💰 Acreditado a billeteras</div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="bg-slate-800 border border-white/10 rounded-lg p-4 mb-4">
+    <div class="flex flex-wrap gap-4">
+      <!-- Búsqueda -->
+      <div class="flex-1 min-w-[200px]">
+        <input
+          type="text"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event); currentPage.set(1)"
+          placeholder="🔍 Buscar por usuario, curso, monto..."
+          class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-lime-400"
+        />
+      </div>
+
+      <!-- Filtro por estado -->
+      <select
+        [ngModel]="statusFilter()"
+        (ngModelChange)="statusFilter.set($event); currentPage.set(1)"
+        class="px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-lime-400"
+      >
+        <option value="all">📋 Todos los estados</option>
+        <option value="pending">⏳ Pendientes</option>
+        <option value="processing">🔄 Procesando</option>
+        <option value="completed">✅ Completados</option>
+        <option value="rejected">❌ Rechazados</option>
+        <option value="failed">⚠️ Fallidos</option>
+      </select>
+
+      <!-- Items por página -->
+      <select
+        [ngModel]="itemsPerPage()"
+        (ngModelChange)="itemsPerPage.set($event); currentPage.set(1)"
+        class="px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-lime-400"
+      >
+        <option [value]="5">5 por página</option>
+        <option [value]="10">10 por página</option>
+        <option [value]="15">15 por página</option>
+        <option [value]="20">20 por página</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
+      <p class="text-slate-400 mt-4">Cargando reembolsos...</p>
+    </div>
+  }
+
+  <!-- Tabla de Reembolsos -->
+  @if (!isLoading() && paginatedRefunds().length > 0) {
+    <div class="bg-slate-800 border border-white/10 rounded-lg overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-slate-900 border-b border-white/10">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Fecha</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Usuario</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Curso/Proyecto</th>
+              <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Monto Original</th>
+              <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">A Acreditar</th>
+              <th class="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase">Estado</th>
+              <th class="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/10">
+            @for (refund of paginatedRefunds(); track refund._id) {
+              <tr class="hover:bg-slate-700/50 transition-colors">
+                <!-- Fecha -->
+                <td class="px-4 py-4 whitespace-nowrap">
+                  <div class="text-sm text-white">{{ formatDate(refund.requestedAt) }}</div>
+                </td>
+
+                <!-- Usuario -->
+                <td class="px-4 py-4">
+                  <div class="text-sm font-medium text-white">
+                    {{ refund.user?.name }} {{ refund.user?.surname }}
+                  </div>
+                  <div class="text-xs text-slate-400">{{ refund.user?.email }}</div>
+                </td>
+
+                <!-- Curso/Proyecto -->
+                <td class="px-4 py-4">
+                  @if (refund.course) {
+                    <div class="text-sm text-white">📚 {{ refund.course.title }}</div>
+                  }
+                  @if (refund.project) {
+                    <div class="text-sm text-white">🎯 {{ refund.project.title }}</div>
+                  }
+                  <div class="text-xs text-slate-400 mt-1">
+                    <span [class]="'px-2 py-0.5 rounded text-xs ' + getStatusBadgeClass(refund.reason.type)">
+                      {{ getReasonLabel(refund.reason.type) }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Monto Original -->
+                <td class="px-4 py-4 text-right">
+                  <div class="text-sm font-medium text-white">
+                    {{ formatCurrency(refund.originalAmount) }}
+                  </div>
+                  <div class="text-xs text-slate-400">{{ refund.currency }}</div>
+                </td>
+
+                <!-- A Acreditar -->
+                <td class="px-4 py-4 text-right">
+                  <div class="text-sm font-bold text-lime-300">
+                    {{ formatCurrency(refund.calculations.refundAmount || 0) }}
+                  </div>
+                  <div class="text-xs text-slate-400 mt-1">
+                    💰 A billetera digital
+                  </div>
+                </td>
+
+                <!-- Estado -->
+                <td class="px-4 py-4 text-center">
+                  <span [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getStatusBadgeClass(refund.status)">
+                    {{ getStatusLabel(refund.status) }}
+                  </span>
+                </td>
+
+                <!-- Acciones -->
+                <td class="px-4 py-4 text-center">
+                  <div class="flex items-center justify-center gap-2">
+                    <!-- Ver Detalles -->
+                    <button
+                      (click)="openDetailsModal(refund)"
+                      class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded-lg transition-colors"
+                      title="Ver detalles completos"
+                    >
+                      👁️ Ver
+                    </button>
+
+                    <!-- Revisar -->
+                    @if (canReview(refund)) {
+                      <button
+                        (click)="openReviewModal(refund)"
+                        class="px-3 py-1 bg-lime-500 hover:bg-lime-600 text-black text-xs rounded-lg transition-colors"
+                      >
+                        ✅ Revisar
+                      </button>
+                    }
+
+                    <!-- Nota: Con billetera digital, el completado es automático al aprobar -->
+                    <!-- Ya no necesitamos botón de "Completar" manual -->
+
+                    <!-- Referencia (completado) -->
+                    @if (refund.status === 'completed') {
+                      <span class="text-xs text-slate-400">
+                        Ref: {{ refund.refundDetails.receiptNumber || '-' }}
+                      </span>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Paginación -->
+    @if (totalPages() > 1) {
+      <div class="mt-4 flex items-center justify-between">
+        <div class="text-sm text-slate-400">
+          Mostrando {{ (currentPage() - 1) * itemsPerPage() + 1 }} -
+          {{ Math.min(currentPage() * itemsPerPage(), filteredRefunds().length) }}
+          de {{ filteredRefunds().length }} reembolsos
+        </div>
+
+        <div class="flex gap-2">
+          <button
+            (click)="goToPage(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+            class="px-3 py-1 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm transition-colors"
+          >
+            Anterior
+          </button>
+
+          @for (page of [].constructor(totalPages()); track $index) {
+            <button
+              (click)="goToPage($index + 1)"
+              [class]="currentPage() === $index + 1
+                ? 'px-3 py-1 bg-lime-500 text-black rounded-lg text-sm font-medium'
+                : 'px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm transition-colors'"
+            >
+              {{ $index + 1 }}
+            </button>
+          }
+
+          <button
+            (click)="goToPage(currentPage() + 1)"
+            [disabled]="currentPage() === totalPages()"
+            class="px-3 py-1 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm transition-colors"
+          >
+            Siguiente
+          </button>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- Empty State -->
+  @if (!isLoading() && paginatedRefunds().length === 0) {
+    <div class="text-center py-12 bg-slate-800 border border-white/10 rounded-lg">
+      <p class="text-slate-400 text-lg">📭 No se encontraron reembolsos</p>
+      <p class="text-slate-500 text-sm mt-2">Ajusta los filtros o espera nuevas solicitudes</p>
+    </div>
+  }
+</div>
+
+<!-- Modales -->
+<app-refund-details-modal
+  [show]="showDetailsModal()"
+  [refund]="selectedRefund()"
+  (close)="closeDetailsModal()"
+/>
+
+<app-refund-review-modal
+  [show]="showReviewModal()"
+  [refund]="reviewRefund()"
+  (close)="closeReviewModal()"
+  (approve)="handleApprove($event)"
+  (reject)="handleReject($event)"
+/>
+
+<app-refund-complete-modal
+  [show]="showCompleteModal()"
+  [refund]="completeRefund()"
+  (close)="closeCompleteModal()"
+  (complete)="handleComplete($event)"
+/>

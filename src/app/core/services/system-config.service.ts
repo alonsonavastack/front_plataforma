@@ -34,7 +34,7 @@ export class SystemConfigService {
    */
   getConfig(): void {
     console.log('📋 [SystemConfigService] Obteniendo configuración del sistema (pública)');
-    
+
     this.state.set({
       ...this.state(),
       isLoading: true,
@@ -67,11 +67,11 @@ export class SystemConfigService {
    */
   updateConfig(formData: FormData): Observable<any> {
     console.log('🔄 [SystemConfigService] Actualizando configuración');
-    
+
     return this.http.put<{ message: string; config: SystemConfig }>(`${this.API_URL}/update`, formData).pipe(
       tap((response) => {
         console.log('✅ [SystemConfigService] Configuración actualizada:', response);
-        
+
         // Actualizar estado local
         this.state.set({
           config: response.config,

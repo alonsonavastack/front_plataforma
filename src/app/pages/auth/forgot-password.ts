@@ -112,7 +112,7 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.isLoading.set(false);
-          console.error('❌ Error solicitando recuperación:', err);
+
           this.errorMessage.set(
             err.error?.message_text ||
             err.error?.message ||
@@ -153,7 +153,6 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.isLoading.set(false);
-          console.error('❌ Error verificando código:', err);
 
           if (err.error?.attemptsRemaining !== undefined) {
             this.attemptsRemaining.set(err.error.attemptsRemaining);
@@ -206,7 +205,6 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.isLoading.set(false);
-          console.error('❌ Error restableciendo contraseña:', err);
           this.errorMessage.set(
             err.error?.message_text ||
             err.error?.message ||
@@ -243,7 +241,6 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.isLoading.set(false);
-          console.error('❌ Error reenviando código:', err);
 
           if (err.error?.waitSeconds) {
             this.resendCountdown.set(err.error.waitSeconds);

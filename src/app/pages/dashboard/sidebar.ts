@@ -7,9 +7,16 @@ import { NavId, NavItem } from "./nav.types";
   selector: 'app-sidebar',
   imports: [CommonModule],
   templateUrl: './sidebar.html',
+  styles: [`
+    :host {
+      display: block;
+      height: 100%;
+      overflow: hidden;
+    }
+  `]
 })
 export class SidebarComponent {
-  selected = input<NavId>('overview');
+  selected = input<NavId>('sales');
   isCollapsed = input.required<boolean>();
   navigate = output<NavId>();
   items = input.required<NavItem[]>();

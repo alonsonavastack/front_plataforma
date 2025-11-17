@@ -420,7 +420,6 @@ export class InstructorPaymentConfigComponent implements OnInit {
 
   get hasPaypalConnected() {
     const connected = this.config()?.paypal_connected ?? false;
-    console.log('hasPaypalConnected:', connected, this.config()?.paypal_email);
     return connected;
   }
 
@@ -428,25 +427,24 @@ export class InstructorPaymentConfigComponent implements OnInit {
     const bankAccount = this.config()?.bank_account;
     // Verificar si existe bank_account Y tiene al menos el nombre del banco o titular
     const hasAccount = !!(bankAccount && (bankAccount.bank_name || bankAccount.account_holder_name));
-    console.log('hasBankAccount:', hasAccount, this.config()?.bank_account);
     return hasAccount;
   }
 
   get maskedAccountNumber() {
     const bankAccount = this.config()?.bank_account;
-    
+
     // Si hay account_number_masked, usarlo
     if (bankAccount?.account_number_masked) {
       const masked = bankAccount.account_number_masked;
       if (masked.includes('*')) return masked.slice(-4);
       return masked;
     }
-    
+
     // Si hay clabe_masked, usarlo
     if (bankAccount?.clabe_masked) {
       return bankAccount.clabe_masked.slice(-4);
     }
-    
+
     // Si no hay ninguno enmascarado, mostrar placeholder
     return '••••';
   }

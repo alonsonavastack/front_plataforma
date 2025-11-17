@@ -1,4 +1,3 @@
-
 <main class="bg-slate-900 min-h-screen text-white pt-24 pb-12">
   <div class="container mx-auto px-4">
     <!-- Cabecera -->
@@ -13,6 +12,66 @@
       </button>
     </div>
 
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="bg-gradient-to-br from-slate-800 to-slate-850 rounded-xl p-5 border border-white/10">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-slate-400 text-sm font-medium">Total Usuarios</p>
+            <p class="text-3xl font-bold text-white mt-1">{{ totalUsers() }}</p>
+          </div>
+          <div class="w-12 h-12 bg-lime-500/20 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-lime-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-850 rounded-xl p-5 border border-white/10">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-slate-400 text-sm font-medium">Estudiantes</p>
+            <p class="text-3xl font-bold text-cyan-400 mt-1">{{ totalStudents() }}</p>
+          </div>
+          <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-850 rounded-xl p-5 border border-white/10">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-slate-400 text-sm font-medium">Instructores</p>
+            <p class="text-3xl font-bold text-lime-400 mt-1">{{ totalInstructors() }}</p>
+          </div>
+          <div class="w-12 h-12 bg-lime-500/20 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-lime-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-850 rounded-xl p-5 border border-white/10">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-slate-400 text-sm font-medium">Activos</p>
+            <p class="text-3xl font-bold text-lime-400 mt-1">{{ activeUsers() }}</p>
+          </div>
+          <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Filtros -->
     <div class="bg-slate-800 p-4 rounded-lg mb-6 flex flex-wrap gap-4 items-center border border-white/10">
       <div class="relative flex-grow">
@@ -25,7 +84,7 @@
         <option value="">Todos los roles</option>
         <option value="admin">Administrador</option>
         <option value="instructor">Instructor</option>
-        <option value="cliente">Cliente</option>
+        <option value="customer">Cliente</option>
       </select>
       <select (change)="onStateFilter($event)" class="bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
         <option value="">Todos los estados</option>
@@ -84,13 +143,13 @@
               </tr>
             } @else {
               @for (user of paginatedUsers(); track user._id) {
-                <tr class="border-b border-slate-700 hover:bg-slate-800/50">
+                <tr class="border-b border-slate-700 hover:bg-slate-800/50 transition-colors">
                   <th scope="row" class="px-6 py-4 font-medium text-white whitespace-nowrap">
                     <div class="flex items-center gap-3">
-                      <img [src]="getAvatarUrl(user.avatar)" [alt]="user.name" class="w-10 h-10 rounded-full object-cover">
+                      <img [src]="getAvatarUrl(user.avatar)" [alt]="user.name" class="w-10 h-10 rounded-full object-cover ring-2 ring-white/10">
                       <div>
                         <div class="font-semibold">{{ user.name }} {{ user.surname }}</div>
-                        <div class="font-normal text-slate-400">{{ user.email }}</div>
+                        <div class="font-normal text-slate-400 text-xs">{{ user.email }}</div>
                       </div>
                     </div>
                   </th>
@@ -110,13 +169,13 @@
                   <td class="px-6 py-4 text-right">
                     <div class="flex items-center justify-end gap-2">
                       <button (click)="openViewModal(user)" class="p-2 rounded-md hover:bg-slate-700 transition" title="Ver detalles">
-                        <svg class="w-5 h-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        <svg class="w-5 h-5 text-slate-400 hover:text-white transition" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                       </button>
                       <button (click)="openEditModal(user)" class="p-2 rounded-md hover:bg-slate-700 transition" title="Editar usuario">
-                        <svg class="w-5 h-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                        <svg class="w-5 h-5 text-slate-400 hover:text-lime-400 transition" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
                       </button>
                       <button (click)="deleteUser(user)" class="p-2 rounded-md hover:bg-red-500/20 transition" title="Eliminar usuario">
-                        <svg class="w-5 h-5 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.124-2.033-2.124H8.033C6.91 2.75 6 3.694 6 4.874v.916m7.5 0h-7.5" /></svg>
+                        <svg class="w-5 h-5 text-red-400 hover:text-red-300 transition" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.124-2.033-2.124H8.033C6.91 2.75 6 3.694 6 4.874v.916m7.5 0h-7.5" /></svg>
                       </button>
                     </div>
                   </td>
@@ -127,248 +186,50 @@
         </table>
       </div>
     </div>
+
+    <!-- Paginación -->
+    @if (totalPages() > 1) {
+      <div class="flex items-center justify-center gap-2 mt-6">
+        <button
+          (click)="previousPage()"
+          [disabled]="currentPage() === 1"
+          class="px-4 py-2 rounded-lg bg-slate-800 border border-white/10 text-slate-400 hover:bg-slate-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        @for (page of pageNumbers(); track page) {
+          @if (page === '...') {
+            <span class="px-4 py-2 text-slate-500">...</span>
+          } @else {
+            <button
+              (click)="changePage(+page)"
+              [class]="'px-4 py-2 rounded-lg border transition ' + (currentPage() === page ? 'bg-lime-400 border-lime-400 text-slate-900 font-semibold' : 'bg-slate-800 border-white/10 text-slate-400 hover:bg-slate-700 hover:text-white')"
+            >
+              {{ page }}
+            </button>
+          }
+        }
+
+        <button
+          (click)="nextPage()"
+          [disabled]="currentPage() === totalPages()"
+          class="px-4 py-2 rounded-lg bg-slate-800 border border-white/10 text-slate-400 hover:bg-slate-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    }
   </div>
 </main>
 
-<!-- Modales -->
-<ng-template #modals>
-  <!-- Modal de Creación/Edición -->
-  @if (isCreateModalOpen() || isEditModalOpen()) {
-    <div class="fixed inset-0 z-50 overflow-y-auto" (click)="isCreateModalOpen() ? closeCreateModal() : closeEditModal()">
-      <div class="flex items-center justify-center min-h-screen px-4">
-        <div class="fixed inset-0 bg-black/70 backdrop-blur-sm"></div>
-
-        <div class="relative bg-slate-800 rounded-2xl w-full max-w-2xl border border-white/10 shadow-2xl flex flex-col max-h-[90vh]" (click)="$event.stopPropagation()">
-          <form [formGroup]="isCreateModalOpen() ? createForm : editForm" (ngSubmit)="isCreateModalOpen() ? saveCreate() : saveEdit()">
-            <div class="p-6 border-b border-white/10">
-              <h3 class="text-2xl font-bold text-white">{{ isCreateModalOpen() ? 'Crear Nuevo Usuario' : 'Editar Usuario' }}</h3>
-              <p class="text-slate-400 mt-2">{{ isCreateModalOpen() ? 'Completa los datos para registrar un nuevo usuario.' : 'Actualiza la información del usuario.' }}</p>
-            </div>
-
-            <div class="p-6 space-y-4 overflow-y-auto">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label for="name" class="block text-sm font-medium text-slate-300 mb-2">Nombre</label>
-                  <input type="text" id="name" formControlName="name" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
-                </div>
-                <div>
-                  <label for="surname" class="block text-sm font-medium text-slate-300 mb-2">Apellidos</label>
-                  <input type="text" id="surname" formControlName="surname" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
-                </div>
-              </div>
-
-              <div>
-                <label for="email" class="block text-sm font-medium text-slate-300 mb-2">Email</label>
-                <input type="email" id="email" formControlName="email" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
-              </div>
-
-              @if (isCreateModalOpen()) {
-                <div>
-                  <label for="password" class="block text-sm font-medium text-slate-300 mb-2">Contraseña</label>
-                  <input type="password" id="password" formControlName="password" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
-                </div>
-              }
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label for="profession" class="block text-sm font-medium text-slate-300 mb-2">Profesión</label>
-                  <input type="text" id="profession" formControlName="profession" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
-                </div>
-                <div>
-                  <label for="phone" class="block text-sm font-medium text-slate-300 mb-2">Teléfono</label>
-                  <input type="tel" id="phone" formControlName="phone" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
-                </div>
-              </div>
-
-              <div>
-                <label for="description" class="block text-sm font-medium text-slate-300 mb-2">Descripción</label>
-                <textarea id="description" formControlName="description" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400"></textarea>
-              </div>
-
-              @if (isEditModalOpen()) {
-                <div>
-                  <label for="rol-edit" class="block text-sm font-medium text-slate-300 mb-2">Rol</label>
-                  <select id="rol-edit" formControlName="rol" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
-                    <option value="" disabled>Selecciona un rol</option>
-                    <option value="cliente">Estudiante</option>
-                    <option value="instructor">Instructor</option>
-                    <option value="admin">Administrador</option>
-                  </select>
-                </div>
-              }
-
-              @if (isCreateModalOpen()) {
-                <div>
-                  <label for="rol" class="block text-sm font-medium text-slate-300 mb-2">Rol</label>
-                  <select id="rol" formControlName="rol" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400">
-                    <option value="cliente">Cliente</option>
-                    <option value="instructor">Instructor</option>
-                    <option value="admin">Administrador</option>
-                  </select>
-                </div>
-              }
-
-              @if (isEditModalOpen()) {
-                <div>
-                  <label class="block text-sm font-medium text-slate-300 mb-2">Estado</label>
-                  <div class="flex items-center">
-                    <input type="checkbox" id="state" formControlName="state" class="h-4 w-4 rounded border-slate-600 bg-slate-700 text-lime-500 focus:ring-lime-500">
-                    <label for="state" class="ml-2 text-sm text-slate-300">Usuario Activo</label>
-                  </div>
-                </div>
-              }
-
-              <div>
-                <label class="block text-sm font-medium text-slate-300 mb-2">Avatar</label>
-                <div class="flex items-center gap-4">
-                  @if (previewUrl()) {
-                    <img [src]="previewUrl()!" class="w-16 h-16 rounded-full object-cover" alt="Preview" />
-                  } @else if (isEditModalOpen() && currentUser()?.avatar) {
-                    <img [src]="getAvatarUrl(currentUser()!.avatar)" class="w-16 h-16 rounded-full object-cover" alt="Avatar Actual" />
-                  }
-                  <input
-                    type="file"
-                    (change)="onFileSelected($event)"
-                    accept="image/*"
-                    class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-lime-400 file:text-slate-900 hover:file:bg-lime-300"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div class="p-6 flex gap-3 border-t border-white/10 bg-slate-800/50 rounded-b-2xl">
-              <button
-                type="button"
-                (click)="isCreateModalOpen() ? closeCreateModal() : closeEditModal()"
-                class="flex-1 px-4 py-2 bg-slate-700 text-white font-medium rounded-lg hover:bg-slate-600 transition"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                [disabled]="(isCreateModalOpen() ? createForm.invalid : editForm.invalid) || isLoading()"
-                class="flex-1 px-4 py-2 bg-lime-400 text-slate-900 font-semibold rounded-lg hover:bg-lime-300 transition disabled:bg-slate-600 disabled:cursor-not-allowed"
-              >
-                {{ isCreateModalOpen() ? 'Crear Usuario' : 'Guardar Cambios' }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- Modal de Vista/Detalles -->
-  @if (isViewModalOpen()) {
-    <div class="fixed inset-0 z-50 overflow-y-auto" (click)="closeViewModal()">
-      <div class="flex items-center justify-center min-h-screen px-4">
-        <div class="fixed inset-0 bg-black/70 backdrop-blur-sm"></div>
-
-        <div class="relative bg-slate-800 rounded-2xl p-6 w-full max-w-2xl border border-white/10 shadow-2xl" (click)="$event.stopPropagation()">
-          @if (currentUser(); as user) {
-            <div class="mb-6">
-              <h3 class="text-2xl font-bold text-white">Detalles del Usuario</h3>
-              <p class="text-slate-400 mt-2">Información completa del usuario</p>
-            </div>
-
-            <div class="space-y-6">
-              <!-- Avatar y Info Básica -->
-              <div class="flex items-center gap-6 pb-6 border-b border-white/10">
-                <img
-                  [src]="getAvatarUrl(user.avatar)"
-                  [alt]="user.name"
-                  class="w-24 h-24 rounded-full object-cover border-4 border-lime-400/20"
-                />
-                <div class="flex-1">
-                  <h4 class="text-2xl font-bold text-white">
-                    {{ user.name }} {{ user.surname }}
-                  </h4>
-                  <p class="text-slate-400 mt-1">{{ user.email }}</p>
-                  <div class="flex items-center gap-3 mt-3">
-                    <span [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getRoleBadgeClass(user.rol)">
-                      {{ getRoleLabel(user.rol) }}
-                    </span>
-                    <span [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getStateBadgeClass(user)">
-                      {{ getStateText(user) }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Información de Contacto -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label class="block text-sm font-medium text-slate-400 mb-1">Teléfono</label>
-                  <p class="text-white">
-                    @if (user.phone) {
-                      {{ user.phone }}
-                    } @else {
-                      <span class="text-slate-500">No especificado</span>
-                    }
-                  </p>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-slate-400 mb-1">Profesión</label>
-                  <p class="text-white">
-                    @if (user.profession) {
-                      {{ user.profession }}
-                    } @else {
-                      <span class="text-slate-500">No especificada</span>
-                    }
-                  </p>
-                </div>
-              </div>
-
-              <!-- Descripción -->
-              @if (user.description) {
-                <div>
-                  <label class="block text-sm font-medium text-slate-400 mb-2">Descripción</label>
-                  <div class="bg-slate-900/50 border border-white/10 rounded-lg p-4">
-                    <p class="text-slate-300 leading-relaxed">{{ user.description }}</p>
-                  </div>
-                </div>
-              }
-
-              <!-- Información del Sistema -->
-              <div class="bg-slate-900/50 border border-white/10 rounded-lg p-4">
-                <h5 class="text-sm font-medium text-slate-400 mb-3">Información del Sistema</h5>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span class="text-slate-500">ID:</span>
-                    <p class="text-slate-300 font-mono text-xs mt-1">{{ user._id }}</p>
-                  </div>
-                  @if (user.createdAt) {
-                    <div>
-                      <span class="text-slate-500">Fecha de Registro:</span>
-                      <p class="text-slate-300 mt-1">{{ user.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
-                    </div>
-                  }
-                </div>
-              </div>
-            </div>
-
-            <div class="mt-6 flex gap-3">
-              <button
-                type="button"
-                (click)="closeViewModal()"
-                class="flex-1 px-4 py-2 bg-slate-700 text-white font-medium rounded-lg hover:bg-slate-600 transition"
-              >
-                Cerrar
-              </button>
-              <button
-                type="button"
-                (click)="closeViewModal(); openEditModal(user)"
-                class="flex-1 px-4 py-2 bg-lime-400 text-slate-900 font-semibold rounded-lg hover:bg-lime-300 transition"
-              >
-                Editar Usuario
-              </button>
-            </div>
-          }
-        </div>
-      </div>
-    </div>
-  }
-</ng-template>
-
-<ng-container *ngTemplateOutlet="modals"></ng-container>
+<!-- ✅ Modal Component - Componente reutilizable premium -->
+<app-user-modal
+  [mode]="modalMode()"
+  [user]="currentUser()"
+  [isLoading]="isLoading()"
+  (close)="closeUserModal()"
+  (save)="handleSaveUser($event)"
+></app-user-modal>

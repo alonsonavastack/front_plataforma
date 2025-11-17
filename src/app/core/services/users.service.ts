@@ -1,7 +1,7 @@
 // src/app/core/services/users.service.ts
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface AllUser {
@@ -93,7 +93,7 @@ export class UsersService {
     const token = localStorage.getItem('token');
     return new HttpHeaders({
       'Content-Type': 'application/json',
-      'Authorization': token || ''
+      'Authorization': token ? `Bearer ${token}` : ''
     });
   }
 
@@ -117,9 +117,10 @@ export class UsersService {
 
   // Crear usuario (admin)
   createUser(userData: FormData): Observable<UserResponse> {
+    const token = localStorage.getItem('token');
     return this.http.post<UserResponse>(`${environment.url}users/register_admin`, userData, {
       headers: new HttpHeaders({
-        'Authorization': localStorage.getItem('token') || ''
+        'Authorization': token ? `Bearer ${token}` : ''
       })
     });
   }
@@ -148,9 +149,6 @@ export class UsersService {
 
   // Actualizar estado del usuario
   updateUserState(userId: string, state: boolean): Observable<UserResponse> {
-    console.log('=== updateUserState called ===');
-    console.log('userId:', userId);
-    console.log('state:', state, 'type:', typeof state);
 
     return this.http.put<UserResponse>(`${environment.url}users/update-state/${userId}`,
       { state },
@@ -158,10 +156,10 @@ export class UsersService {
     ).pipe(
       tap({
         next: (response) => {
-          console.log('Response from server:', response);
+
         },
         error: (error) => {
-          console.error('Error from server:', error);
+
         }
       })
     );
@@ -178,10 +176,34 @@ export class UsersService {
   updateUserWithFile(userId: string, formData: FormData): Observable<UserResponse> {
     formData.append('_id', userId);
 
+    const token = localStorage.getItem('token');
     return this.http.post<UserResponse>(`${environment.url}users/update`, formData, {
       headers: new HttpHeaders({
-        'Authorization': localStorage.getItem('token') || ''
+        'Authorization': token ? `Bearer ${token}` : ''
       })
     });
+  }
+
+  // Obtener todos los usuarios por rol (para admin)
+  getAllUsers(role?: string): Observable<AllUser[]> {
+    const url = role 
+      ? `${environment.url}users/list?role=${role}`
+      : `${environment.url}users/list`;
+    
+    return this.http.get<any>(url, {
+      headers: this.getHeaders()
+    }).pipe(
+      map((response: any) => {
+        // Si la respuesta tiene estructura {users: [...]}
+        if (response && response.users) {
+          return response.users;
+        }
+        // Si la respuesta ya es un array
+        if (Array.isArray(response)) {
+          return response;
+        }
+        return [];
+      })
+    );
   }
 }

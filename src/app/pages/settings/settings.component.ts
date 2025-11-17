@@ -60,7 +60,6 @@ export class SettingsComponent implements OnInit {
         this.homeService.reloadHome();
       },
       error: (err: any) => {
-        console.error('Error al destacar el curso:', err);
         // 3. Si la API falla, revertimos el cambio en el frontend.
         this.settingsService.updateLocalCourse({ ...course, featured: originalState });
         alert('Error al actualizar el curso. El cambio ha sido revertido.');
@@ -83,7 +82,6 @@ export class SettingsComponent implements OnInit {
         this.homeService.reloadHome();
       },
       error: (err: any) => {
-        console.error('Error al destacar el proyecto:', err);
         alert('Error al actualizar el proyecto.');
         // 3. Reversión en caso de error
         this.settingsService.updateLocalProject({ ...project, featured: originalState });
@@ -98,7 +96,7 @@ export class SettingsComponent implements OnInit {
 
   getProjectImageUrl(imageName?: string): string {
     if (!imageName) return 'https://via.placeholder.com/150';
-    return `${this.settingsService.base}project/imagen-project/${imageName}`;
+    return `${this.settingsService.base}projects/imagen-project/${imageName}`;
   }
 
   setTab(tab: 'courses' | 'projects'): void {

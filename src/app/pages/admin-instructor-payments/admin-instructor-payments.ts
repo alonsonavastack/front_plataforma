@@ -2,7 +2,8 @@ import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AdminPaymentService, InstructorWithEarnings } from '../../core/services/admin-payment.service';
+import { HttpClient } from '@angular/common/http';
+import { AdminPaymentService, InstructorWithEarnings, CommissionSettings } from '../../core/services/admin-payment.service';
 
 @Component({
   selector: 'app-admin-instructor-payments',
@@ -13,14 +14,19 @@ import { AdminPaymentService, InstructorWithEarnings } from '../../core/services
 export class AdminInstructorPaymentsComponent implements OnInit {
   private adminPaymentService = inject(AdminPaymentService);
   private router = inject(Router);
+  private http = inject(HttpClient);
 
   instructors = signal<InstructorWithEarnings[]>([]);
   summary = signal<any>({});
   isLoading = signal(true);
   error = signal<string | null>(null);
+  
+  // 🔥 NUEVO: Configuración de comisiones (incluye umbral y días)
+  settings = signal<CommissionSettings | null>(null);
+  isLoadingSettings = signal(true);
 
   filterForm = new FormGroup({
-    status: new FormControl('available'),
+    status: new FormControl('all'), // 🔥 Por defecto mostrar TODAS las ganancias
     minAmount: new FormControl<number | null>(0),
   });
 
@@ -65,18 +71,33 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   });
 
   ngOnInit() {
-    console.log('🔵 AdminInstructorPaymentsComponent initialized');
     this.loadInstructors();
+    this.loadSettings(); // 🔥 NUEVO: Cargar configuración
+  }
+
+  // 🔥 NUEVO: Cargar configuración de comisiones
+  loadSettings() {
+    this.isLoadingSettings.set(true);
+    this.adminPaymentService.getCommissionSettings().subscribe({
+      next: (response) => {
+        this.settings.set(response.settings);
+        this.isLoadingSettings.set(false);
+      },
+      error: (err) => {
+        console.error('Error al cargar configuración:', err);
+        this.isLoadingSettings.set(false);
+      }
+    });
   }
 
   loadInstructors() {
-    console.log('🔵 Loading instructors...');
     this.isLoading.set(true);
     this.error.set(null);
 
     const formValue = this.filterForm.value;
     const filters: { status?: string; minAmount?: number } = {};
 
+    // 🔥 IMPORTANTE: Usar 'all' como valor por defecto, no 'available'
     if (formValue.status && formValue.status !== 'all') {
       filters.status = formValue.status;
     }
@@ -84,27 +105,21 @@ export class AdminInstructorPaymentsComponent implements OnInit {
       filters.minAmount = formValue.minAmount;
     }
 
-    const status = filters.status || 'available';
+    // 🔥 Si no hay filtro de status, usar 'all' para ver TODAS las ganancias
+    const status = filters.status || 'all';
     const minAmount = filters.minAmount || 0;
-    
-    console.log('🔵 Fetching with filters:', { status, minAmount });
+
+    console.log(`🔍 [Frontend] Cargando instructores con status='${status}', minAmount=${minAmount}`);
 
     this.adminPaymentService.getInstructorsWithEarnings(status, minAmount).subscribe({
       next: (response) => {
-        console.log('✅ Response received:', response);
-        console.log('✅ Instructors count:', response.instructors?.length || 0);
-        console.log('✅ Summary:', response.summary);
-        
+
         this.instructors.set(response.instructors || []);
         this.summary.set(response.summary || {});
         this.isLoading.set(false);
-        
-        console.log('✅ State updated - Instructors:', this.instructors().length);
-        console.log('✅ State updated - Total earnings:', this.totalEarnings());
+
       },
       error: (err) => {
-        console.error('❌ Error loading instructors:', err);
-        console.error('❌ Error details:', err.error);
         this.error.set(err.error?.message || 'An error occurred while loading data.');
         this.isLoading.set(false);
       }
@@ -112,15 +127,13 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   }
 
   onFilterChange() {
-    console.log('🔵 Filter changed');
     this.currentPage.set(1); // Reset a primera página
     this.loadInstructors();
   }
 
   clearFilters() {
-    console.log('🔵 Clearing filters');
     this.filterForm.reset({
-      status: 'available',
+      status: 'all', // 🔥 Resetear a 'all' para mostrar todos
       minAmount: 0
     });
     this.currentPage.set(1);
@@ -192,7 +205,6 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   }
 
   viewInstructorDetails(instructorId: string) {
-    console.log('🔵 Navigating to instructor details:', instructorId);
     if (instructorId) {
       this.router.navigate(['/admin-instructor-payments', instructorId]);
     }
@@ -206,5 +218,67 @@ export class AdminInstructorPaymentsComponent implements OnInit {
       return `https://ui-avatars.com/api/?name=${encodeURIComponent(instructor?.name || 'User')}&background=667eea&color=fff`;
     }
     return `http://localhost:3000/api/users/imagen-usuario/${instructor.avatar}`;
+  }
+
+  // 🔥 NUEVO: Verificar si el instructor ha alcanzado el umbral mínimo
+  hasReachedThreshold(earningsTotal: number): boolean {
+    const threshold = this.settings()?.minimum_payment_threshold || 0; // ⚠️ Usar 0 como fallback
+    return earningsTotal >= threshold;
+  }
+
+  // 🔥 NUEVO: Calcular cuánto falta para alcanzar el umbral
+  amountToReachThreshold(earningsTotal: number): number {
+    const threshold = this.settings()?.minimum_payment_threshold || 0; // ⚠️ Usar 0 como fallback
+    const remaining = threshold - earningsTotal;
+    return remaining > 0 ? remaining : 0;
+  }
+
+  // 🔥 NUEVO: Obtener el umbral mínimo configurado
+  getMinimumThreshold(): number {
+    return this.settings()?.minimum_payment_threshold || 0;
+  }
+
+  // 🔥 NUEVO: Obtener los días hasta que las ganancias estén disponibles
+  getDaysUntilAvailable(): number {
+    return this.settings()?.days_until_available ?? 0; // ⚠️ Usar ?? en lugar de || para manejar el 0 correctamente
+  }
+
+  // 🔧 NUEVO: Procesar ventas existentes para crear ganancias
+  isProcessingSales = signal(false);
+
+  processExistingSales() {
+    if (!confirm('⚠️ ¿Procesar todas las ventas existentes?\n\nEsto creará registros de ganancias para los instructores de todas las ventas pagadas que aún no tienen ganancias asociadas.\n\n¿Deseas continuar?')) {
+      return;
+    }
+
+    this.isProcessingSales.set(true);
+    console.log('🔧 [Frontend] Iniciando procesamiento de ventas existentes...');
+
+    this.http.post<{
+      success: boolean;
+      message: string;
+      processed: number;
+      skipped: number;
+      total: number;
+    }>('http://localhost:3000/api/sales/process-existing-sales', {}).subscribe({
+      next: (result) => {
+        console.log('✅ [Frontend] Resultado:', result);
+        this.isProcessingSales.set(false);
+        
+        alert(`✅ Proceso completado:\n\n` +
+              `📊 Ventas procesadas: ${result.processed}\n` +
+              `⏩ Ventas omitidas (ya tenían ganancias): ${result.skipped}\n` +
+              `📦 Total de ventas: ${result.total}\n\n` +
+              `Recargando lista de instructores...`);
+        
+        // Recargar la lista de instructores
+        this.loadInstructors();
+      },
+      error: (err) => {
+        console.error('❌ [Frontend] Error al procesar ventas:', err);
+        this.isProcessingSales.set(false);
+        alert('❌ Error al procesar ventas: ' + (err.error?.message || err.message));
+      }
+    });
   }
 }

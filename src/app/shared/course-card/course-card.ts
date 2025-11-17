@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment.development';
 import { PurchasesService } from '../../core/services/purchases.service';
 import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth';
+import { ToastService } from '../../core/services/toast.service';
 
 type AnyObj = Record<string, any>;
 
@@ -23,7 +24,7 @@ export class CourseCardComponent {
   private purchasesService = inject(PurchasesService);
   private cartService = inject(CartService);
   private authService = inject(AuthService);
-
+  private toast = inject(ToastService);
   galeria = environment.images.course;
 
   private buildImage(part: string | null | undefined): string {
@@ -103,7 +104,7 @@ export class CourseCardComponent {
     if (!id || this.isPurchased() || this.isInCart()) return;
 
     if (!this.authService.isLoggedIn()) {
-      alert('Debes iniciar sesión para agregar al carrito');
+      this.toast.error('Debes iniciar sesión para agregar al carrito');
       return;
     }
 

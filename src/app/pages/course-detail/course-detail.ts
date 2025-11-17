@@ -71,7 +71,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     try {
       return this.detailRes.value();
     } catch (error) {
-      console.error('Error loading course detail:', error);
+
       return {
         course: undefined,
         reviews: [],
@@ -289,13 +289,13 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
   // Métodos para manejar eventos del componente de reviews
   onReviewAdded(review: Review) {
-    console.log('Review added:', review);
+
     // Aquí podrías actualizar las métricas del curso si es necesario
     // o mostrar una notificación de éxito
   }
 
   onReviewUpdated(review: Review) {
-    console.log('Review updated:', review);
+
     // Aquí podrías actualizar las métricas del curso si es necesario
     // o mostrar una notificación de éxito
   }

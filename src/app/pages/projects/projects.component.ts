@@ -81,9 +81,40 @@ export class ProjectsComponent implements OnInit {
     url_video: new FormControl(''),
   });
 
+  // 🔥 Signal para mensaje de error de precio
+  priceErrorMessage = computed(() => {
+    const priceControl = this.projectForm.get('price_usd');
+    const isFreeControl = this.projectForm.get('isFree');
+    
+    if (!priceControl || !isFreeControl) return null;
+    
+    const price = priceControl.value || 0;
+    const isFree = isFreeControl.value;
+    
+    // Si es gratuito, no mostrar error
+    if (isFree) return null;
+    
+    // Si el precio está entre 0.01 y 5.99, mostrar error
+    if (price > 0 && price < 6) {
+      return 'El precio mínimo debe ser $6.00 USD';
+    }
+    
+    return null;
+  });
+
   ngOnInit(): void {
     this.loadProjects();
     this.coursesService.reloadConfig();
+    
+    // 🔥 Listener para el checkbox de "Gratuito"
+    this.projectForm.get('isFree')?.valueChanges.subscribe(isFree => {
+      const priceControl = this.projectForm.get('price_usd');
+      
+      if (isFree) {
+        // Si es gratuito, poner precio en 0 (NO deshabilitar el control)
+        priceControl?.setValue(0);
+      }
+    });
   }
 
   loadProjects(): void {
@@ -91,7 +122,6 @@ export class ProjectsComponent implements OnInit {
 
     this.projectService.list(this.searchTerm(), this.selectedCategory()).subscribe({
       next: (response) => {
-        console.log('Proyectos cargados:', response.projects);
         this.projectsState.set({
           projects: response.projects,
           isLoading: false,
@@ -107,7 +137,6 @@ export class ProjectsComponent implements OnInit {
           isLoading: false,
           error: err,
         });
-        console.error('Error al cargar proyectos:', err);
       }
     });
   }
@@ -117,10 +146,8 @@ export class ProjectsComponent implements OnInit {
    * MEJORADO: Fuerza actualización del template con cada verificación
    */
   private checkProjectsSales(projects: Project[]): void {
-    console.log('🔍 Verificando ventas de', projects.length, 'proyectos...');
 
     if (projects.length === 0) {
-      console.log('⚠️ No hay proyectos para verificar');
       return;
     }
 
@@ -132,22 +159,15 @@ export class ProjectsComponent implements OnInit {
 
     // Forzar actualización inicial
     this.projectSalesStatus.set(new Map(statusMap));
-    console.log('📊 Estado inicial (todos verificando):', statusMap.size, 'proyectos');
 
     // Verificar cada proyecto individualmente
     let completed = 0;
     const total = projects.length;
 
     projects.forEach((project, index) => {
-      console.log(`🔎 [${index + 1}/${total}] Verificando: "${project.title}" (ID: ${project._id})`);
 
       this.projectService.checkSales(project._id).subscribe({
         next: (response) => {
-          console.log(`✅ [${index + 1}/${total}] "${project.title}":`, {
-            hasSales: response.hasSales,
-            canDelete: response.canDelete,
-            saleCount: response.saleCount || 0
-          });
 
           // Actualizar el estado de este proyecto específico
           statusMap.set(project._id, {
@@ -161,18 +181,14 @@ export class ProjectsComponent implements OnInit {
           // CRÍTICO: Crear NUEVO Map para forzar detección de cambios en Angular
           this.projectSalesStatus.set(new Map(statusMap));
 
-          console.log(`📈 Progreso: ${completed}/${total} verificados`);
 
           if (completed === total) {
-            console.log('✅ ¡Verificación completada!\n', '📋 Resumen:');
             statusMap.forEach((status, projectId) => {
               const proj = projects.find(p => p._id === projectId);
-              console.log(`   - ${proj?.title || projectId}:`, status.canDelete ? '✅ PUEDE ELIMINAR' : '🚫 NO PUEDE ELIMINAR', `(ventas: ${status.hasSales})`);
             });
           }
         },
         error: (err) => {
-          console.error(`❌ [${index + 1}/${total}] Error al verificar "${project.title}":`, err);
 
           // En caso de error, asumir que tiene ventas (por seguridad)
           statusMap.set(project._id, {
@@ -187,7 +203,6 @@ export class ProjectsComponent implements OnInit {
           this.projectSalesStatus.set(new Map(statusMap));
 
           if (completed === total) {
-            console.log('⚠️ Verificación completada con errores');
           }
         }
       });
@@ -224,7 +239,6 @@ export class ProjectsComponent implements OnInit {
   }
 
   openEditModal(project: Project): void {
-    console.log('Abriendo modal de edición con proyecto:', project);
     this.isEditing.set(true);
     this.currentProjectId.set(project._id);
 
@@ -276,15 +290,39 @@ export class ProjectsComponent implements OnInit {
       return;
     }
 
+    // 🔥 VALIDACIÓN DE PRECIO
+    const isFree = this.projectForm.get('isFree')?.value;
+    const price = this.projectForm.get('price_usd')?.value || 0;
+    
+    // Si NO es gratuito y el precio es menor a $6, mostrar error
+    if (!isFree && price > 0 && price < 6) {
+      alert('⚠️ El precio mínimo debe ser $6.00 USD o puedes marcarlo como gratuito');
+      return;
+    }
+
     const formData = new FormData();
     const formValue = this.projectForm.value;
 
     formData.append('title', formValue.title || '');
     formData.append('subtitle', formValue.subtitle || '');
     formData.append('description', formValue.description || '');
-    formData.append('price_usd', formValue.price_usd?.toString() || '0');
-    // 🔥 NUEVO: Enviar isFree explícitamente
-    formData.append('isFree', formValue.isFree ? 'true' : 'false');
+    
+    // 🔥 Si es gratuito, enviar 0; si no, enviar el precio (habilitando el control temporalmente)
+    if (isFree) {
+      formData.append('price_usd', '0');
+      formData.append('isFree', 'true');
+    } else {
+      // Habilitar temporalmente el control para obtener su valor
+      const priceControl = this.projectForm.get('price_usd');
+      const wasdisabled = priceControl?.disabled;
+      if (wasdisabled) priceControl?.enable();
+      
+      formData.append('price_usd', priceControl?.value?.toString() || '0');
+      formData.append('isFree', 'false');
+      
+      if (wasdisabled) priceControl?.disable();
+    }
+    
     formData.append('categorie', formValue.categorie || '');
     formData.append('state', formValue.state?.toString() || '1');
     formData.append('url_video', formValue.url_video || '');
@@ -311,7 +349,6 @@ export class ProjectsComponent implements OnInit {
         this.loadProjects();
       },
       error: (error) => {
-        console.error('Error al crear proyecto:', error);
         alert(error.error?.message_text || 'Error al crear el proyecto');
         this.projectsState.update(s => ({ ...s, isLoading: false }));
       }
@@ -328,7 +365,6 @@ export class ProjectsComponent implements OnInit {
         this.loadProjects();
       },
       error: (error) => {
-        console.error('Error al actualizar proyecto:', error);
         alert(error.error?.message_text || 'Error al actualizar el proyecto');
         this.projectsState.update(s => ({ ...s, isLoading: false }));
       }
@@ -342,25 +378,18 @@ export class ProjectsComponent implements OnInit {
    * - NO se puede eliminar si tiene ventas asociadas
    */
   deleteProject(project: Project): void {
-    console.log('\n🗑️ INTENTO DE ELIMINACIÓN');
-    console.log('=====================================');
-    console.log('Proyecto:', project.title);
-    console.log('ID:', project._id);
 
     // Obtener estado de ventas del proyecto
     const salesStatus = this.projectSalesStatus().get(project._id);
-    console.log('Estado de ventas:', salesStatus);
 
     // VALIDACIÓN 1: Verificar si aún se está checando
     if (!salesStatus || salesStatus.isChecking) {
-      console.log('⏳ Aún verificando estado...');
       alert('⏳ Por favor espera, estamos verificando el estado del proyecto...');
       return;
     }
 
     // VALIDACIÓN 2: Si tiene ventas, bloquear eliminación
     if (salesStatus.hasSales) {
-      console.log('🚫 BLOQUEADO: Proyecto tiene ventas');
       alert(
         `🚫 No se puede eliminar "${project.title}"\n\n` +
         `Este proyecto tiene estudiantes que ya lo compraron.\n` +
@@ -369,7 +398,6 @@ export class ProjectsComponent implements OnInit {
       return;
     }
 
-    console.log('✅ No tiene ventas, permitiendo eliminación');
 
     // Confirmación del usuario
     const confirmDelete = confirm(
@@ -378,40 +406,31 @@ export class ProjectsComponent implements OnInit {
     );
 
     if (!confirmDelete) {
-      console.log('❌ Usuario canceló la eliminación');
       return;
     }
 
-    console.log('🔄 Enviando petición de eliminación al backend...');
     this.projectsState.update(s => ({ ...s, isLoading: true }));
 
     this.projectService.delete(project._id).subscribe({
       next: (response: any) => {
-        console.log('📬 Respuesta del backend:', response);
-        console.log('=====================================\n');
 
         // Verificar si el backend bloqueó por ventas
         if (response.code === 403) {
-          console.warn('⚠️ Backend bloqueó: Proyecto tiene ventas');
           alert(`🚫 ${response.message}`);
           this.projectsState.update(s => ({ ...s, isLoading: false }));
         }
         // Eliminación exitosa
         else if (response.code === 200 || response.message?.includes('ELIMINÓ')) {
-          console.log('✅ Proyecto eliminado exitosamente');
           alert('✅ Proyecto eliminado exitosamente');
           this.loadProjects(); // Recargar lista
         }
         // Respuesta inesperada
         else {
-          console.log('⚠️ Respuesta sin code explícito, asumiendo éxito');
           alert('✅ Proyecto eliminado');
           this.loadProjects();
         }
       },
       error: (error) => {
-        console.error('❌ ERROR al eliminar:', error);
-        console.log('=====================================\n');
 
         const errorMsg = error.error?.message || 'Error al eliminar el proyecto';
         alert(`❌ ${errorMsg}`);
@@ -462,7 +481,7 @@ export class ProjectsComponent implements OnInit {
   }
 
   buildImageUrl(imagen: string): string {
-    return `${environment.url}project/imagen-project/${imagen}`;
+    return `${environment.url}projects/imagen-project/${imagen}`; // ✅ projects (plural)
   }
 
   getStateBadgeClass(state: number | undefined): string {
@@ -509,7 +528,6 @@ export class ProjectsComponent implements OnInit {
         this.projectFiles.set(response.project.files || []);
       },
       error: (error) => {
-        console.error('Error al cargar archivos:', error);
       }
     });
   }
@@ -582,7 +600,6 @@ export class ProjectsComponent implements OnInit {
         }, 5000);
       },
       error: (error) => {
-        console.error('Error al subir archivos:', error);
         this.fileErrorMessages.set(['Error al subir los archivos. Por favor, intenta de nuevo.']);
         this.uploadingFiles.set(false);
       }
@@ -610,7 +627,6 @@ export class ProjectsComponent implements OnInit {
         }, 3000);
       },
       error: (error) => {
-        console.error('Error al eliminar archivo:', error);
         this.fileErrorMessages.set(['Error al eliminar el archivo']);
         this.deletingFileId.set(null);
       }

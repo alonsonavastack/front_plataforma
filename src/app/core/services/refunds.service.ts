@@ -1,0 +1,282 @@
+import { Injectable, signal, computed } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
+
+export interface RefundCalculations {
+  subtotal: number;
+  iva: number;
+  ivaRate: number;
+  platformFee: number;
+  platformFeeRate: number;
+  processingFee: number;
+  processingFeeRate: number;
+  refundAmount: number;
+  refundPercentage: number;
+}
+
+export interface RefundDetails {
+  bankAccount?: string;
+  bankName?: string;
+  accountHolder?: string;
+  receiptNumber?: string;
+  receiptImage?: string;
+}
+
+export interface Refund {
+  _id?: string;
+  sale: any;
+  user: any;
+  course?: any;
+  project?: any;
+  originalAmount: number;
+  currency: string;
+  calculations: RefundCalculations;
+  reason: {
+    type: string;
+    description: string;
+  };
+  status: 'pending' | 'approved' | 'rejected' | 'processing' | 'completed' | 'failed';
+  refundDetails: RefundDetails;
+  requestedAt?: Date;
+  reviewedAt?: Date;
+  processedAt?: Date;
+  completedAt?: Date;
+  adminNotes?: string;
+  reviewedBy?: any;
+  taxInvoice?: {
+    cfdiGenerated: boolean;
+    cfdiUuid?: string;
+    invoiceUrl?: string;
+  };
+  state?: number;
+}
+
+// ✅ NUEVA: Interfaz para elegibilidad
+export interface RefundEligibility {
+  isEligible: boolean;
+  isWithinTimeLimit: boolean;
+  hasExistingRefund: boolean;
+  instructorAlreadyPaid: boolean;
+  daysSincePurchase: number;
+  daysRemaining: number;
+  daysLimit: number;
+  saleStatus: string;
+  existingRefundStatus: string | null;
+  reasons: {
+    timeExpired: boolean;
+    alreadyRequested: boolean;
+    instructorPaid: boolean;
+    notPaid: boolean;
+  };
+}
+
+interface RefundState {
+  refunds: Refund[];
+  isLoading: boolean;
+  error: string | null;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class RefundsService {
+  private url = environment.url;
+
+  // Estado con signals
+  private state = signal<RefundState>({
+    refunds: [],
+    isLoading: false,
+    error: null
+  });
+
+  // Computed signals
+  refunds = computed(() => this.state().refunds);
+  isLoading = computed(() => this.state().isLoading);
+  error = computed(() => this.state().error);
+
+  // Filtros por estado
+  pendingRefunds = computed(() => 
+    this.refunds().filter(r => r.status === 'pending')
+  );
+  
+  processingRefunds = computed(() => 
+    this.refunds().filter(r => r.status === 'processing')
+  );
+  
+  completedRefunds = computed(() => 
+    this.refunds().filter(r => r.status === 'completed')
+  );
+
+  // Estadísticas
+  totalRefunds = computed(() => this.refunds().length);
+  totalOriginalAmount = computed(() => 
+    this.refunds().reduce((sum, r) => sum + r.originalAmount, 0)
+  );
+  totalRefundedAmount = computed(() => 
+    this.refunds().reduce((sum, r) => sum + (r.calculations?.refundAmount || 0), 0)
+  );
+
+  constructor(private http: HttpClient) {}
+
+  // Cargar lista de reembolsos
+  async loadRefunds(): Promise<void> {
+    this.state.update(s => ({ ...s, isLoading: true, error: null }));
+
+    try {
+      const response = await this.http.get<Refund[]>(
+        `${this.url}refunds/list`
+      ).toPromise();
+
+      this.state.update(s => ({
+        ...s,
+        refunds: response || [],
+        isLoading: false
+      }));
+
+      console.log('✅ [RefundsService] Reembolsos cargados:', response?.length);
+    } catch (error: any) {
+      console.error('❌ [RefundsService] Error al cargar reembolsos:', error);
+      this.state.update(s => ({
+        ...s,
+        isLoading: false,
+        error: error.message || 'Error al cargar reembolsos'
+      }));
+    }
+  }
+
+  // ✅ NUEVO: Verificar elegibilidad de reembolso
+  async checkEligibility(saleId: string): Promise<RefundEligibility | null> {
+    try {
+      const response = await this.http.get<RefundEligibility>(
+        `${this.url}refunds/check-eligibility?sale_id=${saleId}`
+      ).toPromise();
+
+      console.log('🔍 [RefundsService] Elegibilidad verificada:', response);
+      return response || null;
+    } catch (error: any) {
+      console.error('❌ [RefundsService] Error al verificar elegibilidad:', error);
+      throw error;
+    }
+  }
+
+  // Calcular preview del reembolso
+  async calculatePreview(saleId: string): Promise<any> {
+    try {
+      const response = await this.http.get(
+        `${this.url}refunds/calculate-preview?sale_id=${saleId}`
+      ).toPromise();
+
+      console.log('💰 [RefundsService] Preview calculado:', response);
+      return response;
+    } catch (error: any) {
+      console.error('❌ [RefundsService] Error al calcular preview:', error);
+      throw error;
+    }
+  }
+
+  // Crear solicitud de reembolso
+  async createRefund(data: {
+    sale_id: string;
+    reason_type: string;
+    reason_description: string;
+    bank_account: string;
+    bank_name: string;
+    account_holder: string;
+  }): Promise<any> {
+    try {
+      const response = await this.http.post(
+        `${this.url}refunds/create`,
+        data
+      ).toPromise();
+
+      console.log('✅ [RefundsService] Reembolso creado:', response);
+      
+      // Recargar lista
+      await this.loadRefunds();
+      
+      return response;
+    } catch (error: any) {
+      console.error('❌ [RefundsService] Error al crear reembolso:', error);
+      throw error;
+    }
+  }
+
+  // Revisar reembolso (aprobar/rechazar)
+  async reviewRefund(
+    refundId: string, 
+    status: 'approved' | 'rejected', 
+    adminNotes?: string
+  ): Promise<any> {
+    try {
+      const response = await this.http.put(
+        `${this.url}refunds/review/${refundId}`,
+        { status, admin_notes: adminNotes }
+      ).toPromise();
+
+      console.log('✅ [RefundsService] Reembolso revisado:', response);
+      
+      // Recargar lista
+      await this.loadRefunds();
+      
+      return response;
+    } catch (error: any) {
+      console.error('❌ [RefundsService] Error al revisar reembolso:', error);
+      throw error;
+    }
+  }
+
+  // Marcar como completado
+  async markCompleted(
+    refundId: string,
+    receiptNumber: string,
+    receiptImage?: string
+  ): Promise<any> {
+    try {
+      const response = await this.http.put(
+        `${this.url}refunds/complete/${refundId}`,
+        { receipt_number: receiptNumber, receipt_image: receiptImage }
+      ).toPromise();
+
+      console.log('✅ [RefundsService] Reembolso completado:', response);
+      
+      // Recargar lista
+      await this.loadRefunds();
+      
+      return response;
+    } catch (error: any) {
+      console.error('❌ [RefundsService] Error al completar reembolso:', error);
+      throw error;
+    }
+  }
+
+  // Obtener estadísticas
+  async loadStatistics(): Promise<any> {
+    try {
+      const response = await this.http.get(
+        `${this.url}refunds/statistics`
+      ).toPromise();
+
+      console.log('📊 [RefundsService] Estadísticas:', response);
+      return response;
+    } catch (error: any) {
+      console.error('❌ [RefundsService] Error al cargar estadísticas:', error);
+      throw error;
+    }
+  }
+
+  // 🔥 NUEVO: Verificar si un curso tiene reembolso completado
+  hasCourseRefund(courseId: string): boolean {
+    return this.refunds().some(r => 
+      r.status === 'completed' && 
+      r.course?._id === courseId
+    );
+  }
+
+  // 🔥 NUEVO: Verificar si un proyecto tiene reembolso completado
+  hasProjectRefund(projectId: string): boolean {
+    return this.refunds().some(r => 
+      r.status === 'completed' && 
+      r.project?._id === projectId
+    );
+  }
+}

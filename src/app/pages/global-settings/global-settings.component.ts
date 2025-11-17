@@ -74,7 +74,6 @@ export class GlobalSettingsComponent implements OnInit {
         this.localSettings.set(settingsMap);
       },
       error: (err: any) => {
-        console.error('Error cargando settings:', err);
       }
     });
   }
@@ -88,7 +87,7 @@ export class GlobalSettingsComponent implements OnInit {
   onInputChange(key: string, value: any, type: string): void {
     // Convertir el valor según el tipo
     let convertedValue = value;
-    
+
     if (type === 'number') {
       convertedValue = parseFloat(value) || 0;
     } else if (type === 'boolean') {
@@ -120,7 +119,7 @@ export class GlobalSettingsComponent implements OnInit {
       next: (res: any) => {
         this.isSaving.set(false);
         this.saveSuccess.set(true);
-        
+
         // Ocultar mensaje de éxito después de 3 segundos
         setTimeout(() => {
           this.saveSuccess.set(false);
@@ -129,7 +128,6 @@ export class GlobalSettingsComponent implements OnInit {
       error: (err: any) => {
         this.isSaving.set(false);
         this.saveError.set(err.error?.message || 'Error al guardar los settings');
-        console.error('Error saving settings:', err);
       }
     });
   }
@@ -146,7 +144,6 @@ export class GlobalSettingsComponent implements OnInit {
       },
       error: (err: any) => {
         alert('Error al inicializar settings');
-        console.error(err);
       }
     });
   }

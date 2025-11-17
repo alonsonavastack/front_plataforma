@@ -1,341 +1,106 @@
-<div class="min-h-screen bg-slate-950 text-white p-6">
-  <!-- Header -->
-  <div class="mb-8">
-    <h1 class="text-3xl font-bold mb-2">📊 Reportes y Analítica</h1>
-    <p class="text-slate-400">
-      @if (isAdmin()) {
-        Panel completo de administración
-      } @else {
-        Panel de instructor - Tus estadísticas
-      }
-    </p>
-  </div>
-
-  <!-- Tabs de navegación -->
-  <div class="mb-6 border-b border-slate-800">
-    <nav class="flex space-x-8">
-      <button
-        (click)="loadSalesReports()"
-        [class.border-lime-400]="activeTab() === 'sales'"
-        [class.text-lime-400]="activeTab() === 'sales'"
-        [class.text-slate-400]="activeTab() !== 'sales'"
-        class="pb-4 border-b-2 font-medium transition-colors hover:text-lime-300">
-        💰 Ventas
-      </button>
-      <button
-        (click)="loadStudentsReports()"
-        [class.border-lime-400]="activeTab() === 'students'"
-        [class.text-lime-400]="activeTab() === 'students'"
-        [class.text-slate-400]="activeTab() !== 'students'"
-        class="pb-4 border-b-2 font-medium transition-colors hover:text-lime-300">
-        👥 Estudiantes
-      </button>
-      <button
-        (click)="loadProductsReports()"
-        [class.border-lime-400]="activeTab() === 'products'"
-        [class.text-lime-400]="activeTab() === 'products'"
-        [class.text-slate-400]="activeTab() !== 'products'"
-        class="pb-4 border-b-2 font-medium transition-colors hover:text-lime-300">
-        📚 Productos
-      </button>
-    </nav>
-  </div>
-
-  <!-- Selector de período -->
-  <div class="mb-6 flex items-center gap-4">
-    <span class="text-sm text-slate-400">Período:</span>
-    <div class="flex gap-2">
-      <button
-        (click)="changePeriod('day')"
-        [class.bg-lime-400]="selectedPeriod() === 'day'"
-        [class.text-slate-900]="selectedPeriod() === 'day'"
-        [class.bg-slate-800]="selectedPeriod() !== 'day'"
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-        Día
-      </button>
-      <button
-        (click)="changePeriod('week')"
-        [class.bg-lime-400]="selectedPeriod() === 'week'"
-        [class.text-slate-900]="selectedPeriod() === 'week'"
-        [class.bg-slate-800]="selectedPeriod() !== 'week'"
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-        Semana
-      </button>
-      <button
-        (click)="changePeriod('month')"
-        [class.bg-lime-400]="selectedPeriod() === 'month'"
-        [class.text-slate-900]="selectedPeriod() === 'month'"
-        [class.bg-slate-800]="selectedPeriod() !== 'month'"
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-        Mes
-      </button>
-      <button
-        (click)="changePeriod('year')"
-        [class.bg-lime-400]="selectedPeriod() === 'year'"
-        [class.text-slate-900]="selectedPeriod() === 'year'"
-        [class.bg-slate-800]="selectedPeriod() !== 'year'"
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-        Año
-      </button>
-    </div>
-  </div>
-
-  <!-- Loading -->
-  @if (loading()) {
-    <div class="flex items-center justify-center py-20">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
-    </div>
-  }
-
-  <!-- REPORTES DE VENTAS -->
-  @if (activeTab() === 'sales' && !loading()) {
-    <div class="space-y-6">
-
-      <!-- KPIs de Comparativa -->
-      @if (periodComparison(); as comparison) {
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Ventas actuales vs anteriores -->
-          <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold">Ventas del Período</h3>
-              <span class="text-2xl">📈</span>
-            </div>
-            <div class="space-y-4">
-              <div>
-                <p class="text-sm text-slate-400">Período Actual</p>
-                <p class="text-3xl font-bold text-lime-400">{{ comparison.current.total_sales || 0 }}</p>
-                <p class="text-sm text-slate-400">ventas</p>
-              </div>
-              <div>
-                <p class="text-sm text-slate-400">Crecimiento</p>
-                <p [class]="getGrowthClass(comparison.growth.sales || 0)" class="text-xl font-semibold">
-                  {{ getGrowthIcon(comparison.growth.sales || 0) }}
-                  {{ comparison.growth.sales || 0 }}%
-                </p>
-              </div>
-            </div>
+    <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
+      <div class="max-w-[1800px] mx-auto space-y-6">
+        <!-- 📊 Header -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+              <span class="text-4xl">📊</span> Reportes y Análisis
+            </h1>
+            <p class="text-slate-400 mt-1">Análisis detallado de tu plataforma</p>
           </div>
 
-          <!-- Ingresos actuales vs anteriores -->
-          <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold">Ingresos del Período</h3>
-              <span class="text-2xl">💵</span>
-            </div>
-            <div class="space-y-4">
-              <div>
-                <p class="text-sm text-slate-400">Período Actual</p>
-                <p class="text-3xl font-bold text-lime-400">{{ formatCurrency(comparison.current.total_revenue || 0) }}</p>
-              </div>
-              <div>
-                <p class="text-sm text-slate-400">Crecimiento</p>
-                <p [class]="getGrowthClass(comparison.growth.revenue || 0)" class="text-xl font-semibold">
-                  {{ getGrowthIcon(comparison.growth.revenue || 0) }}
-                  {{ comparison.growth.revenue || 0 }}%
-                </p>
-              </div>
-            </div>
+          <div class="flex items-center gap-3">
+            <span class="px-4 py-2 bg-lime-500/20 text-lime-300 rounded-lg text-sm font-medium">
+              🔴 En vivo
+            </span>
+            <span class="text-sm text-slate-400">
+              {{ currentDate() }}
+            </span>
           </div>
         </div>
-      }
 
-      <!-- Gráfico de Ingresos por Período -->
-      <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-        <h3 class="text-lg font-semibold mb-4">📊 Ingresos por Período</h3>
-        @if (incomeData().length > 0) {
-          <div class="space-y-2">
-            @for (item of incomeData(); track item._id) {
-              <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
-                <div>
-                  <p class="font-medium">{{ item._id }}</p>
-                  <p class="text-sm text-slate-400">{{ item.count }} ventas</p>
-                </div>
-                <p class="text-xl font-bold text-lime-400">
-                  {{ formatCurrency(item.total) }}
-                </p>
-              </div>
+        <!-- 🎯 Tabs Navigation -->
+        <div class="bg-slate-800/50 border border-white/10 rounded-xl p-2">
+          <div class="flex flex-wrap gap-2">
+            <button
+              (click)="activeTab.set('sales')"
+              [ngClass]="{
+                'bg-lime-500 text-slate-900': activeTab() === 'sales',
+                'bg-slate-700/50 text-slate-300 hover:bg-slate-700': activeTab() !== 'sales'
+              }"
+              class="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2"
+            >
+              <span class="text-lg">💰</span> Ventas
+            </button>
+
+            <button
+              (click)="activeTab.set('students')"
+              [ngClass]="{
+                'bg-lime-500 text-slate-900': activeTab() === 'students',
+                'bg-slate-700/50 text-slate-300 hover:bg-slate-700': activeTab() !== 'students'
+              }"
+              class="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2"
+            >
+              <span class="text-lg">🎓</span> Estudiantes
+            </button>
+
+            <button
+              (click)="activeTab.set('products')"
+              [ngClass]="{
+                'bg-lime-500 text-slate-900': activeTab() === 'products',
+                'bg-slate-700/50 text-slate-300 hover:bg-slate-700': activeTab() !== 'products'
+              }"
+              class="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2"
+            >
+              <span class="text-lg">📦</span> Productos
+            </button>
+
+            <!-- 🔒 Solo Admin puede ver Comisiones -->
+            @if (isAdmin()) {
+              <button
+                (click)="activeTab.set('commissions')"
+                [ngClass]="{
+                  'bg-lime-500 text-slate-900': activeTab() === 'commissions',
+                  'bg-slate-700/50 text-slate-300 hover:bg-slate-700': activeTab() !== 'commissions'
+                }"
+                class="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2"
+              >
+                <span class="text-lg">💵</span> Comisiones
+              </button>
             }
-          </div>
-        } @else {
-          <p class="text-slate-400 text-center py-8">No hay datos disponibles para este período</p>
-        }
-      </div>
 
-      <!-- Top 5 Productos -->
-      <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-        <h3 class="text-lg font-semibold mb-4">🏆 Top 5 Productos Más Vendidos</h3>
-        @if (topProducts().length > 0) {
-          <div class="space-y-3">
-            @for (product of topProducts(); track product.product_id; let i = $index) {
-              <div class="flex items-center gap-4 p-4 bg-slate-800/50 rounded-lg">
-                <div class="flex-shrink-0 w-10 h-10 bg-lime-400/20 rounded-full flex items-center justify-center text-lime-400 font-bold">
-                  {{ i + 1 }}
-                </div>
-                <div class="flex-1">
-                  <p class="font-medium">{{ product.title }}</p>
-                  <p class="text-sm text-slate-400">
-                    {{ product.product_type === 'course' ? '📚 Curso' : '🎨 Proyecto' }}
-                  </p>
-                </div>
-                <div class="text-right">
-                  <p class="font-bold text-lime-400">{{ formatCurrency(product.total_revenue) }}</p>
-                  <p class="text-sm text-slate-400">{{ product.total_sales }} ventas</p>
-                </div>
-              </div>
-            }
-          </div>
-        } @else {
-          <p class="text-slate-400 text-center py-8">No hay productos vendidos</p>
-        }
-      </div>
-
-      <!-- Ventas por Categoría -->
-      <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-        <h3 class="text-lg font-semibold mb-4">📂 Ventas por Categoría</h3>
-        @if (salesByCategory().length > 0) {
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            @for (category of salesByCategory(); track category.category_id) {
-              <div class="p-4 bg-slate-800/50 rounded-lg">
-                <div class="flex items-center justify-between mb-2">
-                  <p class="font-medium">{{ category.category_title }}</p>
-                  <span class="text-2xl">📁</span>
-                </div>
-                <p class="text-2xl font-bold text-lime-400">
-                  {{ formatCurrency(category.total_revenue) }}
-                </p>
-                <p class="text-sm text-slate-400">{{ category.total_sales }} ventas</p>
-              </div>
-            }
-          </div>
-        } @else {
-          <p class="text-slate-400 text-center py-8">No hay datos de categorías</p>
-        }
-      </div>
-
-    </div>
-  }
-
-  <!-- REPORTES DE ESTUDIANTES -->
-  @if (activeTab() === 'students' && !loading()) {
-    <div class="space-y-6">
-
-      <!-- Estudiantes Activos vs Inactivos -->
-      @if (activeStudents(); as students) {
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold">Total Estudiantes</h3>
-              <span class="text-2xl">👥</span>
-            </div>
-            <p class="text-4xl font-bold text-lime-400">{{ students.total || 0 }}</p>
-          </div>
-
-          <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold">Activos</h3>
-              <span class="text-2xl">✅</span>
-            </div>
-            <p class="text-4xl font-bold text-green-400">{{ students.active || 0 }}</p>
-            <p class="text-sm text-slate-400 mt-2">
-              {{ students.active_percentage || 0 }}% del total
-            </p>
-          </div>
-
-          <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold">Inactivos</h3>
-              <span class="text-2xl">⏸️</span>
-            </div>
-            <p class="text-4xl font-bold text-slate-400">{{ students.inactive || 0 }}</p>
+            <button
+              (click)="activeTab.set('refunds')"
+              [ngClass]="{
+                'bg-lime-500 text-slate-900': activeTab() === 'refunds',
+                'bg-slate-700/50 text-slate-300 hover:bg-slate-700': activeTab() !== 'refunds'
+              }"
+              class="px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2"
+            >
+              <span class="text-lg">↩️</span> Reembolsos
+            </button>
           </div>
         </div>
-      }
 
-      <!-- Crecimiento de Estudiantes -->
-      @if (studentGrowth(); as growth) {
-        <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-          <h3 class="text-lg font-semibold mb-4">📈 Crecimiento de Estudiantes</h3>
-          @if (growth.growth.length) {
-            <div class="space-y-2">
-              @for (item of growth.growth; track item._id) {
-                <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
-                  <p class="font-medium">{{ item._id }}</p>
-                  <p class="text-xl font-bold text-lime-400">
-                    +{{ item.new_students }} nuevos
-                  </p>
-                </div>
-              }
-            </div>
+        <!-- 📋 Tab Content -->
+        <div class="animate-fadeIn">
+          @switch (activeTab()) {
+            @case ('sales') {
+              <app-sales-report />
+            }
+            @case ('students') {
+              <app-students-report />
+            }
+            @case ('products') {
+              <app-products-report />
+            }
+            @case ('commissions') {
+              <app-commissions-report />
+            }
+            @case ('refunds') {
+              <app-refunds-report />
+            }
           }
-          <div class="mt-4 pt-4 border-t border-slate-800">
-            <p class="text-sm text-slate-400">Total acumulado</p>
-            <p class="text-2xl font-bold text-lime-400">
-              {{ formatNumber(growth.totalStudents || 0) }} estudiantes
-            </p>
-          </div>
         </div>
-      }
-
-    </div>
-  }
-
-  <!-- REPORTES DE PRODUCTOS -->
-  @if (activeTab() === 'products' && !loading()) {
-    <div class="space-y-6">
-
-      <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-        <h3 class="text-lg font-semibold mb-4">📊 Análisis de Productos</h3>
-        @if (productsAnalysis().length > 0) {
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead>
-                <tr class="border-b border-slate-800">
-                  <th class="text-left py-3 px-4">Producto</th>
-                  <th class="text-left py-3 px-4">Tipo</th>
-                  <th class="text-left py-3 px-4">Categoría</th>
-                  <th class="text-right py-3 px-4">Ventas</th>
-                  <th class="text-right py-3 px-4">Ingresos</th>
-                  <th class="text-right py-3 px-4">Rating</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (product of productsAnalysis(); track product.product_id) {
-                  <tr class="border-b border-slate-800/50 hover:bg-slate-800/30">
-                    <td class="py-3 px-4">
-                      <p class="font-medium">{{ product.title }}</p>
-                      @if (isAdmin()) {
-                        <p class="text-sm text-slate-400">{{ product.instructor }}</p>
-                      }
-                    </td>
-                    <td class="py-3 px-4">
-                      <span [class]="product.product_type === 'course' ? 'bg-blue-400/20 text-blue-400' : 'bg-purple-400/20 text-purple-400'"
-                            class="px-2 py-1 rounded text-xs font-medium">
-                        {{ product.product_type === 'course' ? '📚 Curso' : '🎨 Proyecto' }}
-                      </span>
-                    </td>
-                    <td class="py-3 px-4 text-slate-400">{{ product.category }}</td>
-                    <td class="py-3 px-4 text-right font-medium">{{ product.total_sales }}</td>
-                    <td class="py-3 px-4 text-right font-bold text-lime-400">
-                      {{ formatCurrency(product.total_revenue) }}
-                    </td>
-                    <td class="py-3 px-4 text-right">
-                      <div class="flex items-center justify-end gap-1">
-                        <span class="text-yellow-400">⭐</span>
-                        <span class="font-medium">{{ product.avg_rating || 0 }}</span>
-                        <span class="text-sm text-slate-400">({{ product.total_reviews }})</span>
-                      </div>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        } @else {
-          <p class="text-slate-400 text-center py-8">No hay productos para analizar</p>
-        }
       </div>
-
     </div>
-  }
-
-</div>

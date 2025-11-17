@@ -55,7 +55,6 @@ export class AdminService {
         this.state.update((s: AdminState) => ({ ...s, profile: data, isLoading: false }));
       },
       error: (err) => {
-        console.error('Error loading admin profile:', err);
         this.state.update((s: AdminState) => ({ ...s, isLoading: false, error: err }));
       }
     });

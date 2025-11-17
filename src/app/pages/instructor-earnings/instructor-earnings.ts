@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, FormGroup, FormControl, FormsModule } from '@angular/forms';
 import {
   InstructorPaymentService,
   Earning,
@@ -10,7 +10,7 @@ import {
 @Component({
   selector: 'app-instructor-earnings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './instructor-earnings.html',
 })
 export class InstructorEarningsComponent implements OnInit {
@@ -32,6 +32,8 @@ export class InstructorEarningsComponent implements OnInit {
   pendingTotal = computed(() => this.stats()?.pending.total || 0);
   availableTotal = computed(() => this.stats()?.available.total || 0);
   paidTotal = computed(() => this.stats()?.paid.total || 0);
+  refundsTotal = computed(() => this.stats()?.refunds.total || 0);
+  refundsCount = computed(() => this.stats()?.refunds.count || 0);
   totalEarned = computed(() => this.stats()?.total_earned || 0);
   totalSales = computed(() => this.stats()?.total_sales || 0);
   averagePerSale = computed(() => this.stats()?.average_per_sale || 0);
@@ -45,6 +47,11 @@ export class InstructorEarningsComponent implements OnInit {
     startDate: new FormControl(''),
     endDate: new FormControl(''),
   });
+
+  // Filter properties for ngModel
+  selectedStatus = 'all';
+  startDate = '';
+  endDate = '';
 
   ngOnInit() {
     this.loadStats();
@@ -62,7 +69,6 @@ export class InstructorEarningsComponent implements OnInit {
         this.isLoadingStats.set(false);
       },
       error: (err) => {
-        console.error('Error al cargar estadísticas:', err);
         this.isLoadingStats.set(false);
       },
     });
@@ -73,20 +79,19 @@ export class InstructorEarningsComponent implements OnInit {
     this.error.set(null);
     this.currentPage.set(page);
 
-    const formValue = this.filterForm.value;
     const filters: any = {
       page,
       limit: this.limit,
     };
 
-    if (formValue.status && formValue.status !== 'all') {
-      filters.status = formValue.status;
+    if (this.selectedStatus && this.selectedStatus !== 'all') {
+      filters.status = this.selectedStatus;
     }
-    if (formValue.startDate) {
-      filters.startDate = formValue.startDate;
+    if (this.startDate) {
+      filters.startDate = this.startDate;
     }
-    if (formValue.endDate) {
-      filters.endDate = formValue.endDate;
+    if (this.endDate) {
+      filters.endDate = this.endDate;
     }
 
     this.instructorPaymentService.getEarnings(filters).subscribe({
@@ -99,7 +104,6 @@ export class InstructorEarningsComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Error al cargar ganancias:', err);
         this.error.set(err.error?.message || 'Error al cargar ganancias');
         this.isLoading.set(false);
       },
@@ -111,11 +115,9 @@ export class InstructorEarningsComponent implements OnInit {
   }
 
   clearFilters() {
-    this.filterForm.reset({
-      status: 'all',
-      startDate: '',
-      endDate: '',
-    });
+    this.selectedStatus = 'all';
+    this.startDate = '';
+    this.endDate = '';
     this.loadEarnings(1);
   }
 
@@ -130,6 +132,7 @@ export class InstructorEarningsComponent implements OnInit {
       available: 'bg-green-500/10 text-green-300 border-green-500/30',
       paid: 'bg-blue-500/10 text-blue-300 border-blue-500/30',
       disputed: 'bg-red-500/10 text-red-300 border-red-500/30',
+      refunded: 'bg-red-500/20 text-red-300 border-red-500/40',
     };
     return classes[status] || 'bg-slate-500/10 text-slate-300 border-slate-500/30';
   }
@@ -140,6 +143,7 @@ export class InstructorEarningsComponent implements OnInit {
       available: 'Disponible',
       paid: 'Pagado',
       disputed: 'En Disputa',
+      refunded: 'Reembolsado',
     };
     return texts[status] || status;
   }

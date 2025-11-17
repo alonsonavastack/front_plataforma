@@ -56,12 +56,12 @@ export class PurchasesService {
           });
         }
 
-        console.log('Productos comprados cargados:', productIds);
+
         this.purchasedProducts.set(productIds);
       })
     ).subscribe({
       error: (error) => {
-        console.error('Error al cargar productos comprados:', error);
+
         this.purchasedProducts.set(new Set());
       }
     });

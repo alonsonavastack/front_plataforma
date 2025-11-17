@@ -92,8 +92,6 @@ export class RegisterComponent {
       next: (response: any) => {
         this.isLoading.set(false);
 
-        console.log('✅ Respuesta de registro:', response);
-
         // Verificar si el OTP fue enviado
         if (response.otpSent) {
           this.successMessage.set('¡Registro exitoso! Redirigiendo a verificación...');
@@ -125,8 +123,7 @@ export class RegisterComponent {
         }
       },
       error: (err) => {
-        this.isLoading.set(false);
-        console.error('❌ Error en registro:', err);
+        this.isLoading.set(false)
         this.errorMessage.set(
           err.error?.message_text ||
           err.error?.message ||

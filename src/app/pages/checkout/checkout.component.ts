@@ -5,6 +5,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { CartService, CartItem } from '../../core/services/cart.service';
 import { CheckoutService, PaymentMethod } from '../../core/services/checkout.service';
 import { AuthService } from '../../core/services/auth';
+import { WalletService } from '../../core/services/wallet.service';
 
 @Component({
   selector: 'app-checkout',
@@ -16,6 +17,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   cartService = inject(CartService);
   checkoutService = inject(CheckoutService);
   authService = inject(AuthService);
+  walletService = inject(WalletService);
   router = inject(Router);
 
   // State
@@ -25,6 +27,16 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   showWarningModal = signal(false); // 🔥 Nuevo modal de advertencia
   errorMessage = signal<string>('');
   transactionNumber = signal<string>(''); // Para guardar el número de referencia
+  
+  // 🆕 Wallet state
+  walletBalance = computed(() => this.walletService.balance());
+  useWalletBalance = signal(false);
+  walletAmount = signal(0);
+  remainingAmount = computed(() => {
+    if (!this.useWalletBalance()) return this.subtotal();
+    const remaining = this.subtotal() - this.walletAmount();
+    return Math.max(0, remaining);
+  });
 
   // Computed values
   cartItems = computed(() => {
@@ -82,6 +94,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
     // Forzar la recarga del carrito para asegurar que los datos están actualizados.
     this.cartService.reloadCart();
+    
+    // 🆕 Cargar saldo de billetera
+    this.walletService.loadWallet();
 
     // Pre-llenar el formulario con datos del usuario
     const currentUser = this.user();
@@ -101,6 +116,37 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   selectPaymentMethod(methodId: string): void {
     this.selectedPaymentMethod.set(methodId);
     this.errorMessage.set('');
+    
+    // 🆕 Si selecciona billetera, activar automáticamente el uso de billetera
+    if (methodId === 'wallet') {
+      this.toggleWalletPayment(true);
+    }
+  }
+  
+  // 🆕 Toggle uso de billetera
+  toggleWalletPayment(force?: boolean): void {
+    const newValue = force !== undefined ? force : !this.useWalletBalance();
+    this.useWalletBalance.set(newValue);
+    
+    if (newValue) {
+      // Calcular cuánto del saldo de billetera se puede usar
+      const total = this.subtotal();
+      const balance = this.walletBalance();
+      const amountToUse = Math.min(balance, total);
+      this.walletAmount.set(amountToUse);
+      
+      // Si el saldo cubre todo y se seleccionó wallet, no necesita otro método
+      if (amountToUse >= total && this.selectedPaymentMethod() === 'wallet') {
+        // Pago 100% con billetera
+        console.log('💰 Pago completo con billetera');
+      }
+    } else {
+      this.walletAmount.set(0);
+      // Si se desactiva y estaba en wallet, limpiar selección
+      if (this.selectedPaymentMethod() === 'wallet') {
+        this.selectedPaymentMethod.set('');
+      }
+    }
   }
 
   processPayment(): void {
@@ -110,8 +156,17 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.selectedPaymentMethod()) {
-      this.errorMessage.set('Por favor selecciona un método de pago');
+    // 🔥 Si usa billetera completa, forzar método "wallet" ANTES de validar
+    if (this.useWalletBalance() && this.remainingAmount() === 0) {
+      this.selectedPaymentMethod.set('wallet');
+      console.log('💰 Pago 100% con billetera - Forzando method_payment = wallet');
+    }
+
+    // Validar método de pago
+    const needsPaymentMethod = this.remainingAmount() > 0;
+    
+    if (needsPaymentMethod && !this.selectedPaymentMethod()) {
+      this.errorMessage.set('Por favor selecciona un método de pago para el monto restante');
       return;
     }
 
@@ -124,12 +179,21 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     }
 
     console.log('🚀 Iniciando proceso de pago...');
+    console.log('💰 Usar billetera:', this.useWalletBalance());
+    console.log('💵 Monto de billetera:', this.walletAmount());
+    console.log('💳 Monto restante:', this.remainingAmount());
+    
     this.isProcessing.set(true);
     this.errorMessage.set('');
 
+    // 🔥 Asegurar que method_payment esté definido
+    const finalPaymentMethod = this.selectedPaymentMethod() || 'wallet';
+    
+    console.log('💳 Método de pago final:', finalPaymentMethod);
+    
     // Preparar datos de la venta
-    const checkoutData = {
-      method_payment: this.selectedPaymentMethod(),
+    const checkoutData: any = {
+      method_payment: finalPaymentMethod,
       currency_total: 'USD',
       currency_payment: 'USD',
       total: this.subtotal(),
@@ -137,6 +201,20 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       n_transaccion: this.checkoutService.generateTransactionNumber(),
       price_dolar: this.checkoutService.getExchangeRate(),
     };
+    
+    // 🆕 Agregar datos de billetera si se está usando
+    if (this.useWalletBalance() && this.walletAmount() > 0) {
+      checkoutData.use_wallet = true;
+      checkoutData.wallet_amount = this.walletAmount();
+      checkoutData.remaining_amount = this.remainingAmount();
+      
+      console.log('💰 Datos de billetera:', {
+        use_wallet: true,
+        wallet_amount: this.walletAmount(),
+        remaining_amount: this.remainingAmount()
+      });
+    }
+    
     this.transactionNumber.set(checkoutData.n_transaccion);
 
     // Procesar la venta
@@ -145,13 +223,20 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         console.log('✅ Venta exitosa:', response);
         this.isProcessing.set(false);
         this.showSuccess.set(true);
+        
+        // Recargar saldo de billetera si se usó
+        if (this.useWalletBalance()) {
+          this.walletService.loadWallet();
+        }
 
         // NO limpiar el carrito aquí, lo haremos cuando el usuario cierre el modal
         // Esto permite que el modal permanezca visible con toda la información
       },
       error: (error) => {
         console.error('❌ Error al procesar la venta:', error);
-        this.errorMessage.set('Hubo un error al procesar tu pago. Por favor intenta de nuevo.');
+        this.errorMessage.set(
+          error.error?.message || 'Hubo un error al procesar tu pago. Por favor intenta de nuevo.'
+        );
         this.isProcessing.set(false);
       }
     });

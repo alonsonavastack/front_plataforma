@@ -5,6 +5,7 @@ import { environment } from "../../../environments/environment";
 import { CoursePublic, Project, SearchCourseBody } from "../models/home.models";
 import { toQuery } from "../utils/resource-helpers";
 import { map, catchError, throwError, tap } from "rxjs";
+import { Subject } from "rxjs";
 
 interface HomeApiResponse {
   categories: any[];
@@ -41,6 +42,11 @@ interface CourseDetailResponse {
 export class HomeService {
   http = inject(HttpClient);
   base = environment.url;
+
+  // 🚨 Subject para notificar errores al componente (SOLO UNA VEZ)
+  private onHomeError = new Subject<any>();
+  onHomeError$ = this.onHomeError.asObservable();
+  private hasEmittedError = false; // Flag para evitar múltiples emisiones
 
   private homeState = signal<{ data: HomeApiResponse, isLoading: boolean, error: any }>({
     data: {
@@ -101,10 +107,18 @@ export class HomeService {
     this.http.get<HomeApiResponse>(url).subscribe({
       next: (data) => {
         this.homeState.set({ data, isLoading: false, error: null });
+        this.hasEmittedError = false; // 🔄 Resetear flag cuando carga exitosa
       },
       error: (err) => {
-        console.error('Error loading home data:', err);
+        // 🔇 SILENCIADO: El error se propaga al computed home()
+        // El componente maneja el error y muestra toast
         this.homeState.update(s => ({ ...s, isLoading: false, error: err }));
+        
+        // 🚨 Emitir evento de error SOLO UNA VEZ
+        if (!this.hasEmittedError) {
+          this.hasEmittedError = true;
+          this.onHomeError.next(err);
+        }
       }
     });
   }
@@ -117,7 +131,7 @@ export class HomeService {
         this.allCoursesState.set({ data: data.courses, isLoading: false, error: null });
       },
       error: (err) => {
-        console.error('Error loading all courses:', err);
+        // 🔇 SILENCIADO: Carga de catálogo en background
         this.allCoursesState.update(s => ({ ...s, isLoading: false, error: err }));
       }
     });
@@ -131,7 +145,7 @@ export class HomeService {
         this.allProjectsState.set({ data: data.projects, isLoading: false, error: null });
       },
       error: (err) => {
-        console.error('Error loading all projects:', err);
+        // 🔇 SILENCIADO: Carga de proyectos en background
         this.allProjectsState.update(s => ({ ...s, isLoading: false, error: err }));
       }
     });

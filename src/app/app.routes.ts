@@ -136,6 +136,24 @@ export const routes: Routes = [
     canActivate: [roleGuard(["cliente"])],
   },
   {
+    path: "wallet",
+    loadComponent: () =>
+      import("./pages/wallet/wallet.component").then(
+        (m) => m.WalletComponent
+      ),
+    // Solo el rol 'cliente' puede acceder a su billetera
+    canActivate: [roleGuard(["cliente"])],
+  },
+  {
+    path: "admin-wallets",
+    loadComponent: () =>
+      import("./pages/admin-wallets/admin-wallets.component").then(
+        (m) => m.AdminWalletsComponent
+      ),
+    // Solo el rol 'admin' puede ver todas las billeteras
+    canActivate: [roleGuard(["admin"])],
+  },
+  {
     path: "sales",
     loadComponent: () =>
       import("./pages/sales/sales.component").then((m) => m.SalesComponent),
@@ -185,9 +203,9 @@ export const routes: Routes = [
       ),
     canActivate: [roleGuard(["instructor"])],
   },
-  // PERFIL PÚBLICO DEL INSTRUCTOR
+  // PERFIL PÚBLICO DEL INSTRUCTOR POR SLUG 🆕
   {
-    path: "instructor/:id",
+    path: "instructor/:slug", // 🆕 Cambiar de ':id' a ':slug'
     loadComponent: () =>
       import("./pages/instructor-profile/instructor-profile.component").then(
         (m) => m.InstructorProfileComponent

@@ -35,19 +35,19 @@ export class ProfileService {
     return this.http.put<any>(`${this.base}${endpoint}`, body).pipe(
       // Después de actualizar, actualizamos la señal del perfil en AuthService.
       tap((response) => {
-        console.log("📥 Respuesta de update:", response);
+
         // La respuesta puede venir como { profile: ... }, { user: ... }, o el objeto de usuario directamente.
         const updatedUser = response.profile || response.user || response;
         if (updatedUser) {
           // 🔥 CRÃTICO: Fusionar con usuario actual para mantener token y otros datos
           const currentUser = this.authService.user();
           const mergedUser = { ...currentUser, ...updatedUser };
-          
-          console.log('🔄 Actualizando usuario en AuthService:', mergedUser);
-          
+
+
+
           // Actualizar signal
           this.authService.user.set(mergedUser);
-          
+
           // 🔥 IMPORTANTE: También actualizar localStorage para persistencia
           if (typeof window !== 'undefined' && window.localStorage) {
             localStorage.setItem('user', JSON.stringify(mergedUser));
@@ -84,7 +84,7 @@ export class ProfileService {
     return request.pipe(
       // Después de actualizar el avatar, actualizamos la señal del usuario en AuthService.
       tap((response) => {
-        console.log("Respuesta de updateAvatar:", response);
+
         // La respuesta puede venir como { user: ... } o el objeto de usuario directamente.
         const updatedUser = response.user || response;
         if (updatedUser) {

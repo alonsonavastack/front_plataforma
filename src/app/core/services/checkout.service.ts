@@ -40,6 +40,12 @@ export class CheckoutService {
   // Métodos de pago disponibles
   readonly paymentMethods: PaymentMethod[] = [
     {
+      id: 'wallet',
+      name: 'Billetera Digital',
+      icon: '💰',
+      description: 'Usa tu saldo disponible de forma instantánea'
+    },
+    {
       id: 'paypal',
       name: 'PayPal',
       icon: '💳',

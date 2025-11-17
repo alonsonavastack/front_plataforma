@@ -46,7 +46,6 @@ export class InstructorPaymentHistoryComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Error al cargar historial:', err);
         this.error.set(err.error?.message || 'Error al cargar el historial de pagos');
         this.isLoading.set(false);
       },

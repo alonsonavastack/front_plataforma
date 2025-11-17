@@ -35,16 +35,81 @@ export interface RecentActivity {
   color: string;
 }
 
+// 💎 NUEVO: Interfaces para Métricas Ejecutivas
+export interface ExecutiveMetrics {
+  income: {
+    gross: {
+      total: number;
+      currentMonth: number;
+      label: string;
+      description: string;
+    };
+    net: {
+      total: number;
+      currentMonth: number;
+      lastMonth: number;
+      currentYear: number;
+      delta: number;
+      label: string;
+      description: string;
+    };
+    difference: {
+      amount: number;
+      percentage: string;
+      label: string;
+    };
+  };
+  refunds: {
+    total: number;
+    totalAmount: number;
+    platformFeesRetained: number;
+    processingFees: number;
+    pending: number;
+    rate: number;
+    label: string;
+    description: string;
+  };
+  commissions: {
+    platform: {
+      amount: number;
+      rate: number;
+      label: string;
+      description: string;
+    };
+    instructors: {
+      amount: number;
+      rate: number;
+      label: string;
+      description: string;
+    };
+  };
+  counters: {
+    students: number;
+    instructors: number;
+    activeCourses: number;
+    activeProjects: number;
+    totalSales: number;
+    activeSales: number;
+  };
+  alerts: Array<{
+    type: 'warning' | 'danger' | 'info';
+    message: string;
+    priority: 'high' | 'medium' | 'low';
+  }>;
+}
+
 // Interfaz para el estado del servicio
 interface DashboardState {
   kpis: Kpi[];
   monthlyIncome: MonthlyIncome[];
   distribution: Distribution | null;
   recentActivity: RecentActivity[];
+  executiveMetrics: ExecutiveMetrics | null; // 💎 NUEVO
   isLoadingKpis: boolean;
   isLoadingMonthlyIncome: boolean;
   isLoadingDistribution: boolean;
   isLoadingRecentActivity: boolean;
+  isLoadingExecutiveMetrics: boolean; // 💎 NUEVO
   error: any;
 }
 
@@ -59,10 +124,12 @@ export class DashboardService {
     monthlyIncome: [],
     distribution: null,
     recentActivity: [],
+    executiveMetrics: null, // 💎 NUEVO
     isLoadingKpis: false,
     isLoadingMonthlyIncome: false,
     isLoadingDistribution: false,
     isLoadingRecentActivity: false,
+    isLoadingExecutiveMetrics: false, // 💎 NUEVO
     error: null,
   });
 
@@ -71,10 +138,12 @@ export class DashboardService {
   monthlyIncome = computed(() => this.state().monthlyIncome);
   distribution = computed(() => this.state().distribution);
   recentActivity = computed(() => this.state().recentActivity);
+  executiveMetrics = computed(() => this.state().executiveMetrics); // 💎 NUEVO
   isLoadingKpis = computed(() => this.state().isLoadingKpis);
   isLoadingMonthlyIncome = computed(() => this.state().isLoadingMonthlyIncome);
   isLoadingDistribution = computed(() => this.state().isLoadingDistribution);
   isLoadingRecentActivity = computed(() => this.state().isLoadingRecentActivity);
+  isLoadingExecutiveMetrics = computed(() => this.state().isLoadingExecutiveMetrics); // 💎 NUEVO
   error = computed(() => this.state().error);
 
   // --- MÉTODOS PARA CARGAR DATOS ---
@@ -120,6 +189,32 @@ export class DashboardService {
       tap(activity => this.state.update(s => ({ ...s, recentActivity: activity, isLoadingRecentActivity: false }))),
       catchError(err => {
         this.state.update(s => ({ ...s, error: err, isLoadingRecentActivity: false }));
+        return throwError(() => err);
+      })
+    ).subscribe();
+  }
+
+  // 💎 NUEVO: Cargar métricas ejecutivas (Solo Admin)
+  loadExecutiveMetrics() {
+    console.log('📊 [DashboardService] Cargando métricas ejecutivas...');
+    this.state.update(s => ({ ...s, isLoadingExecutiveMetrics: true }));
+    
+    this.http.get<ExecutiveMetrics>(`${this.base}dashboard/executive-metrics`).pipe(
+      tap(metrics => {
+        console.log('✅ [DashboardService] Métricas ejecutivas cargadas:', metrics);
+        this.state.update(s => ({ 
+          ...s, 
+          executiveMetrics: metrics, 
+          isLoadingExecutiveMetrics: false 
+        }));
+      }),
+      catchError(err => {
+        console.error('❌ [DashboardService] Error cargando métricas ejecutivas:', err);
+        this.state.update(s => ({ 
+          ...s, 
+          error: err, 
+          isLoadingExecutiveMetrics: false 
+        }));
         return throwError(() => err);
       })
     ).subscribe();

@@ -33,7 +33,6 @@ export class SalesComponent implements OnInit {
   currentUser = this.authService.user;
   isAdmin = computed(() => {
     const user = this.currentUser();
-    console.log('🔍 Sales - User role:', user?.rol, 'Is admin:', user?.rol === 'admin');
     return user?.rol === 'admin';
   });
   isInstructor = computed(() => this.currentUser()?.rol === 'instructor');
@@ -139,7 +138,6 @@ export class SalesComponent implements OnInit {
       // Este effect se ejecutará cuando cambien los query params
       const params = this.route.snapshot.queryParams;
       if (params['status']) {
-        console.log('🔍 Query param detectado - Status:', params['status'], 'ID:', params['saleId']);
         this.applyFilterFromNotification(params['status'], params['saleId']);
       }
     });
@@ -149,7 +147,6 @@ export class SalesComponent implements OnInit {
     // Verificar query params en la inicialización
     this.route.queryParams.subscribe(params => {
       if (params['status']) {
-        console.log('🔔 Aplicando filtro desde notificación:', params);
         this.applyFilterFromNotification(params['status'], params['saleId']);
       } else {
         // Aplicar filtro inicial normal
@@ -162,11 +159,10 @@ export class SalesComponent implements OnInit {
    * Aplica filtro desde una notificación
    */
   private applyFilterFromNotification(status: string, saleId?: string): void {
-    console.log('🎯 Aplicando filtro desde notificación:', { status, saleId });
-    
+
     // Aplicar el filtro de estado
     this.statusFilter.set(status);
-    
+
     // Cargar las ventas con el filtro
     this.saleService.listSales(
       undefined,
@@ -175,7 +171,7 @@ export class SalesComponent implements OnInit {
       undefined
     ).subscribe(() => {
       this.currentPage.set(1);
-      
+
       // Si hay un saleId específico, expandir sus detalles automáticamente
       if (saleId) {
         setTimeout(() => {
@@ -192,7 +188,7 @@ export class SalesComponent implements OnInit {
           }
         }, 300);
       }
-      
+
       // Limpiar los query params después de aplicar el filtro
       this.router.navigate([], {
         relativeTo: this.route,
@@ -250,7 +246,7 @@ export class SalesComponent implements OnInit {
     if (!item.product?.imagen) {
       return 'https://via.placeholder.com/80x60?text=Sin+Imagen';
     }
-    const imageType = item.product_type === 'course' ? 'courses/imagen-course' : 'project/imagen-project';
+    const imageType = item.product_type === 'course' ? 'courses/imagen-course' : 'projects/imagen-project';
     return `${environment.url}${imageType}/${item.product.imagen}`;
   }
 
@@ -264,10 +260,8 @@ export class SalesComponent implements OnInit {
       this.currentStatusAction.set(newStatus);
       this.saleService.updateSaleStatus(saleId, newStatus).subscribe({
         next: () => {
-          console.log(`Venta ${saleId} actualizada a ${newStatus}`);
         },
         error: (err) => {
-          console.error('Error al actualizar el estado de la venta:', err);
           alert('Ocurrió un error al actualizar el estado.');
         },
         complete: () => {

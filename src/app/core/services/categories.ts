@@ -29,12 +29,17 @@ export class CategoriesService {
   // --- Métodos para interactuar con el servicio ---
   reload() {
     this.state.update((s: CategoriesState) => ({ ...s, isLoading: true }));
-    this.http.get<CategoriesListResponse>(`${this.API_URL}categories/list-public`).subscribe({
+
+    // 📌 Usar endpoint correcto según autenticación
+    const endpoint = this.authService.user()
+      ? `${this.API_URL}categories/list`  // Usuario autenticado = lista completa
+      : `${this.API_URL}categories/list-public`;  // Público = solo activas
+
+    this.http.get<CategoriesListResponse>(endpoint).subscribe({
       next: (response) => {
         this.state.update((s: CategoriesState) => ({ ...s, categories: response.categories, isLoading: false }));
       },
       error: (err) => {
-        console.error('❌ Error al cargar categorías:', err);
         this.state.update((s: CategoriesState) => ({ ...s, isLoading: false, error: err }));
       }
     });

@@ -587,13 +587,6 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
     // 3. NO está en modo edición
     const canCreate = response.can_rate && !response.existing_review && !this.isEditing();
 
-    console.log('🔍 [shouldShowCreateForm]', {
-      can_rate: response.can_rate,
-      has_existing_review: !!response.existing_review,
-      is_editing: this.isEditing(),
-      should_show: canCreate
-    });
-
     return canCreate;
   });
 
@@ -628,7 +621,7 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
 
   async loadReviews(page: number = 1) {
     if (!this.productId) {
-      console.warn('Cannot load reviews: productId is null or undefined');
+
       return;
     }
 
@@ -647,7 +640,7 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
         }
       }
     } catch (error) {
-      console.error('Error loading reviews:', error);
+
     } finally {
       this.isLoading.set(false);
     }
@@ -655,7 +648,7 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
 
   async checkCanRate() {
     if (!this.productId) {
-      console.warn('Cannot check can rate: productId is null or undefined');
+
       return;
     }
 
@@ -663,16 +656,11 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
       const response = await this.reviewService.canRateProduct(this.productId, this.productType).toPromise();
       this.canRateResponse.set(response || null);
 
-      console.log('🔍 [checkCanRate] Respuesta del servidor:', {
-        can_rate: response?.can_rate,
-        reason: response?.reason,
-        has_existing_review: !!response?.existing_review
-      });
 
       // ✅ CORREGIDO: Si ya tiene review existente, NO mostrar formulario de creación
       // Solo mostrar si hace click en "Editar calificación"
     } catch (error) {
-      console.error('Error checking can rate:', error);
+
     }
   }
 
@@ -697,18 +685,11 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
       return;
     }
 
-    console.log('📝 [onSubmit] Enviando review:', {
-      is_editing: this.isEditing(),
-      editing_review_id: this.editingReviewId(),
-      rating: this.selectedRating(),
-      product_id: this.productId
-    });
-
     this.isSubmitting.set(true);
     try {
       if (this.isEditing() && this.editingReviewId()) {
         // Actualizar reseña existente
-        console.log('🔄 [onSubmit] Actualizando reseña existente...');
+
         const response = await this.reviewService.updateReview(
           this.editingReviewId()!,
           this.selectedRating(),
@@ -716,7 +697,7 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
         ).toPromise();
 
         if (response) {
-          console.log('✅ [onSubmit] Reseña actualizada exitosamente');
+
           this.reviewUpdated.emit(response.review);
           this.resetForm();
           await this.loadReviews(this.currentPage()); // Recargar reviews
@@ -725,7 +706,7 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
         }
       } else {
         // Crear nueva reseña
-        console.log('➕ [onSubmit] Creando nueva reseña...');
+
         const response = await this.reviewService.createReview({
           product_id: this.productId,
           product_type: this.productType,
@@ -734,7 +715,7 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
         }).toPromise();
 
         if (response) {
-          console.log('✅ [onSubmit] Reseña creada exitosamente');
+
           this.reviewAdded.emit(response.review);
           this.resetForm();
           await this.loadReviews(1); // Volver a página 1 para ver la nueva review
@@ -743,7 +724,7 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
         }
       }
     } catch (error: any) {
-      console.error('❌ [onSubmit] Error submitting review:', error);
+
       const errorMessage = error?.error?.message_text || 'Error al enviar la calificación';
       alert(errorMessage);
     } finally {
@@ -761,10 +742,7 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
   editExistingReview() {
     if (this.canRateResponse()?.existing_review) {
       const existingReview = this.canRateResponse()!.existing_review!;
-      console.log('✏️ [editExistingReview] Entrando en modo edición:', {
-        review_id: existingReview._id,
-        rating: existingReview.rating
-      });
+
       this.isEditing.set(true);
       this.editingReviewId.set(existingReview._id);
       this.selectedRating.set(existingReview.rating);
@@ -844,30 +822,23 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
   canReplyToReviews = computed(() => {
     const user = this.authService.user();
     if (!user) {
-      console.log('❌ [canReplyToReviews] No hay usuario autenticado');
+
       return false;
     }
 
-    console.log('🔍 [canReplyToReviews] Verificando permisos:', {
-      user_id: user._id,
-      user_role: user.rol,
-      is_admin: user.rol === 'admin',
-      is_instructor: user.rol === 'instructor'
-    });
-
     // Admin puede responder a cualquier review
     if (user.rol === 'admin') {
-      console.log('✅ [canReplyToReviews] Usuario es admin');
+
       return true;
     }
 
     // Instructor puede responder (el backend valida si es SU curso)
     if (user.rol === 'instructor') {
-      console.log('✅ [canReplyToReviews] Usuario es instructor');
+
       return true;
     }
 
-    console.log('❌ [canReplyToReviews] Usuario no tiene permisos (rol:', user.rol + ')');
+
     return false;
   });
 
@@ -875,11 +846,7 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
    * ✅ CORREGIDO: Iniciar respuesta a una review
    */
   startReply(reviewId: string) {
-    console.log('💬 [startReply] Iniciando respuesta para review:', reviewId);
-    console.log('🔍 [startReply] Permisos actuales:', {
-      can_reply: this.canReplyToReviews(),
-      user_role: this.authService.user()?.rol
-    });
+
     this.replyingTo.set(reviewId);
     this.replyText.set('');
     this.editingReplyFor.set(null);
@@ -914,17 +881,12 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
 
     // ✅ VALIDAR permisos antes de enviar
     if (!this.canReplyToReviews()) {
-      console.error('❌ [submitReply] Usuario no tiene permisos para responder');
+
       alert('No tienes permisos para responder a reviews');
       return;
     }
 
-    console.log('📤 [submitReply] Enviando respuesta:', {
-      review_id: reviewId,
-      is_editing: this.editingReplyFor() === reviewId,
-      reply_length: this.replyText().trim().length,
-      user_role: this.authService.user()?.rol
-    });
+
 
     this.isSubmittingReply.set(true);
 
@@ -933,18 +895,18 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
 
       if (isEditing) {
         // Actualizar respuesta existente
-        console.log('🔄 [submitReply] Actualizando respuesta existente...');
+
         await this.reviewService.updateReply(reviewId, this.replyText().trim()).toPromise();
-        console.log('✅ [submitReply] Respuesta actualizada');
+
       } else {
         // Agregar nueva respuesta
-        console.log('➕ [submitReply] Agregando nueva respuesta...');
+
         await this.reviewService.addReply(reviewId, this.replyText().trim()).toPromise();
-        console.log('✅ [submitReply] Respuesta agregada');
-        
+
+
         // 🔥 AUTO-MARCAR NOTIFICACIÓN COMO LEÍDA
         this.reviewNotificationsService.markAsReplied(reviewId);
-        console.log('✅ [submitReply] Notificación auto-marcada como leída');
+
       }
 
       // Recargar reviews para mostrar la respuesta
@@ -956,8 +918,8 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
       alert(isEditing ? 'Respuesta actualizada exitosamente' : 'Respuesta enviada exitosamente');
 
     } catch (error: any) {
-      console.error('❌ [submitReply] Error al enviar respuesta:', error);
-      console.error('❌ [submitReply] Error completo:', JSON.stringify(error, null, 2));
+
+
       const errorMessage = error?.error?.message_text || error?.message || 'Error al enviar la respuesta';
       alert(errorMessage);
     } finally {
@@ -977,7 +939,7 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
 
     try {
       await this.reviewService.deleteReply(reviewId).toPromise();
-      console.log('✅ Respuesta eliminada');
+
 
       // Recargar reviews
       await this.loadReviews(this.currentPage());
@@ -985,7 +947,7 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
       alert('Respuesta eliminada exitosamente');
 
     } catch (error: any) {
-      console.error('Error al eliminar respuesta:', error);
+
       const errorMessage = error?.error?.message_text || 'Error al eliminar la respuesta';
       alert(errorMessage);
     } finally {

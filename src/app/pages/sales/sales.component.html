@@ -37,7 +37,7 @@
     </header>
 
     <!-- Estadísticas Generales -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
       <!-- Total Ingresos -->
       <div class="bg-gradient-to-br from-lime-500/20 to-lime-600/10 border border-lime-500/30 rounded-2xl p-6">
         <div class="flex items-center justify-between mb-4">
@@ -55,13 +55,21 @@
           }
         </h3>
         <p class="text-3xl font-bold text-white">${{ stats().totalIngresos | number:'1.2-2' }}</p>
-        <p class="text-lime-400 text-sm mt-2">
-          @if (isInstructor()) {
-            De tus productos
-          } @else {
-            Ventas pagadas
-          }
-        </p>
+        
+        <!-- ✅ NUEVO: Mostrar total reembolsado -->
+        @if (stats().totalReembolsado > 0) {
+          <p class="text-xs text-orange-400 mt-2">
+            🔄 Reembolsado: ${{ stats().totalReembolsado | number:'1.2-2' }}
+          </p>
+        } @else {
+          <p class="text-lime-400 text-sm mt-2">
+            @if (isInstructor()) {
+              De tus productos
+            } @else {
+              Ventas pagadas
+            }
+          </p>
+        }
       </div>
 
       <!-- Total Ventas -->
@@ -85,7 +93,7 @@
           @if (isInstructor()) {
             Con tus productos
           } @else {
-            Todas las transacciones
+            Ventas activas
           }
         </p>
       </div>
@@ -116,6 +124,20 @@
         <h3 class="text-slate-400 text-sm font-medium mb-1">Pendientes</h3>
         <p class="text-3xl font-bold text-white">{{ stats().porEstado.pendiente }}</p>
         <p class="text-yellow-400 text-sm mt-2">Por confirmar pago</p>
+      </div>
+
+      <!-- ✅ NUEVO: Ventas Reembolsadas -->
+      <div class="bg-gradient-to-br from-orange-500/20 to-orange-600/10 border border-orange-500/30 rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center">
+            <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+          </div>
+        </div>
+        <h3 class="text-slate-400 text-sm font-medium mb-1">Reembolsadas</h3>
+        <p class="text-3xl font-bold text-white">{{ stats().porEstado.reembolsado }}</p>
+        <p class="text-orange-400 text-sm mt-2">Reembolsos completados</p>
       </div>
     </div>
 
@@ -309,17 +331,47 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-5 py-4 text-center font-semibold text-sm">{{ sale.total | currency:'USD' }}</td>
                 <td class="px-5 py-4 text-center">
-                  <span
-                    [ngClass]="{
-                      'bg-green-500/10 text-green-400': sale.status === 'Pagado',
-                      'bg-yellow-500/10 text-yellow-400': sale.status === 'Pendiente',
-                      'bg-red-500/10 text-red-400': sale.status === 'Anulado'
-                    }"
-                    class="py-1 px-3 rounded-full text-xs font-medium">
-                    {{ sale.status }}
-                  </span>
+                  <div class="flex flex-col items-center gap-1">
+                    <span class="font-semibold text-sm" 
+                          [ngClass]="sale.refund?.status === 'completed' ? 'line-through text-slate-500' : 'text-white'">
+                      {{ sale.total | currency:'USD' }}
+                    </span>
+                    
+                    <!-- 🔥 NUEVO: Mostrar monto reembolsado -->
+                    @if (sale.refund?.status === 'completed') {
+                      <span class="text-xs font-medium text-orange-400 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                        </svg>
+                        ${{ (sale.refund?.calculations?.refundAmount ?? sale.total) | number:'1.2-2' }}
+                      </span>
+                    }
+                  </div>
+                </td>
+                <td class="px-5 py-4 text-center">
+                  <div class="flex flex-col items-center gap-2">
+                    <span
+                      [ngClass]="{
+                        'bg-green-500/10 text-green-400 ring-1 ring-green-500/30': sale.status === 'Pagado' && !sale.refund,
+                        'bg-yellow-500/10 text-yellow-400 ring-1 ring-yellow-500/30': sale.status === 'Pendiente',
+                        'bg-red-500/10 text-red-400 ring-1 ring-red-500/30': sale.status === 'Anulado',
+                        'bg-slate-700/50 text-slate-400 ring-1 ring-slate-600': sale.refund?.status === 'completed'
+                      }"
+                      class="inline-flex items-center gap-2 py-1.5 px-3 rounded-full text-xs font-medium transition-all">
+                      {{ sale.status }}
+                    </span>
+                    
+                    <!-- 🔥 NUEVO: Badge de reembolso más visible -->
+                    @if (sale.refund?.status === 'completed') {
+                      <span class="px-3 py-1 bg-gradient-to-r from-orange-600 to-red-600 text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1.5">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        REEMBOLSADO
+                      </span>
+                    }
+                  </div>
                 </td>
                 <td class="px-5 py-4 text-sm">{{ sale.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
                 @if (isAdmin()) {

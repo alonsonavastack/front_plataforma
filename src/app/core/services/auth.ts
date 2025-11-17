@@ -4,10 +4,12 @@ import { computed, inject, Injectable, signal, effect, Injector } from '@angular
 import { environment } from '../../../environments/environment';
 import { tap, catchError, of, throwError } from 'rxjs';
 import { Router } from '@angular/router';
+import { LoggerService } from './logger.service';
+import { ToastService } from './toast.service';
 
 export interface User {
   _id: string;
-  rol: 'admin' | 'instructor' | 'cliente';
+  rol: 'admin' | 'instructor' | 'cliente'; // 'cliente' en backend, NO 'customer'
   name: string;
   surname: string;
   email: string;
@@ -54,6 +56,11 @@ export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
   private injector = inject(Injector);
+  private logger = inject(LoggerService);
+  private toast = inject(ToastService);
+
+  // 🔥 Timer para logout automático
+  private logoutTimer: any = null;
 
   // Helper para acceso seguro a localStorage
   private getFromStorage(key: string, isJson = false): any {
@@ -96,6 +103,9 @@ export class AuthService {
   });
 
   constructor() {
+    // 🔥 VERIFICACIÓN INMEDIATA AL CARGAR LA APP
+    this.checkTokenOnLoad();
+
     // Effect para sincronizar localStorage cuando cambien los signals
     effect(() => {
       const userValue = this.user();
@@ -105,9 +115,11 @@ export class AuthService {
         if (userValue && tokenValue) {
           localStorage.setItem('user', JSON.stringify(userValue));
           localStorage.setItem('token', tokenValue);
+          // 🔇 Logs silenciados - solo toasts para usuario
         } else {
           localStorage.removeItem('user');
           localStorage.removeItem('token');
+          // 🔇 Logs silenciados - solo toasts para usuario
         }
       }
     });
@@ -121,8 +133,10 @@ export class AuthService {
         if (state.user) {
           // Sesión válida, actualizamos el usuario
           this.user.set(state.user);
+          // 🔇 Logs silenciados - solo toasts para usuario
         } else if (state.error) {
           // Error de autenticación (401/403), limpiamos la sesión
+          // 🔇 Logs silenciados - solo toasts para usuario
           this.token.set(null);
           this.user.set(null);
         }
@@ -138,54 +152,157 @@ export class AuthService {
     }, 0);
   }
 
+  // 🔥 MÉTODOS DE GESTIÓN AUTOMÁTICA DE SESIÓN
+
+  /**
+   * Verifica el token inmediatamente al cargar la página
+   * Si el token ya expiró, hace logout inmediato
+   */
+  private checkTokenOnLoad(): void {
+    const token = this.token();
+
+    if (!token) {
+      return; // No hay token, no hacer nada
+    }
+
+    try {
+      const payload = this.decodeTokenPayload(token);
+
+      if (!payload) {
+        console.error('❌ Token corrupto al cargar');
+        this.forceLogout('Token inválido');
+        return;
+      }
+
+      const now = Date.now();
+      const exp = payload.exp * 1000; // Convertir a millisegundos
+      const isExpired = now > exp;
+
+      if (isExpired) {
+        console.log('⏰ Token expiró, logout inmediato');
+        this.forceLogout('Tu sesión ha expirado');
+      } else {
+        // Token válido, programar logout para cuando expire
+        const expiresIn = exp - now;
+        console.log(`✅ Token válido. Expira en ${Math.round(expiresIn / 1000 / 60)} minutos`);
+        this.scheduleLogoutOnExpiration(expiresIn);
+      }
+    } catch (error) {
+      console.error('❌ Error al verificar token:', error);
+      this.forceLogout('Error de autenticación');
+    }
+  }
+
+  /**
+   * Programa un timer para hacer logout cuando expire el token
+   * @param expiresIn Milisegundos hasta la expiración
+   */
+  private scheduleLogoutOnExpiration(expiresIn: number): void {
+    // Limpiar timer anterior si existe
+    if (this.logoutTimer) {
+      clearTimeout(this.logoutTimer);
+    }
+
+    // Programar logout para cuando expire el token
+    this.logoutTimer = setTimeout(() => {
+      console.log('⏰ Token expirado, haciendo logout automático...');
+      this.forceLogout('Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
+    }, expiresIn);
+
+    console.log(`⏰ Logout programado para ${new Date(Date.now() + expiresIn).toLocaleString()}`);
+  }
+
+  /**
+   * Decodifica el payload del JWT sin verificar la firma
+   * @param token JWT token
+   * @returns Payload decodificado o null si es inválido
+   */
+  private decodeTokenPayload(token: string): any {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        return null;
+      }
+      return JSON.parse(atob(parts[1]));
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Fuerza el logout inmediato sin preguntar
+   * Se usa cuando el token expira o es inválido
+   * @param message Mensaje a mostrar al usuario
+   */
+  private forceLogout(message: string): void {
+    console.log('🔐 Forzando logout:', message);
+
+    // Limpiar timer si existe
+    if (this.logoutTimer) {
+      clearTimeout(this.logoutTimer);
+      this.logoutTimer = null;
+    }
+
+    // Limpiar signals
+    this.token.set(null);
+    this.user.set(null);
+
+    // Limpiar compras
+    import('./purchases.service').then(module => {
+      const purchasesService = this.injector.get(module.PurchasesService);
+      purchasesService.clearPurchases();
+    });
+
+    // Mostrar toast
+    this.toast.warning('Sesión expirada', message);
+
+    // Redirigir a login
+    this.router.navigate(['/login'], {
+      queryParams: { sessionExpired: 'true' }
+    });
+  }
+
   private verifyStoredSession() {
     const token = this.token();
     const storedUser = this.user();
 
     if (token && storedUser) {
+      // 🔇 Logs silenciados - solo toasts para usuario
       this.isAuthenticating.set(true);
 
       this.http.get<{ user: User, profile?: any }>(`${environment.url}users/profile`)
         .pipe(
           catchError((error) => {
-            console.error('Error verifying session:', error);
-            console.error('Status:', error.status);
-            console.error('Error details:', error.error);
+            // 🔇 Logs silenciados - solo toasts para usuario
 
             // Solo limpiar la sesión si es un error de autenticación (401)
             // Para otros errores, mantener la sesión almacenada
             if (error.status === 401 || error.status === 403) {
-              console.log('Token inválido o expirado, limpiando sesión');
+              // 🔇 Logs silenciados - solo toasts para usuario
               this.token.set(null);
               this.user.set(null);
             } else {
               // Para errores de red u otros, mantener los datos actuales
-              console.log('Error de red o servidor, manteniendo sesión almacenada');
+              // 🔇 Logs silenciados - solo toasts para usuario
             }
             return of(null);
           })
         )
         .subscribe({
           next: (response) => {
-            console.log('Respuesta completa de /users/profile:', response);
             if (response) {
               // El backend devuelve { user: { _id, rol }, profile: { ...datos completos } }
               // Necesitamos combinar ambos para tener el objeto User completo
               if (response.profile) {
                 // response.profile ya contiene toda la información incluyendo _id y rol
                 const userToSet = response.profile as User;
-                console.log('Usuario extraído de la respuesta:', userToSet);
-                console.log('Sesión verificada correctamente, actualizando usuario');
+                // 🔇 Logs silenciados - solo toasts para usuario
                 this.user.set(userToSet);
               } else if (response.user) {
                 // Fallback si solo viene el user básico
-                console.log('Solo se recibió user básico:', response.user);
+                // 🔇 Logs silenciados - solo toasts para usuario
                 this.user.set(response.user as User);
-              } else {
-                console.warn('No se pudo extraer el usuario de la respuesta');
               }
-            } else {
-              console.warn('Respuesta vacía de /users/profile');
             }
           },
           complete: () => {
@@ -195,23 +312,35 @@ export class AuthService {
         });
     } else {
       // No hay token, marcar como cargado inmediatamente
+      // 🔇 Logs silenciados - solo toasts para usuario
       this.isSessionLoaded.set(true);
     }
   }
 
   login(email: string, password: string) {
+    // 🔇 Logs silenciados - solo toasts para usuario
     this.isAuthenticating.set(true);
 
     return this.http.post<LoginResponse>(`${environment.url}users/login`, { email, password })
       .pipe(
         tap(response => {
-          console.log('Login response:', response);
+          // ℹ️ El interceptor ya logueó la petición HTTP exitosa
 
           const { token, user, profile } = response.USER;
           const fullUser = { ...user, ...profile };
 
           this.token.set(token);
           this.user.set(fullUser as User);
+
+          // 🔇 Logs silenciados - solo toasts para usuario
+
+          // ✅ Toast de bienvenida (usar fullUser que tiene todos los datos)
+          this.toast.success(
+            `¡Bienvenido ${fullUser.name}!`,
+            fullUser.rol === 'admin' ? 'Acceso como administrador' :
+            fullUser.rol === 'instructor' ? 'Acceso como instructor' :
+            'Has iniciado sesión correctamente'
+          );
 
           // Cargar las compras del usuario después del login
           // Importamos PurchasesService de manera lazy para evitar dependencias circulares
@@ -230,7 +359,9 @@ export class AuthService {
           }, 100);
         }),
         catchError(error => {
-          console.error('Login error:', error);
+          // 🔇 Logs silenciados - solo toasts para usuario
+          // ✅ NO mostrar toast aquí - se maneja en el componente
+          // porque necesitamos lógica específica para verificación OTP
           this.isAuthenticating.set(false);
           throw error;
         }),
@@ -239,6 +370,8 @@ export class AuthService {
   }
 
   logout() {
+    // 🔇 Logs silenciados - solo toasts para usuario
+
     this.token.set(null);
     this.user.set(null);
 
@@ -247,6 +380,9 @@ export class AuthService {
       const purchasesService = this.injector.get(module.PurchasesService);
       purchasesService.clearPurchases();
     });
+
+    // 🔇 Logs silenciados - solo toasts para usuario
+    this.toast.info('Sesión cerrada', 'Has cerrado sesión correctamente');
 
     this.router.navigate(['/']);
   }
@@ -257,15 +393,32 @@ export class AuthService {
    * @param updatedUser El objeto de usuario actualizado recibido del backend.
    */
   updateUser(updatedUser: User): void {
+    // 🔇 Logs silenciados - solo toasts para usuario
     this.user.set(updatedUser);
   }
 
   register(userData: any) {
-    return this.http.post(`${environment.url}users/register`, userData);
+    // 🔇 Logs silenciados - solo toasts para usuario
+    return this.http.post(`${environment.url}users/register`, userData)
+      .pipe(
+        tap(() => {
+          // 🔇 Logs silenciados - solo toasts para usuario
+          this.toast.success(
+            '¡Registro exitoso!',
+            'Revisa tu correo para verificar tu cuenta'
+          );
+        }),
+        catchError(error => {
+          // 🔇 Logs silenciados - solo toasts para usuario
+          throw error;
+        })
+      );
   }
 
   // Métodos de verificación OTP
   verifyOtp(userId: string, code: string) {
+    // 🔇 Logs silenciados - solo toasts para usuario
+
     return this.http.post<LoginResponse>(`${environment.url}users/verify-otp`, { userId, code })
       .pipe(
         tap(response => {
@@ -275,6 +428,14 @@ export class AuthService {
 
             this.token.set(token);
             this.user.set(fullUser as User);
+
+            // 🔇 Logs silenciados - solo toasts para usuario
+
+            // ✅ Toast de éxito (usar fullUser que tiene todos los datos)
+            this.toast.success(
+              '¡Cuenta verificada!',
+              `Bienvenido ${fullUser.name}, tu cuenta ha sido verificada`
+            );
 
             // Cargar las compras del usuario después de verificar
             import('./purchases.service').then(module => {
@@ -291,12 +452,47 @@ export class AuthService {
               }
             }, 100);
           }
+        }),
+        catchError(error => {
+          // 🔇 Logs silenciados - solo toasts para usuario
+
+          // ✅ Toast de error
+          this.toast.error(
+            'Código inválido',
+            'El código de verificación es incorrecto o ha expirado'
+          );
+
+          throw error;
         })
       );
   }
 
   resendOtp(userId: string) {
-    return this.http.post(`${environment.url}users/resend-otp`, { userId });
+    // 🔇 Logs silenciados - solo toasts para usuario
+
+    return this.http.post(`${environment.url}users/resend-otp`, { userId })
+      .pipe(
+        tap(() => {
+          // 🔇 Logs silenciados - solo toasts para usuario
+
+          // ✅ Toast informativo
+          this.toast.info(
+            'Código enviado',
+            'Revisa tu correo electrónico'
+          );
+        }),
+        catchError(error => {
+          // 🔇 Logs silenciados - solo toasts para usuario
+
+          // ✅ Toast de error
+          this.toast.error(
+            'Error al reenviar',
+            'No se pudo reenviar el código de verificación'
+          );
+
+          throw error;
+        })
+      );
   }
 
   // Helper para verificar rol

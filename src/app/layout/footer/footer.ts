@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SystemConfigService } from '../../core/services/system-config.service';
@@ -13,6 +13,9 @@ import { environment } from '../../../environments/environment';
 export class FooterComponent implements OnInit {
   systemConfigService = inject(SystemConfigService);
   currentYear = new Date().getFullYear();
+
+  // 🆕 Output para emitir eventos al componente padre
+  openLegalModalEvent = output<'privacy' | 'terms'>();
 
   // Computed signals para datos del sistema
   siteName = computed(() => this.systemConfigService.config()?.siteName || 'Dev-Sharks');
@@ -57,5 +60,10 @@ export class FooterComponent implements OnInit {
   ngOnInit(): void {
     // Cargar configuración al iniciar
     this.systemConfigService.getConfig();
+  }
+
+  // 🆕 Método para abrir modal desde footer
+  openLegalModal(type: 'privacy' | 'terms'): void {
+    this.openLegalModalEvent.emit(type);
   }
 }

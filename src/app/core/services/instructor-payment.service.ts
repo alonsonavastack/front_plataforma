@@ -50,12 +50,19 @@ export interface Earning {
   earned_at: string;
   available_at: string;
   paid_at?: string;
+
+  isRefunded?: boolean;  // Si la venta fue reembolsada
+  status_display?: 'pending' | 'available' | 'paid' | 'disputed' | 'refunded';
+  instructor_earning_original?: number;  // Ganancia antes del reembolso
 }
+
 
 export interface EarningsStats {
   pending: { total: number; count: number };
   available: { total: number; count: number };
   paid: { total: number; count: number };
+    refunds: { count: number; total: number };
+
   total: { total: number; count: number };
   total_earned: number;
   total_sales: number;
@@ -200,10 +207,10 @@ export class InstructorPaymentService {
       earnings: Earning[];
       pagination: any;
     }>(`${this.apiUrl}/earnings`, { params }).pipe(
-      map(response => ({ 
-        success: response.success, 
-        data: response.earnings, 
-        pagination: response.pagination 
+      map(response => ({
+        success: response.success,
+        data: response.earnings,
+        pagination: response.pagination
       }))
     );
   }
@@ -226,6 +233,7 @@ export class InstructorPaymentService {
           pending: stats.pending || { total: 0, count: 0 },
           available: stats.available || { total: 0, count: 0 },
           paid: stats.paid || { total: 0, count: 0 },
+          refunds: stats.refunds || { total: 0, count: 0 },
           total: stats.total || { total: 0, count: 0 },
           total_earned: stats.total?.total || 0,
           total_sales: stats.totalCoursesSold || 0,

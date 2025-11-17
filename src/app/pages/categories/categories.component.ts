@@ -135,18 +135,18 @@ export class Categories implements OnInit {
   openEditModal(category: Category): void {
     this.isEditing.set(true);
     this.currentCategoryId.set(category._id);
-    this.categoryForm.patchValue({ 
+    this.categoryForm.patchValue({
       title: category.title,
       imagen: null
     });
-    
+
     if (category.imagen) {
       const imageUrl = this.buildImageUrl(category.imagen);
       this.imagePreview.set(imageUrl);
     } else {
       this.imagePreview.set(null);
     }
-    
+
     this.isModalOpen.set(true);
   }
 
@@ -160,25 +160,24 @@ export class Categories implements OnInit {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       const file = input.files[0];
-      
+
       if (!file.type.startsWith('image/')) {
         alert('Por favor selecciona un archivo de imagen válido');
         return;
       }
-      
+
       if (file.size > 5 * 1024 * 1024) {
         alert('La imagen no debe superar los 5MB');
         return;
       }
-      
+
       this.categoryForm.patchValue({ imagen: file });
-      
+
       const reader = new FileReader();
       reader.onload = () => {
         this.imagePreview.set(reader.result as string);
       };
       reader.onerror = () => {
-        console.error('❌ Error al leer el archivo');
         alert('Error al cargar la imagen');
       };
       reader.readAsDataURL(file);
@@ -202,8 +201,10 @@ export class Categories implements OnInit {
       formData.append('_id', this.currentCategoryId()!);
     }
 
+    // 📌 Solo agregar imagen si se seleccionó una nueva
     if (formValue.imagen instanceof File) {
       formData.append('imagen', formValue.imagen);
+    } else if (this.isEditing()) {
     }
 
     const operation$ = this.isEditing()
@@ -211,13 +212,19 @@ export class Categories implements OnInit {
       : this.categoriesService.register(formData);
 
     operation$.subscribe({
-      next: () => {
+      next: (response: any) => {
+
+        // 🔄 IMPORTANTE: Recargar lista para obtener datos actualizados
         this.categoriesService.reload();
+
         this.closeModal();
         this.isSaving.set(false);
+
+        // 🎉 Feedback al usuario
+        const action = this.isEditing() ? 'actualizada' : 'creada';
+        alert(`✅ Categoría ${action} exitosamente`);
       },
       error: (error) => {
-        console.error('❌ Error en la operación:', error);
         alert(`Error: ${error.error?.message || 'No se pudo guardar la categoría'}`);
         this.isSaving.set(false);
       }
@@ -231,7 +238,6 @@ export class Categories implements OnInit {
           this.categoriesService.reload();
         },
         error: (error) => {
-          console.error('❌ Error al eliminar:', error);
           alert(`Error: ${error.error?.message || 'No se pudo eliminar la categoría'}`);
         }
       });
@@ -242,11 +248,14 @@ export class Categories implements OnInit {
     if (!imageName) {
       return 'https://i.pravatar.cc/80?u=placeholder';
     }
-    
+
     const cleanImageName = imageName.trim();
     const baseUrl = environment.images.cat;
-    const fullUrl = `${baseUrl}${cleanImageName}`;
-    
+
+    // 🔄 Agregar timestamp para evitar caché del navegador
+    const timestamp = new Date().getTime();
+    const fullUrl = `${baseUrl}${cleanImageName}?t=${timestamp}`;
+
     return fullUrl;
   }
 }

@@ -1,5 +1,35 @@
 // src/app/core/models/home.models.ts
 
+// 💰 INTERFAZ SALE MOVIDA AQUÍ PARA RESOLVER CONFLICTO DE TIPOS
+export interface SaleDetailItem {
+  product: {
+    _id: string;
+    title: string;
+    imagen: string;
+    user?: {
+      _id?: string;
+      name?: string;
+      surname?: string;
+    } | string;
+  };
+  product_type: 'course' | 'project';
+  price_unit: number;
+  title?: string;
+}
+
+export interface Sale {
+  _id: string;
+  user: any; // Simplificado para el contexto de esta interfaz
+  method_payment: string;
+  n_transaccion: string;
+  total: number;
+  status: 'Pendiente' | 'Pagado' | 'Anulado';
+  createdAt: string;
+  currency_total?: string;
+  detail: SaleDetailItem[];
+  isRefundable?: boolean; // ✅ La propiedad que causa el error
+}
+
 export interface Category {
   _id: string;
   title: string;
@@ -56,14 +86,14 @@ export interface CourseClase {
   section: string; // ID de la sección
   state?: boolean;
   time?: number; // Duración en segundos
-  
+
   // 🎬 NUEVOS CAMPOS para soporte de múltiples plataformas
   video_platform?: 'vimeo' | 'youtube'; // Plataforma del video
   video_id?: string; // ID genérico del video
-  
+
   // CAMPO LEGACY (compatibilidad con datos antiguos)
   vimeo_id?: string; // ID del video de Vimeo (deprecado)
-  
+
   order?: number;
 }
 
@@ -160,10 +190,30 @@ export interface ProfileResponse {
   enrolled_course_news: any[]; // Puedes crear una interfaz más específica para esto
   actived_course_news?: any[];
   termined_course_news?: any[];
-  sales: any[]; // Puedes crear una interfaz más específica para las ventas
+  sales: Sale[];
   projects?: any[];
 }
 
+// 💸 NUEVO: Modelo para una transacción individual (usado en el perfil del estudiante)
+export interface Transaction {
+  _id: string;
+  n_transaccion: string;
+  method_payment: string;
+  total: number;
+  currency_total?: string;
+  status: 'Pendiente' | 'Pagado' | 'Anulado';
+  isRefundable?: boolean; // ✅ Propiedad para la lógica de reembolso
+  items: {
+    product: {
+      _id: string | null;
+      title: string;
+      imagen: string | null;
+    };
+    product_type: 'course' | 'project';
+    price: number;
+  }[];
+  createdAt: string;
+}
 // Modelo para archivos de proyecto
 export interface ProjectFile {
   _id: string;

@@ -150,8 +150,8 @@ export class TransactionHistoryComponent {
   filteredTransactions = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     if (!query) return this.transactions();
-    
-    return this.transactions().filter(t => 
+
+    return this.transactions().filter(t =>
       t.n_transaccion.toLowerCase().includes(query)
     );
   });
@@ -205,7 +205,7 @@ export class TransactionHistoryComponent {
   copyToClipboard(text: string) {
     navigator.clipboard.writeText(text).then(() => {
       // Aquí podrías mostrar un toast notification
-      console.log('Número de transacción copiado:', text);
+
     });
   }
 }

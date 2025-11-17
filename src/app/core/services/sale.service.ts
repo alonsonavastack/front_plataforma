@@ -15,7 +15,10 @@ interface SalesStats {
     pagado: number;
     pendiente: number;
     anulado: number;
+    reembolsado: number; // ✅ NUEVO
   };
+  totalReembolsado: number; // ✅ NUEVO
+  ingresosNetos: number; // ✅ NUEVO (ingresos - reembolsos)
   porInstructor?: {
     instructorId: string;
     instructorName: string;
@@ -52,22 +55,38 @@ export class SaleService {
   public stats = computed<SalesStats>(() => {
     const salesData = this.sales();
 
-    const totalIngresos = salesData
+    // ✅ NUEVO: Separar ventas reembolsadas
+    const activeSales = salesData.filter(s => !s.refund || s.refund.status !== 'completed');
+    const refundedSales = salesData.filter(s => s.refund?.status === 'completed');
+
+    // ✅ MODIFICAR: Calcular solo ventas activas (sin reembolsos completados)
+    const totalIngresos = activeSales
       .filter(s => s.status === 'Pagado')
       .reduce((sum, sale) => sum + sale.total, 0);
 
-    const totalVentas = salesData.length;
+    // ✅ NUEVO: Calcular total reembolsado
+    const totalReembolsado = refundedSales.reduce((sum, sale) => {
+      return sum + (sale.refund?.calculations?.refundAmount || sale.total || 0);
+    }, 0);
+
+    // ✅ NUEVO: Ingresos netos (ingresos - reembolsos)
+    const ingresosNetos = totalIngresos;
+
+    const totalVentas = activeSales.length;
 
     const porEstado = {
-      pagado: salesData.filter(s => s.status === 'Pagado').length,
-      pendiente: salesData.filter(s => s.status === 'Pendiente').length,
-      anulado: salesData.filter(s => s.status === 'Anulado').length,
+      pagado: activeSales.filter(s => s.status === 'Pagado').length,
+      pendiente: activeSales.filter(s => s.status === 'Pendiente').length,
+      anulado: activeSales.filter(s => s.status === 'Anulado').length,
+      reembolsado: refundedSales.length, // ✅ NUEVO
     };
 
     return {
       totalIngresos,
       totalVentas,
       porEstado,
+      totalReembolsado, // ✅ NUEVO
+      ingresosNetos, // ✅ NUEVO
     };
   });
 
@@ -130,7 +149,7 @@ constructor() {
     this.listSales().subscribe();
   }
 
-  listSales(search?: string, status?: string, month?: string, year?: string): Observable<SaleListResponse> {
+  listSales(search?: string, status?: string, month?: string, year?: string, excludeRefunded?: boolean): Observable<SaleListResponse> {
     this.state.update(s => ({ ...s, isLoading: true }));
 
     let params = new HttpParams();
@@ -138,6 +157,7 @@ constructor() {
     if (status) params = params.set('status', status);
     if (month) params = params.set('month', month);
     if (year) params = params.set('year', year);
+    if (excludeRefunded) params = params.set('exclude_refunded', 'true'); // ✅ NUEVO
 
     return this.http.get<SaleListResponse>(`${this.API_URL}checkout/list`, { params }).pipe(
       tap({

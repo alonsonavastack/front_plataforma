@@ -132,7 +132,7 @@ export class DiscountsComponent implements OnInit {
     // Obtener la fecha y hora actual
     const now = new Date();
     const startDateLocal = this.toDatetimeLocalString(now);
-    
+
     // Fecha de fin: 7 días después
     const endDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const endDateLocal = this.toDatetimeLocalString(endDate);
@@ -199,10 +199,10 @@ export class DiscountsComponent implements OnInit {
     }
 
     // ✅ FIX: Preparar los datos correctamente
-    const selectedItems = typeSegment === 1 
-      ? this.selectedCourses() 
-      : typeSegment === 2 
-        ? this.selectedCategories() 
+    const selectedItems = typeSegment === 1
+      ? this.selectedCourses()
+      : typeSegment === 2
+        ? this.selectedCategories()
         : this.selectedProjects();
 
     const data = {
@@ -224,7 +224,6 @@ export class DiscountsComponent implements OnInit {
       categories_s: typeSegment === 2 ? selectedItems : [],
     };
 
-    console.log('📤 Datos a enviar al crear descuento:', data);
 
     this.discountService.createDiscount(data).subscribe({
       next: () => {
@@ -232,7 +231,6 @@ export class DiscountsComponent implements OnInit {
         this.closeCreateModal();
       },
       error: (err) => {
-        console.error('❌ Error al crear descuento:', err);
         alert(err.error?.message_text || 'Error al crear descuento');
       }
     });
@@ -286,10 +284,10 @@ export class DiscountsComponent implements OnInit {
     const startDate = new Date(formValue.start_date!);
     const endDate = new Date(formValue.end_date!);
 
-    const selectedItems = typeSegment === 1 
-      ? this.selectedCourses() 
-      : typeSegment === 2 
-        ? this.selectedCategories() 
+    const selectedItems = typeSegment === 1
+      ? this.selectedCourses()
+      : typeSegment === 2
+        ? this.selectedCategories()
         : this.selectedProjects();
 
     const data = {

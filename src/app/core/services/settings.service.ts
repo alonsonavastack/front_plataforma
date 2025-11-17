@@ -164,15 +164,11 @@ export class SettingsService {
     return logo ? `${environment.url}settings/logo/${logo}` : null;
   });
 
-  constructor() {
-    console.log('⚙️ [SettingsService] Inicializado');
-  }
-
   /**
    * 📥 Cargar toda la configuración del sistema
    */
   loadSettings(): Observable<any> {
-    console.log('📥 [SettingsService] Cargando configuración del sistema...');
+    console.log('📥 [SettingsService] === INICIANDO CARGA DE SETTINGS ===');
 
     this.settingsState.update(state => ({ ...state, isLoading: true }));
 
@@ -180,13 +176,40 @@ export class SettingsService {
 
     obs.subscribe({
       next: (response) => {
-        console.log('✅ [SettingsService] Configuración cargada:', response);
+        console.log('✅ [SettingsService] Respuesta recibida:', response);
+        console.log('📊 [SettingsService] response.settings:', response.settings);
+        console.log('📊 [SettingsService] Tipo:', typeof response.settings);
+        
+        // 🔥 TRANSFORMAR ARRAY A OBJETO
+        let settingsObject: Record<string, SettingDetail> = {};
+        
+        if (Array.isArray(response.settings)) {
+          console.log('🔄 [SettingsService] Transformando array a objeto...');
+          response.settings.forEach((setting: any) => {
+            settingsObject[setting.key] = {
+              key: setting.key,
+              value: setting.value,
+              name: setting.name || setting.key,
+              description: setting.description || '',
+              group: setting.group || 'general',
+              type: setting.type || 'text'
+            };
+          });
+          console.log('✅ [SettingsService] Transformación completada:', Object.keys(settingsObject));
+        } else {
+          // Si ya es objeto, usarlo directamente
+          settingsObject = response.settings || {};
+        }
 
         this.settingsState.set({
-          settings: response.settings || {},
+          settings: settingsObject,
           isLoading: false,
           lastUpdate: new Date()
         });
+
+        console.log('✅ [SettingsService] Estado actualizado');
+        console.log('📊 [SettingsService] Verificar signal:', this.settings());
+        console.log('📊 [SettingsService] platform_name:', this.settings()['platform_name']);
       },
       error: (error) => {
         console.error('❌ [SettingsService] Error al cargar configuración:', error);
@@ -201,7 +224,7 @@ export class SettingsService {
    * 📥 Cargar configuración global (para GlobalSettingsComponent)
    */
   loadGlobalSettings(): Observable<any> {
-    console.log('📥 [SettingsService] Cargando configuración global...');
+
 
     this.globalSettingsState.update(state => ({ ...state, isLoading: true }));
 
@@ -209,7 +232,7 @@ export class SettingsService {
 
     obs.subscribe({
       next: (response) => {
-        console.log('✅ [SettingsService] Configuración global cargada:', response);
+
 
         this.globalSettingsState.set({
           allSettings: response.settings || [],
@@ -218,7 +241,7 @@ export class SettingsService {
         });
       },
       error: (error) => {
-        console.error('❌ [SettingsService] Error al cargar configuración global:', error);
+
         this.globalSettingsState.update(state => ({ ...state, isLoading: false }));
       }
     });
@@ -230,13 +253,13 @@ export class SettingsService {
    * 📚 Cargar cursos (para SettingsComponent - featured)
    */
   loadCourses(): Observable<any> {
-    console.log('📚 [SettingsService] Cargando cursos...');
+
 
     this.coursesState.update(state => ({ ...state, isLoading: true }));
 
     return this.http.get<{ courses: SettingsCourse[] }>(`${environment.url}courses/list`).pipe(
       tap(response => {
-        console.log('✅ [SettingsService] Cursos cargados:', response.courses.length);
+
         this.coursesState.set({
           courses: response.courses || [],
           isLoading: false
@@ -249,13 +272,13 @@ export class SettingsService {
    * 📦 Cargar proyectos (para SettingsComponent - featured)
    */
   loadProjects(): Observable<any> {
-    console.log('📦 [SettingsService] Cargando proyectos...');
+
 
     this.projectsState.update(state => ({ ...state, isLoading: true }));
 
     return this.http.get<{ projects: SettingsProject[] }>(`${environment.url}projects/list`).pipe(
       tap(response => {
-        console.log('✅ [SettingsService] Proyectos cargados:', response.projects.length);
+
         this.projectsState.set({
           projects: response.projects || [],
           isLoading: false
@@ -268,16 +291,16 @@ export class SettingsService {
    * ⭐ Toggle featured state de un curso
    */
   toggleCourseFeatured(courseId: string, featured: boolean): Observable<any> {
-    console.log(`⭐ [SettingsService] Toggle course featured: ${courseId} -> ${featured}`);
-    return this.http.put<{ course: SettingsCourse }>(`${environment.url}courses/toggle-featured/${courseId}`, { featured });
+
+    return this.http.put<{ course: SettingsCourse }>(`${environment.url}courses/toggle-featured/${courseId}`, { is_featured: featured });
   }
 
   /**
    * ⭐ Toggle featured state de un proyecto
    */
   toggleProjectFeatured(projectId: string, featured: boolean): Observable<any> {
-    console.log(`⭐ [SettingsService] Toggle project featured: ${projectId} -> ${featured}`);
-    return this.http.put<{ project: SettingsProject }>(`${environment.url}projects/toggle-featured/${projectId}`, { featured });
+
+    return this.http.put<{ project: SettingsProject }>(`${environment.url}projects/toggle-featured/${projectId}`, { is_featured: featured });
   }
 
   /**
@@ -358,16 +381,16 @@ export class SettingsService {
   /**
    * 💾 Actualizar configuración del sistema (sin logo)
    */
-  updateSettings(settings: Setting[]): Observable<any> {
+  updateSettings(settings: Record<string, any>): Observable<any> {
     console.log('💾 [SettingsService] Actualizando configuración:', settings);
-    return this.http.put<any>(`${environment.url}settings/update`, { settings });
+    return this.http.put<any>(`${environment.url}settings/update`, settings);
   }
 
   /**
    * 🖼️ Actualizar logo del sistema
    */
   updateLogo(file: File): Observable<any> {
-    console.log('🖼️ [SettingsService] Actualizando logo...');
+
 
     const formData = new FormData();
     formData.append('logo', file);
@@ -379,7 +402,7 @@ export class SettingsService {
    * 🗑️ Eliminar logo del sistema
    */
   deleteLogo(): Observable<any> {
-    console.log('🗑️ [SettingsService] Eliminando logo...');
+
     return this.http.delete<any>(`${environment.url}settings/delete-logo`);
   }
 
@@ -387,7 +410,7 @@ export class SettingsService {
    * 🔄 Restablecer configuración por defecto
    */
   resetSettings(): Observable<any> {
-    console.log('🔄 [SettingsService] Restableciendo configuración por defecto...');
+
     return this.http.post<any>(`${environment.url}settings/reset`, {});
   }
 
@@ -395,7 +418,7 @@ export class SettingsService {
    * 🔄 Inicializar configuración por defecto
    */
   initializeDefaults(): Observable<any> {
-    console.log('🔄 [SettingsService] Inicializando configuración por defecto...');
+
     return this.http.post<any>(`${environment.url}settings/initialize-defaults`, {});
   }
 

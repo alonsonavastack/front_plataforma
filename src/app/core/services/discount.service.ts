@@ -66,7 +66,7 @@ export class DiscountService {
       tap({
         next: (response) => {
           // Imprime el arreglo de descuentos en la consola
-          console.log('Descuentos recibidos de la API:', response.discounts);
+
           this.state.update(s => ({
             ...s,
             discounts: response.discounts,
@@ -93,7 +93,7 @@ export class DiscountService {
           this.state.update(s => ({ ...s, config: response }));
         },
         error: (err) => {
-          console.error('Error loading config:', err);
+
         }
       })
     );

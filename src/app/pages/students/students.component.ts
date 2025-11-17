@@ -46,8 +46,8 @@ export class StudentsComponent implements OnInit {
 
   ngOnInit(): void {
     this.studentService.loadStudents().subscribe({
-      next: () => console.log('Estudiantes cargados'),
-      error: (err) => console.error('Error al cargar estudiantes:', err)
+      next: () => {},
+      error: (err) => {}
     });
   }
 
@@ -107,13 +107,11 @@ export class StudentsComponent implements OnInit {
     // Mostrar feedback visual inmediato
     this.studentService.updateStudentState(student._id, newState).subscribe({
       next: (response) => {
-        console.log('Usuario actualizado:', response);
         alert(`Estudiante ${action === 'activar' ? 'activado' : 'desactivado'} exitosamente`);
         // Recargar la lista completa para asegurar consistencia
         this.studentService.loadStudents().subscribe();
       },
       error: (error) => {
-        console.error('Error al cambiar estado:', error);
         const errorMessage = error.error?.message_text || error.error?.message || 'Error al cambiar el estado del estudiante';
         alert(errorMessage);
         // Recargar en caso de error para mantener consistencia
@@ -156,7 +154,6 @@ export class StudentsComponent implements OnInit {
         this.studentService.loadStudents().subscribe();
       },
       error: (error) => {
-        console.error('Error al actualizar estudiante:', error);
         alert(error.error?.message_text || 'Error al actualizar el estudiante');
       }
     });

@@ -10,20 +10,24 @@ import { ProfileService } from '../../core/services/profile';
 import { CheckoutService } from '../../core/services/checkout.service';
 import { CountryCodeSelectorComponent, CountryCode } from '../../shared/country-code-selector/country-code-selector';
 
-import { ProfileStudentService, EnrolledCourse, Sale, Project, ProjectFile } from '../../core/services/profile-student.service';
+import { ProfileStudentService } from '../../core/services/profile-student.service';
+import type { EnrolledCourse, Sale, Project, ProjectFile } from '../../core/services/profile-student.service';
 import { ProjectService } from '../../core/services/project.service';
 import { environment } from '../../../environments/environment';
-type ProfileSection = 'courses' | 'projects' | 'purchases' | 'edit';
+type ProfileSection = 'courses' | 'projects' | 'purchases' | 'edit' | 'refunds' | 'wallet';
 
 // Validador personalizado para confirmar que las contraseñas coinciden
 export const passwordsMatchValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   return control.get('newPassword')?.value === control.get('confirmPassword')?.value ? null : { passwordsMismatch: true };
 };
 
+import { RefundModalComponent } from './refund-modal.component';
+import { WalletService } from '../../core/services/wallet.service';
+
 @Component({
   standalone: true,
   selector: 'app-profile-student',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, HeaderComponent, CountryCodeSelectorComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, HeaderComponent, CountryCodeSelectorComponent, RefundModalComponent],
   templateUrl: './profile-student.html',
 })
 export class ProfileStudentComponent implements OnInit, OnDestroy {
@@ -33,6 +37,7 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
   projectService = inject(ProjectService);
   checkoutService = inject(CheckoutService);
   authService = inject(AuthService);
+  walletService = inject(WalletService);
   private sanitizer = inject(DomSanitizer);
   private http = inject(HttpClient);
   private route = inject(ActivatedRoute);
@@ -60,6 +65,20 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
   // Señal para el código de país seleccionado
   selectedCountryCode = signal('+52'); // Por defecto México
 
+  // Señal para los reembolsos
+  refunds = signal<any[]>([]);
+
+  // 🆕 Señales para el modal de reembolso
+  showRefundModal = signal(false);
+  selectedSaleForRefund = signal<Sale | null>(null);
+
+  // Computed para el nombre completo del usuario
+  userFullName = computed(() => {
+    const user = this.authService.user();
+    if (!user) return '';
+    return `${user.name} ${user.surname || ''}`.trim();
+  });
+
   // Señales para la paginación de compras
   purchasesCurrentPage = signal(1);
   purchasesPerPage = signal(10);
@@ -71,6 +90,10 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
   // Señales para la paginación de cursos
   coursesCurrentPage = signal(1);
   coursesPerPage = signal(10);
+
+  // 🔥 NUEVO: Señales para la paginación de reembolsos
+  refundsCurrentPage = signal(1);
+  refundsPerPage = signal(10);
 
   // Computed para las compras paginadas
   paginatedSales = computed(() => {
@@ -134,6 +157,29 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
 
   coursesPageNumbers = computed(() => {
     const total = this.totalCoursesPages();
+    return Array.from({ length: total }, (_, i) => i + 1);
+  });
+
+  // 🔥 NUEVO: Computed para los reembolsos paginados
+  paginatedRefunds = computed(() => {
+    const refundsList = this.refunds();
+    const page = this.refundsCurrentPage();
+    const perPage = this.refundsPerPage();
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    return refundsList.slice(start, end);
+  });
+
+  // 🔥 NUEVO: Computed para el total de páginas de reembolsos
+  totalRefundsPages = computed(() => {
+    const refundsList = this.refunds();
+    const perPage = this.refundsPerPage();
+    return Math.ceil(refundsList.length / perPage);
+  });
+
+  // 🔥 NUEVO: Computed para el array de números de página de reembolsos
+  refundsPageNumbers = computed(() => {
+    const total = this.totalRefundsPages();
     return Array.from({ length: total }, (_, i) => i + 1);
   });
 
@@ -239,7 +285,25 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.profileStudentService.loadProfile().subscribe();
-    console.log('📍 Sección actual al iniciar:', this.activeSection());
+    this.loadRefunds();
+    
+    // 💼 Cargar billetera si la sección activa es 'wallet'
+    const activeSection = this.activeSection();
+    if (activeSection === 'wallet') {
+      console.log('💼 [ProfileStudent] Sección activa es wallet, cargando datos...');
+      this.walletService.loadWallet();
+    }
+  }
+
+  loadRefunds(): void {
+    this.profileStudentService.loadRefunds().subscribe({
+      next: (response) => {
+        this.refunds.set(response);
+      },
+      error: (err) => {
+        console.error('Error al cargar los reembolsos', err);
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -248,23 +312,24 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
   }
 
   // Cambia la sección activa y la guarda en localStorage
-  setActiveSection(section: ProfileSection) {
+  setActiveSection(section: ProfileSection | 'refunds') {
     // Validar que la sección sea válida
-    if (!['courses', 'projects', 'purchases', 'edit'].includes(section)) {
-      console.error('❌ Sección inválida:', section);
+    if (!['courses', 'projects', 'purchases', 'edit', 'refunds', 'wallet'].includes(section)) {
       return;
     }
 
-    console.log('📦 Guardando sección:', section);
-    this.activeSection.set(section);
+    this.activeSection.set(section as ProfileSection);
+
+    // 💎 Si se selecciona la billetera, cargar los datos
+    if (section === 'wallet') {
+      console.log('💼 [ProfileStudent] Cargando billetera...');
+      this.walletService.loadWallet();
+    }
 
     // 🔥 Guardar en localStorage para persistir entre recargas
     try {
       localStorage.setItem('profile-active-section', section);
-      console.log('✅ Sección guardada exitosamente');
-      console.log('📍 Verificando localStorage:', localStorage.getItem('profile-active-section'));
     } catch (error) {
-      console.error('❌ Error al guardar en localStorage:', error);
     }
   }
 
@@ -316,7 +381,6 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
         this.isSubmitting.set(false);
       },
       error: (err) => {
-        console.error('Error al actualizar el perfil:', err);
         alert('Ocurrió un error al actualizar tu perfil.');
         this.isSubmitting.set(false);
       },
@@ -343,7 +407,6 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
         this.authService.logout(); // Cierra la sesión y redirige a /login
       },
       error: (err) => {
-        console.error('Error al actualizar la contraseña:', err);
         alert(err.error.message_text || 'Ocurrió un error al cambiar tu contraseña.');
         this.isPasswordSubmitting.set(false);
       },
@@ -365,7 +428,6 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
           alert('¡Avatar actualizado con éxito!');
         },
         error: (err) => {
-          console.error('Error al subir el avatar:', err);
           alert('Ocurrió un error al subir tu avatar.');
         }
       });
@@ -379,8 +441,8 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
 
   buildProjectImageUrl(imageName?: string): string {
     if (!imageName) return 'https://via.placeholder.com/300x200?text=No+Image';
-    // CORRECCIÓN: Usamos la URL base de la API y la ruta correcta para las imágenes de proyectos.
-    return `${environment.url}project/imagen-project/${imageName}`;
+    // ✅ CORREGIDO: Usamos environment.images.project que ya tiene la URL completa correcta
+    return `${environment.images.project}${imageName}`;
   }
 
   buildProjectFileUrl(projectId: string, filename: string): string {
@@ -414,7 +476,6 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
         this.downloadingFileId.set(null);
       },
       error: (err) => {
-        console.error('Error al descargar el archivo:', err);
         alert('No se pudo descargar el archivo. Por favor, intenta de nuevo.');
         this.downloadingFileId.set(null);
       }
@@ -604,7 +665,6 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
       // (podría ser Vimeo u otra plataforma)
       return url;
     } catch (error) {
-      console.error('Error al convertir URL de video:', error);
       return url;
     }
   }
@@ -630,7 +690,6 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
   // 📋 Función para copiar al portapapeles
   copyToClipboard(text: string, type: string): void {
     navigator.clipboard.writeText(text).then(() => {
-      console.log(`✅ ${type} copiado al portapapeles:`, text);
       // Podrías agregar una notificación toast aquí
       let message = '';
       if (type === 'cuenta') message = 'Número de cuenta copiado';
@@ -639,9 +698,85 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
       else message = `${type} copiado`;
       alert(`✅ ${message} al portapapeles`);
     }).catch(err => {
-      console.error('❌ Error al copiar:', err);
       alert('❌ No se pudo copiar. Por favor, copia manualmente.');
     });
+  }
+
+  // 🆕 MÉTODOS PARA EL MODAL DE REEMBOLSO
+  
+  /**
+   * Abrir el modal de reembolso
+   */
+  openRefundModal(sale: Sale): void {
+    console.log('🎯 [ProfileStudent] Abriendo modal de reembolso para venta:', sale._id);
+    this.selectedSaleForRefund.set(sale);
+    this.showRefundModal.set(true);
+  }
+
+  /**
+   * Cerrar el modal de reembolso
+   */
+  closeRefundModal(): void {
+    console.log('🚪 [ProfileStudent] Cerrando modal de reembolso');
+    this.showRefundModal.set(false);
+    this.selectedSaleForRefund.set(null);
+  }
+
+  /**
+   * Manejar el envío de la solicitud de reembolso
+   */
+  handleRefundSubmit(refundData: any): void {
+    console.log('📤 [ProfileStudent] Enviando solicitud de reembolso:', refundData);
+
+    this.profileStudentService.requestRefund(refundData.sale_id, refundData).subscribe({
+      next: (response) => {
+        console.log('✅ [ProfileStudent] Solicitud exitosa:', response);
+        
+        // Cerrar modal
+        this.closeRefundModal();
+        
+        // Mostrar mensaje de éxito
+        alert('✅ Tu solicitud de reembolso ha sido enviada correctamente. Te notificaremos cuando sea procesada.');
+        
+        // Recargar perfil
+        this.profileStudentService.loadProfile().subscribe({
+          next: () => {
+            console.log('🔄 [ProfileStudent] Perfil recargado');
+          },
+          error: (err) => {
+            console.error('❌ [ProfileStudent] Error al recargar perfil:', err);
+          }
+        });
+      },
+      error: (err) => {
+        console.error('❌ [ProfileStudent] Error en solicitud:', err);
+        const errorMessage = err.error?.message || 'Ocurrió un error al procesar tu solicitud.';
+        alert(`❌ ${errorMessage}`);
+      }
+    });
+  }
+
+  /**
+   * Verifica si ya existe una solicitud de reembolso para una venta específica
+   */
+  hasRefundRequest(saleId: string): boolean {
+    const refundList = this.refunds();
+    if (!refundList || refundList.length === 0) return false;
+    
+    return refundList.some(refund => {
+      // Verificar si sale es un objeto con _id o directamente el ID
+      const refundSaleId = typeof refund.sale === 'object' ? refund.sale._id : refund.sale;
+      return refundSaleId === saleId;
+    });
+  }
+
+  /**
+   * 🆕 Construir URL del comprobante de reembolso
+   */
+  buildRefundReceiptUrl(imageName?: string): string {
+    if (!imageName) return '';
+    const cleanImageName = imageName.trim();
+    return `${environment.url}refunds/receipt-image/${cleanImageName}`;
   }
 
 }

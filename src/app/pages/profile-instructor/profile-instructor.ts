@@ -95,7 +95,6 @@ export class ProfileInstructorComponent implements OnInit {
     effect(() => {
       const profileData = this.authService.user();
 
-      console.log('🔄 [ProfileInstructor] Effect ejecutándose - Usuario actual:', profileData);
 
       if (profileData?.email) {
         // Separar código de país del número de teléfono
@@ -114,12 +113,6 @@ export class ProfileInstructorComponent implements OnInit {
         }
 
         this.selectedCountryCode.set(countryCode);
-
-        console.log('📝 [ProfileInstructor] Cargando datos al formulario:', {
-          facebook: profileData.facebook,
-          instagram: profileData.instagram,
-          youtube: profileData.youtube
-        });
 
         this.profileForm.patchValue({
           name: profileData.name || "",
@@ -141,7 +134,6 @@ export class ProfileInstructorComponent implements OnInit {
           github: profileData.github || "",
         });
 
-        console.log('✅ [ProfileInstructor] Formulario actualizado con valores:', this.profileForm.value);
       }
     });
   }
@@ -155,7 +147,6 @@ export class ProfileInstructorComponent implements OnInit {
   private loadUserDataToForm(): void {
     const profileData = this.authService.user();
 
-    console.log('📝 [ProfileInstructor] Cargando datos del usuario al formulario:', profileData);
 
     if (profileData?.email) {
       // Separar código de país del número de teléfono
@@ -198,7 +189,6 @@ export class ProfileInstructorComponent implements OnInit {
       // Forzar detección de cambios
       this.cdr.detectChanges();
 
-      console.log('✅ [ProfileInstructor] Formulario cargado con valores:', this.profileForm.value);
     }
   }
 
@@ -237,12 +227,10 @@ export class ProfileInstructorComponent implements OnInit {
     // 🔥 Eliminar socialMedia anidado
     delete (updateData as any).socialMedia;
 
-    console.log('📤 [ProfileInstructor] Enviando datos de perfil:', updateData);
 
     // Usamos el `update` del ProfileService que ya apunta al endpoint correcto
     this.profileService.update(updateData).subscribe({
       next: (response) => {
-        console.log('✅ [ProfileInstructor] Perfil actualizado exitosamente:', response);
 
         // 🔥 FORZAR actualización del formulario con los datos de la respuesta
         const updatedUser = response.user;
@@ -292,14 +280,12 @@ export class ProfileInstructorComponent implements OnInit {
             this.loadUserDataToForm();
           }, 100);
 
-          console.log('🔄 [ProfileInstructor] Formulario actualizado manualmente:', this.profileForm.value);
         }
 
         alert("¡Perfil actualizado con éxito!");
         this.isSubmitting.set(false);
       },
       error: (err) => {
-        console.error("Error al actualizar el perfil:", err);
         alert("Ocurrió un error al actualizar tu perfil.");
         this.isSubmitting.set(false);
       },
@@ -316,7 +302,6 @@ export class ProfileInstructorComponent implements OnInit {
           alert("¡Avatar actualizado con éxito!");
         },
         error: (err) => {
-          console.error("Error al subir el avatar:", err);
           alert("Ocurrió un error al subir tu avatar.");
         },
       });
@@ -348,7 +333,6 @@ export class ProfileInstructorComponent implements OnInit {
           this.authService.logout(); // Logout for security
         },
         error: (err) => {
-          console.error("Error al actualizar la contraseña:", err);
           alert(
             err.error.message_text ||
               "Ocurrió un error al cambiar tu contraseña."

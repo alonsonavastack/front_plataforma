@@ -32,7 +32,7 @@ export class AdminCommissionSettingsComponent implements OnInit {
   loadSettings() {
     this.isLoading.set(true);
     this.error.set(null);
-    
+
     this.adminPaymentService.getCommissionSettings().subscribe({
       next: (response) => {
         this.settings.set(response.settings);
@@ -87,10 +87,10 @@ export class AdminCommissionSettingsComponent implements OnInit {
 
   // Placeholder for custom commission logic
   openCustomCommissionModal(instructorId?: string) {
-    console.log('Open modal for:', instructorId || 'new custom commission');
+
   }
 
   removeCustomCommission(instructorId: string) {
-    console.log('Remove custom commission for:', instructorId);
+
   }
 }

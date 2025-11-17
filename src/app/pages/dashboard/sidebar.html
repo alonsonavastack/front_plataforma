@@ -1,19 +1,63 @@
-<nav>
-  <ul class="space-y-2 font-medium pt-5">
+<nav class="h-full overflow-y-auto overflow-x-hidden">
+  <!-- 🎯 SCROLL CORREGIDO: h-full ocupa todo el alto + overflow-y-auto activa scroll -->
+  <ul class="space-y-1 font-medium px-3 py-4">
     @for (it of items(); track it.id) {
       <li>
         <button
           (click)="navigate.emit(it.id)"
-          class="w-full flex items-center p-2 text-white/80 rounded-lg hover:bg-white/5 group"
+          type="button"
+          class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-300 rounded-lg hover:bg-white/5 hover:text-white transition-all duration-200 group relative overflow-hidden"
           [class.justify-center]="isCollapsed()"
-          [class.bg-white/5]="selected() === it.id"
-          [class.text-lime-300]="selected() === it.id">
-          <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path [attr.d]="it.icon" stroke-linecap="round" stroke-width="2"/>
+          [class.bg-lime-500/10]="selected() === it.id"
+          [class.text-lime-400]="selected() === it.id"
+          [class.ring-1]="selected() === it.id"
+          [class.ring-lime-500/30]="selected() === it.id"
+          [class.shadow-lg]="selected() === it.id"
+          [class.shadow-lime-500/20]="selected() === it.id">
+          
+          <!-- Gradient overlay para item activo -->
+          @if (selected() === it.id) {
+            <div class="absolute inset-0 bg-gradient-to-r from-lime-500/5 to-transparent opacity-50"></div>
+          }
+          
+          <!-- Icon -->
+          <svg class="w-5 h-5 shrink-0 relative z-10 transition-transform duration-200"
+               [class.group-hover:scale-110]="selected() !== it.id"
+               fill="none" 
+               stroke="currentColor" 
+               viewBox="0 0 24 24">
+            <path [attr.d]="it.icon" 
+                  stroke-linecap="round" 
+                  stroke-linejoin="round"
+                  stroke-width="2"/>
           </svg>
-          <span class="ms-3 flex-1 whitespace-nowrap text-left" [class.lg:hidden]="isCollapsed()">{{ it.label }}</span>
+          
+          <!-- Label -->
+          <span class="flex-1 whitespace-nowrap text-left relative z-10 transition-all duration-200"
+                [class.lg:hidden]="isCollapsed()"
+                [class.font-semibold]="selected() === it.id">
+            {{ it.label }}
+          </span>
+          
+          <!-- Active indicator -->
+          @if (selected() === it.id && !isCollapsed()) {
+            <div class="w-1 h-6 bg-lime-400 rounded-full absolute right-0 top-1/2 -translate-y-1/2"></div>
+          }
+          
+          <!-- Tooltip para sidebar colapsado -->
+          @if (isCollapsed()) {
+            <div class="hidden lg:block absolute left-full ml-2 px-3 py-2 bg-slate-900 text-white text-sm rounded-lg shadow-xl border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+              {{ it.label }}
+              <div class="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-4 border-transparent border-r-slate-900"></div>
+            </div>
+          }
         </button>
       </li>
     }
   </ul>
+  
+  <!-- Divider decorativo al final -->
+  <div class="mt-6 px-3 pb-4">
+    <div class="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+  </div>
 </nav>

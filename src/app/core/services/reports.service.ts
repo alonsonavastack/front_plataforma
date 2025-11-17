@@ -81,6 +81,109 @@ export interface ProductsAnalysis {
   created_at: string;
 }
 
+// ==================== INTERFACES DE COMISIONES ====================
+
+export interface CommissionsSummary {
+  success: boolean;
+  period: string;
+  date_range: {
+    start: Date | string;
+    end: Date | string;
+  };
+  summary: {
+    total_ventas_bruto: number;
+    total_ventas_count: number;
+    total_comisiones_plataforma: number;
+    porcentaje_comision: string;
+    total_pago_instructores: number;
+    porcentaje_instructores: string;
+    total_impuestos: number;
+    neto_plataforma: number;
+    comisiones_disponibles: number;
+    comisiones_pendientes: number;
+    comisiones_pagadas: number;
+  };
+  fiscal: {
+    iva: number;
+    retencion_iva: number;
+    isr: number;
+    otros_impuestos: number;
+    total: number;
+  };
+  sales_count: number;
+  earnings_count: number;
+}
+
+export interface CommissionByPeriod {
+  period: string;
+  total_ventas_bruto: number;
+  ventas_count: number;
+  comisiones_plataforma: number;
+  pago_instructores: number;
+  impuestos: number;
+  neto_plataforma: number;
+}
+
+export interface CommissionByInstructor {
+  instructor_id: string;
+  instructor_name: string;
+  instructor_email: string;
+  total_comisiones_plataforma: number;
+  total_pago_instructor: number;
+  total_ventas_bruto: number;
+  total_impuestos: number;
+  neto_plataforma: number;
+  ventas_count: number;
+  disponibles: number;
+  pendientes: number;
+  pagadas: number;
+}
+
+export interface CommissionByProduct {
+  product_id: string;
+  product_title: string;
+  product_type: 'course' | 'project';
+  total_comisiones_plataforma: number;
+  total_pago_instructor: number;
+  total_ventas_bruto: number;
+  total_impuestos: number;
+  neto_plataforma: number;
+  ventas_count: number;
+}
+
+// ==================== INTERFACES DE VENTAS DETALLADAS ====================
+
+export interface SaleDetail {
+  product: string;
+  product_type: 'course' | 'project';
+  title: string;
+  price_unit: number;
+  productDetails?: {
+    title: string;
+    category: string;
+    instructor: string;
+  };
+}
+
+export interface SaleItem {
+  _id: string;
+  user: {
+    _id: string;
+    name: string;
+    surname: string;
+    email: string;
+  };
+  detail: SaleDetail[];
+  total: number;
+  instructorTotal?: number; // Solo para instructores
+  method_payment: string;
+  currency_payment: string;
+  n_transaccion: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -138,6 +241,28 @@ export class ReportsService {
     });
   }
 
+  /**
+   * 📋 Lista detallada de ventas
+   * @param startDate Fecha inicio (YYYY-MM-DD)
+   * @param endDate Fecha fin (YYYY-MM-DD)
+   * @param productType Filtrar por tipo de producto
+   */
+  getSalesList(
+    startDate?: string,
+    endDate?: string,
+    productType?: 'course' | 'project'
+  ): Observable<{ success: boolean; sales: SaleItem[]; total: number }> {
+    let params = new HttpParams();
+    if (startDate) params = params.set('start_date', startDate);
+    if (endDate) params = params.set('end_date', endDate);
+    if (productType) params = params.set('product_type', productType);
+
+    return this.http.get<{ success: boolean; sales: SaleItem[]; total: number }>(
+      `${this.apiUrl}/sales/list`,
+      { headers: this.getHeaders(), params }
+    );
+  }
+
   // ==================== REPORTES DE ESTUDIANTES ====================
 
   getStudentGrowth(period: 'day' | 'week' | 'month' = 'month'): Observable<StudentGrowth> {
@@ -181,7 +306,7 @@ export class ReportsService {
     });
   }
 
-  getLowPerformingProducts(minSales: number = 5, minRating: number = 3): Observable<any> { // Mantengo any porque no se usa en el componente
+  getLowPerformingProducts(minSales: number = 5, minRating: number = 3): Observable<any> {
     const params = new HttpParams()
       .set('min_sales', minSales.toString())
       .set('min_rating', minRating.toString());
@@ -191,7 +316,7 @@ export class ReportsService {
     });
   }
 
-  getReviewsAnalysis(productId?: string): Observable<any> { // Mantengo any porque no se usa en el componente
+  getReviewsAnalysis(productId?: string): Observable<any> {
     let params = new HttpParams();
     if (productId) {
       params = params.set('product_id', productId);
@@ -204,13 +329,13 @@ export class ReportsService {
 
   // ==================== REPORTES DE DESCUENTOS (Solo Admin) ====================
 
-  getCouponEffectiveness(): Observable<any> { // Mantengo any porque no se usa en el componente
+  getCouponEffectiveness(): Observable<any> {
     return this.http.get(`${this.apiUrl}/discounts/coupon-effectiveness`, {
       headers: this.getHeaders()
     });
   }
 
-  getDiscountsImpact(startDate?: string, endDate?: string): Observable<any> { // Mantengo any porque no se usa en el componente
+  getDiscountsImpact(startDate?: string, endDate?: string): Observable<any> {
     let params = new HttpParams();
     if (startDate) params = params.set('start_date', startDate);
     if (endDate) params = params.set('end_date', endDate);
@@ -221,7 +346,7 @@ export class ReportsService {
     });
   }
 
-  getCampaignPerformance(): Observable<any> { // Mantengo any porque no se usa en el componente
+  getCampaignPerformance(): Observable<any> {
     return this.http.get(`${this.apiUrl}/discounts/campaign-performance`, {
       headers: this.getHeaders()
     });
@@ -229,13 +354,13 @@ export class ReportsService {
 
   // ==================== REPORTES DE INSTRUCTORES ====================
 
-  getInstructorRanking(): Observable<any> { // Mantengo any porque no se usa en el componente
+  getInstructorRanking(): Observable<any> {
     return this.http.get(`${this.apiUrl}/instructors/ranking`, {
       headers: this.getHeaders()
     });
   }
 
-  getInstructorDetail(instructorId?: string): Observable<any> { // Mantengo any porque no se usa en el componente
+  getInstructorDetail(instructorId?: string): Observable<any> {
     let params = new HttpParams();
     if (instructorId) {
       params = params.set('instructor_id', instructorId);
@@ -246,9 +371,162 @@ export class ReportsService {
     });
   }
 
-  getRevenueDistribution(): Observable<any> { // Mantengo any porque no se usa en el componente
+  getRevenueDistribution(): Observable<any> {
     return this.http.get(`${this.apiUrl}/instructors/revenue-distribution`, {
       headers: this.getHeaders()
     });
+  }
+
+  // ==================== REPORTES DE COMISIONES (SOLO ADMIN) ====================
+
+  /**
+   * 💰 Resumen general de comisiones
+   * @param period 'day' | 'week' | 'month' | 'year'
+   * @param startDate Fecha inicio (YYYY-MM-DD)
+   * @param endDate Fecha fin (YYYY-MM-DD)
+   * @param instructorId Filtrar por instructor
+   */
+  getCommissionsSummary(
+    period?: 'day' | 'week' | 'month' | 'year',
+    startDate?: string,
+    endDate?: string,
+    instructorId?: string
+  ): Observable<CommissionsSummary> {
+    let params = new HttpParams();
+    if (period) params = params.set('period', period);
+    if (startDate) params = params.set('start_date', startDate);
+    if (endDate) params = params.set('end_date', endDate);
+    if (instructorId) params = params.set('instructor_id', instructorId);
+
+    return this.http.get<CommissionsSummary>(`${this.apiUrl}/commissions/summary`, {
+      headers: this.getHeaders(),
+      params
+    });
+  }
+
+  /**
+   * 📊 Comisiones agrupadas por período (para tabla)
+   */
+  getCommissionsByPeriod(
+    period: 'day' | 'week' | 'month' | 'year' = 'month',
+    startDate?: string,
+    endDate?: string
+  ): Observable<{ success: boolean; period: string; data: CommissionByPeriod[] }> {
+    let params = new HttpParams().set('period', period);
+    if (startDate) params = params.set('start_date', startDate);
+    if (endDate) params = params.set('end_date', endDate);
+
+    return this.http.get<{ success: boolean; period: string; data: CommissionByPeriod[] }>(
+      `${this.apiUrl}/commissions/by-period`,
+      { headers: this.getHeaders(), params }
+    );
+  }
+
+  /**
+   * 👨‍🏫 Comisiones por instructor
+   */
+  getCommissionsByInstructor(
+    startDate?: string,
+    endDate?: string
+  ): Observable<{ success: boolean; instructors: CommissionByInstructor[] }> {
+    let params = new HttpParams();
+    if (startDate) params = params.set('start_date', startDate);
+    if (endDate) params = params.set('end_date', endDate);
+
+    return this.http.get<{ success: boolean; instructors: CommissionByInstructor[] }>(
+      `${this.apiUrl}/commissions/by-instructor`,
+      { headers: this.getHeaders(), params }
+    );
+  }
+
+  /**
+   * 📚 Comisiones por producto (curso/proyecto)
+   */
+  getCommissionsByProduct(
+    startDate?: string,
+    endDate?: string,
+    productType?: 'course' | 'project'
+  ): Observable<{ success: boolean; products: CommissionByProduct[] }> {
+    let params = new HttpParams();
+    if (startDate) params = params.set('start_date', startDate);
+    if (endDate) params = params.set('end_date', endDate);
+    if (productType) params = params.set('product_type', productType);
+
+    return this.http.get<{ success: boolean; products: CommissionByProduct[] }>(
+      `${this.apiUrl}/commissions/by-product`,
+      { headers: this.getHeaders(), params }
+    );
+  }
+
+  // ==================== REPORTES DE REEMBOLSOS ====================
+
+  /**
+   * 💸 Reporte completo de reembolsos
+   */
+  getRefundsReport(
+    startDate?: string,
+    endDate?: string,
+    status?: string
+  ): Observable<{ success: boolean; refunds: any[] }> {
+    let params = new HttpParams();
+    if (startDate) params = params.set('start_date', startDate);
+    if (endDate) params = params.set('end_date', endDate);
+    if (status) params = params.set('status', status);
+
+    return this.http.get<{ success: boolean; refunds: any[] }>(
+      `${this.apiUrl}/refunds`,
+      { headers: this.getHeaders(), params }
+    );
+  }
+
+  /**
+   * 📊 Reporte completo de ventas con detalles
+   */
+  getSalesReport(
+    startDate?: string,
+    endDate?: string,
+    productType?: string
+  ): Observable<{ success: boolean; sales: any[] }> {
+    let params = new HttpParams();
+    if (startDate) params = params.set('start_date', startDate);
+    if (endDate) params = params.set('end_date', endDate);
+    if (productType) params = params.set('product_type', productType);
+
+    return this.http.get<{ success: boolean; sales: any[] }>(
+      `${this.apiUrl}/sales/report`,
+      { headers: this.getHeaders(), params }
+    );
+  }
+
+  /**
+   * 👥 Reporte de estudiantes
+   */
+  getStudentsReport(
+    startDate?: string,
+    endDate?: string
+  ): Observable<{ success: boolean; students: any[] }> {
+    let params = new HttpParams();
+    if (startDate) params = params.set('start_date', startDate);
+    if (endDate) params = params.set('end_date', endDate);
+
+    return this.http.get<{ success: boolean; students: any[] }>(
+      `${this.apiUrl}/students/report`,
+      { headers: this.getHeaders(), params }
+    );
+  }
+
+  /**
+   * 📦 Reporte de productos
+   */
+  getProductsReport(
+    productType?: string
+  ): Observable<{ success: boolean; products: any[] }> {
+    let params = new HttpParams();
+    if (productType) params = params.set('product_type', productType);
+
+    return this.http.get<{ success: boolean; products: any[] }>(
+      `${this.apiUrl}/products/report`,
+      { headers: this.getHeaders(), params }
+    );
   }
 }

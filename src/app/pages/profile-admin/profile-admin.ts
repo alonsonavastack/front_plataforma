@@ -91,7 +91,6 @@ export class ProfileAdminComponent implements OnInit {
     effect(() => {
       const profileData = this.authService.user();
 
-      console.log("🔄 Effect ejecutándose - Usuario actual:", profileData);
 
       if (profileData?.email) {
         // Separar código de país del número de teléfono
@@ -134,12 +133,6 @@ export class ProfileAdminComponent implements OnInit {
 
         this.selectedCountryCode.set(countryCode);
 
-        console.log("📝 Cargando datos al formulario:", {
-          facebook: profileData.facebook,
-          instagram: profileData.instagram,
-          youtube: profileData.youtube,
-        });
-
         this.profileForm.patchValue({
           name: profileData.name || "",
           surname: profileData.surname || "",
@@ -160,10 +153,6 @@ export class ProfileAdminComponent implements OnInit {
           github: profileData.github || "",
         });
 
-        console.log(
-          "✅ Formulario actualizado con valores:",
-          this.profileForm.value
-        );
       }
     });
   }
@@ -183,7 +172,6 @@ export class ProfileAdminComponent implements OnInit {
   private loadUserDataToForm(): void {
     const profileData = this.authService.user();
 
-    console.log("📝 Cargando datos del usuario al formulario:", profileData);
 
     if (profileData?.email) {
       // Separar código de país del número de teléfono
@@ -247,7 +235,6 @@ export class ProfileAdminComponent implements OnInit {
       // Forzar detección de cambios
       this.cdr.detectChanges();
 
-      console.log("✅ Formulario cargado con valores:", this.profileForm.value);
     }
   }
 
@@ -286,11 +273,9 @@ export class ProfileAdminComponent implements OnInit {
     // 🔥 Eliminar socialMedia anidado
     delete (updateData as any).socialMedia;
 
-    console.log("📤 Enviando datos de perfil:", updateData);
 
     this.profileService.update(updateData).subscribe({
       next: (response) => {
-        console.log("✅ Perfil actualizado exitosamente:", response);
 
         // 🔥 FORZAR actualización del formulario con los datos de la respuesta
         const updatedUser = response.user;
@@ -362,17 +347,12 @@ export class ProfileAdminComponent implements OnInit {
             this.loadUserDataToForm();
           }, 100);
 
-          console.log(
-            "🔄 Formulario actualizado manualmente:",
-            this.profileForm.value
-          );
         }
 
         alert("¡Perfil actualizado con éxito!");
         this.isSubmitting.set(false);
       },
       error: (err) => {
-        console.error("Error al actualizar el perfil:", err);
         alert("Ocurrió un error al actualizar tu perfil.");
         this.isSubmitting.set(false);
       },
@@ -389,7 +369,6 @@ export class ProfileAdminComponent implements OnInit {
           alert("¡Avatar actualizado con éxito!");
         },
         error: (err) => {
-          console.error("Error al subir el avatar:", err);
           alert("Ocurrió un error al subir tu avatar.");
         },
       });
@@ -420,7 +399,6 @@ export class ProfileAdminComponent implements OnInit {
           this.authService.logout();
         },
         error: (err) => {
-          console.error("Error al actualizar la contraseña:", err);
           alert(
             err.error.message_text ||
               "Ocurrió un error al cambiar tu contraseña."

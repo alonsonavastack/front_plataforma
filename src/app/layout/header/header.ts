@@ -34,15 +34,6 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   constructor() {
     // 🔥 NUEVO: Cargar configuración al iniciar
     this.systemConfigService.getConfig();
-
-    // 🔍 DEBUG: Verificar qué valor tiene siteName
-    effect(() => {
-      const name = this.siteName();
-      const config = this.systemConfigService.config();
-      console.log('🔍 [HeaderComponent] siteName:', name);
-      console.log('🔍 [HeaderComponent] config completo:', config);
-      console.log('🔍 [HeaderComponent] config.siteName:', config?.siteName);
-    });
   }
 
   ngAfterViewInit(): void {
@@ -50,25 +41,12 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
       this.animate.animateFadeInDashboard(this.headerEl.nativeElement);
     }
 
+    // 🔥 SOLUCIÓN MEJORADA: Inicializar Flowbite de forma segura
     if (!this.isOnAuthPage()) {
-      // 🔥 SOLUCIÓN: Envolver en try-catch para evitar errores de Flowbite
-      setTimeout(() => {
-        try {
-          initFlowbite();
-        } catch (error) {
-          console.warn('Flowbite initialization warning:', error);
-          // Reintentar después de 1 segundo si falla
-          setTimeout(() => {
-            try {
-              initFlowbite();
-            } catch (retryError) {
-              // Silenciar error en segundo intento
-            }
-          }, 1000);
-        }
-      }, 100); // Aumentar el delay a 100ms para dar tiempo al DOM
+      this.safeInitFlowbite();
     }
 
+    // Asegurar que el drawer esté oculto al inicio
     const drawer = document.getElementById('drawer-navigation');
     if (drawer && drawer.classList.contains('transform-none')) {
       drawer.classList.remove('transform-none');
@@ -76,9 +54,49 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  /**
+   * 🔥 Inicialización segura de Flowbite con reintentos
+   * Evita errores cuando el DOM no está completamente listo
+   */
+  private safeInitFlowbite(retryCount = 0): void {
+    const maxRetries = 3;
+    const retryDelay = 300;
+
+    setTimeout(() => {
+      try {
+        // Verificar que el drawer exista antes de inicializar
+        const drawer = document.getElementById('drawer-navigation');
+        if (!drawer) {
+          if (retryCount < maxRetries) {
+            this.safeInitFlowbite(retryCount + 1);
+          }
+          return;
+        }
+
+        // Inicializar Flowbite solo si el drawer existe
+        initFlowbite();
+      } catch (error) {
+        // Solo reintentar si no hemos alcanzado el máximo
+        if (retryCount < maxRetries) {
+          this.safeInitFlowbite(retryCount + 1);
+        } else {
+          // Silenciar el error después de todos los reintentos
+        }
+      }
+    }, retryCount === 0 ? 100 : retryDelay);
+  }
+
   ngOnDestroy(): void {
+    // 🔥 Limpiar backdrop y drawer al destruir el componente
     const backdrop = document.querySelector('[drawer-backdrop]');
     backdrop?.remove();
+
+    // Asegurar que el drawer esté cerrado
+    const drawer = document.getElementById('drawer-navigation');
+    if (drawer) {
+      drawer.classList.remove('transform-none');
+      drawer.classList.add('-translate-x-full');
+    }
   }
 
   isProfileMenuOpen = signal(false);
@@ -90,11 +108,56 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     return url.includes('/login') || url.includes('/register');
   });
 
-  buildImage(part: string | null | undefined): string {
-    if (!part) return 'https://picsum.photos/seed/fallback-cart/200/200';
-    const p = String(part).trim();
-    if (/^https?:\/\//i.test(p) || p.startsWith('/api/')) return p;
-    return `${environment.url}${p}`;
+  /**
+   * Construye la URL de una imagen del carrito basándose en el item completo
+   * Este método simplifica la lógica en el template
+   */
+  getCartItemImage(item: any): string {
+    const productType = item.product_type as 'course' | 'project';
+    const imagen = item.product?.imagen;
+
+    if (!imagen) {
+      return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
+    }
+
+    const img = String(imagen).trim();
+
+    // Si ya es una URL completa, devolverla tal cual
+    if (/^https?:\/\//i.test(img)) {
+      return img;
+    }
+
+    // Construir la URL según el tipo de producto
+    if (productType === 'project') {
+      return `${environment.images.project}${img}`;
+    }
+
+    // Por defecto, cursos
+    return `${environment.images.course}${img}`;
+  }
+
+  /**
+   * Construye la URL de una imagen del carrito
+   * Soporta cursos y proyectos
+   */
+  buildImage(imagen: string | null | undefined, productType?: 'course' | 'project'): string {
+    if (!imagen) return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
+
+    const img = String(imagen).trim();
+
+    // Si ya es una URL completa, devolverla tal cual
+    if (/^https?:\/\//i.test(img)) return img;
+
+    // Si tiene /api/, asumir que es una URL relativa válida
+    if (img.startsWith('/api/')) return `${environment.url.replace('/api/', '')}${img}`;
+
+    // Usar la URL correcta según el tipo de producto
+    if (productType === 'project') {
+      return `${environment.images.project}${img}`;
+    }
+
+    // Por defecto, usar la URL de cursos
+    return `${environment.images.course}${img}`;
   }
 
   getProfileLink(): string {

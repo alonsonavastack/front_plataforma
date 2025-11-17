@@ -30,7 +30,7 @@ export class ProjectsCard implements OnInit {
     if (!this.project?.imagen) {
       return 'https://via.placeholder.com/400x250.png?text=Proyecto';
     }
-    return `${environment.url}project/imagen-project/${this.project.imagen}`;
+    return `${environment.images.project}${this.project.imagen}`; // ✅ Usar environment.images.project
   });
 
   // Obtener nombre del instructor

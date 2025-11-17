@@ -59,28 +59,28 @@ export class SystemSettingsComponent implements OnInit {
 
     this.initForm();
     this.loadConfig();
-    
+
     // 🔥 Suscribirse a cambios del formulario para actualizar signal
     this.configForm.statusChanges.subscribe(() => {
       const siteName = this.configForm.get('siteName');
       const isValid = !!(siteName?.valid && siteName.value?.trim().length >= 3); // 🔥 !! fuerza boolean
-      
+
       console.log('🔄 [Form Status Changed]', {
         siteName: siteName?.value,
         valid: isValid,
         formValid: this.configForm.valid
       });
-      
+
       this.formIsValid.set(isValid);
     });
-    
+
     // 🔥 También al cambiar valores
     this.configForm.valueChanges.subscribe(() => {
       const siteName = this.configForm.get('siteName');
       const isValid = !!(siteName?.valid && siteName.value?.trim().length >= 3); // 🔥 !! fuerza boolean
       this.formIsValid.set(isValid);
     });
-    
+
     // 🔥 Evaluar estado inicial después de cargar
     setTimeout(() => {
       const siteName = this.configForm.get('siteName');
@@ -156,7 +156,7 @@ export class SystemSettingsComponent implements OnInit {
 
     // ❌ ELIMINADO: No se puede hacer .set() en un computed signal
     // currentLogoUrl es computed (solo lectura), se actualiza automáticamente
-    
+
     // 🔥 Actualizar estado de validez del formulario
     setTimeout(() => {
       const siteName = this.configForm.get('siteName');
@@ -179,7 +179,7 @@ export class SystemSettingsComponent implements OnInit {
     console.log('  - Form value:', this.configForm.value);
     console.log('  - Form valid:', this.configForm.valid);
     console.log('  - Form errors:', this.configForm.errors);
-    
+
     Object.keys(this.configForm.controls).forEach(key => {
       const control = this.configForm.get(key);
       if (control?.invalid) {
@@ -209,7 +209,7 @@ export class SystemSettingsComponent implements OnInit {
     console.log('  - Form valid:', this.configForm.valid);
     console.log('  - Form value:', this.configForm.value);
     console.log('  - Form errors:', this.configForm.errors);
-    
+
     // Verificar cada control del formulario
     Object.keys(this.configForm.controls).forEach(key => {
       const control = this.configForm.get(key);

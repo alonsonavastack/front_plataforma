@@ -24,7 +24,7 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
   attemptsRemaining = signal(3);
-  
+
   // Timers
   private countdownInterval: any;
   private resendInterval: any;
@@ -52,7 +52,7 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   maskedPhone = computed(() => {
     const phone = this.phone();
     if (!phone || phone.length < 10) return phone;
-    
+
     // Formato: +52 155 XXXX 1234
     const countryCode = phone.substring(0, 2);
     const areaCode = phone.substring(2, 5);
@@ -72,23 +72,21 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
       const userId = params['userId'];
       const phone = params['phone'];
       const error = params['error'];
-      
+
       if (!userId) {
-        console.error('❌ No se recibió userId');
+
         this.router.navigate(['/register']);
         return;
       }
 
       this.userId.set(userId);
       this.phone.set(phone || null);
-      console.log('✅ Usuario ID:', userId);
-      console.log('📱 Teléfono:', phone);
-      
+
       // Detectar si hubo error al enviar OTP inicial
       if (error === 'otp_not_sent') {
         this.errorMessage.set('⚠️ No se pudo enviar el código inicial. Por favor, haz clic en "Reenviar Código".');
         this.canResend.set(true); // Permitir reenvío inmediato
-        console.warn('⚠️ OTP inicial no enviado, permitiendo reenvío inmediato');
+
       }
     });
 
@@ -102,7 +100,7 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
 
   private startExpirationCountdown(): void {
     this.clearTimers();
-    
+
     this.countdownInterval = setInterval(() => {
       const current = this.countdown();
       if (current > 0) {
@@ -146,12 +144,12 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   onOtpInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     let value = input.value.replace(/\D/g, ''); // Solo números
-    
+
     // Limitar a 6 dígitos
     if (value.length > 6) {
       value = value.substring(0, 6);
     }
-    
+
     this.otpCode.set(value);
     this.errorMessage.set(null);
   }
@@ -175,26 +173,26 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     this.authService.verifyOtp(userId, this.otpCode())
       .subscribe({
         next: (response: any) => {
-          console.log('✅ Verificación exitosa:', response);
+
           this.successMessage.set(response.message || '¡Cuenta verificada exitosamente!');
           this.clearTimers();
-          
+
           // Navegar automáticamente después de 2 segundos
           setTimeout(() => {
             // El AuthService ya maneja la navegación según el rol
           }, 2000);
         },
         error: (error) => {
-          console.error('❌ Error en verificación:', error);
+
           this.isVerifying.set(false);
-          
+
           if (error.status === 400) {
             this.errorMessage.set(error.error.message_text || 'Código incorrecto');
-            
+
             // Actualizar intentos restantes
             if (error.error.attemptsRemaining !== undefined) {
               this.attemptsRemaining.set(error.error.attemptsRemaining);
-              
+
               if (error.error.attemptsRemaining === 0) {
                 this.errorMessage.set('Has excedido el número de intentos. Solicita un nuevo código.');
               }
@@ -208,7 +206,7 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
           } else {
             this.errorMessage.set(error.error?.message_text || 'Ocurrió un error. Inténtalo de nuevo.');
           }
-          
+
           // Limpiar el código si es incorrecto
           this.otpCode.set('');
         },
@@ -237,21 +235,21 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     this.authService.resendOtp(userId)
       .subscribe({
         next: (response: any) => {
-          console.log('✅ Código reenviado:', response);
+
           this.successMessage.set(response.message || 'Código reenviado exitosamente');
-          
+
           // Reiniciar los contadores
           this.countdown.set(600); // 10 minutos
           this.startExpirationCountdown();
           this.startResendCountdown();
-          
+
           // Resetear intentos
           this.attemptsRemaining.set(3);
           this.otpCode.set('');
         },
         error: (error) => {
-          console.error('❌ Error reenviando código:', error);
-          
+
+
           if (error.status === 429) {
             if (error.error.waitSeconds) {
               this.errorMessage.set(error.error.message_text);

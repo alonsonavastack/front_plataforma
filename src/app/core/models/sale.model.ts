@@ -14,6 +14,24 @@ export interface SaleDetailItem {
   title?: string; // Opcional, para compatibilidad si a veces no viene el producto poblado
 }
 
+// ✅ NUEVO: Interface para información de reembolso
+export interface RefundInfo {
+  _id: string;
+  status: 'pending' | 'approved' | 'rejected' | 'processing' | 'completed' | 'failed';
+  originalAmount: number;
+  calculations?: {
+    refundAmount: number;
+    platformFee: number;
+    processingFee: number;
+  };
+  requestedAt: string;
+  completedAt?: string;
+  refundDetails?: {
+    receiptNumber?: string;
+    receiptImage?: string;
+  };
+}
+
 export interface Sale {
   _id: string;
   user: {
@@ -29,4 +47,8 @@ export interface Sale {
   createdAt: string;
   currency_total?: string;
   detail: SaleDetailItem[];
+  isRefundable?: boolean; // Añadido para la lógica de reembolsos
+  
+  // ✅ NUEVO: Información de reembolso asociado
+  refund?: RefundInfo | null;
 }

@@ -81,7 +81,7 @@ export class StudentService {
 
     return this.http.get<StudentListResponse>(`${this.base}dashboard/students`).pipe(
       tap(res => {
-        console.log('Estudiantes recibidos:', res.students);
+
         this.studentsState.set({
           students: res.students,
           isLoading: false,
@@ -102,7 +102,7 @@ export class StudentService {
   updateStudentState(studentId: string, newState: boolean) {
     return this.http.put(`${this.base}users/update-state/${studentId}`, { state: newState }).pipe(
       tap((response: any) => {
-        console.log('Respuesta del servidor:', response);
+
         // Actualizar el estado local inmediatamente usando el boolean directamente
         const updatedStudents = this.students().map(s =>
           s._id === studentId ? { ...s, state: newState } : s
@@ -110,7 +110,7 @@ export class StudentService {
         this.studentsState.update(s => ({ ...s, students: updatedStudents }));
       }),
       catchError(err => {
-        console.error('Error en updateStudentState:', err);
+
         return throwError(() => err);
       })
     );

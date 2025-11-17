@@ -118,8 +118,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
     const categoryId = this.categoryFilter();
     const instructorId = this.instructorFilter();
 
-    console.log('🔍 Filtros aplicados:', { term, categoryId, instructorId });
-    console.log('📚 Total de cursos:', allCourses.length);
 
     return allCourses.filter(course => {
       // Normalizar búsqueda por título
@@ -135,14 +133,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
 
       // Debug para el primer curso
       if (allCourses.indexOf(course) === 0) {
-        console.log('🔎 Primer curso debug:', {
-          title: course.title,
-          categId: courseCategId,
-          userId: courseUserId,
-          titleMatch,
-          categoryMatch,
-          instructorMatch,
-        });
+
       }
 
       return titleMatch && categoryMatch && instructorMatch;
@@ -157,14 +148,12 @@ export class CoursesComponent implements OnInit, OnDestroy {
 
   onCategoryFilter(event: Event) {
     const value = (event.target as HTMLSelectElement).value;
-    console.log('📂 Categoría seleccionada:', value);
     this.categoryFilter.set(value);
     this.currentPage.set(1);
   }
 
   onInstructorFilter(event: Event) {
     const value = (event.target as HTMLSelectElement).value;
-    console.log('👨‍🏫 Instructor seleccionado:', value);
     this.instructorFilter.set(value);
     this.currentPage.set(1);
   }
@@ -248,22 +237,12 @@ export class CoursesComponent implements OnInit, OnDestroy {
         userControl?.disable();
         // Para el filtro de la lista
         this.instructorFilter.set(user._id);
-        console.log('📌 Instructor auto-filtrado:', user._id);
       } else if (userControl?.disabled) {
         userControl?.enable();
       }
     });
 
-    // 🐛 DEBUG: Observar cambios en los filtros
-    effect(() => {
-      console.log('🔄 CAMBIO EN FILTROS:', {
-        search: this.searchTerm(),
-        category: this.categoryFilter(),
-        instructor: this.instructorFilter(),
-        totalCourses: this.coursesService.courses().length,
-        filteredCourses: this.filteredCourses().length
-      });
-    });
+
 
     // 🔥 Effect 3: Verificar ventas cuando se cargan los cursos
     effect(() => {
@@ -286,7 +265,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
   }
 
   openCreateModal(): void {
-    console.log('🎯 Abriendo modal de crear curso');
     this.isEditing.set(false);
     this.courseForm.reset({
       level: 'Basico',
@@ -301,7 +279,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
     // Bloquear scroll del body
     document.body.style.overflow = 'hidden';
 
-    console.log('✅ Modal abierto:', this.isModalOpen());
   }
 
   openEditModal(course: CourseAdmin): void {
@@ -379,25 +356,18 @@ export class CoursesComponent implements OnInit, OnDestroy {
   }
 
   deleteCourse(course: CourseAdmin): void {
-    console.log('\n🗑️ INTENTO DE ELIMINACIÓN');
-    console.log('=====================================');
-    console.log('Curso:', course.title);
-    console.log('ID:', course._id);
 
     // Obtener estado de ventas y estudiantes del curso
     const salesStatus = this.courseSalesStatus().get(course._id);
-    console.log('Estado de ventas/estudiantes:', salesStatus);
 
     // VALIDACIÓN 1: Verificar si aún se está checando
     if (!salesStatus || salesStatus.isChecking) {
-      console.log('⏳ Aún verificando estado...');
       alert('⏳ Por favor espera, estamos verificando el estado del curso...');
       return;
     }
 
     // VALIDACIÓN 2: Si tiene ventas, bloquear eliminación
     if (salesStatus.hasSales) {
-      console.log('🚫 BLOQUEADO: Curso tiene ventas');
       alert(
         `🚫 No se puede eliminar "${course.title}"\n\n` +
         `Este curso tiene estudiantes que ya lo compraron.\n` +
@@ -409,7 +379,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
 
     // VALIDACIÓN 3: Si tiene estudiantes inscritos, bloquear eliminación
     if (salesStatus.hasStudents) {
-      console.log('🚫 BLOQUEADO: Curso tiene estudiantes inscritos');
       alert(
         `🚫 No se puede eliminar "${course.title}"\n\n` +
         `Este curso tiene estudiantes inscritos actualmente.\n` +
@@ -419,7 +388,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('✅ No tiene ventas ni estudiantes, permitiendo eliminación');
 
     // Confirmación del usuario
     const confirmDelete = confirm(
@@ -433,38 +401,29 @@ export class CoursesComponent implements OnInit, OnDestroy {
     );
 
     if (!confirmDelete) {
-      console.log('❌ Usuario canceló la eliminación');
       return;
     }
 
-    console.log('🔄 Enviando petición de eliminación al backend...');
 
     this.coursesService.remove(course._id).subscribe({
       next: (response: any) => {
-        console.log('📬 Respuesta del backend:', response);
-        console.log('=====================================\n');
 
         // Verificar si el backend bloqueó por ventas o estudiantes
         if (response.code === 403) {
-          console.warn('⚠️ Backend bloqueó: Curso tiene ventas o estudiantes');
           alert(`🚫 ${response.message}`);
         }
         // Eliminación exitosa
         else if (response.code === 200 || response.message?.includes('ELIMINÓ')) {
-          console.log('✅ Curso eliminado exitosamente');
           alert('✅ Curso eliminado exitosamente');
           this.coursesService.reloadList(); // Recargar lista
         }
         // Respuesta inesperada
         else {
-          console.log('⚠️ Respuesta sin code explícito, asumiendo éxito');
           alert('✅ Curso eliminado');
           this.coursesService.reloadList();
         }
       },
       error: (error) => {
-        console.error('❌ ERROR al eliminar:', error);
-        console.log('=====================================\n');
 
         const errorMsg = error.error?.message || 'Error al eliminar el curso';
         alert(`❌ ${errorMsg}`);
@@ -518,10 +477,8 @@ export class CoursesComponent implements OnInit, OnDestroy {
    * MEJORADO: Fuerza actualización del template con cada verificación
    */
   private checkCoursesSales(courses: CourseAdmin[]): void {
-    console.log('🔍 Verificando ventas y estudiantes de', courses.length, 'cursos...');
 
     if (courses.length === 0) {
-      console.log('⚠️ No hay cursos para verificar');
       return;
     }
 
@@ -546,24 +503,16 @@ export class CoursesComponent implements OnInit, OnDestroy {
 
     // Forzar actualización inicial
     this.courseSalesStatus.set(new Map(statusMap));
-    console.log('📊 Estado inicial (todos verificando):', statusMap.size, 'cursos');
 
     // Verificar cada curso individualmente
     let completed = 0;
     const total = courses.length;
 
     courses.forEach((course, index) => {
-      console.log(`🔎 [${index + 1}/${total}] Verificando: "${course.title}" (ID: ${course._id})`);
 
       this.coursesService.checkSales(course._id).subscribe({
         next: (response) => {
-          console.log(`✅ [${index + 1}/${total}] "${course.title}":`, {
-            hasSales: response.hasSales,
-            hasStudents: response.hasStudents,
-            canDelete: response.canDelete,
-            saleCount: response.saleCount || 0,
-            studentCount: response.studentCount || 0
-          });
+
 
           // Actualizar el estado de este curso específico
           statusMap.set(course._id, {
@@ -580,19 +529,15 @@ export class CoursesComponent implements OnInit, OnDestroy {
           // CRÍTICO: Crear NUEVO Map para forzar detección de cambios en Angular
           this.courseSalesStatus.set(new Map(statusMap));
 
-          console.log(`📈 Progreso: ${completed}/${total} verificados`);
 
           if (completed === total) {
-            console.log('✅ ¡Verificación completada!\n', '📋 Resumen:');
             statusMap.forEach((status, courseId) => {
               const crs = courses.find(p => p._id === courseId);
               const canDeleteStr = status.canDelete ? '✅ PUEDE ELIMINAR' : '🚫 NO PUEDE ELIMINAR';
-              console.log(`   - ${crs?.title || courseId}:`, canDeleteStr, `(ventas: ${status.hasSales}, estudiantes: ${status.hasStudents})`);
             });
           }
         },
         error: (err) => {
-          console.error(`❌ [${index + 1}/${total}] Error al verificar "${course.title}":`, err);
 
           // En caso de error, asumir que tiene ventas/estudiantes (por seguridad)
           statusMap.set(course._id, {
@@ -608,7 +553,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
           this.courseSalesStatus.set(new Map(statusMap));
 
           if (completed === total) {
-            console.log('⚠️ Verificación completada con errores');
           }
         }
       });
@@ -687,7 +631,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
     this.selectedSection.set(section);
     this.coursesService.reloadClasses(section._id); // Cargar las clases de la sección
     this.viewMode.set('classes');
-    console.log('Cambiando a vista de clases para la sección:', section.title);
   }
 
   openCreateClassModal(): void {
@@ -838,12 +781,10 @@ export class CoursesComponent implements OnInit, OnDestroy {
         if (response && response.duration) {
           // Actualiza el campo 'time' del formulario con la duración obtenida
           this.classForm.patchValue({ time: response.duration }, { emitEvent: false });
-          console.log('✅ Duración obtenida:', response.duration, 'segundos');
         }
       })
     ).subscribe({
       error: (err) => {
-        console.error('❌ Error al obtener duración del video:', err);
         // Opcional: Mostrar mensaje al usuario
       }
     });

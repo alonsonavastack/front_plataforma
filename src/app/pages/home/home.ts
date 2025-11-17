@@ -16,10 +16,12 @@ import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
 import {
   Component,
   OnInit,
+  OnDestroy,
   computed,
   effect,
   inject,
   signal,
+  untracked,
 } from "@angular/core";
 import { Router, RouterLink } from "@angular/router";
 import { ProfileService } from "../../core/services/profile.service";
@@ -32,6 +34,10 @@ import { PurchasesService } from "../../core/services/purchases.service";
 import { InstructorCardComponent, Instructor } from '../../shared/instructor-card/instructor-card.component';
 import { HttpClient } from '@angular/common/http';
 import { SystemConfigService } from '../../core/services/system-config.service';
+import { ToastService } from '../../core/services/toast.service';
+import { Subscription } from 'rxjs';
+import { LegalModalComponent, LegalModalType } from '../../shared/legal-modal/legal-modal.component';
+import { RefundsService } from '../../core/services/refunds.service'; // 🔥 NUEVO
 
 @Component({
   standalone: true,
@@ -44,10 +50,11 @@ import { SystemConfigService } from '../../core/services/system-config.service';
     ProjectsCard,
     CarouselComponent,
     InstructorCardComponent,
+    LegalModalComponent,
   ],
   templateUrl: "./home.html",
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   api = inject(HomeService);
   private sanitizer = inject(DomSanitizer);
   private router = inject(Router);
@@ -60,10 +67,21 @@ export class HomeComponent implements OnInit {
   purchasesService = inject(PurchasesService);
   private http = inject(HttpClient);
   systemConfigService = inject(SystemConfigService);
+  private toast = inject(ToastService);
+  refundsService = inject(RefundsService); // 🔥 NUEVO
+
+  // 🚨 Control de errores: Evitar múltiples toasts
+  private hasShownConnectionError = signal<boolean>(false);
+  private errorToastShown = false; // Flag simple para evitar duplicados
+  private errorSubscription?: Subscription; // Para cleanup
 
   // Signals para instructores
   instructors = signal<Instructor[]>([]);
   searchInstructorTerm = signal<string>('');
+
+  // 📜 Signals para Legal Modal
+  isLegalModalOpen = signal<boolean>(false);
+  legalModalType = signal<LegalModalType>(null);
 
   // 🔥 System Config
   systemConfig = computed(() => this.systemConfigService.config());
@@ -296,31 +314,8 @@ export class HomeComponent implements OnInit {
   });
 
   constructor() {
-    // Imprime el arreglo completo de proyectos destacados cuando se cargan.
-    effect(() => {
-      const projects = this.featuredProjects();
-      if (projects.length > 0) {
-        console.log("Proyectos Destacados (arreglo completo):", projects);
-      }
-    });
-    // Imprime el arreglo completo de descuentos cuando se cargan.
-    effect(() => {
-      const discounts = this.discountService.discounts();
-      if (discounts.length > 0) {
-        console.log("Descuentos activos (arreglo completo):", discounts);
-      }
-    });
-    // 🔍 DEBUG: Estado de instructores
-    effect(() => {
-      console.log('🔍 [EFFECT] Estado de Instructores:', {
-        isLoading: this.isLoading(),
-        total: this.instructors().length,
-        filtered: this.filteredInstructors().length,
-        searchTerm: this.searchInstructorTerm(),
-        condition: !this.isLoading() && this.instructors().length > 0,
-        instructors: this.instructors()
-      });
-    });
+    // 🔇 LOGS SILENCIADOS - Solo toasts para usuario
+    // Los effects se mantienen pero sin logs en consola
   }
 
   // ---------- Error-safe helpers ----------
@@ -445,6 +440,12 @@ export class HomeComponent implements OnInit {
     if (!this.authService.isLoggedIn()) {
       return false;
     }
+    
+    // 🔥 FIX: Verificar si tiene reembolso completado
+    if (this.refundsService && this.refundsService.hasCourseRefund(courseId)) {
+      return false; // No mostrar como comprado si tiene reembolso
+    }
+    
     return this.enrolledCourses().some(
       (enrollment: Enrollment) => enrollment.course?._id === courseId
     );
@@ -455,6 +456,12 @@ export class HomeComponent implements OnInit {
     if (!this.authService.isLoggedIn()) {
       return false;
     }
+    
+    // 🔥 FIX: Verificar si tiene reembolso completado
+    if (this.refundsService && this.refundsService.hasProjectRefund(projectId)) {
+      return false; // No mostrar como comprado si tiene reembolso
+    }
+    
     return this.purchasedProjects().some(
       (project: any) =>
         project._id === projectId || project.project?._id === projectId
@@ -485,15 +492,37 @@ export class HomeComponent implements OnInit {
     // 🔥 Cargar configuración del sistema PRIMERO
     this.systemConfigService.getConfig();
 
+    // 🚨 Suscribirse a errores del home service (SOLO UNA VEZ)
+    this.errorSubscription = this.api.onHomeError$.subscribe(() => {
+      if (!this.errorToastShown) {
+        this.errorToastShown = true;
+        this.hasShownConnectionError.set(true);
+        this.toast.networkError();
+      }
+    });
+
+    // Cargar datos del home
     this.api.reloadHome();
     this.api.reloadAllCourses();
     this.api.reloadAllProjects();
+
+    // Cargar datos del usuario si está autenticado
     if (this.authService.isLoggedIn()) {
       this.profileService.reloadProfile();
       this.purchasesService.loadPurchasedProducts();
+      
+      // 🔥 NUEVO: Cargar reembolsos para verificar estado de compras
+      this.refundsService.loadRefunds();
     }
+
+    // Cargar categorías e instructores (silencioso si falla)
     this.categoriesService.reload();
     this.loadInstructors();
+  }
+
+  ngOnDestroy(): void {
+    // 🧿 Cleanup: Cancelar suscripción para evitar memory leaks
+    this.errorSubscription?.unsubscribe();
   }
 
   // ---------- Handlers de búsqueda ----------
@@ -567,6 +596,8 @@ export class HomeComponent implements OnInit {
   // ---------- Recargar ----------
   reload(): void {
     clearTimeout(this.debounceId);
+    this.errorToastShown = false; // 🔄 Resetear ambos flags
+    this.hasShownConnectionError.set(false);
     this.api.reloadHome();
     this.clearSearch();
   }
@@ -589,22 +620,6 @@ export class HomeComponent implements OnInit {
     } else if (item.item_type === 'project') {
       this.openVideoModal(item.url_video);
     }
-  }
-
-  buildProjectImageUrl(imagen?: string): string {
-    if (!imagen) return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
-    return `${environment.url}project/imagen-project/${imagen}`;
-  }
-
-  getCourseImageUrl(imagen?: string): string {
-    if (!imagen)
-      return "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800";
-    const img = String(imagen).trim();
-    if (/^https?:\/\//i.test(img)) return img;
-    const base = environment.images.course.endsWith("/")
-      ? environment.images.course
-      : environment.images.course + "/";
-    return base + encodeURIComponent(img);
   }
 
   clearCatalogFilters(): void {
@@ -665,20 +680,17 @@ export class HomeComponent implements OnInit {
 
   /**
    * Cargar lista de instructores
+   * 🔇 SILENCIADO: Sin logs, sin toasts (carga silenciosa en background)
    */
   private loadInstructors(): void {
-    console.log('🔍 [DEBUG] Iniciando carga de instructores...');
     this.http.get<any>(`${environment.url}users/list-instructors`)
       .subscribe({
         next: (response) => {
-          console.log('✅ Instructores cargados:', response);
-          console.log('📊 Cantidad:', response.users?.length || 0);
           this.instructors.set(response.users || []);
-          console.log('📊 Signal actualizado:', this.instructors());
         },
         error: (error) => {
-          console.error('❌ Error cargando instructores:', error);
-          console.error('📍 URL intentada:', `${environment.url}users/list-instructors`);
+          // 🔇 Silencioso: No mostrar error de instructores al usuario
+          // Es una funcionalidad secundaria, no crítica
         }
       });
   }
@@ -715,4 +727,46 @@ export class HomeComponent implements OnInit {
   clearInstructorSearch(): void {
     this.searchInstructorTerm.set('');
   }
+
+  /**
+   * Construir URL de imagen de proyecto
+   */
+  buildProjectImageUrl(imagen?: string): string {
+    if (!imagen) return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
+    return `${environment.images.project}${imagen}`;
+  }
+
+  /**
+   * Construir URL de imagen de curso
+   */
+  getCourseImageUrl(imagen?: string): string {
+    if (!imagen) return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
+    const img = String(imagen).trim();
+    if (/^https?:\/\//i.test(img)) return img;
+    const base = environment.images.course.endsWith('/')
+      ? environment.images.course
+      : environment.images.course + '/';
+    return base + encodeURIComponent(img);
+  }
+
+  // ========== MÉTODOS PARA LEGAL MODAL ==========
+
+  /**
+   * Abrir modal legal (Privacidad o Términos)
+   */
+  openLegalModal(type: 'privacy' | 'terms'): void {
+    this.legalModalType.set(type);
+    this.isLegalModalOpen.set(true);
+  }
+
+  /**
+   * Cerrar modal legal
+   */
+  closeLegalModal(): void {
+    this.isLegalModalOpen.set(false);
+    setTimeout(() => {
+      this.legalModalType.set(null);
+    }, 300); // Delay para animación
+  }
 }
+

@@ -1,0 +1,360 @@
+<div class="bg-slate-950 text-white min-h-screen">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold flex items-center gap-3">
+        <svg class="w-8 h-8 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+        </svg>
+        Billeteras de Clientes
+      </h1>
+      <p class="text-slate-400 mt-2">Administra los saldos y transacciones de tus estudiantes</p>
+    </div>
+
+    @if (loading()) {
+      <!-- Loading State -->
+      <div class="flex items-center justify-center py-20">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
+        <p class="ml-4 text-slate-400">Cargando billeteras...</p>
+      </div>
+    } @else {
+      <!-- Statistics Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-lg bg-cyan-400/10 flex items-center justify-center">
+              <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+              </svg>
+            </div>
+            <span class="text-slate-400 text-sm">Total Clientes</span>
+          </div>
+          <p class="text-3xl font-bold text-white">{{ totalCustomers() }}</p>
+        </div>
+
+        <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-lg bg-lime-400/10 flex items-center justify-center">
+              <svg class="w-5 h-5 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <span class="text-slate-400 text-sm">Balance Total</span>
+          </div>
+          <p class="text-3xl font-bold text-lime-400">${{ totalBalance().toFixed(2) }}</p>
+        </div>
+
+        <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-lg bg-green-400/10 flex items-center justify-center">
+              <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <span class="text-slate-400 text-sm">Con Saldo</span>
+          </div>
+          <p class="text-3xl font-bold text-green-400">{{ walletsWithBalance() }}</p>
+          <p class="text-xs text-slate-500 mt-1">de {{ totalCustomers() }} clientes</p>
+        </div>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="mb-6">
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+          <input
+            type="text"
+            [value]="searchTerm()"
+            (input)="searchTerm.set($any($event.target).value)"
+            placeholder="Buscar por nombre o email del cliente..."
+            class="w-full bg-slate-900/70 border border-slate-700 text-white rounded-lg pl-10 pr-4 py-3 focus:ring-lime-400 focus:border-lime-400"
+          />
+        </div>
+      </div>
+
+      <!-- Wallets Table -->
+      <div class="rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-slate-800/50">
+              <tr class="border-b border-slate-700">
+                <th class="text-left py-4 px-6 text-slate-300 font-semibold text-sm uppercase tracking-wider">
+                  Cliente
+                </th>
+                <th class="text-right py-4 px-6 text-slate-300 font-semibold text-sm uppercase tracking-wider">
+                  Balance
+                </th>
+                <th class="text-center py-4 px-6 text-slate-300 font-semibold text-sm uppercase tracking-wider">
+                  Transacciones
+                </th>
+                <th class="text-center py-4 px-6 text-slate-300 font-semibold text-sm uppercase tracking-wider">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+              @if (filteredWallets().length === 0) {
+                <tr>
+                  <td colspan="4" class="text-center py-16">
+                    <div class="flex flex-col items-center gap-3">
+                      <svg class="w-16 h-16 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                      </svg>
+                      <p class="text-slate-400 font-medium">
+                        @if (searchTerm()) {
+                          No se encontraron clientes con: "{{ searchTerm() }}"
+                        } @else {
+                          No hay billeteras de clientes registradas
+                        }
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              } @else {
+                @for (wallet of filteredWallets(); track wallet.userId) {
+                  <tr class="hover:bg-slate-800/30 transition-colors">
+                    <td class="py-4 px-6">
+                      <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-lime-400 to-cyan-400 flex items-center justify-center text-slate-900 font-bold text-sm">
+                          {{ wallet.userName.substring(0, 2).toUpperCase() }}
+                        </div>
+                        <div>
+                          <p class="font-semibold text-white">{{ wallet.userName }}</p>
+                          <p class="text-sm text-slate-400">{{ wallet.userEmail }}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-4 px-6 text-right">
+                      <div>
+                        <p [class]="'text-xl font-bold ' + (wallet.balance > 0 ? 'text-lime-400' : 'text-slate-500')">
+                          ${{ wallet.balance.toFixed(2) }}
+                        </p>
+                        <p class="text-xs text-slate-500">{{ wallet.currency }}</p>
+                      </div>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-slate-700/50 text-slate-300 border border-slate-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        {{ wallet.transactionsCount }}
+                      </span>
+                    </td>
+                    <td class="py-4 px-6">
+                      <div class="flex items-center justify-center gap-2">
+                        <button
+                          (click)="openDetailsModal(wallet)"
+                          class="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-sm font-medium transition-all border border-blue-500/20 hover:border-blue-500/30"
+                        >
+                          <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                          </svg>
+                          Ver
+                        </button>
+                        <button
+                          (click)="openAddCreditModal(wallet)"
+                          class="px-4 py-2 bg-lime-500/10 hover:bg-lime-500/20 text-lime-400 rounded-lg text-sm font-medium transition-all border border-lime-500/20 hover:border-lime-500/30"
+                        >
+                          <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                          </svg>
+                          Agregar
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal: Agregar Crédito -->
+@if (showAddCreditModal()) {
+  <div class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-900 rounded-2xl border border-white/10 shadow-2xl p-6 max-w-md w-full">
+      <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        Agregar Crédito
+      </h3>
+
+      <div class="mb-4 p-3 rounded-lg bg-lime-500/10 border border-lime-500/20">
+        <p class="text-sm text-slate-400">Cliente:</p>
+        <p class="text-white font-semibold">{{ selectedUserName() }}</p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">Monto (USD)</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">$</span>
+            <input
+              type="number"
+              [value]="creditAmount()"
+              (input)="creditAmount.set(+$any($event.target).value)"
+              min="0.01"
+              step="0.01"
+              class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg pl-8 pr-4 py-2.5 focus:ring-2 focus:ring-lime-400 focus:border-lime-400"
+              placeholder="0.00"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">Descripción</label>
+          <textarea
+            [value]="creditDescription()"
+            (input)="creditDescription.set($any($event.target).value)"
+            rows="3"
+            class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 resize-none"
+            placeholder="Ej: Reembolso de curso, Crédito promocional, etc."
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="flex gap-3 mt-6">
+        <button
+          (click)="closeAddCreditModal()"
+          [disabled]="addingCredit()"
+          class="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition disabled:opacity-50 font-medium"
+        >
+          Cancelar
+        </button>
+        <button
+          (click)="addCredit()"
+          [disabled]="addingCredit() || creditAmount() <= 0 || !creditDescription().trim()"
+          class="flex-1 px-4 py-2.5 bg-lime-500 hover:bg-lime-400 text-slate-900 font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          @if (addingCredit()) {
+            <span class="flex items-center justify-center gap-2">
+              <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Procesando...
+            </span>
+          } @else {
+            Agregar Crédito
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: Ver Detalles -->
+@if (showDetailsModal()) {
+  <div class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+    <div class="bg-slate-900 rounded-2xl border border-white/10 shadow-2xl p-6 max-w-3xl w-full my-8">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold flex items-center gap-2">
+          <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Detalles de Billetera
+        </h3>
+        <button (click)="closeDetailsModal()" class="text-slate-400 hover:text-white transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      @if (loadingDetails()) {
+        <div class="flex items-center justify-center py-12">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-lime-400"></div>
+          <p class="ml-4 text-slate-400">Cargando detalles...</p>
+        </div>
+      } @else if (selectedWalletDetails()) {
+        <div class="space-y-6">
+          <!-- User Info -->
+          <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-white/10">
+            <div class="flex items-center gap-4 mb-3">
+              <div class="w-14 h-14 rounded-full bg-gradient-to-br from-lime-400 to-cyan-400 flex items-center justify-center text-slate-900 font-bold text-xl">
+                {{ selectedWalletDetails().userName.substring(0, 2).toUpperCase() }}
+              </div>
+              <div>
+                <p class="text-lg font-semibold text-white">{{ selectedWalletDetails().userName }}</p>
+                <p class="text-sm text-slate-400">{{ selectedWalletDetails().userEmail }}</p>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2 mt-4">
+              <p class="text-3xl font-bold text-lime-400">
+                ${{ selectedWalletDetails().balance.toFixed(2) }}
+              </p>
+              <span class="text-slate-400 text-sm">{{ selectedWalletDetails().currency }}</span>
+            </div>
+          </div>
+
+          <!-- Transactions -->
+          <div>
+            <h4 class="font-semibold text-lg mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+              Historial de Transacciones ({{ selectedWalletDetails().transactions?.length || 0 }})
+            </h4>
+            @if (selectedWalletDetails().transactions?.length === 0) {
+              <div class="text-center py-12 text-slate-400 bg-slate-800/30 rounded-lg border border-slate-700/50">
+                <svg class="w-12 h-12 mx-auto mb-3 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                </svg>
+                <p>Sin transacciones registradas</p>
+              </div>
+            } @else {
+              <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                @for (transaction of selectedWalletDetails().transactions; track transaction._id) {
+                  <div class="p-4 rounded-xl bg-slate-800/40 border border-white/5 hover:bg-slate-800/60 transition">
+                    <div class="flex justify-between items-start gap-4">
+                      <div class="flex-1">
+                        <p class="font-medium text-white mb-1">{{ transaction.description }}</p>
+                        <p class="text-xs text-slate-400">
+                          {{ formatDate(transaction.createdAt) }}
+                        </p>
+
+                        @if (transaction.metadata?.reason) {
+                          <span class="inline-block mt-2 text-xs px-2.5 py-1 rounded-full bg-slate-700/70 text-slate-300 border border-slate-600/50">
+                            {{ transaction.metadata.reason }}
+                          </span>
+                        }
+                      </div>
+                      <div class="text-right flex-shrink-0">
+                        <p [class]="'text-xl font-bold ' + (transaction.type === 'credit' ? 'text-green-400' : 'text-red-400')">
+                          {{ transaction.type === 'credit' ? '+' : '-' }}${{ transaction.amount.toFixed(2) }}
+                        </p>
+                        <p class="text-xs text-slate-500 mt-1">
+                          Balance: ${{ transaction.balanceAfter.toFixed(2) }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="mt-6">
+        <button
+          (click)="closeDetailsModal()"
+          class="w-full px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition font-medium"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+}

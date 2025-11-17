@@ -2,6 +2,8 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { LoggerService } from '../../core/services/logger.service';
+import { ToastService } from '../../core/services/toast.service';
 
 interface Instructor {
   _id: string;
@@ -36,6 +38,8 @@ interface PaymentConfig {
 })
 export class AdminBankVerificationComponent implements OnInit {
   private http = inject(HttpClient);
+  private logger = inject(LoggerService);
+  private toast = inject(ToastService);
 
   instructors = signal<PaymentConfig[]>([]);
   isLoading = signal(false);
@@ -48,6 +52,7 @@ export class AdminBankVerificationComponent implements OnInit {
   }
 
   loadInstructorsWithBankAccounts() {
+    this.logger.operation('LoadBankAccounts', 'start');
     this.isLoading.set(true);
     this.error.set(null);
 
@@ -55,19 +60,23 @@ export class AdminBankVerificationComponent implements OnInit {
       .subscribe({
         next: (response) => {
           if (response.success && response.instructors) {
+            this.logger.info('Instructores cargados', { count: response.instructors.length });
             // Obtener detalles de cada instructor
             this.loadInstructorPaymentDetails(response.instructors.map(i => i._id || i.instructor?._id));
           }
           this.isLoading.set(false);
         },
         error: (err) => {
+          this.logger.httpError('AdminBankVerification', 'loadInstructorsWithBankAccounts', err);
           this.error.set('Error al cargar instructores');
+          this.toast.apiError('cargar la lista de instructores');
           this.isLoading.set(false);
         }
       });
   }
 
   loadInstructorPaymentDetails(instructorIds: string[]) {
+    this.logger.info('Cargando detalles de pago', { instructorIds });
     const instructorsData: PaymentConfig[] = [];
 
     instructorIds.forEach(id => {
@@ -76,28 +85,43 @@ export class AdminBankVerificationComponent implements OnInit {
           next: (response) => {
             if (response.success && response.data && response.data.paymentDetails) {
               instructorsData.push(response.data);
+              this.logger.debug('Detalles de pago cargados', { instructorId: id });
             }
           },
-          error: (err) => console.error(`Error al cargar detalles de instructor ${id}:`, err),
+          error: (err) => {
+            this.logger.httpError('AdminBankVerification', `loadInstructorPaymentDetails[${id}]`, err);
+
+            // ✅ NO mostrar toast individual (evitar saturación de notificaciones)
+            // El error se registra en consola para debugging
+          },
           complete: () => {
             // Solo incluir instructores con cuentas bancarias
             const bankAccounts = instructorsData.filter(config =>
               config.paymentMethod === 'bank_transfer' && config.paymentDetails
             );
             this.instructors.set(bankAccounts);
+            this.logger.operation('LoadBankAccounts', 'success', { count: bankAccounts.length });
           }
         });
     });
   }
 
   verifyBankAccount(instructorId: string) {
+    this.logger.operation('VerifyBankAccount', 'start', { instructorId });
     this.verifyingInstructorId.set(instructorId);
     this.error.set(null);
 
     this.http.put(`${environment.url}admin/instructors/${instructorId}/verify-bank`, {})
       .subscribe({
         next: () => {
-          this.success.set('Cuenta bancaria verificada exitosamente');
+          this.logger.operation('VerifyBankAccount', 'success', { instructorId });
+
+          // ✅ USAR toast.success en lugar de signal
+          this.toast.success(
+            '¡Cuenta verificada!',
+            'La cuenta bancaria ha sido verificada exitosamente'
+          );
+
           // Actualizar el estado local
           this.instructors.update(items =>
             items.map(item =>
@@ -107,10 +131,16 @@ export class AdminBankVerificationComponent implements OnInit {
             )
           );
           this.verifyingInstructorId.set(null);
-          setTimeout(() => this.success.set(null), 3000);
         },
         error: (err) => {
-          this.error.set(err.error?.message || 'Error al verificar cuenta bancaria');
+          this.logger.httpError('AdminBankVerification', 'verifyBankAccount', err);
+          this.logger.operation('VerifyBankAccount', 'error', { instructorId, error: err.message });
+
+          // ✅ USAR toast.error con mensaje apropiado
+          const errorMessage = err.error?.message || 'No se pudo verificar la cuenta bancaria';
+          this.toast.error('Error al verificar', errorMessage);
+
+          this.error.set(errorMessage);
           this.verifyingInstructorId.set(null);
         }
       });
@@ -126,4 +156,3 @@ export class AdminBankVerificationComponent implements OnInit {
     return labels[type] || type || 'No especificado';
   }
 }
-

@@ -34,7 +34,7 @@ export class CoursesService {
     this.listState.update(s => ({ ...s, isLoading: true }));
     this.http.get<CourseListResponse>(url).subscribe({
       next: (response) => {
-        console.log('Cursos recibidos de la API:', response); // Para depuración
+
         // La API devuelve un objeto { courses: [...] }, nos aseguramos de asignar el array.
         this.listState.set({ courses: response.courses || [], isLoading: false, error: null });
       },
@@ -83,19 +83,19 @@ export class CoursesService {
     this.configState.update(s => ({ ...s, isLoading: true }));
     this.http.get<CourseConfigResponse>(`${this.base}courses/config_all`).subscribe({
       next: (data) => {
-        console.log('⚙️ Configuración cargada:', data);
-        console.log('  - Categorías:', data.categories.length);
-        console.log('  - Usuarios:', data.users.length);
+
+
+
         if (data.categories.length > 0) {
-          console.log('  - Primera categoría:', data.categories[0]);
+
         }
         if (data.users.length > 0) {
-          console.log('  - Primer usuario:', data.users[0]);
+
         }
         this.configState.set({ data, isLoading: false, error: null });
       },
       error: (err) => {
-        console.error('❌ Error al cargar config:', err);
+
         this.configState.set({ data: { categories: [], users: [] }, isLoading: false, error: err });
       },
     });

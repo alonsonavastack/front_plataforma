@@ -5,6 +5,7 @@ import { CdkDragDrop, moveItemInArray, CdkDropList, CdkDrag } from '@angular/cdk
 import { CarouselService, CarouselImage } from '../../core/services/carousel';
 import { environment } from '../../../environments/environment';
 import { tap } from 'rxjs';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-carousel-dashboard',
@@ -15,7 +16,7 @@ import { tap } from 'rxjs';
 export class CarouselDashboard implements OnInit {
   private carouselService = inject(CarouselService);
   private fb = inject(FormBuilder);
-
+private toast = inject(ToastService);
   // --- State Signals ---
   images = this.carouselService.allImages;
   isLoading = this.carouselService.isLoading;
@@ -120,7 +121,7 @@ export class CarouselDashboard implements OnInit {
         this.closeModal();
       },
       error: (err) => {
-        console.error('Error saving image:', err);
+
         this.isSaving.set(false);
       }
     });
@@ -151,9 +152,9 @@ export class CarouselDashboard implements OnInit {
 
     // Enviar los cambios al backend
     this.carouselService.updateOrder(orderUpdates).subscribe({
-      next: () => console.log('Orden actualizado en el backend.'),
+      next: () => this.toast.success('Orden actualizado en el backend.'),
       error: (err) => {
-        console.error('Error al actualizar el orden:', err);
+
         this.carouselService.loadAllImages().subscribe(); // Recargar para revertir si hay error
       }
     });

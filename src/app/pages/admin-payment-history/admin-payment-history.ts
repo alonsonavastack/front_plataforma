@@ -19,7 +19,7 @@ export class AdminPaymentHistoryComponent implements OnInit {
   success = signal<string | null>(null);
   currentPage = signal(1);
   totalPages = signal(1);
-  
+
   // Modales
   showProcessModal = signal(false);
   showCompleteModal = signal(false);
@@ -106,7 +106,6 @@ export class AdminPaymentHistoryComponent implements OnInit {
       error: (err) => {
         this.error.set(err.error?.message || 'Error al cargar método de pago');
         this.isLoadingPaymentMethod.set(false);
-        console.error('Error loading payment method:', err);
       }
     });
   }

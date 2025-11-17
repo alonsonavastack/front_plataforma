@@ -2,6 +2,7 @@ import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppearanceService, Setting } from '../../core/services/appearance.service';
 import { HomeService } from '../../core/services/home';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-appearance',
@@ -12,7 +13,7 @@ import { HomeService } from '../../core/services/home';
 export class AppearanceComponent implements OnInit {
   appearanceService = inject(AppearanceService);
   homeService = inject(HomeService); // Para recargar el home
-
+  private toast = inject(ToastService);
   settings = this.appearanceService.settings;
   isLoading = this.appearanceService.isLoading;
 
@@ -35,12 +36,12 @@ export class AppearanceComponent implements OnInit {
 
     this.appearanceService.updateSettings([{ key, value }]).subscribe({
       next: () => {
-        console.log(`Ajuste ${key} actualizado a ${value}`);
+
         // Recargamos los datos del home para que se reflejen los cambios
         this.homeService.reloadHome();
         this.appearanceService.loadSettings().subscribe(); // Recargamos para mantener el estado sincronizado
       },
-      error: (err) => console.error(`Error al actualizar el ajuste ${key}:`, err),
+      error: (err) => this.toast.error(`Error al actualizar el ajuste ${key}:`, err),
     });
   }
 }

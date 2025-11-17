@@ -13,8 +13,8 @@ import {
 })
 export class ProjectService {
   private readonly http = inject(HttpClient);
-  // Corregido: La URL base debe ser 'project' en singular para coincidir con el backend.
-  private readonly url = `${environment.url}project`;
+  // ✅ La URL base debe ser 'projects' en plural para coincidir con el backend.
+  private readonly url = `${environment.url}projects`;
 
   list(search: string, categorie: string): Observable<ProjectListResponse> {
     // Usar HttpParams para construir la query de forma segura

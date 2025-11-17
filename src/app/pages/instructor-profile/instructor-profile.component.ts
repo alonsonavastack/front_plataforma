@@ -13,6 +13,7 @@ interface InstructorProfile {
   name: string;
   surname: string;
   email: string;
+  slug: string; // 🆕 NUEVO: Slug único
   avatar?: string;
   profession?: string;
   description?: string;
@@ -77,6 +78,19 @@ export class InstructorProfileComponent implements OnInit {
   isLoading = signal(true);
   error = signal<string | null>(null);
 
+  // 🔥 COMPARTIR PERFIL
+  isShareModalOpen = signal(false);
+  copySuccess = signal(false);
+
+  shareUrl = computed(() => {
+    const instructor = this.instructor();
+    if (!instructor) return '';
+
+    // URL limpia sin hash
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/instructor/${instructor.slug}`;
+  });
+
   // 🆕 FILTROS
   searchTerm = signal('');
   selectedCategory = signal<string>('all'); // 'all' o ID de categoría
@@ -111,9 +125,6 @@ export class InstructorProfileComponent implements OnInit {
     const categoryId = this.selectedCategory();
     const allCourses = this.courses();
 
-    console.log('📘 [filteredCourses] Total cursos:', allCourses.length);
-    console.log('🔍 [filteredCourses] Búsqueda:', search);
-    console.log('📂 [filteredCourses] Categoría:', categoryId);
 
     const filtered = allCourses.filter(course => {
       // Filtro de búsqueda
@@ -128,7 +139,6 @@ export class InstructorProfileComponent implements OnInit {
       return matchesSearch && matchesCategory;
     });
 
-    console.log('✅ [filteredCourses] Cursos filtrados:', filtered.length);
     return filtered;
   });
 
@@ -138,9 +148,6 @@ export class InstructorProfileComponent implements OnInit {
     const categoryId = this.selectedCategory();
     const allProjects = this.projects();
 
-    console.log('🎯 [filteredProjects] Total proyectos:', allProjects.length);
-    console.log('🔍 [filteredProjects] Búsqueda:', search);
-    console.log('📂 [filteredProjects] Categoría:', categoryId);
 
     const filtered = allProjects.filter(project => {
       // Filtro de búsqueda
@@ -156,7 +163,6 @@ export class InstructorProfileComponent implements OnInit {
       return matchesSearch && matchesCategory;
     });
 
-    console.log('✅ [filteredProjects] Proyectos filtrados:', filtered.length);
     return filtered;
   });
 
@@ -222,25 +228,21 @@ export class InstructorProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
-      const instructorId = params['id'];
-      if (instructorId) {
-        this.loadInstructorProfile(instructorId);
+      const instructorSlug = params['slug']; // 🆕 Cambiar de 'id' a 'slug'
+      if (instructorSlug) {
+        this.loadInstructorProfile(instructorSlug);
       }
     });
   }
 
-  private loadInstructorProfile(instructorId: string): void {
+  private loadInstructorProfile(instructorSlug: string): void { // 🆕 Cambiar parámetro
     this.isLoading.set(true);
     this.error.set(null);
 
-    // Cargar perfil del instructor
-    this.http.get<any>(`${environment.url}users/instructor-profile/${instructorId}`)
+    // 🆕 Cargar perfil del instructor por SLUG
+    this.http.get<any>(`${environment.url}users/instructor-profile/${instructorSlug}`)
       .subscribe({
         next: (response) => {
-          console.log('✅ [InstructorProfile] Respuesta del backend:', response);
-          console.log('👨‍🏫 [InstructorProfile] Instructor:', response.instructor);
-          console.log('📚 [InstructorProfile] Cursos:', response.courses?.length || 0);
-          console.log('🎯 [InstructorProfile] Proyectos RAW:', response.projects);
 
           this.instructor.set(response.instructor);
           this.courses.set(response.courses || []);
@@ -253,14 +255,11 @@ export class InstructorProfileComponent implements OnInit {
             categorie: p.categorie || { _id: '', title: 'Sin categoría' }
           }));
 
-          console.log('🔄 [InstructorProfile] Proyectos mapeados:', mappedProjects);
           this.projects.set(mappedProjects);
-          console.log('✅ [InstructorProfile] Proyectos finales:', this.validProjects());
 
           this.isLoading.set(false);
         },
         error: (error) => {
-          console.error('❌ Error cargando perfil:', error);
           this.error.set('No se pudo cargar el perfil del instructor');
           this.isLoading.set(false);
         }
@@ -287,7 +286,7 @@ export class InstructorProfileComponent implements OnInit {
 
   getProjectImageUrl(imagen?: string): string {
     if (!imagen) return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
-    return `${environment.url}project/imagen-project/${imagen}`;
+    return `${environment.url}projects/imagen-project/${imagen}`; // ✅ projects (plural)
   }
 
   navigateToCourse(course: Course): void {
@@ -326,5 +325,80 @@ export class InstructorProfileComponent implements OnInit {
 
   setActiveTab(tab: 'courses' | 'projects'): void {
     this.activeTab.set(tab);
+  }
+
+  // 🔥 MÉTODOS DE COMPARTIR
+  openShareModal(): void {
+    this.isShareModalOpen.set(true);
+  }
+
+  closeShareModal(): void {
+    this.isShareModalOpen.set(false);
+    this.copySuccess.set(false);
+  }
+
+  async copyToClipboard(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(this.shareUrl());
+      this.copySuccess.set(true);
+
+      // Reset después de 3 segundos
+      setTimeout(() => {
+        this.copySuccess.set(false);
+      }, 3000);
+    } catch (err) {
+      // Fallback para navegadores antiguos
+      this.fallbackCopyToClipboard(this.shareUrl());
+    }
+  }
+
+  private fallbackCopyToClipboard(text: string): void {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      this.copySuccess.set(true);
+      setTimeout(() => this.copySuccess.set(false), 3000);
+    } catch (err) {
+    }
+    document.body.removeChild(textArea);
+  }
+
+  shareOnWhatsApp(): void {
+    const text = encodeURIComponent(`¡Mira el perfil de ${this.fullName()} en Dev-Sharks! 🚀`);
+    const url = encodeURIComponent(this.shareUrl());
+    window.open(`https://wa.me/?text=${text}%20${url}`, '_blank');
+  }
+
+  shareOnTwitter(): void {
+    const text = encodeURIComponent(`¡Mira el perfil de ${this.fullName()} en Dev-Sharks! 🚀`);
+    const url = encodeURIComponent(this.shareUrl());
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+  }
+
+  shareOnFacebook(): void {
+    const url = encodeURIComponent(this.shareUrl());
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+  }
+
+  shareOnLinkedIn(): void {
+    const url = encodeURIComponent(this.shareUrl());
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank');
+  }
+
+  shareOnTelegram(): void {
+    const text = encodeURIComponent(`¡Mira el perfil de ${this.fullName()} en Dev-Sharks! 🚀`);
+    const url = encodeURIComponent(this.shareUrl());
+    window.open(`https://t.me/share/url?url=${url}&text=${text}`, '_blank');
+  }
+
+  shareViaEmail(): void {
+    const subject = encodeURIComponent(`Perfil de ${this.fullName()} en Dev-Sharks`);
+    const body = encodeURIComponent(`¡Hola! Te comparto el perfil de ${this.fullName()} en Dev-Sharks:\n\n${this.shareUrl()}\n\nDisfruta aprendiendo!`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
   }
 }
