@@ -1,4 +1,4 @@
-import { CommonModule } from "@angular/common";
+
 import { Component, OnInit, inject, signal, computed } from "@angular/core";
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { Project } from "../../core/models/home.models";
@@ -18,7 +18,7 @@ interface ProjectFile {
 @Component({
   selector: 'app-projects',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './projects.component.html',
 })
 export class ProjectsComponent implements OnInit {

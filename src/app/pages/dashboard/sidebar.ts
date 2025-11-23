@@ -1,11 +1,11 @@
 import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { NavId, NavItem } from "./nav.types";
 
 @Component({
   standalone: true,
   selector: 'app-sidebar',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './sidebar.html',
   styles: [`
     :host {

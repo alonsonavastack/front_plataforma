@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray } from '@angular/forms';
 import { CdkDragDrop, moveItemInArray, CdkDropList, CdkDrag } from '@angular/cdk/drag-drop';
 import { CarouselService, CarouselImage } from '../../core/services/carousel';
@@ -10,7 +10,7 @@ import { ToastService } from '../../core/services/toast.service';
 @Component({
   selector: 'app-carousel-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CdkDropList, CdkDrag],
+  imports: [ReactiveFormsModule, CdkDropList, CdkDrag],
   templateUrl: './carousel-dashboard.html',
 })
 export class CarouselDashboard implements OnInit {

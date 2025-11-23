@@ -1,12 +1,12 @@
 import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { SystemConfigService } from '../../../../core/services/system-config.service';
 
 @Component({
   selector: 'app-basic-info',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './basic-info.component.html'
 })
 export class BasicInfoComponent {

@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ReportsService } from '../../../core/services/reports.service';
 import * as XLSX from 'xlsx';
@@ -20,7 +20,7 @@ interface StudentRecord {
 @Component({
   selector: 'app-students-report',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: `
     <div class="space-y-6">
       <!-- 📊 KPIs -->

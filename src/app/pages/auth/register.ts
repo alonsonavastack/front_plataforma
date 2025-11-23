@@ -1,6 +1,6 @@
 // src/app/pages/auth/register.ts
 import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, RouterLink } from '@angular/router';
 import {
   FormControl,
@@ -16,12 +16,11 @@ import { CountryCodeSelectorComponent } from '../../shared/country-code-selector
   selector: 'app-register',
   standalone: true,
   imports: [
-    CommonModule,
     RouterLink,
     ReactiveFormsModule,
     HeaderComponent,
-    CountryCodeSelectorComponent,
-  ],
+    CountryCodeSelectorComponent
+],
   templateUrl: './register.html',
 })
 export class RegisterComponent {

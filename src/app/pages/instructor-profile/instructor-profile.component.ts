@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -50,7 +50,7 @@ interface InstructorProject {
 @Component({
   selector: 'app-instructor-profile',
   standalone: true,
-  imports: [CommonModule, CourseCardComponent, ProjectsCard, NgOptimizedImage, FormsModule],
+  imports: [CourseCardComponent, ProjectsCard, NgOptimizedImage, FormsModule],
   templateUrl: './instructor-profile.component.html'
 })
 export class InstructorProfileComponent implements OnInit {

@@ -1,12 +1,12 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { AdminPaymentService, CommissionSettings } from '../../core/services/admin-payment.service';
 
 @Component({
   selector: 'app-admin-commission-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './admin-commission-settings.html',
 })
 export class AdminCommissionSettingsComponent implements OnInit {

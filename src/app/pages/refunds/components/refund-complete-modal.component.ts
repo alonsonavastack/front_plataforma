@@ -1,12 +1,12 @@
 import { Component, input, output, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Refund } from '../../../core/services/refunds.service';
 
 @Component({
   selector: 'app-refund-complete-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: `
     @if (show()) {
       <!-- Backdrop -->

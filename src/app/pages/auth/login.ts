@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, RouterLink } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import {
@@ -17,11 +17,10 @@ import { ToastService } from '../../core/services/toast.service';
   selector: 'app-login',
   standalone: true,
   imports: [
-    CommonModule,
     RouterLink,
     ReactiveFormsModule,
-    HeaderComponent,
-  ],
+    HeaderComponent
+],
   templateUrl: './login.html',
 })
 export class LoginComponent {

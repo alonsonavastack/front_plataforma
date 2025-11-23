@@ -1,6 +1,6 @@
 // pages/auth/forgot-password.ts
 import { Component, OnInit, signal, computed, effect, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -10,7 +10,7 @@ import { HeaderComponent } from '../../layout/header/header';
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeaderComponent],
+  imports: [FormsModule, HeaderComponent],
   templateUrl: './forgot-password.html'
 })
 export class ForgotPasswordComponent implements OnInit, OnDestroy {

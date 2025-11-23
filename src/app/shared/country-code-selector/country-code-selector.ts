@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 
 export interface CountryCode {
@@ -12,7 +12,7 @@ export interface CountryCode {
 @Component({
   selector: 'app-country-code-selector',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: `
     <div class="relative">
       <button

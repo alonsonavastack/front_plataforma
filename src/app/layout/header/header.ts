@@ -1,6 +1,6 @@
 // src/app/shared/header/header.component.ts
 import { AfterViewInit, AnimationCallbackEvent, Component, ElementRef, inject, OnDestroy, ViewChild, computed, signal, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
 import { AnimateService } from '../../core/animate.service';
@@ -12,7 +12,7 @@ import { environment } from '../../../environments/environment.development';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   templateUrl: './header.html',
 })
 export class HeaderComponent implements AfterViewInit, OnDestroy {

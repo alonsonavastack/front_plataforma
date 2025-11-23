@@ -1,6 +1,6 @@
 // /cursos/src/app/pages/global-settings/global-settings.component.ts
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { SettingsService, Setting } from '../../core/services/settings.service';
 
@@ -13,7 +13,7 @@ interface GroupInfo {
 @Component({
   selector: 'app-global-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './global-settings.component.html',
 })
 export class GlobalSettingsComponent implements OnInit {

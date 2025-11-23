@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { RefundsService, Refund } from '../../core/services/refunds.service';
 import { AuthService } from '../../core/services/auth';
@@ -13,12 +13,11 @@ import { RefundCompleteModalComponent } from './components/refund-complete-modal
   selector: 'app-refunds',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     RefundDetailsModalComponent,
     RefundReviewModalComponent,
     RefundCompleteModalComponent
-  ],
+],
   templateUrl: './refunds.component.html'
 })
 export class RefundsComponent implements OnInit {

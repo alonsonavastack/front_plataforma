@@ -1,5 +1,5 @@
 import { Component, Input, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 
 export interface Transaction {
@@ -24,7 +24,7 @@ export interface Transaction {
 @Component({
   selector: 'app-transaction-history',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: `
     <div class="space-y-4">
       <!-- Header -->

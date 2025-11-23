@@ -1,6 +1,6 @@
 // src/app/pages/dashboard/students/students.component.ts
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { environment } from '../../../environments/environment';
 import { StudentService, Student } from '../../core/services/student.service';
 import { AuthService } from '../../core/services/auth';
@@ -9,7 +9,7 @@ import { FormsModule, FormControl, FormGroup, ReactiveFormsModule, Validators } 
 @Component({
   selector: 'app-students',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [FormsModule, ReactiveFormsModule],
   templateUrl: './students.component.html',
 })
 export class StudentsComponent implements OnInit {

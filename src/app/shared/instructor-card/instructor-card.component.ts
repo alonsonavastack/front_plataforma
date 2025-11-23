@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 
@@ -23,7 +23,7 @@ export interface Instructor {
 @Component({
   selector: 'app-instructor-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './instructor-card.component.html'
 })
 export class InstructorCardComponent {

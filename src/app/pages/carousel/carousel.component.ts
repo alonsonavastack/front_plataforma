@@ -1,5 +1,5 @@
 import { Component, inject, computed, effect, AfterViewInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { CarouselService } from '../../core/services/carousel';
 import { environment } from '../../../environments/environment';
@@ -10,7 +10,7 @@ declare var initFlowbite: () => void;
 @Component({
   selector: 'app-carousel',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './carousel.component.html',
 })
 export class CarouselComponent implements AfterViewInit, OnDestroy {

@@ -1,11 +1,11 @@
 import { Component, signal, computed, input, output, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-refund-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: `
     <!-- Modal de Reembolso con Flowbite -->
     @if (isOpen()) {

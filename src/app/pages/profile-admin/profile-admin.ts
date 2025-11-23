@@ -7,7 +7,7 @@ import {
   computed,
   ChangeDetectorRef,
 } from "@angular/core";
-import { CommonModule } from "@angular/common";
+
 import {
   AbstractControl,
   FormControl,
@@ -32,11 +32,10 @@ import { environment } from "../../../environments/environment";
   selector: "app-profile-admin",
   standalone: true,
   imports: [
-    CommonModule,
     HeaderComponent,
     ReactiveFormsModule,
-    CountryCodeSelectorComponent,
-  ],
+    CountryCodeSelectorComponent
+],
   templateUrl: "./profile-admin.html",
 })
 export class ProfileAdminComponent implements OnInit {

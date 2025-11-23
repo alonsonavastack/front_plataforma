@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, computed, inject, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { SystemConfigService } from '../../core/services/system-config.service';
 import { Router } from '@angular/router';
@@ -14,12 +14,11 @@ import { AuthService } from '../../core/services/auth';
   selector: 'app-system-settings',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     BasicInfoComponent,
     ContactInfoComponent,
     SocialMediaComponent
-  ],
+],
   templateUrl: './system-settings.component.html'
 })
 export class SystemSettingsComponent implements OnInit {

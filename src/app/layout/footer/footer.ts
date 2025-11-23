@@ -1,5 +1,5 @@
 import { Component, computed, inject, OnInit, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { SystemConfigService } from '../../core/services/system-config.service';
 import { environment } from '../../../environments/environment';
@@ -7,7 +7,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   templateUrl: './footer.html'
 })
 export class FooterComponent implements OnInit {

@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, signal, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ReviewService, Review, ReviewStatistics, CanRateResponse } from '../../core/services/review.service';
 import { AuthService } from '../../core/services/auth';
@@ -8,7 +8,7 @@ import { ReviewNotificationsService } from '../../core/services/review-notificat
 @Component({
   selector: 'app-course-reviews',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: `
     <div class="space-y-6">
       <!-- Estadísticas de calificaciones -->

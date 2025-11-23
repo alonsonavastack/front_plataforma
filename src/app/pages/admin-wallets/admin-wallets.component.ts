@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { WalletService } from '../../core/services/wallet.service';
 
@@ -29,7 +29,7 @@ interface WalletDisplay {
 @Component({
   selector: 'app-admin-wallets',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './admin-wallets.component.html'
 })
 export class AdminWalletsComponent implements OnInit {

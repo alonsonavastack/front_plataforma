@@ -1,6 +1,6 @@
 // pages/auth/verify-otp.ts
 import { Component, OnInit, signal, computed, effect, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
@@ -8,7 +8,7 @@ import { AuthService } from '../../core/services/auth';
 @Component({
   selector: 'app-verify-otp',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './verify-otp.html'
 })
 export class VerifyOtpComponent implements OnInit, OnDestroy {

@@ -2,7 +2,7 @@
 // 📊 DASHBOARD COMPLETO DE ADMINISTRACIÓN DE PAGOS
 
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PaymentDashboardService, SaleItem, SalesFilter } from '../../core/services/payment-dashboard.service';
@@ -11,7 +11,7 @@ import { TransferVerificationService } from '../../core/services/transfer-verifi
 @Component({
   selector: 'app-admin-payment-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './admin-payment-dashboard.component.html'
 })
 export class AdminPaymentDashboardComponent implements OnInit {

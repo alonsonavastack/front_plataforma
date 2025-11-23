@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { AppearanceService, Setting } from '../../core/services/appearance.service';
 import { HomeService } from '../../core/services/home';
 import { ToastService } from '../../core/services/toast.service';
@@ -7,7 +7,7 @@ import { ToastService } from '../../core/services/toast.service';
 @Component({
   selector: 'app-appearance',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './appearance.component.html',
 })
 export class AppearanceComponent implements OnInit {

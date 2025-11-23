@@ -1,11 +1,11 @@
 import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Refund } from '../../../core/services/refunds.service';
 
 @Component({
   selector: 'app-refund-details-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     @if (show()) {
       <!-- Backdrop -->

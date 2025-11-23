@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
+import { Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { AdminPaymentService } from '../../core/services/admin-payment.service';
@@ -8,7 +8,7 @@ import { Earning } from '../../core/models/instructor-earning.model';
 @Component({
   selector: 'app-admin-instructor-earnings-detail',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './admin-instructor-earnings-detail.html',
 })
 export class AdminInstructorEarningsDetailComponent implements OnInit {

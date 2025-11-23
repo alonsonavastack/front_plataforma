@@ -2,7 +2,7 @@
 // 🏦 COMPONENTE DE VERIFICACIÓN DE TRANSFERENCIAS BANCARIAS
 
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { TransferVerificationService, TransferSale } from '../../core/services/transfer-verification.service';
 import { AuthService } from '../../core/services/auth';
@@ -10,7 +10,7 @@ import { AuthService } from '../../core/services/auth';
 @Component({
   selector: 'app-admin-transfer-verification',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './admin-transfer-verification.component.html'
 })
 export class AdminTransferVerificationComponent implements OnInit {

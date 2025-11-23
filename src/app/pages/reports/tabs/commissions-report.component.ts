@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ReportsService, CommissionsSummary } from '../../../core/services/reports.service';
 import * as XLSX from 'xlsx';
@@ -7,7 +7,7 @@ import * as XLSX from 'xlsx';
 @Component({
   selector: 'app-commissions-report',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: `
     <div class="space-y-6">
       <!-- 📊 KPIs -->

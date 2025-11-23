@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { LoggerService } from '../../core/services/logger.service';
@@ -33,7 +33,7 @@ interface PaymentConfig {
 @Component({
   selector: 'app-admin-bank-verification',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './admin-bank-verification.html',
 })
 export class AdminBankVerificationComponent implements OnInit {

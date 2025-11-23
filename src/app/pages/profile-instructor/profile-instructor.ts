@@ -1,5 +1,5 @@
 import { Component, inject, effect, signal, computed, OnInit, ChangeDetectorRef } from "@angular/core";
-import { CommonModule } from "@angular/common";
+
 import { HttpClient } from "@angular/common/http";
 import {
   AbstractControl,
@@ -19,7 +19,7 @@ import { environment } from "../../../environments/environment";
 @Component({
   selector: "app-profile-instructor",
   standalone: true,
-  imports: [CommonModule, HeaderComponent, ReactiveFormsModule, CountryCodeSelectorComponent],
+  imports: [HeaderComponent, ReactiveFormsModule, CountryCodeSelectorComponent],
   templateUrl: "./profile-instructor.html",
 })
 export class ProfileInstructorComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -10,7 +10,7 @@ import { CourseClase } from '../../core/models/home.models';
 @Component({
   standalone: true,
   selector: 'app-learning',
-  imports: [CommonModule, RouterLink, HeaderComponent],
+  imports: [RouterLink, HeaderComponent],
   templateUrl: './learning.component.html',
 })
 export class LearningComponent implements OnInit {

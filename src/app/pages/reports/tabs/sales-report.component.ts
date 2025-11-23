@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, computed, inject, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Chart, registerables } from 'chart.js';
 import { ReportsService } from '../../../core/services/reports.service';
@@ -23,7 +23,7 @@ interface SaleRecord {
 @Component({
   selector: 'app-sales-report',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: `
     <div class="space-y-6">
       <!-- 📊 KPIs -->
