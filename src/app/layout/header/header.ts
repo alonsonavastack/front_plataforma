@@ -4,8 +4,8 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
 import { AnimateService } from '../../core/animate.service';
-import { CartService } from '../../core/services/cart.service';
-import { SystemConfigService } from '../../core/services/system-config.service'; // 🔥 NUEVO
+import { SystemConfigService } from '../../core/services/system-config.service';
+import { WalletService } from '../../core/services/wallet.service'; // 🔥 Para billetera
 import { initFlowbite } from 'flowbite';
 import { environment } from '../../../environments/environment.development';
 
@@ -17,10 +17,11 @@ import { environment } from '../../../environments/environment.development';
 })
 export class HeaderComponent implements AfterViewInit, OnDestroy {
   authService = inject(AuthService);
-  cartService = inject(CartService);
+  // CartService removed: purchases are direct
+  walletService = inject(WalletService); // 🔥 Para billetera
   router = inject(Router);
   animate = inject(AnimateService);
-  systemConfigService = inject(SystemConfigService); // 🔥 NUEVO
+  systemConfigService = inject(SystemConfigService);
 
   @ViewChild('headerElement') headerEl!: ElementRef<AnimationCallbackEvent>;
 
@@ -34,6 +35,11 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   constructor() {
     // 🔥 NUEVO: Cargar configuración al iniciar
     this.systemConfigService.getConfig();
+
+    // 💰 Cargar saldo de billetera si el usuario está logueado
+    if (this.authService.isLoggedIn()) {
+      this.walletService.loadWallet();
+    }
   }
 
   ngAfterViewInit(): void {
@@ -170,9 +176,8 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     return '/profile-student';
   }
 
-  // Nuevo método para ir al checkout y cerrar el drawer del carrito
+  // Ir al checkout (no hay drawer de carrito)
   goToCheckout(): void {
-    this.cartService.toggleDrawer(); // Cierra el drawer
     this.router.navigate(['/checkout']);
   }
 }

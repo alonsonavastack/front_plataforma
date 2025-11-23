@@ -50,6 +50,14 @@ export const routes: Routes = [
     canActivate: [roleGuard(["admin"])],
   },
   {
+    path: "admin-transfer-verification",
+    loadComponent: () =>
+      import("./pages/admin-transfer-verification/admin-transfer-verification.component").then(
+        (m) => m.AdminTransferVerificationComponent
+      ),
+    canActivate: [roleGuard(["admin"])],
+  },
+  {
     path: "login",
     loadComponent: () =>
       import("./pages/auth/login").then((m) => m.LoginComponent),

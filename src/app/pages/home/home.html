@@ -271,6 +271,7 @@
                 <course-card
                   [course]="c"
                   (click)="navigateToCourse(c, $event)"
+                  (buyNowClick)="buyCourseDirect($event)"
                 ></course-card>
               }
             </div>
@@ -288,6 +289,7 @@
                     <course-card
                       [course]="c"
                       (click)="navigateToCourse(c, $event)"
+                      (buyNowClick)="buyCourseDirect($event)"
                     ></course-card>
                   </div>
                 }
@@ -347,6 +349,7 @@
               <app-projects-card
                 [project]="project"
                 (click)="openVideoModal(project.url_video)"
+                (buyNowClick)="buyProjectDirect($event)"
               ></app-projects-card>
             </div>
           }
@@ -398,12 +401,12 @@
             placeholder="Buscar instructores..."
             class="w-full px-4 py-2.5 pl-11 pr-10 bg-slate-800/50 border border-white/10 rounded-lg text-white/90 placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-lime-400/50 focus:border-lime-400/50 transition-all"
           />
-          
+
           <!-- Icono de búsqueda -->
-          <svg 
+          <svg
             class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40"
-            fill="none" 
-            stroke="currentColor" 
+            fill="none"
+            stroke="currentColor"
             viewBox="0 0 24 24"
           >
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -690,6 +693,14 @@
                   </p>
 
                   <div class="flex flex-wrap items-center gap-3 text-xs text-white/50 mb-3">
+                    @if (item.user && typeof item.user === 'object' && (item.user.name || item.user.surname)) {
+                      <span class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                        </svg>
+                        {{ item.user.name }} {{ item.user.surname }}
+                      </span>
+                    }
                     @if (item.categorie?.title) {
                       <span class="flex items-center gap-1">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -741,19 +752,18 @@
                       @if (item.type === 'course') {
                         @if (isCourseEnrolled(item._id)) {
                           <button class="px-4 py-2 rounded-lg bg-sky-600/50 text-sky-300 text-sm font-semibold cursor-not-allowed" disabled>
-                            Comprado
-                          </button>
-                        } @else if (isCourseInCart(item._id)) {
-                          <button (click)="cartService.toggleDrawer()" class="px-4 py-2 rounded-lg bg-slate-700 text-white/80 text-sm font-semibold hover:bg-slate-600 transition">
-                            Ver carrito
+                            Ya adquirido
                           </button>
                         } @else {
                           <button
-                            (click)="addCourseToCart(item, $event)"
+                            (click)="buyCourseDirect(item)"
                             [disabled]="!authService.isLoggedIn()"
-                            class="px-4 py-2 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-4 py-2 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                           >
-                            Añadir al carrito
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            Comprar - ${{ item.discount_active ? item.final_price_usd : item.price_usd }}
                           </button>
                         }
                         <button
@@ -765,19 +775,18 @@
                       } @else {
                         @if (isProjectPurchased(item._id)) {
                           <button class="px-4 py-2 rounded-lg bg-sky-600/50 text-sky-300 text-sm font-semibold cursor-not-allowed" disabled>
-                            Comprado
-                          </button>
-                        } @else if (isProjectInCart(item._id)) {
-                          <button (click)="cartService.toggleDrawer()" class="px-4 py-2 rounded-lg bg-slate-700 text-white/80 text-sm font-semibold hover:bg-slate-600 transition">
-                            Ver carrito
+                            Ya adquirido
                           </button>
                         } @else {
                           <button
-                            (click)="addProjectToCart(item)"
+                            (click)="buyProjectDirect(item)"
                             [disabled]="!authService.isLoggedIn()"
-                            class="px-4 py-2 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-4 py-2 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                           >
-                            Añadir al carrito
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            Comprar - ${{ item.discount_active ? item.final_price_usd : item.price_usd }}
                           </button>
                         }
                         <!-- Botón de ver video si el proyecto tiene url_video -->

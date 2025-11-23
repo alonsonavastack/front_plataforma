@@ -34,27 +34,17 @@
 
     <!-- 🔥 ACCIONES DEL USUARIO -->
     <div class="flex items-center gap-3">
-      @if (!isOnAuthPage()) {
-      <!-- Botón del Carrito MEJORADO -->
-      <button
-        (click)="cartService.toggleDrawer()"
-        class="relative p-2.5 rounded-xl border border-white/10 hover:border-lime-400/50 hover:bg-lime-400/5 text-slate-400 hover:text-lime-300 transition-all duration-200 group">
+      @if (!isOnAuthPage() && authService.isLoggedIn()) {
+      <!-- 💰 Billetera Digital -->
+      <a
+        routerLink="/wallet"
+        class="relative flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 hover:border-lime-400/50 hover:bg-lime-400/5 text-slate-400 hover:text-lime-300 transition-all duration-200 group"
+      >
         <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-          ></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
         </svg>
-        @if (cartService.totalItems() > 0) {
-        <span
-          class="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 border-2 border-slate-950 rounded-full animate-pulse"
-        >
-          {{ cartService.totalItems() }}
-        </span>
-        }
-      </button>
+        <span class="text-sm font-semibold text-lime-400">${{ walletService.balance() || 0 }}</span>
+      </a>
       }
 
       <!-- Botones de Login/Registro MEJORADOS (Escritorio) -->
@@ -274,107 +264,4 @@
   </div>
 </div>
 
-<!-- === DRAWER DEL CARRITO DE COMPRAS === -->
-@if (cartService.isDrawerOpen()) {
-<!-- Fondo (Backdrop) -->
-<div (click)="cartService.toggleDrawer()" class="bg-gray-900/50 fixed inset-0 z-[100]"></div>
-
-<!-- Contenido del Drawer -->
-<div
-  class="fixed top-0 right-0 z-[110] h-screen p-4 overflow-y-auto transition-transform transform-none bg-slate-800 w-96 shadow-2xl"
->
-  <div class="flex flex-col h-full">
-    <!-- Cabecera -->
-    <div class="flex items-center justify-between mb-4">
-      <h5 class="text-xl font-semibold text-white">Tu Carrito</h5>
-      <button
-        (click)="cartService.toggleDrawer()"
-        type="button"
-        class="text-gray-400 bg-transparent hover:bg-gray-700 hover:text-white rounded-lg text-sm p-1.5 inline-flex items-center"
-      >
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            fill-rule="evenodd"
-            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-            clip-rule="evenodd"
-          ></path>
-        </svg>
-        <span class="sr-only">Cerrar carrito</span>
-      </button>
-    </div>
-
-    <!-- Lista de artículos -->
-    <div class="flex-grow overflow-y-auto -mr-4 pr-4">
-      @if (cartService.totalItems() === 0) {
-      <div class="flex flex-col items-center justify-center h-full text-center text-gray-400">
-        <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1"
-            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-          ></path>
-        </svg>
-        <p class="text-lg font-semibold">Tu carrito está vacío</p>
-        <p class="text-sm">Añade cursos o proyectos para empezar.</p>
-      </div>
-      } @else {
-      <ul class="space-y-3">
-        @for (item of cartService.items(); track item._id) {
-        <li class="flex items-start gap-4 p-2 rounded-lg bg-slate-700/50">
-          <img
-            [src]="getCartItemImage(item)"
-            alt="portada"
-            class="w-24 h-16 object-cover rounded-md"
-          />
-          <div class="flex-1">
-            <p class="text-sm font-medium text-white line-clamp-2">{{ item.product.title }}</p>
-            <p class="text-lg font-bold text-lime-300 mt-1">${{ item.total | number : '1.2-2' }}</p>
-          </div>
-          <button
-            (click)="cartService.removeFromCart(item._id)"
-            class="text-gray-500 hover:text-red-400 p-1"
-          >
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fill-rule="evenodd"
-                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                clip-rule="evenodd"
-              ></path>
-            </svg>
-          </button>
-        </li>
-        }
-      </ul>
-      }
-    </div>
-
-    <!-- Pie de página del carrito -->
-    @if (cartService.totalItems() > 0) {
-    <div class="border-t border-gray-700 pt-4 mt-4">
-      <div class="flex justify-between text-lg font-semibold text-white">
-        <span>Subtotal</span>
-        <span>${{ cartService.subtotal() | number : '1.2-2' }}</span>
-      </div>
-      <p class="text-xs text-gray-400 mt-1">
-        Los impuestos y gastos de envío se calculan en la pantalla de pago.
-      </p>
-      <button
-        (click)="goToCheckout()"
-        class="w-full mt-4 h-12 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition flex items-center justify-center gap-2"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M13 7l5 5m0 0l-5 5m5-5H6"
-          ></path>
-        </svg>
-        Proceder al Pago
-      </button>
-    </div>
-    }
-  </div>
-</div>
-}
+<!-- 🗑️ Sistema de Carrito Eliminado - Ahora usamos Compra Directa -->

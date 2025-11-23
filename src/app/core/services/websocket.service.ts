@@ -8,14 +8,48 @@ export interface SaleNotification {
   n_transaccion: string;
   total: number;
   currency_total: string;
-  status: string;
+  status: 'Pendiente' | 'Pagado' | 'Anulado';
   createdAt: string;
   user: {
     _id: string;
     name: string;
     surname: string;
     email: string;
+    avatar?: string;
   };
+}
+
+// 🆕 Interfaz para notificaciones de reembolsos
+export interface RefundNotification {
+  _id: string;
+  sale: {
+    _id: string;
+    n_transaccion: string;
+    total: number;
+  };
+  user: {
+    _id: string;
+    name: string;
+    surname: string;
+    email: string;
+    avatar?: string;
+  };
+  course?: {
+    _id: string;
+    title: string;
+  };
+  project?: {
+    _id: string;
+    title: string;
+  };
+  reason: {
+    type: string;
+    description: string;
+  };
+  originalAmount: number;
+  status: 'pending' | 'approved' | 'rejected' | 'processing' | 'completed' | 'failed';
+  createdAt: string;
+  requestedAt: string;
 }
 
 @Injectable({
@@ -28,11 +62,13 @@ export class WebsocketService {
   // Subjects para emitir eventos
   private newSaleSubject = new Subject<SaleNotification>();
   private saleStatusUpdateSubject = new Subject<SaleNotification>();
+  private newRefundRequestSubject = new Subject<RefundNotification>(); // 🆕
   private connectionSubject = new Subject<boolean>();
 
   // Observables públicos
   public newSale$ = this.newSaleSubject.asObservable();
   public saleStatusUpdate$ = this.saleStatusUpdateSubject.asObservable();
+  public newRefundRequest$ = this.newRefundRequestSubject.asObservable(); // 🆕
   public connection$ = this.connectionSubject.asObservable();
 
   constructor() {}
@@ -95,6 +131,12 @@ export class WebsocketService {
     this.socket.on('sale_status_updated', (sale: SaleNotification) => {
 
       this.saleStatusUpdateSubject.next(sale);
+    });
+
+    // 🆕 Evento: Nueva solicitud de reembolso
+    this.socket.on('new_refund_request', (refund: RefundNotification) => {
+      console.log('🔔 [WebSocket] Nueva solicitud de reembolso recibida:', refund);
+      this.newRefundRequestSubject.next(refund);
     });
 
     // Evento: Desconexión

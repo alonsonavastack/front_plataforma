@@ -1,0 +1,64 @@
+<!-- 🔥 SECCIÓN DE BOTÓN DE REEMBOLSO -->
+<!-- Usamos hasRefundableProducts() en lugar de hasRefundRequest() -->
+
+@if (hasRefundRequest(sale._id)) {
+  <!-- Ya tiene solicitud de reembolso -->
+  <button
+    disabled
+    class="w-full flex items-center justify-center px-4 py-2.5 bg-slate-700/50 rounded-lg transition-colors text-sm font-medium text-slate-400 border border-slate-600 cursor-not-allowed"
+  >
+    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <span>Reembolso Solicitado</span>
+  </button>
+} @else if (hasRefundableProducts(sale)) {
+  <!-- Tiene productos reembolsables -->
+  <button
+    (click)="openRefundModal(sale)"
+    class="w-full flex items-center justify-center px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors text-sm font-medium text-red-400 border border-red-500/20 hover:border-red-500/40"
+  >
+    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-1a4 4 0 00-4-4H8m0 0l-3 3m3-3l3 3m-3-3V4a2 2 0 012-2h2a2 2 0 012 2v1m-6 9h.01"></path>
+    </svg>
+    <span>Solicitar Reembolso ({{ getRefundableProducts(sale).length }}/{{ sale.detail.length }} disponibles)</span>
+  </button>
+  
+  <!-- Info adicional sobre el tiempo restante -->
+  @if (isWithinRefundPeriod(sale.createdAt)) {
+    @let purchaseDate = new Date(sale.createdAt);
+    @let now = new Date();
+    @let diffInDays = Math.floor((now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24));
+    @let daysLeft = 7 - diffInDays;
+    
+    <div class="mt-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+      <p class="text-xs text-yellow-400 text-center flex items-center justify-center gap-1">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>{{ daysLeft }} día{{ daysLeft !== 1 ? 's' : '' }} restante{{ daysLeft !== 1 ? 's' : '' }} para solicitar reembolso</span>
+      </p>
+    </div>
+  }
+} @else {
+  <!-- No hay productos reembolsables (período expirado o todos reembolsados) -->
+  @if (!isWithinRefundPeriod(sale.createdAt)) {
+    <div class="px-4 py-2.5 bg-slate-700/30 rounded-lg border border-slate-600 text-center">
+      <p class="text-xs text-slate-400 flex items-center justify-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>Período de reembolso expirado (7 días)</span>
+      </p>
+    </div>
+  } @else {
+    <div class="px-4 py-2.5 bg-slate-700/30 rounded-lg border border-slate-600 text-center">
+      <p class="text-xs text-slate-400 flex items-center justify-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>Todos los productos ya tienen reembolso</span>
+      </p>
+    </div>
+  }
+}

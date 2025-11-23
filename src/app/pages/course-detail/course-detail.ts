@@ -9,7 +9,7 @@ import { environment } from '../../../environments/environment';
 import { HeaderComponent } from '../../layout/header/header';
 import { AuthService } from '../../core/services/auth';
 import { HomeService } from '../../core/services/home';
-import { CartService } from '../../core/services/cart.service';
+import { HttpClient } from '@angular/common/http';
 import { CourseReviewsComponent } from '../../shared/course-reviews/course-reviews.component';
 import { Review } from '../../core/services/review.service';
 
@@ -24,8 +24,8 @@ type TabType = 'overview' | 'curriculum' | 'instructor' | 'reviews';
 export class CourseDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private api = inject(HomeService);
-  private cartService = inject(CartService);
-  private authService = inject(AuthService);
+  private http = inject(HttpClient);
+  public authService = inject(AuthService);
   private router = inject(Router);
   private sanitizer = inject(DomSanitizer);
   private routeSubscription?: Subscription;
@@ -109,6 +109,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
   moreFromInstructor = computed<any[]>(() => this.safeDetail().course_instructor ?? []);
   relatedCourses = computed<any[]>(() => this.safeDetail().course_relateds ?? []);
   studentHasCourse = computed<boolean>(() => !!this.safeDetail().student_have_course);
+
+  // NOTE: Cart removed — purchases are direct via API
 
   // Video URL segura
   videoUrl = computed<SafeResourceUrl | null>(() => {
@@ -263,24 +265,23 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
     return `${m}m`;
   }
-  // acciones
-  addCourseToCart(course: any, event?: MouseEvent) {
-    event?.stopPropagation(); // Evita que el clic se propague si el botón está dentro de un enlace.
-    if (!this.authService.isLoggedIn()) {
-      this.router.navigate(['/login']);
-      return;
-    }
-    this.cartService.addToCart(course, 'course');
-  }
-
+  // Compra directa: Navega al checkout con el producto
   buyNow() {
     if (!this.authService.isLoggedIn()) {
       this.router.navigate(['/login']);
       return;
     }
-    // Agregar al carrito y redirigir al checkout
-    this.cartService.addToCart(this.course(), 'course');
-    this.router.navigate(['/checkout']);
+
+    const c = this.course();
+    if (!c || !c._id) return;
+
+    // Navegar al checkout pasando el producto en el state
+    this.router.navigate(['/checkout'], {
+      state: {
+        product: c,
+        productType: 'course'
+      }
+    });
   }
 
   reload() {

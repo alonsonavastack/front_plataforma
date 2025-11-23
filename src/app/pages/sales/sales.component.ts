@@ -244,7 +244,8 @@ export class SalesComponent implements OnInit {
    */
   getProductImageUrl(item: SaleDetailItem): string {
     if (!item.product?.imagen) {
-      return 'https://via.placeholder.com/80x60?text=Sin+Imagen';
+      // SVG placeholder (data URI - no requiere HTTP)
+      return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMWUyOTNiIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzY0NzQ4YiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlbjwvdGV4dD48L3N2Zz4=';
     }
     const imageType = item.product_type === 'course' ? 'courses/imagen-course' : 'projects/imagen-project';
     return `${environment.url}${imageType}/${item.product.imagen}`;

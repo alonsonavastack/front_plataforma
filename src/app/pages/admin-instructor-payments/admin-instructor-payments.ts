@@ -2,7 +2,6 @@ import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { AdminPaymentService, InstructorWithEarnings, CommissionSettings } from '../../core/services/admin-payment.service';
 
 @Component({
@@ -14,13 +13,12 @@ import { AdminPaymentService, InstructorWithEarnings, CommissionSettings } from 
 export class AdminInstructorPaymentsComponent implements OnInit {
   private adminPaymentService = inject(AdminPaymentService);
   private router = inject(Router);
-  private http = inject(HttpClient);
 
   instructors = signal<InstructorWithEarnings[]>([]);
   summary = signal<any>({});
   isLoading = signal(true);
   error = signal<string | null>(null);
-  
+
   // 🔥 NUEVO: Configuración de comisiones (incluye umbral y días)
   settings = signal<CommissionSettings | null>(null);
   isLoadingSettings = signal(true);
@@ -247,30 +245,54 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   isProcessingSales = signal(false);
 
   processExistingSales() {
-    if (!confirm('⚠️ ¿Procesar todas las ventas existentes?\n\nEsto creará registros de ganancias para los instructores de todas las ventas pagadas que aún no tienen ganancias asociadas.\n\n¿Deseas continuar?')) {
+    if (!confirm('⚠️ ¿Procesar productos de ventas existentes?\n\nEsto creará registros de ganancias para los instructores por cada producto vendido que aún no tenga ganancias asociadas.\n\n⚠️ IMPORTANTE: NO se crearán ganancias para productos con reembolso completado.\n\n¿Deseas continuar?')) {
       return;
     }
 
     this.isProcessingSales.set(true);
-    console.log('🔧 [Frontend] Iniciando procesamiento de ventas existentes...');
+    console.log('🔧 [Frontend] Iniciando procesamiento de productos de ventas existentes...');
 
-    this.http.post<{
-      success: boolean;
-      message: string;
-      processed: number;
-      skipped: number;
-      total: number;
-    }>('http://localhost:3000/api/sales/process-existing-sales', {}).subscribe({
+    this.adminPaymentService.processExistingSales().subscribe({
       next: (result) => {
         console.log('✅ [Frontend] Resultado:', result);
         this.isProcessingSales.set(false);
-        
-        alert(`✅ Proceso completado:\n\n` +
-              `📊 Ventas procesadas: ${result.processed}\n` +
-              `⏩ Ventas omitidas (ya tenían ganancias): ${result.skipped}\n` +
-              `📦 Total de ventas: ${result.total}\n\n` +
-              `Recargando lista de instructores...`);
-        
+
+        let message = `✅ Proceso completado:\n\n` +
+              `📦 Productos procesados: ${result.processed}\n` +
+              `⏩ Productos omitidos: ${result.skipped}\n` +
+              `   (ver detalles más abajo)\n` +
+              `📊 Total de productos: ${result.total}\n` +
+              `💳 Ventas revisadas: ${result.sales_reviewed}\n\n`;
+
+        // Incluir detalles si el backend los devolvió (diagnóstico)
+        if (result.skipped_details && Array.isArray(result.skipped_details) && result.skipped_details.length > 0) {
+          message += 'Detalles de productos omitidos:\n';
+          // Mostrar hasta 10 items para no abrumar al alert
+          const maxShow = 10;
+          result.skipped_details.slice(0, maxShow).forEach((d: any, i: number) => {
+            message += `${i + 1}. Sale ${d.sale} - ${d.title || d.product} - Motivo: ${d.reason}` + (d.error ? ` (error: ${d.error})` : '') + '\n';
+          });
+          if (result.skipped_details.length > maxShow) {
+            message += `... y ${result.skipped_details.length - maxShow} más\n`;
+          }
+          message += '\n';
+        }
+
+        if (result.processed_details && Array.isArray(result.processed_details) && result.processed_details.length > 0) {
+          message += 'Productos procesados:\n';
+          result.processed_details.slice(0, 10).forEach((p: any, i: number) => {
+            message += `${i + 1}. Sale ${p.sale} - ${p.title || p.product}\n`;
+          });
+          if (result.processed_details.length > 10) {
+            message += `... y ${result.processed_details.length - 10} más\n`;
+          }
+          message += '\n';
+        }
+
+        message += 'Recargando lista de instructores...';
+
+        alert(message);
+
         // Recargar la lista de instructores
         this.loadInstructors();
       },

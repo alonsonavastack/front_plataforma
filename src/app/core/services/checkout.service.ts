@@ -23,6 +23,17 @@ export interface CheckoutData {
   total: number;
   price_dolar?: number;
   n_transaccion: string;
+  detail: Array<{
+    product: string;
+    product_type: 'course' | 'project';
+    title: string;
+    price_unit: number;
+    discount?: number;
+    type_discount?: number;
+  }>;
+  use_wallet?: boolean;
+  wallet_amount?: number;
+  remaining_amount?: number;
 }
 
 export interface CheckoutResponse {
@@ -84,6 +95,8 @@ export class CheckoutService {
   processSale(data: CheckoutData): Observable<CheckoutResponse> {
     return this.http.post<CheckoutResponse>(`${this.API_URL}/register`, data);
   }
+
+
 
   /**
    * Genera un número de transacción único

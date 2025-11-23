@@ -381,6 +381,116 @@
         </div>
       }
 
+      <!-- 💵 Campana de Notificaciones de Reembolsos (admin e instructor) -->
+      @if (authService.user()?.rol === 'admin' || authService.user()?.rol === 'instructor') {
+        <div class="relative">
+          <button
+            (click)="toggleRefundNotificationsMenu()"
+            class="relative p-2.5 rounded-xl border border-white/10 hover:border-red-400/50 hover:text-red-300 transition">
+            <!-- Icono de devolución/reembolso -->
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"></path>
+            </svg>
+
+            <!-- Badge con el número de reembolsos pendientes -->
+            @if (refundNotificationsService.unreadCount() > 0) {
+              <span class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold animate-pulse">
+                {{ refundNotificationsService.unreadCount() > 9 ? '9+' : refundNotificationsService.unreadCount() }}
+              </span>
+            }
+          </button>
+
+          <!-- Dropdown de notificaciones de reembolsos -->
+          @if (isRefundNotificationsMenuOpen()) {
+            <div
+              class="fixed sm:absolute top-16 sm:top-full left-0 right-0 sm:left-auto sm:right-0 sm:mt-3 w-full sm:w-96 max-h-[calc(100vh-5rem)] sm:max-h-[32rem] overflow-y-auto bg-slate-800/95 backdrop-blur rounded-none sm:rounded-xl shadow-2xl ring-1 ring-white/10 z-50"
+              (clickOutside)="isRefundNotificationsMenuOpen.set(false)">
+
+              <!-- Header -->
+              <div class="sticky top-0 bg-slate-800 px-4 py-3 border-b border-white/10">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-sm font-semibold text-white">💵 Reembolsos Pendientes</h3>
+                  <div class="flex items-center gap-2">
+                    <!-- Botón de recarga manual -->
+                    <button
+                      (click)="refundNotificationsService.loadNotifications()"
+                      class="p-1.5 rounded-md hover:bg-slate-700 text-slate-400 hover:text-red-400 transition"
+                      title="Recargar notificaciones">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                      </svg>
+                    </button>
+                    @if (refundNotificationsService.unreadCount() > 0) {
+                      <button
+                        (click)="goToRefunds()"
+                        class="text-xs text-red-400 hover:text-red-300 font-medium">
+                        Ver todos
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Lista de notificaciones de reembolsos -->
+              <div class="py-2">
+                @if (refundNotificationsService.unreadCount() === 0) {
+                  <div class="px-4 py-8 text-center">
+                    <svg class="w-12 h-12 text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-sm text-slate-400">No hay reembolsos pendientes</p>
+                  </div>
+                } @else {
+                  @for (refund of refundNotificationsService.notifications(); track refund._id) {
+                    <div
+                      (click)="goToRefunds(refund._id)"
+                      class="px-4 py-3 hover:bg-slate-700/50 transition-colors cursor-pointer border-b border-slate-700/50 last:border-0">
+                      <div class="flex items-start gap-3">
+                        <!-- Avatar del usuario -->
+                        <div class="flex-shrink-0">
+                          <img
+                            [src]="buildAvatarUrl(refund.user.avatar, refund.user.name, refund.user.surname)"
+                            [alt]="refund.user.name + ' ' + refund.user.surname"
+                            class="w-10 h-10 rounded-full object-cover border-2 border-red-400/30"
+                            (error)="$event.target.src = buildAvatarUrl(undefined, refund.user.name, refund.user.surname)">
+                        </div>
+
+                        <!-- Contenido -->
+                        <div class="flex-1 min-w-0">
+                          <p class="text-sm font-medium text-white">
+                            <span class="text-red-400">{{ refund.user.name }} {{ refund.user.surname }}</span> solicitó reembolso
+                          </p>
+                          <p class="text-xs text-slate-400 mt-1 truncate">
+                            @if (refund.course) {
+                              📚 Curso: <span class="font-semibold text-red-300">{{ refund.course.title }}</span>
+                            } @else if (refund.project) {
+                              📁 Proyecto: <span class="font-semibold text-red-300">{{ refund.project.title }}</span>
+                            }
+                          </p>
+                          <p class="text-xs text-slate-400 mt-1">
+                            Monto: <span class="font-semibold text-red-300">${{ refund.originalAmount.toFixed(2) }}</span>
+                          </p>
+                          <p class="text-xs text-slate-500 mt-1">
+                            {{ refundNotificationsService.getRelativeTime(refund.requestedAt) }}
+                          </p>
+                        </div>
+
+                        <!-- Estado -->
+                        <div class="flex-shrink-0">
+                          <span [class]="refundNotificationsService.getStatusColor(refund.status) + ' inline-block px-2 py-1 text-xs font-semibold rounded-full border'">
+                            {{ refundNotificationsService.getStatusText(refund.status) }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
       <!-- Menú de usuario -->
       <div class="relative">
         <button (click)="toggleProfileMenu()" class="flex items-center gap-3">

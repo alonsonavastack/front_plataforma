@@ -1,11 +1,11 @@
-import { Component, Input, Output, EventEmitter, computed, OnInit, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, computed, OnInit, inject, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Project } from '../../core/models/home.models';
 import { environment } from '../../../environments/environment';
 import { PurchasesService } from '../../core/services/purchases.service';
-import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-projects-card',
@@ -16,10 +16,13 @@ import { AuthService } from '../../core/services/auth';
 export class ProjectsCard implements OnInit {
   @Input({ required: true }) project!: Project;
   @Output() openVideo = new EventEmitter<string>();
+  
+  // 🔥 Output para compra directa
+  buyNowClick = output<Project>();
 
   private purchasesService = inject(PurchasesService);
-  private cartService = inject(CartService);
   private authService = inject(AuthService);
+  private toast = inject(ToastService);
 
   ngOnInit(): void {
     // Componente inicializado
@@ -47,27 +50,27 @@ export class ProjectsCard implements OnInit {
     return this.project?._id ? this.purchasesService.isPurchased(this.project._id) : false;
   });
 
-  // Verificar si está en el carrito
-  isInCart = computed(() => {
-    if (!this.project?._id) return false;
-    return this.cartService.items().some(item =>
-      item.product._id === this.project._id && item.product_type === 'project'
-    );
+  // 🔥 Precio del proyecto
+  price = computed(() => {
+    if (this.project.discount_active && this.project.final_price_usd !== undefined) {
+      return this.project.final_price_usd;
+    }
+    return this.project.price_usd || 0;
   });
 
-  // Agregar al carrito
-  addToCart(event: MouseEvent): void {
+  // 🔥 Método actualizado para emitir evento de compra
+  buyNow(event: MouseEvent): void {
     event.stopPropagation();
     event.preventDefault();
 
-    if (!this.project._id || this.isPurchased() || this.isInCart()) return;
+    if (!this.project._id || this.isPurchased()) return;
 
     if (!this.authService.isLoggedIn()) {
-      alert('Debes iniciar sesión para agregar al carrito');
+      this.toast.error('Debes iniciar sesión para comprar');
       return;
     }
 
-    this.cartService.addToCart(this.project, 'project');
+    this.buyNowClick.emit(this.project);
   }
 
   // Emite el evento para abrir el modal de video

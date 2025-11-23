@@ -1,12 +1,12 @@
 // src/app/shared/course-card/course-card.ts
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment.development';
 import { PurchasesService } from '../../core/services/purchases.service';
-import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth';
 import { ToastService } from '../../core/services/toast.service';
+import { CoursePublic } from '../../core/models/home.models';
 
 type AnyObj = Record<string, any>;
 
@@ -17,12 +17,14 @@ type AnyObj = Record<string, any>;
   templateUrl: './course-card.html',
 })
 export class CourseCardComponent {
+  // 🔥 Output para compra directa
+  buyNowClick = output<CoursePublic>();
+
   // Hacer Math disponible en el template
   Math = Math;
-  course = input.required<AnyObj>();
+  course = input.required<CoursePublic>();
 
   private purchasesService = inject(PurchasesService);
-  private cartService = inject(CartService);
   private authService = inject(AuthService);
   private toast = inject(ToastService);
   galeria = environment.images.course;
@@ -45,29 +47,29 @@ export class CourseCardComponent {
 
   coverUrl = computed(() => {
     const c = this.course();
-    const img = c?.['imagen'] || c?.['cover'] || c?.['portada'] || null;
+    const img = c.imagen || null;
     return this.buildImage(img);
   });
 
   category = computed(() => {
-    const cat = this.course()?.['categorie'];
-    return typeof cat === 'string' ? undefined : (cat?.['title'] ?? undefined);
+    const cat = this.course().categorie;
+    return typeof cat === 'string' ? undefined : (cat?.title ?? undefined);
   });
 
   instructor = computed(() => {
-    const u = this.course()?.['user'];
+    const u = this.course().user;
     const name = (u && typeof u === 'object')
-      ? [u['name'], u['surname']].filter(Boolean).join(' ')
+      ? [u.name, u.surname].filter(Boolean).join(' ')
       : '';
     return name || undefined;
   });
 
-  priceOriginal = computed<number>(() => Number(this.course()?.['price_usd'] ?? 0));
+  priceOriginal = computed<number>(() => Number(this.course().price_usd ?? 0));
   priceCurrent  = computed<number>(() =>
-    Number(this.course()?.['final_price_usd'] ?? this.priceOriginal())
+    Number(this.course().final_price_usd ?? this.priceOriginal())
   );
   hasDiscount   = computed<boolean>(() =>
-    !!this.course()?.['discount_active'] && this.priceCurrent() < this.priceOriginal()
+    !!this.course().discount_active && this.priceCurrent() < this.priceOriginal()
   );
   discountPct   = computed<number | null>(() => {
     const p0 = this.priceOriginal();
@@ -77,10 +79,10 @@ export class CourseCardComponent {
   });
 
   rating  = computed<string>(() =>
-    String(this.course()?.['avg_rating'] ?? this.course()?.['avgRating'] ?? '')
+    String(this.course().AVG_RATING ?? '')
   );
   reviews = computed<number>(() =>
-    Number(this.course()?.['n_reviews'] ?? this.course()?.['nReviews'] ?? 0)
+    Number(this.course().N_REVIEWS ?? 0)
   );
 
   // Verificar si ya fue comprado
@@ -89,25 +91,18 @@ export class CourseCardComponent {
     return id ? this.purchasesService.isPurchased(id) : false;
   });
 
-  // Verificar si está en el carrito
-  isInCart = computed(() => {
-    const id = this.courseId();
-    if (!id) return false;
-    return this.cartService.items().some(item =>
-      item.product._id === id && item.product_type === 'course'
-    );
-  });
+  // 🔥 Método actualizado para emitir evento de compra
+  price = computed(() => this.priceCurrent());
 
-  // Agregar al carrito
-  addToCart() {
+  buyNow() {
     const id = this.courseId();
-    if (!id || this.isPurchased() || this.isInCart()) return;
+    if (!id || this.isPurchased()) return;
 
     if (!this.authService.isLoggedIn()) {
-      this.toast.error('Debes iniciar sesión para agregar al carrito');
+      this.toast.error('Debes iniciar sesión para comprar');
       return;
     }
 
-    this.cartService.addToCart(this.course(), 'course');
+    this.buyNowClick.emit(this.course());
   }
 }

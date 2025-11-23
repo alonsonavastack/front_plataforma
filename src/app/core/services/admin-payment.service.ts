@@ -336,4 +336,26 @@ export class AdminPaymentService {
       `${this.apiUrl}/instructors/${instructorId}/payment-method-full`
     );
   }
+
+  /**
+   * 🔧 Procesar ventas existentes (crear ganancias para ventas que no las tengan)
+   * Este endpoint escanea todas las ventas 'paid' y crea InstructorEarnings automáticamente
+   * si aún no existen.
+   */
+  processExistingSales(): Observable<{
+    success: boolean;
+    message: string;
+    processed: number;
+    skipped: number;
+    total: number;
+    sales_reviewed: number;
+    // Detalles para diagnóstico (opcionales)
+    processed_details?: Array<{ sale: string; product: string; title?: string }>;
+    skipped_details?: Array<{ sale: string; product: string; title?: string; reason?: string; error?: string }>;
+  }> {
+    return this.http.post<any>(
+      `${environment.url}sales/process-existing-sales`,
+      {}
+    );
+  }
 }

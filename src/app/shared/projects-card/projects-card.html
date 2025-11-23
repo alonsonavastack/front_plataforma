@@ -1,10 +1,10 @@
 <!-- src/app/shared/projects-card/projects-card.html -->
 <div class="group relative h-full flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-sm transition-all duration-300 hover:border-lime-400/40 hover:shadow-xl hover:shadow-lime-500/10 hover:-translate-y-1">
-  
+
   <!-- Badge de Ya Comprado -->
   @if (isPurchased()) {
     <div class="absolute top-3 left-3 z-20 px-3 py-1.5 rounded-xl text-xs font-bold
-                bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg 
+                bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg
                 flex items-center gap-1.5 backdrop-blur-sm">
       <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
@@ -12,14 +12,14 @@
       Comprado
     </div>
   }
-  
+
   <!-- Imagen con efecto overlay -->
-  <div 
+  <div
     class="relative overflow-hidden cursor-pointer"
     (click)="project.url_video ? onOpenVideo($event) : null">
     <!-- Overlay gradient -->
     <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent opacity-60 z-10 group-hover:opacity-40 transition-opacity duration-300"></div>
-    
+
     <!-- Imagen -->
     <div class="aspect-video overflow-hidden">
       <img
@@ -31,7 +31,7 @@
         decoding="async"
       />
     </div>
-    
+
     <!-- Badge de descuento flotante -->
     @if (project.discount_active && !isPurchased()) {
       <div class="absolute top-3 right-3 z-20">
@@ -39,7 +39,7 @@
           <!-- Círculo con animación de pulso -->
           <div class="absolute inset-0 rounded-full bg-lime-400 animate-ping opacity-75"></div>
           <div class="relative px-3 py-1.5 rounded-full text-xs font-black
-                      bg-gradient-to-br from-lime-400 to-yellow-400 text-slate-900 
+                      bg-gradient-to-br from-lime-400 to-yellow-400 text-slate-900
                       shadow-lg flex items-center gap-1">
             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"/>
@@ -65,7 +65,7 @@
     <!-- Categoría flotante en la parte inferior -->
     @if (project.categorie.title) {
       <div class="absolute bottom-3 left-3 z-20">
-        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg 
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
                      bg-slate-900/80 backdrop-blur-md border border-white/10
                      text-xs font-medium text-white/90">
           <svg class="w-3.5 h-3.5 text-lime-400" fill="currentColor" viewBox="0 0 20 20">
@@ -81,7 +81,7 @@
   <div class="flex-1 flex flex-col p-5 space-y-3">
     <!-- Título del proyecto -->
     <div class="block group/title">
-      <h3 class="text-base font-bold text-white leading-tight line-clamp-2 
+      <h3 class="text-base font-bold text-white leading-tight line-clamp-2
                  group-hover/title:text-lime-300 transition-colors duration-200">
         {{ project.title }}
       </h3>
@@ -136,71 +136,114 @@
         <span class="text-xs text-white/50 font-medium">USD</span>
       }
     </div>
-    
+
     <!-- Botón de acción con estados -->
     <div class="pt-2">
       @if (isPurchased()) {
-        <a 
-          [routerLink]="['/project-detail', project._id]"
-          (click)="$event.stopPropagation()"
-          class="group/btn relative block w-full text-center px-4 py-3 rounded-xl 
-                 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 
-                 border border-emerald-500/40
-                 text-emerald-400 font-bold text-sm
-                 overflow-hidden
-                 hover:from-emerald-500/30 hover:to-teal-500/30 
-                 hover:border-emerald-400/60
-                 transition-all duration-300">
-          <span class="relative z-10 flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
-            </svg>
-            Ver Proyecto
-          </span>
-          <!-- Shine effect -->
-          <div class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full 
-                      bg-gradient-to-r from-transparent via-white/10 to-transparent 
-                      transition-transform duration-700 ease-out"></div>
-        </a>
-      } @else if (isInCart()) {
-        <button
-          disabled
-          class="w-full px-4 py-3 rounded-xl font-bold text-sm
-                 bg-slate-700/50 border border-slate-600/50
-                 text-slate-400 
-                 cursor-not-allowed
-                 flex items-center justify-center gap-2">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-          </svg>
-          En el Carrito
-        </button>
+        <!-- Si ya fue comprado: Mostrar botón de "Ver Proyecto" -->
+        <div class="flex gap-2">
+          <a
+            [routerLink]="['/project-detail', project._id]"
+            (click)="$event.stopPropagation()"
+            class="group/btn relative flex-1 text-center px-4 py-3 rounded-xl
+                   bg-gradient-to-r from-emerald-500/20 to-teal-500/20
+                   border border-emerald-500/40
+                   text-emerald-400 font-bold text-sm
+                   overflow-hidden
+                   hover:from-emerald-500/30 hover:to-teal-500/30
+                   hover:border-emerald-400/60
+                   transition-all duration-300">
+            <span class="relative z-10 flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+              </svg>
+              Ver Proyecto
+            </span>
+            <!-- Shine effect -->
+            <div class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full
+                        bg-gradient-to-r from-transparent via-white/10 to-transparent
+                        transition-transform duration-700 ease-out"></div>
+          </a>
+
+          <!-- Botón de video si existe -->
+          @if (project.url_video) {
+            <button
+              (click)="onOpenVideo($event)"
+              class="group/btn relative px-4 py-3 rounded-xl font-bold text-sm
+                     bg-gradient-to-r from-cyan-500/20 to-blue-500/20
+                     border border-cyan-500/40
+                     text-cyan-400
+                     overflow-hidden
+                     hover:from-cyan-500/30 hover:to-blue-500/30
+                     hover:border-cyan-400/60
+                     transition-all duration-300">
+              <span class="relative z-10 flex items-center justify-center gap-1.5">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="hidden sm:inline">Video</span>
+              </span>
+              <!-- Shine effect -->
+              <div class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full
+                          bg-gradient-to-r from-transparent via-white/10 to-transparent
+                          transition-transform duration-700 ease-out"></div>
+            </button>
+          }
+        </div>
       } @else {
-        <button
-          (click)="addToCart($event)"
-          class="group/btn relative w-full px-4 py-3 rounded-xl font-bold text-sm
-                 bg-gradient-to-r from-lime-400 to-emerald-400
-                 text-slate-900
-                 overflow-hidden
-                 hover:from-lime-300 hover:to-emerald-300
-                 hover:shadow-lg hover:shadow-lime-500/30
-                 active:scale-95
-                 transition-all duration-200
-                 flex items-center justify-center gap-2">
-          <svg class="w-5 h-5 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-          </svg>
-          <span class="relative z-10">Agregar al Carrito</span>
-          <!-- Shine effect on hover -->
-          <div class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full 
-                      bg-gradient-to-r from-transparent via-white/30 to-transparent 
-                      transition-transform duration-500 ease-out"></div>
-        </button>
+        <!-- Si no fue comprado: Mostrar botón de "Comprar" y opcionalmente video -->
+        <div class="flex gap-2">
+          <button
+            (click)="buyNow($event)"
+            class="group/btn relative flex-1 px-4 py-3 rounded-xl font-bold text-sm
+                   bg-gradient-to-r from-lime-400 to-emerald-400
+                   text-slate-900
+                   overflow-hidden
+                   hover:from-lime-300 hover:to-emerald-300
+                   hover:shadow-lg hover:shadow-lime-500/30
+                   active:scale-95
+                   transition-all duration-200
+                   flex items-center justify-center gap-2">
+            <svg class="w-5 h-5 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            <span class="relative z-10">Comprar - ${{ price() }}</span>
+            <!-- Shine effect on hover -->
+            <div class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full
+                        bg-gradient-to-r from-transparent via-white/30 to-transparent
+                        transition-transform duration-500 ease-out"></div>
+          </button>
+
+          <!-- Botón de video preview si existe -->
+          @if (project.url_video) {
+            <button
+              (click)="onOpenVideo($event)"
+              class="group/btn relative px-4 py-3 rounded-xl font-bold text-sm
+                     bg-gradient-to-r from-cyan-500/20 to-blue-500/20
+                     border border-cyan-500/40
+                     text-cyan-400
+                     overflow-hidden
+                     hover:from-cyan-500/30 hover:to-blue-500/30
+                     hover:border-cyan-400/60
+                     transition-all duration-300">
+              <span class="relative z-10 flex items-center justify-center gap-1.5">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="hidden sm:inline">Vista previa</span>
+              </span>
+              <!-- Shine effect -->
+              <div class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full
+                          bg-gradient-to-r from-transparent via-white/10 to-transparent
+                          transition-transform duration-700 ease-out"></div>
+            </button>
+          }
+        </div>
       }
     </div>
   </div>
 
   <!-- Efecto de brillo en hover (borde superior) -->
-  <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-lime-400/0 to-transparent 
+  <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-lime-400/0 to-transparent
               group-hover:via-lime-400/60 transition-all duration-300"></div>
 </div>

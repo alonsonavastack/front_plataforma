@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { CourseCardComponent } from '../../shared/course-card/course-card';
 import { ProjectsCard } from '../../shared/projects-card/projects-card';
-import { Project as CoreProject } from '../../core/models/home.models';
+import { Project as CoreProject, CoursePublic } from '../../core/models/home.models';
 
 interface InstructorProfile {
   _id: string;
@@ -30,19 +30,6 @@ interface InstructorProfile {
   twitter?: string;
   github?: string;
   createdAt?: string;
-}
-
-interface Course {
-  _id: string;
-  title: string;
-  subtitle?: string;
-  slug: string;
-  imagen?: string;
-  price_usd: number;
-  level?: string;
-  categorie?: any;
-  avg_rating?: number;
-  count_class?: number;
 }
 
 interface InstructorProject {
@@ -73,7 +60,7 @@ export class InstructorProfileComponent implements OnInit {
 
   // Signals
   instructor = signal<InstructorProfile | null>(null);
-  courses = signal<Course[]>([]);
+  courses = signal<CoursePublic[]>([]);
   projects = signal<InstructorProject[]>([]);
   isLoading = signal(true);
   error = signal<string | null>(null);
@@ -289,7 +276,7 @@ export class InstructorProfileComponent implements OnInit {
     return `${environment.url}projects/imagen-project/${imagen}`; // ✅ projects (plural)
   }
 
-  navigateToCourse(course: Course): void {
+  navigateToCourse(course: CoursePublic): void {
     this.router.navigate(['/course-detail', course.slug]);
   }
 

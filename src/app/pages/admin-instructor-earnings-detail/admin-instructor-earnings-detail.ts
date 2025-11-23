@@ -29,7 +29,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
   selectedEarnings = signal<string[]>([]);
 
   filterForm = new FormGroup({
-    status: new FormControl('available'),
+    status: new FormControl('all'),
     startDate: new FormControl(''),
     endDate: new FormControl(''),
   });
@@ -145,7 +145,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
 
   clearFilters() {
     this.filterForm.reset({
-      status: 'available',
+      status: 'all',
       startDate: '',
       endDate: ''
     });
@@ -193,8 +193,11 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
   }
 
   selectAll() {
-    const allEarningIds = this.earnings().map(e => e._id);
-    this.selectedEarnings.set(allEarningIds);
+    // Solo seleccionar ganancias con estado 'available'
+    const availableEarningIds = this.earnings()
+      .filter(e => e.status === 'available')
+      .map(e => e._id);
+    this.selectedEarnings.set(availableEarningIds);
   }
 
   deselectAll() {

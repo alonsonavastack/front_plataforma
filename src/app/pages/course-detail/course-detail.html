@@ -85,21 +85,33 @@
                 </div>
               }
 
-              @if (studentHasCourse()) {
-                <div class="text-xs text-lime-300">Ya cuentas con este curso.</div>
-              } @else {
-                <div class="grid grid-cols-1 gap-2">
-                  <button class="h-11 rounded-xl border border-lime-400/40 bg-lime-400/10 text-lime-300 font-semibold
-                                 hover:border-lime-400 hover:shadow-[0_0_16px_#22c55e] transition"
-                          (click)="buyNow()">
+              <!-- 🎯 Estados del botón principal -->
+              <div class="space-y-2">
+                @if (studentHasCourse()) {
+                  <!-- Usuario ya tiene el curso -->
+                  <button
+                    disabled
+                    class="w-full h-11 rounded-xl border border-sky-500/40 bg-sky-500/20 text-sky-300 font-semibold cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    Comprado
+                  </button>
+                } @else {
+                  <!-- Compra directa: botón Comprar Ahora -->
+                  <button
+                    (click)="buyNow()"
+                    [disabled]="!authService.isLoggedIn()"
+                    class="w-full h-11 rounded-xl border border-lime-400/40 bg-lime-400/10 text-lime-300 font-semibold hover:border-lime-400 hover:shadow-[0_0_16px_#22c55e] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 3h2l1.5 9.5A2 2 0 007.5 15h7a2 2 0 001.9-1.5L19 6H5"/>
+                    </svg>
                     Comprar ahora
                   </button>
-                  <button class="h-11 rounded-xl border border-white/10 text-white/80 hover:text-lime-300 hover:border-lime-400/40 transition"
-                          (click)="addCourseToCart(course())">
-                    Agregar al carrito
-                  </button>
-                </div>
-              }
+                }
+              </div>
               <div class="text-xs text-white/50">
                 Acceso de por vida • Actualizaciones incluidas
               </div>

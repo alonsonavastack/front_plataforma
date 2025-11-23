@@ -6,6 +6,7 @@ import { AnimateService } from '../../core/animate.service';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { BankNotificationsService } from '../../core/services/bank-notifications.service';
 import { ReviewNotificationsService } from '../../core/services/review-notifications.service';
+import { RefundNotificationsService } from '../../core/services/refund-notifications.service';
 import { SystemConfigService } from '../../core/services/system-config.service';
 import { ClickOutsideDirective } from '../../shared/directives/click-outside.directive';
 import { initFlowbite } from 'flowbite';
@@ -26,6 +27,7 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
   notificationsService = inject(NotificationsService);
   bankNotificationsService = inject(BankNotificationsService);
   reviewNotificationsService = inject(ReviewNotificationsService);
+  refundNotificationsService = inject(RefundNotificationsService);
   systemConfigService = inject(SystemConfigService); // 🔥 NUEVO
 
   isSidebarCollapsed = input.required<boolean>();
@@ -42,6 +44,9 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Lógica para el menú de notificaciones de reviews (instructores)
   isReviewNotificationsMenuOpen = signal(false);
+
+  // 🆕 Lógica para el menú de notificaciones de reembolsos (admin/instructor)
+  isRefundNotificationsMenuOpen = signal(false);
 
   toggleProfileMenu() {
     this.isProfileMenuOpen.update(v => !v);
@@ -86,11 +91,47 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.isProfileMenuOpen()) this.isProfileMenuOpen.set(false);
     if (this.isNotificationsMenuOpen()) this.isNotificationsMenuOpen.set(false);
     if (this.isBankNotificationsMenuOpen()) this.isBankNotificationsMenuOpen.set(false);
+    if (this.isRefundNotificationsMenuOpen()) this.isRefundNotificationsMenuOpen.set(false);
 
     // Cargar notificaciones de reviews cuando se abre el menú
     if (this.isReviewNotificationsMenuOpen()) {
       this.reviewNotificationsService.loadNotifications();
     }
+  }
+
+  /**
+   * 🆕 Toggle menú de notificaciones de reembolsos
+   */
+  toggleRefundNotificationsMenu() {
+    this.isRefundNotificationsMenuOpen.update(v => !v);
+    // Cerrar otros menús
+    if (this.isProfileMenuOpen()) this.isProfileMenuOpen.set(false);
+    if (this.isNotificationsMenuOpen()) this.isNotificationsMenuOpen.set(false);
+    if (this.isBankNotificationsMenuOpen()) this.isBankNotificationsMenuOpen.set(false);
+    if (this.isReviewNotificationsMenuOpen()) this.isReviewNotificationsMenuOpen.set(false);
+
+    // Cargar notificaciones de reembolsos cuando se abre el menú
+    if (this.isRefundNotificationsMenuOpen()) {
+      this.refundNotificationsService.loadNotifications();
+    }
+  }
+
+  /**
+   * 🆕 Navegar a reembolsos con filtro
+   */
+  goToRefunds(refundId?: string) {
+    console.log('📍 [Topbar] Navegando a reembolsos:', refundId);
+    
+    // Cerrar el menú
+    this.isRefundNotificationsMenuOpen.set(false);
+
+    // Navegar a dashboard con query params
+    this.router.navigate(['/dashboard'], {
+      queryParams: {
+        section: 'refunds',
+        ...(refundId && { refundId })
+      }
+    });
   }
 
   reloadNotifications() {
@@ -169,6 +210,13 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
     // Instructor: Polling de reviews sin respuesta
     if (user?.rol === 'instructor') {
       this.reviewNotificationsService.startPolling();
+      // 🆕 Polling de reembolsos para instructor
+      this.refundNotificationsService.startPolling();
+    }
+
+    // 🆕 Admin: Polling de reembolsos
+    if (user?.rol === 'admin') {
+      this.refundNotificationsService.startPolling();
     }
   }
 
@@ -178,6 +226,7 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
     this.notificationsService.clearNotifications();
     this.bankNotificationsService.stopPolling();
     this.reviewNotificationsService.stopPolling();
+    this.refundNotificationsService.stopPolling(); // 🆕
   }
 
   logout() {

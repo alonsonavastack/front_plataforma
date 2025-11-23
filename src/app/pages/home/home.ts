@@ -6,7 +6,7 @@ import {
 } from "../../core/models/home.models";
 import { HomeService } from "../../core/services/home";
 import { AuthService } from "../../core/services/auth";
-import { CartService } from "../../core/services/cart.service";
+// import { CartService } from "../../core/services/cart.service"; // 🗑️ ELIMINADO - Sistema de compra directa
 
 import { CourseCardComponent } from "../../shared/course-card/course-card";
 import { environment } from "../../../environments/environment";
@@ -38,6 +38,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { Subscription } from 'rxjs';
 import { LegalModalComponent, LegalModalType } from '../../shared/legal-modal/legal-modal.component';
 import { RefundsService } from '../../core/services/refunds.service'; // 🔥 NUEVO
+import { WalletService } from '../../core/services/wallet.service'; // 💰 Para billetera
 
 @Component({
   standalone: true,
@@ -58,7 +59,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   api = inject(HomeService);
   private sanitizer = inject(DomSanitizer);
   private router = inject(Router);
-  cartService = inject(CartService);
+  // cartService = inject(CartService); // 🗑️ ELIMINADO - Sistema de compra directa
   authService = inject(AuthService);
   profileService = inject(ProfileService);
   categoriesService = inject(CategoriesService);
@@ -69,6 +70,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   systemConfigService = inject(SystemConfigService);
   private toast = inject(ToastService);
   refundsService = inject(RefundsService); // 🔥 NUEVO
+  walletService = inject(WalletService); // 💰 Para billetera
 
   // 🚨 Control de errores: Evitar múltiples toasts
   private hasShownConnectionError = signal<boolean>(false);
@@ -399,40 +401,35 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (url) this.videoModalUrl.set(url);
   }
 
-  // --- Cart Methods ---
-  isProjectInCart(projectId: string): boolean {
-    return this.cartService
-      .items()
-      .some(
-        (item) =>
-          item.product._id === projectId && item.product_type === "project"
-      );
-  }
-
-  addProjectToCart(project: Project): void {
+  // 🆕 COMPRA DIRECTA - Sin carrito
+  buyCourseDirect(course: CoursePublic): void {
     if (!this.authService.isLoggedIn()) {
       this.router.navigate(["/login"]);
       return;
     }
-    this.cartService.addToCart(project, "project");
+
+    // Navegar al checkout con el curso
+    this.router.navigate(['/checkout'], {
+      state: {
+        productType: 'course',
+        product: course
+      }
+    });
   }
 
-  isCourseInCart(courseId: string): boolean {
-    return this.cartService
-      .items()
-      .some(
-        (item) =>
-          item.product._id === courseId && item.product_type === "course"
-      );
-  }
-
-  addCourseToCart(course: CoursePublic, event: MouseEvent): void {
-    event.preventDefault();
+  buyProjectDirect(project: Project): void {
     if (!this.authService.isLoggedIn()) {
       this.router.navigate(["/login"]);
       return;
     }
-    this.cartService.addToCart(course, "course");
+
+    // Navegar al checkout con el proyecto
+    this.router.navigate(['/checkout'], {
+      state: {
+        productType: 'project',
+        product: project
+      }
+    });
   }
 
   // --- Course Enrollment Methods ---
@@ -440,15 +437,29 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (!this.authService.isLoggedIn()) {
       return false;
     }
-    
+
+    // 🔥 OPCIÓN 1: Verificar con enrolledCourses de ProfileService
+    const isEnrolledInProfile = this.enrolledCourses().some(
+      (enrollment: Enrollment) => enrollment.course?._id === courseId
+    );
+
+    // 🔥 OPCIÓN 2: Verificar con PurchasesService (más rápido)
+    const isPurchased = this.purchasesService.isPurchased(courseId);
+
+    console.log('🔍 [Home] Verificando curso:', {
+      courseId,
+      isEnrolledInProfile,
+      isPurchased,
+      result: isEnrolledInProfile || isPurchased
+    });
+
     // 🔥 FIX: Verificar si tiene reembolso completado
     if (this.refundsService && this.refundsService.hasCourseRefund(courseId)) {
       return false; // No mostrar como comprado si tiene reembolso
     }
-    
-    return this.enrolledCourses().some(
-      (enrollment: Enrollment) => enrollment.course?._id === courseId
-    );
+
+    // Retornar true si está en cualquiera de las dos fuentes
+    return isEnrolledInProfile || isPurchased;
   }
 
   // --- Project Purchase Methods ---
@@ -456,16 +467,30 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (!this.authService.isLoggedIn()) {
       return false;
     }
-    
+
+    // 🔥 OPCIÓN 1: Verificar con purchasedProjects de ProfileService
+    const isPurchasedInProfile = this.purchasedProjects().some(
+      (project: any) =>
+        project._id === projectId || project.project?._id === projectId
+    );
+
+    // 🔥 OPCIÓN 2: Verificar con PurchasesService (más rápido)
+    const isPurchased = this.purchasesService.isPurchased(projectId);
+
+    console.log('🔍 [Home] Verificando proyecto:', {
+      projectId,
+      isPurchasedInProfile,
+      isPurchased,
+      result: isPurchasedInProfile || isPurchased
+    });
+
     // 🔥 FIX: Verificar si tiene reembolso completado
     if (this.refundsService && this.refundsService.hasProjectRefund(projectId)) {
       return false; // No mostrar como comprado si tiene reembolso
     }
-    
-    return this.purchasedProjects().some(
-      (project: any) =>
-        project._id === projectId || project.project?._id === projectId
-    );
+
+    // Retornar true si está en cualquiera de las dos fuentes
+    return isPurchasedInProfile || isPurchased;
   }
 
   // ---------- Búsqueda pro ----------
@@ -510,9 +535,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (this.authService.isLoggedIn()) {
       this.profileService.reloadProfile();
       this.purchasesService.loadPurchasedProducts();
-      
+
       // 🔥 NUEVO: Cargar reembolsos para verificar estado de compras
       this.refundsService.loadRefunds();
+
+      // 💰 Cargar saldo de billetera
+      this.walletService.loadWallet();
     }
 
     // Cargar categorías e instructores (silencioso si falla)
