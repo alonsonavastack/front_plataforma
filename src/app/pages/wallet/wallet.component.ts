@@ -42,10 +42,36 @@ export class WalletComponent implements OnInit {
   // Computed: Estadísticas
   stats = computed(() => {
     const txs = this.transactions();
+    
+    // 💰 TOTAL RECIBIDO: Solo sumar los ingresos (credits)
+    // Esto incluye: reembolsos, créditos manuales, etc.
+    const totalCredits = txs
+      .filter(t => t.type === 'credit')
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    // 💳 TOTAL GASTADO: Solo sumar los gastos (debits)
+    // Esto incluye SOLO compras hechas CON DINERO DE LA WALLET
+    const totalDebits = txs
+      .filter(t => t.type === 'debit')
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    // 📊 BALANCE NETO: La diferencia entre lo recibido y lo gastado
+    // Esto debería coincidir con el balance actual de la wallet
+    const netBalance = totalCredits - totalDebits;
+    
+    console.log('📊 [Wallet Stats]', {
+      totalTransactions: txs.length,
+      totalCredits,
+      totalDebits,
+      netBalance,
+      currentBalance: this.balance()
+    });
+    
     return {
       totalTransactions: txs.length,
-      totalCredits: txs.filter(t => t.type === 'credit').reduce((sum, t) => sum + t.amount, 0),
-      totalDebits: txs.filter(t => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0)
+      totalCredits,
+      totalDebits,
+      netBalance
     };
   });
 

@@ -24,6 +24,7 @@ export const passwordsMatchValidator: ValidatorFn = (control: AbstractControl): 
 // RefundModalComponent no se usa - modal está en el template principal
 import { WalletService } from '../../core/services/wallet.service';
 import { lastValueFrom } from 'rxjs';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   standalone: true,
@@ -39,6 +40,7 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
   checkoutService = inject(CheckoutService);
   authService = inject(AuthService);
   walletService = inject(WalletService);
+  private toast = inject(ToastService);
   private sanitizer = inject(DomSanitizer);
   private http = inject(HttpClient);
   private route = inject(ActivatedRoute);
@@ -92,6 +94,32 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
       .filter((item: any) => selectedIds.has(item.product._id || item.product))
       .reduce((sum: number, item: any) => sum + (item.price_unit || 0), 0);
   });
+
+  // 🔥 NUEVO: Contar reembolsos completados para un producto específico
+  getCompletedRefundsCountForProduct(productId: string): number {
+    const refundList = this.refunds() as any[];
+    if (!refundList || refundList.length === 0) {
+      return 0;
+    }
+
+    const completedCount = refundList.filter((refund: any) => {
+      if (refund.status !== 'completed') return false;
+
+      const refundProductId = (refund.sale_detail_item?.product && typeof refund.sale_detail_item.product === 'object')
+        ? refund.sale_detail_item.product._id
+        : refund.sale_detail_item?.product;
+
+      return refundProductId === productId;
+    }).length;
+
+    console.log('📊 [getCompletedRefundsCountForProduct]', {
+      productId,
+      completedCount,
+      maxAllowed: 2
+    });
+
+    return completedCount;
+  }
 
   // 🔥 NUEVO: Verificar si un producto específico ya tiene reembolso
   hasRefundForProduct(saleId: string, productId: string): boolean {
@@ -190,16 +218,24 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
         return false;
       }
 
-      const hasRefund = this.hasRefundForProduct(sale._id, productId);
+      // 🔥 VALIDACIÓN 1: Verificar si ya tiene reembolso activo para esta compra
+      const hasActiveRefund = this.hasRefundForProduct(sale._id, productId);
+      
+      // 🔥 VALIDACIÓN 2: Verificar límite de reembolsos completados (2 máximo)
+      const completedCount = this.getCompletedRefundsCountForProduct(productId);
+      const reachedLimit = completedCount >= 2;
 
       console.log('📦 [getRefundableProducts] Producto:', {
         productId,
         title: item.title,
-        hasRefund,
-        isRefundable: !hasRefund
+        hasActiveRefund,
+        completedCount,
+        reachedLimit,
+        isRefundable: !hasActiveRefund && !reachedLimit
       });
 
-      return !hasRefund; // Solo productos sin reembolso
+      // Solo es reembolsable si NO tiene reembolso activo Y NO ha alcanzado el límite
+      return !hasActiveRefund && !reachedLimit;
     });
 
     console.log('✅ [getRefundableProducts] Productos reembolsables:', refundableProducts.length);
@@ -303,10 +339,25 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
         return Promise.resolve();
       }
 
+      // ✅ VALIDACIÓN CRÃTICA: Asegurar que productId NO sea undefined
+      const extractedProductId = typeof item.product === 'object' && item.product?._id 
+        ? item.product._id 
+        : item.product;
+
+      if (!extractedProductId) {
+        console.error('❌ [submitPartialRefund] product_id es undefined o null:', item);
+        return Promise.reject({ 
+          error: { 
+            message: 'Error al procesar el producto. Por favor, intenta nuevamente.',
+            reason: 'invalid_product_id'
+          } 
+        });
+      }
+
       // 🔥 PAYLOAD MEJORADO: Asegurar formato correcto
       const refundData = {
         sale_id: sale._id,
-        product_id: productId,
+        product_id: extractedProductId, // ✅ Usar el ID extraído y validado
         product_type: item.product_type,
         reason_type: reasonType,
         reason_description: reason.trim()
@@ -324,7 +375,12 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
     // Esperar a que todas las solicitudes se completen
     Promise.all(refundPromises)
       .then(() => {
-        alert(`✅ Solicitud de reembolso enviada correctamente para ${selectedIds.size} producto(s)\n\nTotal: ${this.selectedRefundTotal().toFixed(2)} USD`);
+        // 🎨 Toast de éxito
+        this.toast.success(
+          '¡Solicitud Enviada!',
+          `Reembolso de ${selectedIds.size} producto(s) solicitado correctamente (${this.selectedRefundTotal().toFixed(2)} USD)`,
+          7000
+        );
 
         // Cerrar modal
         this.showRefundProductSelector.set(false);
@@ -350,7 +406,26 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
       })
       .catch(error => {
         console.error('❌ Error al solicitar reembolso:', error);
-        alert('❌ Error al procesar la solicitud. Por favor, intenta nuevamente.');
+        
+        // 🔥 MANEJO MEJORADO: Verificar si es límite de reembolsos
+        const errorMessage = error.error?.message || error.message || 'Error al procesar la solicitud.';
+        const isMaxRefundsError = error.error?.reason === 'max_refunds_reached' || error.error?.show_toast;
+        
+        if (isMaxRefundsError) {
+          // 🎨 TOAST de advertencia (no error) para límite alcanzado
+          this.toast.warning(
+            'Límite Alcanzado',
+            errorMessage,
+            8000
+          );
+        } else {
+          // 🎨 TOAST de error para otros casos
+          this.toast.error(
+            'Error en Solicitud',
+            errorMessage,
+            7000
+          );
+        }
       })
       .finally(() => {
         this.isSubmittingRefund.set(false);
@@ -1080,8 +1155,12 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
         // Cerrar modal
         this.closeRefundModal();
 
-        // Mostrar mensaje de éxito
-        alert('✅ Tu solicitud de reembolso ha sido enviada correctamente. Te notificaremos cuando sea procesada.');
+        // 🎨 Toast de éxito profesional
+        this.toast.success(
+          '¡Solicitud Enviada!',
+          'Tu reembolso será procesado pronto. Te notificaremos.',
+          7000
+        );
 
         // Recargar perfil
         this.profileStudentService.loadProfile().subscribe({
@@ -1096,7 +1175,13 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('❌ [ProfileStudent] Error en solicitud:', err);
         const errorMessage = err.error?.message || 'Ocurrió un error al procesar tu solicitud.';
-        alert(`❌ ${errorMessage}`);
+        
+        // 🎨 Toast de error profesional
+        this.toast.error(
+          'Error en Solicitud',
+          errorMessage,
+          7000
+        );
       }
     });
   }

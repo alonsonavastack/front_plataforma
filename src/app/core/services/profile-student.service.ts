@@ -135,27 +135,47 @@ export class ProfileStudentService {
       
       console.log('🔍 [ProfileStudentService] Cursos antes de filtrar:', originalCount);
 
-      // Obtener IDs de cursos reembolsados
-      const refundedCourseIds = new Set<string>();
+      // Obtener IDs de cursos reembolsados CON FECHA
+      const refundedCourses = new Map(); // courseId -> refund date
       
       refunds.forEach((r: any) => {
         if (r.status === 'completed' && r.course) {
           const courseId = typeof r.course === 'string' ? r.course : r.course._id;
+          const refundDate = new Date(r.completedAt || r.createdAt);
+          
           if (courseId) {
-            console.log(`  🚫 Curso reembolsado: ${courseId}`);
-            refundedCourseIds.add(courseId);
+            console.log(`  🚫 Curso reembolsado: ${courseId} (${refundDate.toISOString()})`);
+            refundedCourses.set(courseId, refundDate);
           }
         }
       });
 
-      console.log('📋 [ProfileStudentService] Total IDs de cursos a filtrar:', refundedCourseIds.size);
+      console.log('📋 [ProfileStudentService] Total IDs de cursos reembolsados:', refundedCourses.size);
 
-      // Filtrar cursos
+      // Filtrar cursos - VERIFICAR SI LA COMPRA ES POSTERIOR AL REEMBOLSO
       data.enrolled_courses = data.enrolled_courses.filter((enrollment: any) => {
         const courseId = enrollment.course._id;
-        const shouldKeep = !refundedCourseIds.has(courseId);
-        console.log(`  ${shouldKeep ? '✅ Mantener' : '❌ Filtrar'}: ${enrollment.course.title} (${courseId})`);
-        return shouldKeep;
+        const enrollmentDate = new Date(enrollment.createdAt);
+        
+        // Si NO tiene reembolso, mantener
+        if (!refundedCourses.has(courseId)) {
+          console.log(`  ✅ Mantener: ${enrollment.course.title} (sin reembolso)`);
+          return true;
+        }
+        
+        // Si tiene reembolso, verificar si la inscripción es POSTERIOR al reembolso
+        const refundDate = refundedCourses.get(courseId);
+        const isPurchaseAfterRefund = enrollmentDate > refundDate;
+        
+        if (isPurchaseAfterRefund) {
+          console.log(`  ✅ Mantener: ${enrollment.course.title} (comprado DESPUÉS del reembolso)`);
+          console.log(`     Reembolso: ${refundDate.toISOString()}, Compra: ${enrollmentDate.toISOString()}`);
+          return true;
+        }
+        
+        console.log(`  ❌ Filtrar: ${enrollment.course.title} (reembolsado y no recomprado)`);
+        console.log(`     Reembolso: ${refundDate.toISOString()}, Compra: ${enrollmentDate.toISOString()}`);
+        return false;
       });
 
       // Actualizar contadores
@@ -173,26 +193,77 @@ export class ProfileStudentService {
       console.log('🔍 [ProfileStudentService] Proyectos antes de filtrar:', originalCount);
       console.log('🔍 [ProfileStudentService] Reembolsos a procesar:', refunds.length);
 
-      // Obtener IDs de proyectos reembolsados
-      const refundedProjectIds = new Set<string>();
+      // Obtener IDs de proyectos reembolsados CON FECHA
+      const refundedProjects = new Map(); // projectId -> refund date
       
       refunds.forEach((r: any) => {
         if (r.status === 'completed' && r.project) {
           const projectId = typeof r.project === 'string' ? r.project : r.project._id;
+          const refundDate = new Date(r.completedAt || r.createdAt);
+          
           if (projectId) {
-            console.log(`  🚫 Proyecto reembolsado: ${projectId}`);
-            refundedProjectIds.add(projectId);
+            console.log(`  🚫 Proyecto reembolsado: ${projectId} (${refundDate.toISOString()})`);
+            refundedProjects.set(projectId, refundDate);
           }
         }
       });
 
-      console.log('📋 [ProfileStudentService] Total IDs de proyectos a filtrar:', refundedProjectIds.size);
+      console.log('📋 [ProfileStudentService] Total IDs de proyectos reembolsados:', refundedProjects.size);
 
-      // Filtrar proyectos
+      // 🔥 NUEVO: Buscar fechas de compra de proyectos en Sales
+      const projectPurchaseDates = new Map(); // projectId -> purchase date
+      
+      if (data.sales && data.sales.length > 0) {
+        data.sales.forEach((sale: any) => {
+          if (sale.detail && sale.detail.length > 0) {
+            sale.detail.forEach((item: any) => {
+              if (item.product_type === 'project') {
+                const projectId = typeof item.product === 'string' ? item.product : item.product?._id;
+                const purchaseDate = new Date(sale.createdAt);
+                
+                if (projectId) {
+                  // Si ya existe, mantener la fecha más reciente
+                  if (!projectPurchaseDates.has(projectId) || purchaseDate > projectPurchaseDates.get(projectId)) {
+                    projectPurchaseDates.set(projectId, purchaseDate);
+                    console.log(`  📅 Fecha de compra proyecto ${projectId}: ${purchaseDate.toISOString()}`);
+                  }
+                }
+              }
+            });
+          }
+        });
+      }
+
+      // Filtrar proyectos - VERIFICAR SI LA COMPRA ES POSTERIOR AL REEMBOLSO
       data.projects = data.projects.filter((project: any) => {
-        const shouldKeep = !refundedProjectIds.has(project._id);
-        console.log(`  ${shouldKeep ? '✅ Mantener' : '❌ Filtrar'}: ${project.title} (${project._id})`);
-        return shouldKeep;
+        const projectId = project._id;
+        
+        // Si NO tiene reembolso, mantener
+        if (!refundedProjects.has(projectId)) {
+          console.log(`  ✅ Mantener: ${project.title} (sin reembolso)`);
+          return true;
+        }
+        
+        // Si tiene reembolso, verificar si la compra es POSTERIOR al reembolso
+        const refundDate = refundedProjects.get(projectId);
+        const purchaseDate = projectPurchaseDates.get(projectId);
+        
+        if (!purchaseDate) {
+          console.log(`  ❌ Filtrar: ${project.title} (no se encontró fecha de compra)`);
+          return false;
+        }
+        
+        const isPurchaseAfterRefund = purchaseDate > refundDate;
+        
+        if (isPurchaseAfterRefund) {
+          console.log(`  ✅ Mantener: ${project.title} (comprado DESPUÉS del reembolso)`);
+          console.log(`     Reembolso: ${refundDate.toISOString()}, Compra: ${purchaseDate.toISOString()}`);
+          return true;
+        }
+        
+        console.log(`  ❌ Filtrar: ${project.title} (reembolsado y no recomprado)`);
+        console.log(`     Reembolso: ${refundDate.toISOString()}, Compra: ${purchaseDate.toISOString()}`);
+        return false;
       });
 
       console.log(`✅ Proyectos después de filtrar: ${data.projects.length} (Excluidos: ${originalCount - data.projects.length})`);

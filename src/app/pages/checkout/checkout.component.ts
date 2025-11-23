@@ -408,14 +408,18 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   closeSuccessModalAndRedirect(): void {
     this.showSuccess.set(false);
 
-    // 🔥 NUEVO: Si pagó 100% con billetera, no mostrar advertencia y redirigir directo
+    // 🔥 FIX: Si pagó 100% con billetera, NO mostrar modal de advertencia
     if (this.isFullWalletPayment()) {
       console.log('✨ Pago 100% con billetera - Omitiendo modal de advertencia');
-      this.closeWarningAndRedirect();
+      // Redirigir directo sin mostrar el modal de transferencia
+      const productType = this.productType();
+      const fragment = productType === 'project' ? 'projects' : 'courses';
+      console.log(`📨 Redirigiendo a profile-student#${fragment}`);
+      this.router.navigate(['/profile-student'], { fragment });
       return;
     }
 
-    // 🔥 Mostrar el modal de advertencia para pagos mixtos o transferencias
+    // 🔥 Solo mostrar el modal de advertencia para pagos mixtos o transferencias
     this.showWarningModal.set(true);
   }
 
