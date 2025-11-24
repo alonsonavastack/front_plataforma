@@ -318,6 +318,26 @@ export class HomeComponent implements OnInit, OnDestroy {
   constructor() {
     // 🔇 LOGS SILENCIADOS - Solo toasts para usuario
     // Los effects se mantienen pero sin logs en consola
+
+    // 🔍 DEBUG: Inspect purchased products
+    effect(() => {
+      const projects = this.profileService.purchasedProjects();
+      const purchases = this.purchasesService.getPurchasedProducts()();
+      const isLoading = this.purchasesService.isLoading();
+      const isLoaded = this.purchasesService.isLoaded();
+      
+      console.log('🔍 [Home Debug] Estado de compras:', {
+        isLoading,
+        isLoaded,
+        purchasesCount: purchases.size,
+        projectsCount: projects.length,
+        isLoggedIn: this.authService.isLoggedIn()
+      });
+      
+      if (isLoaded && purchases.size > 0) {
+        console.log('👁️ [Home Debug] IDs de compras:', Array.from(purchases));
+      }
+    });
   }
 
   // ---------- Error-safe helpers ----------
@@ -438,28 +458,17 @@ export class HomeComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    // 🔥 OPCIÓN 1: Verificar con enrolledCourses de ProfileService
-    const isEnrolledInProfile = this.enrolledCourses().some(
-      (enrollment: Enrollment) => enrollment.course?._id === courseId
-    );
-
-    // 🔥 OPCIÓN 2: Verificar con PurchasesService (más rápido)
+    // ✅ SOLUCIÓN CORRECTA: Solo usar PurchasesService
+    // El backend ya filtra productos reembolsados, así que confiamos en esa lógica
     const isPurchased = this.purchasesService.isPurchased(courseId);
 
     console.log('🔍 [Home] Verificando curso:', {
       courseId,
-      isEnrolledInProfile,
       isPurchased,
-      result: isEnrolledInProfile || isPurchased
+      purchasesLoaded: this.purchasesService.isLoaded()
     });
 
-    // 🔥 FIX: Verificar si tiene reembolso completado
-    if (this.refundsService && this.refundsService.hasCourseRefund(courseId)) {
-      return false; // No mostrar como comprado si tiene reembolso
-    }
-
-    // Retornar true si está en cualquiera de las dos fuentes
-    return isEnrolledInProfile || isPurchased;
+    return isPurchased;
   }
 
   // --- Project Purchase Methods ---
@@ -468,29 +477,17 @@ export class HomeComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    // 🔥 OPCIÓN 1: Verificar con purchasedProjects de ProfileService
-    const isPurchasedInProfile = this.purchasedProjects().some(
-      (project: any) =>
-        project._id === projectId || project.project?._id === projectId
-    );
-
-    // 🔥 OPCIÓN 2: Verificar con PurchasesService (más rápido)
+    // ✅ SOLUCIÓN CORRECTA: Solo usar PurchasesService
+    // El backend ya filtra productos reembolsados, así que confiamos en esa lógica
     const isPurchased = this.purchasesService.isPurchased(projectId);
 
     console.log('🔍 [Home] Verificando proyecto:', {
       projectId,
-      isPurchasedInProfile,
       isPurchased,
-      result: isPurchasedInProfile || isPurchased
+      purchasesLoaded: this.purchasesService.isLoaded()
     });
 
-    // 🔥 FIX: Verificar si tiene reembolso completado
-    if (this.refundsService && this.refundsService.hasProjectRefund(projectId)) {
-      return false; // No mostrar como comprado si tiene reembolso
-    }
-
-    // Retornar true si está en cualquiera de las dos fuentes
-    return isPurchasedInProfile || isPurchased;
+    return isPurchased;
   }
 
   // ---------- Búsqueda pro ----------
@@ -533,14 +530,25 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     // Cargar datos del usuario si está autenticado
     if (this.authService.isLoggedIn()) {
+      console.log('👤 [Home] Usuario autenticado, cargando datos...');
+      
       this.profileService.reloadProfile();
       this.purchasesService.loadPurchasedProducts();
 
-      // 🔥 NUEVO: Cargar reembolsos para verificar estado de compras
-      this.refundsService.loadRefunds();
-
       // 💰 Cargar saldo de billetera
       this.walletService.loadWallet();
+
+      // 🔎 DEBUG: Verificar estado después de 3 segundos
+      setTimeout(() => {
+        console.log('📄 [Home] Estado después de cargar:', {
+          enrolled: this.enrolledCourses().length,
+          projects: this.purchasedProjects().length,
+          purchasesLoaded: this.purchasesService.isLoaded(),
+          purchasesCount: this.purchasesService.getPurchasedProducts()().size
+        });
+      }, 3000);
+    } else {
+      console.log('⚠️ [Home] Usuario NO autenticado');
     }
 
     // Cargar categorías e instructores (silencioso si falla)

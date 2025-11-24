@@ -28,6 +28,7 @@ interface PaymentConfig {
   instructor: Instructor;
   paymentMethod: string;
   paymentDetails: BankAccount;
+  bankDetails?: BankAccount; // 🔥 Nuevo campo del backend
 }
 
 @Component({
@@ -56,7 +57,8 @@ export class AdminBankVerificationComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.http.get<{ success: boolean; instructors: any[] }>(`${environment.url}admin/instructors/payments?status=all`)
+    // 🔥 USAR NUEVO ENDPOINT: Obtener todos los instructores con cuenta bancaria
+    this.http.get<{ success: boolean; instructors: any[] }>(`${environment.url}admin/bank-accounts/all`)
       .subscribe({
         next: (response) => {
           if (response.success && response.instructors) {
@@ -83,7 +85,8 @@ export class AdminBankVerificationComponent implements OnInit {
       this.http.get<{ success: boolean; data: PaymentConfig }>(`${environment.url}admin/instructors/${id}/payment-method-full`)
         .subscribe({
           next: (response) => {
-            if (response.success && response.data && response.data.paymentDetails) {
+            // 🔥 ACEPTAR si tiene bankDetails (nuevo) O paymentDetails (legacy/fallback)
+            if (response.success && response.data) {
               instructorsData.push(response.data);
               this.logger.debug('Detalles de pago cargados', { instructorId: id });
             }
@@ -95,9 +98,9 @@ export class AdminBankVerificationComponent implements OnInit {
             // El error se registra en consola para debugging
           },
           complete: () => {
-            // Solo incluir instructores con cuentas bancarias
+            // 🔥 FILTRO RELAJADO: Incluir si tiene bankDetails (aunque su método preferido sea otro)
             const bankAccounts = instructorsData.filter(config =>
-              config.paymentMethod === 'bank_transfer' && config.paymentDetails
+              config.bankDetails || (config.paymentMethod === 'bank_transfer' && config.paymentDetails)
             );
             this.instructors.set(bankAccounts);
             this.logger.operation('LoadBankAccounts', 'success', { count: bankAccounts.length });
@@ -124,11 +127,19 @@ export class AdminBankVerificationComponent implements OnInit {
 
           // Actualizar el estado local
           this.instructors.update(items =>
-            items.map(item =>
-              item.instructor._id === instructorId
-                ? { ...item, paymentDetails: { ...item.paymentDetails, verified: true } }
-                : item
-            )
+            items.map(item => {
+              if (item.instructor._id === instructorId) {
+                const updated = { ...item };
+                if (updated.paymentDetails) {
+                  updated.paymentDetails = { ...updated.paymentDetails, verified: true };
+                }
+                if (updated.bankDetails) {
+                  updated.bankDetails = { ...updated.bankDetails, verified: true };
+                }
+                return updated;
+              }
+              return item;
+            })
           );
           this.verifyingInstructorId.set(null);
         },

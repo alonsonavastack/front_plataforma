@@ -264,19 +264,40 @@ export class RefundsService {
     }
   }
 
-  // 🔥 NUEVO: Verificar si un curso tiene reembolso completado
+  // 🔥 CORREGIDO: Verificar si un curso tiene reembolso completado
+  // NOTA: Este método ya NO se usa para verificar compras en el HOME
+  // porque no distingue entre múltiples compras del mismo producto
   hasCourseRefund(courseId: string): boolean {
-    return this.refunds().some(r => 
+    const refundsCount = this.refunds().filter(r => 
       r.status === 'completed' && 
       r.course?._id === courseId
-    );
+    ).length;
+    
+    console.log(`🔍 [RefundsService] Curso ${courseId} tiene ${refundsCount} reembolsos completados`);
+    return refundsCount > 0;
   }
 
-  // 🔥 NUEVO: Verificar si un proyecto tiene reembolso completado
+  // 🔥 CORREGIDO: Verificar si un proyecto tiene reembolso completado
+  // NOTA: Este método ya NO se usa para verificar compras en el HOME
+  // porque no distingue entre múltiples compras del mismo producto
   hasProjectRefund(projectId: string): boolean {
-    return this.refunds().some(r => 
+    const refundsCount = this.refunds().filter(r => 
       r.status === 'completed' && 
       r.project?._id === projectId
+    ).length;
+    
+    console.log(`🔍 [RefundsService] Proyecto ${projectId} tiene ${refundsCount} reembolsos completados`);
+    return refundsCount > 0;
+  }
+
+  // ✅ NUEVO: Verificar si una venta específica tiene reembolso completado
+  hasSaleRefund(saleId: string): boolean {
+    const hasRefund = this.refunds().some(r => 
+      r.status === 'completed' && 
+      r.sale?._id === saleId
     );
+    
+    console.log(`🔍 [RefundsService] Sale ${saleId} tiene reembolso: ${hasRefund}`);
+    return hasRefund;
   }
 }

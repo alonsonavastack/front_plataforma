@@ -1,0 +1,45 @@
+// 🔍 QUERY PARA VER DETALLES DE TODAS LAS VENTAS
+// Ejecutar en MongoDB Compass en la colección "sales"
+
+// OPCIÓN 1: Ver todas las ventas del usuario con proyección de campos importantes
+{
+  "user": ObjectId("691ca8ae140226c9a89570ef")
+}
+
+// Projection (pestaña Options → Project):
+{
+  "_id": 1,
+  "total": 1,
+  "status": 1,
+  "detail": 1,
+  "createdAt": 1,
+  "n_transaccion": 1
+}
+
+// OPCIÓN 2: Ver venta específica (la que falta en los logs)
+{
+  "_id": ObjectId("69235ffe099238a8ea3bd381")
+}
+
+// =============================================
+// INFORMACIÓN NECESARIA:
+// =============================================
+// Para cada venta, necesito saber:
+// 1. detail[0].product (ID del producto)
+// 2. detail[0].product_type (course o project)
+// 3. detail[0].title (nombre del producto)
+
+// EJEMPLO de lo que debería ver:
+// {
+//   "_id": ObjectId("69235ffe099238a8ea3bd381"),
+//   "total": 16,
+//   "status": "Pagado",
+//   "detail": [
+//     {
+//       "product": ObjectId("690977c08db14650c0b1c1bb"),
+//       "product_type": "project",
+//       "title": "Contador para facturas",
+//       "price_unit": 16
+//     }
+//   ]
+// }

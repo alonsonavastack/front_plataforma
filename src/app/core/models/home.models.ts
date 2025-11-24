@@ -140,6 +140,7 @@ export interface CoursePublic {
   N_STUDENTS?: number;
   N_REVIEWS?: number;
   AVG_RATING?: string | number;
+  student_has_course?: boolean; // ✅ Indica si el estudiante ya tiene el curso
   // Añadir otras propiedades públicas del curso si son necesarias
 }
 
@@ -242,6 +243,7 @@ export interface Project {
   files?: ProjectFile[]; // Archivos ZIP adjuntos al proyecto
   featured?: boolean; // Añadido para saber si es destacado
   createdAt?: string; // ✅ Fecha de creación
+  student_has_project?: boolean; // ✅ Indica si el estudiante ya tiene el proyecto
   // Campos de descuento
   discount_active?: {
     _id: string;

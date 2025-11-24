@@ -291,7 +291,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
 
     // Los proyectos usan 'imagen', los cursos pueden usar 'imagen' o 'image'
     const imageName = product.imagen || product.image;
-    
+
     if (!imageName) {
       return 'https://i.pravatar.cc/40?u=' + (product.title || 'placeholder');
     }
