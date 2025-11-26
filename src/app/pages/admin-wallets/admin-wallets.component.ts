@@ -50,11 +50,11 @@ export class AdminWalletsComponent implements OnInit {
   });
 
   // Computed para estadísticas
-  totalBalance = computed(() => 
+  totalBalance = computed(() =>
     this.wallets().reduce((sum, wallet) => sum + wallet.balance, 0)
   );
 
-  walletsWithBalance = computed(() => 
+  walletsWithBalance = computed(() =>
     this.wallets().filter(wallet => wallet.balance > 0).length
   );
 
@@ -73,7 +73,7 @@ export class AdminWalletsComponent implements OnInit {
   selectedWalletDetails = signal<any>(null);
   loadingDetails = signal<boolean>(false);
 
-  constructor(private walletService: WalletService) {}
+  constructor(private walletService: WalletService) { }
 
   ngOnInit() {
     this.loadAllWallets();
@@ -84,13 +84,10 @@ export class AdminWalletsComponent implements OnInit {
    * ✅ El backend YA filtra solo usuarios con rol 'customer'
    */
   loadAllWallets() {
-    console.log('💰 [AdminWallets] Cargando billeteras de clientes...');
     this.loading.set(true);
 
     this.walletService.getAllWallets().subscribe({
       next: (wallets: Wallet[]) => {
-        console.log(`✅ [AdminWallets] Billeteras cargadas: ${wallets.length}`);
-        console.log('📊 [AdminWallets] Datos:', wallets);
 
         const walletsDisplay: WalletDisplay[] = wallets.map(wallet => {
           const lastTx = wallet.transactions && wallet.transactions.length > 0
@@ -113,15 +110,8 @@ export class AdminWalletsComponent implements OnInit {
 
         this.wallets.set(walletsDisplay);
         this.loading.set(false);
-
-        console.log('📈 [AdminWallets] Estadísticas:', {
-          total: walletsDisplay.length,
-          conSaldo: this.walletsWithBalance(),
-          balanceTotal: `$${this.totalBalance().toFixed(2)}`
-        });
       },
       error: (error) => {
-        console.error('❌ [AdminWallets] Error:', error);
         alert('Error al cargar billeteras: ' + (error.error?.message || error.message));
         this.loading.set(false);
       }
@@ -161,12 +151,6 @@ export class AdminWalletsComponent implements OnInit {
       return;
     }
 
-    console.log('➕ [AdminWallets] Agregando crédito:', {
-      userId: this.selectedUserId(),
-      amount: this.creditAmount(),
-      description: this.creditDescription()
-    });
-
     this.addingCredit.set(true);
 
     this.walletService.addCredit(
@@ -175,13 +159,11 @@ export class AdminWalletsComponent implements OnInit {
       this.creditDescription()
     ).subscribe({
       next: (response) => {
-        console.log('✅ [AdminWallets] Crédito agregado:', response);
         alert(`Crédito de $${this.creditAmount()} agregado exitosamente`);
         this.closeAddCreditModal();
         this.loadAllWallets(); // Recargar lista
       },
       error: (error) => {
-        console.error('❌ [AdminWallets] Error al agregar crédito:', error);
         alert('Error al agregar crédito: ' + (error.error?.message || error.message));
         this.addingCredit.set(false);
       }
@@ -196,7 +178,6 @@ export class AdminWalletsComponent implements OnInit {
     this.showDetailsModal.set(true);
     this.loadingDetails.set(true);
 
-    console.log('📋 [AdminWallets] Cargando detalles de:', wallet.userName);
 
     this.walletService.getUserWallet(wallet.userId).subscribe({
       next: (walletData) => {
@@ -205,10 +186,8 @@ export class AdminWalletsComponent implements OnInit {
           transactions: walletData.transactions
         });
         this.loadingDetails.set(false);
-        console.log('✅ [AdminWallets] Detalles cargados:', walletData);
       },
       error: (error) => {
-        console.error('❌ [AdminWallets] Error al cargar detalles:', error);
         alert('Error al cargar detalles');
         this.showDetailsModal.set(false);
         this.loadingDetails.set(false);

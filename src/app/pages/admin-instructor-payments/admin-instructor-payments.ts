@@ -3,6 +3,7 @@ import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminPaymentService, InstructorWithEarnings, CommissionSettings } from '../../core/services/admin-payment.service';
+import { ModalService } from '../../core/services/modal.service';
 
 @Component({
   selector: 'app-admin-instructor-payments',
@@ -13,6 +14,7 @@ import { AdminPaymentService, InstructorWithEarnings, CommissionSettings } from 
 export class AdminInstructorPaymentsComponent implements OnInit {
   private adminPaymentService = inject(AdminPaymentService);
   private router = inject(Router);
+  private modalService = inject(ModalService);
 
   instructors = signal<InstructorWithEarnings[]>([]);
   summary = signal<any>({});
@@ -82,7 +84,6 @@ export class AdminInstructorPaymentsComponent implements OnInit {
         this.isLoadingSettings.set(false);
       },
       error: (err) => {
-        console.error('Error al cargar configuración:', err);
         this.isLoadingSettings.set(false);
       }
     });
@@ -107,7 +108,6 @@ export class AdminInstructorPaymentsComponent implements OnInit {
     const status = filters.status || 'all';
     const minAmount = filters.minAmount || 0;
 
-    console.log(`🔍 [Frontend] Cargando instructores con status='${status}', minAmount=${minAmount}`);
 
     this.adminPaymentService.getInstructorsWithEarnings(status, minAmount).subscribe({
       next: (response) => {
@@ -244,25 +244,31 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   // 🔧 NUEVO: Procesar ventas existentes para crear ganancias
   isProcessingSales = signal(false);
 
-  processExistingSales() {
-    if (!confirm('⚠️ ¿Procesar productos de ventas existentes?\n\nEsto creará registros de ganancias para los instructores por cada producto vendido que aún no tenga ganancias asociadas.\n\n⚠️ IMPORTANTE: NO se crearán ganancias para productos con reembolso completado.\n\n¿Deseas continuar?')) {
+  async processExistingSales() {
+    const confirmed = await this.modalService.confirm({
+      title: '¿Procesar productos de ventas existentes?',
+      message: 'Esto creará registros de ganancias para los instructores por cada producto vendido que aún no tenga ganancias asociadas.\n\n⚠️ IMPORTANTE: NO se crearán ganancias para productos con reembolso completado.\n\n¿Deseas continuar?',
+      icon: 'warning',
+      confirmText: 'Aceptar',
+      cancelText: 'Cancelar'
+    });
+
+    if (!confirmed) {
       return;
     }
 
     this.isProcessingSales.set(true);
-    console.log('🔧 [Frontend] Iniciando procesamiento de productos de ventas existentes...');
 
     this.adminPaymentService.processExistingSales().subscribe({
       next: (result) => {
-        console.log('✅ [Frontend] Resultado:', result);
         this.isProcessingSales.set(false);
 
         let message = `✅ Proceso completado:\n\n` +
-              `📦 Productos procesados: ${result.processed}\n` +
-              `⏩ Productos omitidos: ${result.skipped}\n` +
-              `   (ver detalles más abajo)\n` +
-              `📊 Total de productos: ${result.total}\n` +
-              `💳 Ventas revisadas: ${result.sales_reviewed}\n\n`;
+          `📦 Productos procesados: ${result.processed}\n` +
+          `⏩ Productos omitidos: ${result.skipped}\n` +
+          `   (ver detalles más abajo)\n` +
+          `📊 Total de productos: ${result.total}\n` +
+          `💳 Ventas revisadas: ${result.sales_reviewed}\n\n`;
 
         // Incluir detalles si el backend los devolvió (diagnóstico)
         if (result.skipped_details && Array.isArray(result.skipped_details) && result.skipped_details.length > 0) {
@@ -291,15 +297,24 @@ export class AdminInstructorPaymentsComponent implements OnInit {
 
         message += 'Recargando lista de instructores...';
 
-        alert(message);
+        this.modalService.alert({
+          title: 'Proceso Completado',
+          message: message,
+          icon: 'success',
+          confirmText: 'Entendido'
+        });
 
         // Recargar la lista de instructores
         this.loadInstructors();
       },
       error: (err) => {
-        console.error('❌ [Frontend] Error al procesar ventas:', err);
         this.isProcessingSales.set(false);
-        alert('❌ Error al procesar ventas: ' + (err.error?.message || err.message));
+        this.modalService.alert({
+          title: 'Error',
+          message: '❌ Error al procesar ventas: ' + (err.error?.message || err.message),
+          icon: 'error',
+          confirmText: 'Cerrar'
+        });
       }
     });
   }

@@ -1,8 +1,9 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { ToastService } from './toast.service';
 
 export interface WalletTransaction {
   _id: string;
@@ -24,90 +25,65 @@ export interface Wallet {
   transactions: WalletTransaction[];
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class WalletService {
   private baseUrl = environment.url + 'wallet';
+  private http = inject(HttpClient);
+  private toastService = inject(ToastService);
 
-  // Signals para el estado de la billetera
-  balance = signal<number>(0);
-  currency = signal<string>('USD');
-  transactions = signal<WalletTransaction[]>([]);
-  loading = signal<boolean>(false);
-  error = signal<string>('');
+  // ✅ Signals simples
+  private walletData = signal<Wallet | null>(null);
+  private walletLoading = signal(false);
 
-  // Signal legacy para compatibilidad
-  currentBalance = signal<number>(0);
+  // 📊 Computed values
+  balance = computed(() => this.walletData()?.balance ?? 0);
+  currency = computed(() => this.walletData()?.currency ?? 'USD');
+  transactions = computed(() => this.walletData()?.transactions ?? []);
+  loading = this.walletLoading.asReadonly();
+  error = signal<string | null>(null);
 
-  constructor(private http: HttpClient) {}
+  // Legacy compatibility
+  currentBalance = this.balance;
 
-  /**
-   * Cargar billetera usando signals
-   */
+  // 🔄 Cargar billetera
   loadWallet(): void {
-    this.loading.set(true);
-    this.error.set('');
+    this.walletLoading.set(true);
 
-    this.getMyWallet().subscribe({
+    this.http.get<Wallet>(`${this.baseUrl}/my-wallet`).subscribe({
       next: (wallet) => {
-        console.log('💰 [WalletService] Wallet loaded:', wallet);
-        this.balance.set(wallet.balance);
-        this.currency.set(wallet.currency);
-        this.transactions.set(wallet.transactions || []);
-        this.loading.set(false);
+        this.walletData.set(wallet);
+        this.walletLoading.set(false);
       },
       error: (error) => {
-        console.error('❌ [WalletService] Error loading wallet:', error);
-        this.error.set('Error al cargar la billetera');
-        this.loading.set(false);
+        this.toastService.error('Error', 'No se pudo cargar la billetera');
+        this.error.set('No se pudo cargar la billetera');
+        this.walletLoading.set(false);
       }
     });
   }
 
-  /**
-   * Obtener billetera completa del usuario actual
-   */
+  reloadWallet(): void {
+    this.loadWallet();
+  }
+
   getMyWallet(): Observable<Wallet> {
-    return this.http.get<Wallet>(`${this.baseUrl}/my-wallet`).pipe(
-      tap(wallet => {
-        this.currentBalance.set(wallet.balance);
-      })
-    );
+    return this.http.get<Wallet>(`${this.baseUrl}/my-wallet`);
   }
 
-  /**
-   * Obtener solo el balance actual
-   */
   getBalance(): Observable<{ balance: number; currency: string }> {
-    return this.http.get<{ balance: number; currency: string }>(`${this.baseUrl}/balance`).pipe(
-      tap(data => {
-        this.currentBalance.set(data.balance);
-      })
+    return this.http.get<{ balance: number; currency: string }>(`${this.baseUrl}/balance`);
+  }
+
+  addCredit(userId: string, amount: number, description: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/add-credit`, { userId, amount, description }).pipe(
+      tap(() => this.loadWallet())
     );
   }
 
-  /**
-   * Agregar crédito manualmente (Solo Admin)
-   */
-  addCredit(userId: string, amount: number, description: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/add-credit`, {
-      userId,
-      amount,
-      description
-    });
-  }
-
-  /**
-   * Obtener todas las billeteras (Solo Admin)
-   */
   getAllWallets(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/admin/all-wallets`);
   }
 
-  /**
-   * Obtener billetera de un usuario específico (Solo Admin)
-   */
   getUserWallet(userId: string): Observable<Wallet> {
     return this.http.get<Wallet>(`${this.baseUrl}/admin/user-wallet/${userId}`);
   }

@@ -95,8 +95,8 @@ interface SaleRecord {
             <label class="block text-sm font-medium text-slate-300 mb-2">Fecha Inicio</label>
             <input 
               type="date" 
-              [(ngModel)]="startDate"
-              (change)="applyFilters()"
+              [ngModel]="startDate()"
+              (ngModelChange)="startDate.set($event); applyFilters()"
               class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-lime-500 focus:border-transparent"
             />
           </div>
@@ -105,8 +105,8 @@ interface SaleRecord {
             <label class="block text-sm font-medium text-slate-300 mb-2">Fecha Fin</label>
             <input 
               type="date" 
-              [(ngModel)]="endDate"
-              (change)="applyFilters()"
+              [ngModel]="endDate()"
+              (ngModelChange)="endDate.set($event); applyFilters()"
               class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-lime-500 focus:border-transparent"
             />
           </div>
@@ -115,8 +115,8 @@ interface SaleRecord {
           <div>
             <label class="block text-sm font-medium text-slate-300 mb-2">Tipo de Producto</label>
             <select 
-              [(ngModel)]="productType"
-              (change)="applyFilters()"
+              [ngModel]="productType()"
+              (ngModelChange)="productType.set($event); applyFilters()"
               class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-lime-500 focus:border-transparent"
             >
               <option value="">Todos</option>
@@ -129,8 +129,8 @@ interface SaleRecord {
           <div>
             <label class="block text-sm font-medium text-slate-300 mb-2">Método de Pago</label>
             <select 
-              [(ngModel)]="paymentMethod"
-              (change)="applyFilters()"
+              [ngModel]="paymentMethod()"
+              (ngModelChange)="paymentMethod.set($event); applyFilters()"
               class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-lime-500 focus:border-transparent"
             >
               <option value="">Todos</option>
@@ -283,7 +283,7 @@ interface SaleRecord {
 })
 export class SalesReportComponent implements OnInit, AfterViewInit {
   @ViewChild('salesChart') salesChartRef!: ElementRef<HTMLCanvasElement>;
-  
+
   private reportsService = inject(ReportsService);
   private chart: Chart | null = null;
 
@@ -291,11 +291,11 @@ export class SalesReportComponent implements OnInit, AfterViewInit {
   sales = signal<SaleRecord[]>([]);
   isLoading = signal(false);
 
-  // 🔍 Filtros
-  startDate = '';
-  endDate = '';
-  productType = '';
-  paymentMethod = '';
+  // 🔍 Filtros (Signals)
+  startDate = signal('');
+  endDate = signal('');
+  productType = signal('');
+  paymentMethod = signal('');
 
   // 📄 Paginación
   currentPage = signal(1);
@@ -305,19 +305,24 @@ export class SalesReportComponent implements OnInit, AfterViewInit {
   filteredSales = computed(() => {
     let filtered = this.sales();
 
-    if (this.startDate) {
-      filtered = filtered.filter(s => new Date(s.dateCreated) >= new Date(this.startDate));
+    const start = this.startDate();
+    const end = this.endDate();
+    const type = this.productType();
+    const method = this.paymentMethod();
+
+    if (start) {
+      filtered = filtered.filter(s => new Date(s.dateCreated) >= new Date(start));
     }
-    if (this.endDate) {
-      filtered = filtered.filter(s => new Date(s.dateCreated) <= new Date(this.endDate));
+    if (end) {
+      filtered = filtered.filter(s => new Date(s.dateCreated) <= new Date(end));
     }
-    if (this.productType === 'course') {
+    if (type === 'course') {
       filtered = filtered.filter(s => s.course);
-    } else if (this.productType === 'project') {
+    } else if (type === 'project') {
       filtered = filtered.filter(s => s.project);
     }
-    if (this.paymentMethod) {
-      filtered = filtered.filter(s => s.paymentMethod === this.paymentMethod);
+    if (method) {
+      filtered = filtered.filter(s => s.paymentMethod === method);
     }
 
     return filtered;
@@ -353,14 +358,14 @@ export class SalesReportComponent implements OnInit, AfterViewInit {
     this.isLoading.set(true);
     try {
       const response = await this.reportsService.getSalesReport().toPromise();
-      
+
       if (response && response.sales) {
-        console.log('✅ Ventas cargadas:', response.sales.length);
+
         this.sales.set(response.sales);
         setTimeout(() => this.renderChart(), 200);
       }
     } catch (error) {
-      console.error('❌ Error cargando ventas:', error);
+
     } finally {
       this.isLoading.set(false);
     }
@@ -372,16 +377,16 @@ export class SalesReportComponent implements OnInit, AfterViewInit {
   }
 
   clearFilters() {
-    this.startDate = '';
-    this.endDate = '';
-    this.productType = '';
-    this.paymentMethod = '';
+    this.startDate.set('');
+    this.endDate.set('');
+    this.productType.set('');
+    this.paymentMethod.set('');
     this.applyFilters();
   }
 
   renderChart() {
     if (!this.salesChartRef) return;
-    
+
     const canvas = this.salesChartRef.nativeElement;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -398,8 +403,8 @@ export class SalesReportComponent implements OnInit, AfterViewInit {
       return acc;
     }, {} as Record<string, number>);
 
-    const labels = Object.keys(salesByDay).sort((a, b) => 
-      new Date(a.split('/').reverse().join('-')).getTime() - 
+    const labels = Object.keys(salesByDay).sort((a, b) =>
+      new Date(a.split('/').reverse().join('-')).getTime() -
       new Date(b.split('/').reverse().join('-')).getTime()
     );
     const data = labels.map(label => salesByDay[label]);
@@ -429,12 +434,12 @@ export class SalesReportComponent implements OnInit, AfterViewInit {
           }
         },
         scales: {
-          y: { 
+          y: {
             beginAtZero: true,
             ticks: { color: 'rgb(148, 163, 184)' },
             grid: { color: 'rgba(148, 163, 184, 0.1)' }
           },
-          x: { 
+          x: {
             ticks: { color: 'rgb(148, 163, 184)' },
             grid: { color: 'rgba(148, 163, 184, 0.1)' }
           }
@@ -462,7 +467,7 @@ export class SalesReportComponent implements OnInit, AfterViewInit {
 
   exportToPDF() {
     const doc = new jsPDF();
-    
+
     doc.text('Reporte de Ventas', 14, 20);
     doc.setFontSize(10);
     doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, 14, 28);

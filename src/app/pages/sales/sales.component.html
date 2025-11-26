@@ -8,30 +8,31 @@
           <h1 class="text-3xl font-bold text-white">Panel de Ventas</h1>
           <p class="text-slate-400 mt-1">
             @if (isInstructor()) {
-              Ventas de tus cursos y proyectos
+            Ventas de tus cursos y proyectos
             } @else {
-              Gestiona y revisa todas las transacciones
+            Gestiona y revisa todas las transacciones
             }
           </p>
           @if (isInstructor()) {
-            <div class="mt-3 flex items-center gap-2 text-xs text-lime-400">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <span>Solo se muestran las ventas que incluyen tus productos</span>
-            </div>
+          <div class="mt-3 flex items-center gap-2 text-xs text-lime-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>Solo se muestran las ventas que incluyen tus productos</span>
+          </div>
           }
         </div>
         @if (isAdmin()) {
-          <button
-            (click)="exportSales()"
-            class="flex items-center gap-2 px-4 py-2 bg-lime-400 text-slate-900 font-semibold rounded-lg hover:bg-lime-300 transition"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            Exportar
-          </button>
+        <button (click)="exportSales()"
+          class="flex items-center gap-2 px-4 py-2 bg-lime-400 text-slate-900 font-semibold rounded-lg hover:bg-lime-300 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+            </path>
+          </svg>
+          Exportar
+        </button>
         }
       </div>
     </header>
@@ -43,32 +44,34 @@
         <div class="flex items-center justify-between mb-4">
           <div class="w-12 h-12 rounded-xl bg-lime-500/20 flex items-center justify-center">
             <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+              </path>
             </svg>
           </div>
         </div>
         <h3 class="text-slate-400 text-sm font-medium mb-1">
           @if (isInstructor()) {
-            Mis Ingresos
+          Mis Ingresos
           } @else {
-            Total Ingresos
+          Total Ingresos
           }
         </h3>
         <p class="text-3xl font-bold text-white">${{ stats().totalIngresos | number:'1.2-2' }}</p>
-        
+
         <!-- ✅ NUEVO: Mostrar total reembolsado -->
         @if (stats().totalReembolsado > 0) {
-          <p class="text-xs text-orange-400 mt-2">
-            🔄 Reembolsado: ${{ stats().totalReembolsado | number:'1.2-2' }}
-          </p>
+        <p class="text-xs text-orange-400 mt-2">
+          🔄 Reembolsado: ${{ stats().totalReembolsado | number:'1.2-2' }}
+        </p>
         } @else {
-          <p class="text-lime-400 text-sm mt-2">
-            @if (isInstructor()) {
-              De tus productos
-            } @else {
-              Ventas pagadas
-            }
-          </p>
+        <p class="text-lime-400 text-sm mt-2">
+          @if (isInstructor()) {
+          De tus productos
+          } @else {
+          Ventas pagadas
+          }
+        </p>
         }
       </div>
 
@@ -77,23 +80,24 @@
         <div class="flex items-center justify-between mb-4">
           <div class="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center">
             <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
             </svg>
           </div>
         </div>
         <h3 class="text-slate-400 text-sm font-medium mb-1">
           @if (isInstructor()) {
-            Mis Ventas
+          Mis Ventas
           } @else {
-            Total Ventas
+          Total Ventas
           }
         </h3>
         <p class="text-3xl font-bold text-white">{{ stats().totalVentas }}</p>
         <p class="text-cyan-400 text-sm mt-2">
           @if (isInstructor()) {
-            Con tus productos
+          Con tus productos
           } @else {
-            Ventas activas
+          Ventas activas
           }
         </p>
       </div>
@@ -103,7 +107,8 @@
         <div class="flex items-center justify-between mb-4">
           <div class="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
             <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
           </div>
         </div>
@@ -117,7 +122,8 @@
         <div class="flex items-center justify-between mb-4">
           <div class="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
             <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
           </div>
         </div>
@@ -131,7 +137,9 @@
         <div class="flex items-center justify-between mb-4">
           <div class="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center">
             <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+              </path>
             </svg>
           </div>
         </div>
@@ -143,57 +151,55 @@
 
     <!-- Estadísticas por Instructor (Solo para Admin) -->
     @if (isAdmin() && statsByInstructor().length > 0) {
-      <div class="bg-slate-900/50 border border-white/10 rounded-2xl p-6 mb-8">
-        <div class="flex items-center justify-between mb-6">
-          <div>
-            <h2 class="text-xl font-bold text-white">Ingresos por Instructor</h2>
-            <p class="text-slate-400 text-sm mt-1">Desglose de ventas por curso</p>
-          </div>
-          <button
-            (click)="toggleInstructorStats()"
-            class="text-lime-400 hover:text-lime-300 transition"
-          >
-            @if (showInstructorStats()) {
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-              </svg>
-            } @else {
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            }
-          </button>
+    <div class="bg-slate-900/50 border border-white/10 rounded-2xl p-6 mb-8">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-bold text-white">Ingresos por Instructor</h2>
+          <p class="text-slate-400 text-sm mt-1">Desglose de ventas por curso</p>
         </div>
+        <button (click)="toggleInstructorStats()" class="text-lime-400 hover:text-lime-300 transition">
+          @if (showInstructorStats()) {
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+          </svg>
+          } @else {
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+          }
+        </button>
+      </div>
 
-        @if (showInstructorStats()) {
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            @for (instructor of statsByInstructor(); track instructor.instructorId) {
-              <div class="bg-slate-800/50 border border-white/5 rounded-xl p-4">
-                <div class="flex items-center gap-3 mb-3">
-                  <div class="w-10 h-10 rounded-full bg-lime-500/20 flex items-center justify-center">
-                    <svg class="w-5 h-5 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                    </svg>
-                  </div>
-                  <div class="flex-1">
-                    <h4 class="text-white font-semibold">{{ instructor.instructorName }}</h4>
-                  </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                  <div class="bg-slate-900/50 rounded-lg p-3">
-                    <p class="text-slate-400 text-xs">Ventas</p>
-                    <p class="text-white font-bold">{{ instructor.totalVentas }}</p>
-                  </div>
-                  <div class="bg-slate-900/50 rounded-lg p-3">
-                    <p class="text-slate-400 text-xs">Ingresos</p>
-                    <p class="text-lime-400 font-bold">${{ instructor.totalIngresos | number:'1.2-2' }}</p>
-                  </div>
-                </div>
-              </div>
-            }
+      @if (showInstructorStats()) {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (instructor of statsByInstructor(); track instructor.instructorId) {
+        <div class="bg-slate-800/50 border border-white/5 rounded-xl p-4">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-lime-500/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <h4 class="text-white font-semibold">{{ instructor.instructorName }}</h4>
+            </div>
           </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-slate-900/50 rounded-lg p-3">
+              <p class="text-slate-400 text-xs">Ventas</p>
+              <p class="text-white font-bold">{{ instructor.totalVentas }}</p>
+            </div>
+            <div class="bg-slate-900/50 rounded-lg p-3">
+              <p class="text-slate-400 text-xs">Ingresos</p>
+              <p class="text-lime-400 font-bold">${{ instructor.totalIngresos | number:'1.2-2' }}</p>
+            </div>
+          </div>
+        </div>
         }
       </div>
+      }
+    </div>
     }
 
     <!-- Filtros -->
@@ -204,23 +210,16 @@
         <!-- Búsqueda -->
         <div class="lg:col-span-2">
           <label class="block text-sm font-medium text-slate-300 mb-2">Buscar</label>
-          <input
-            type="text"
-            [(ngModel)]="searchTerm"
-            (ngModelChange)="applyFilters()"
+          <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()"
             placeholder="Transacción, cliente..."
-            class="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5"
-          />
+            class="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5" />
         </div>
 
         <!-- Estado -->
         <div>
           <label class="block text-sm font-medium text-slate-300 mb-2">Estado</label>
-          <select
-            [(ngModel)]="statusFilter"
-            (ngModelChange)="applyFilters()"
-            class="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5"
-          >
+          <select [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()"
+            class="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5">
             <option value="">Todos</option>
             <option value="Pagado">Pagado</option>
             <option value="Pendiente">Pendiente</option>
@@ -231,14 +230,11 @@
         <!-- Mes -->
         <div>
           <label class="block text-sm font-medium text-slate-300 mb-2">Mes</label>
-          <select
-            [(ngModel)]="selectedMonth"
-            (ngModelChange)="applyFilters()"
-            class="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5"
-          >
+          <select [(ngModel)]="selectedMonth" (ngModelChange)="applyFilters()"
+            class="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5">
             <option value="">Todos</option>
             @for (month of months; track month.value) {
-              <option [value]="month.value">{{ month.label }}</option>
+            <option [value]="month.value">{{ month.label }}</option>
             }
           </select>
         </div>
@@ -246,249 +242,268 @@
         <!-- Año -->
         <div>
           <label class="block text-sm font-medium text-slate-300 mb-2">Año</label>
-          <select
-            [(ngModel)]="selectedYear"
-            (ngModelChange)="applyFilters()"
-            class="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5"
-          >
+          <select [(ngModel)]="selectedYear" (ngModelChange)="applyFilters()"
+            class="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5">
             @for (year of years(); track year) {
-              <option [value]="year">{{ year }}</option>
+            <option [value]="year">{{ year }}</option>
             }
           </select>
         </div>
       </div>
 
-      <button
-        (click)="clearFilters()"
-        class="text-sm text-slate-400 hover:text-lime-400 transition"
-      >
+      <button (click)="clearFilters()" class="text-sm text-slate-400 hover:text-lime-400 transition">
         Limpiar filtros
       </button>
     </div>
 
     <!-- Controles de Paginación y Selector -->
     @if (sales().length > 0) {
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-        <div class="text-sm text-slate-400">
-          Mostrando {{ (currentPage() - 1) * itemsPerPage() + 1 }} -
-          {{ Math.min(currentPage() * itemsPerPage(), sales().length) }}
-          de {{ sales().length }} ventas
-        </div>
-        <div class="flex items-center gap-2">
-          <label for="items-per-page" class="text-sm text-slate-400">Mostrar:</label>
-          <select id="items-per-page" [value]="itemsPerPage()" (change)="changePerPage(+$any($event.target).value)" class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-1.5 focus:ring-lime-400 focus:border-lime-400">
-            <option [value]="10">10</option>
-            <option [value]="15">15</option>
-            <option [value]="20">20</option>
-          </select>
-        </div>
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+      <div class="text-sm text-slate-400">
+        Mostrando {{ (currentPage() - 1) * itemsPerPage() + 1 }} -
+        {{ Math.min(currentPage() * itemsPerPage(), sales().length) }}
+        de {{ sales().length }} ventas
       </div>
+      <div class="flex items-center gap-2">
+        <label for="items-per-page" class="text-sm text-slate-400">Mostrar:</label>
+        <select id="items-per-page" [value]="itemsPerPage()" (change)="changePerPage(+$any($event.target).value)"
+          class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-1.5 focus:ring-lime-400 focus:border-lime-400">
+          <option [value]="10">10</option>
+          <option [value]="15">15</option>
+          <option [value]="20">20</option>
+        </select>
+      </div>
+    </div>
     }
 
     <!-- Indicador de carga principal -->
     @if (isLoading()) {
-      <div class="flex justify-center items-center py-20">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
-        <p class="ml-4 text-slate-300">Cargando ventas...</p>
-      </div>
+    <div class="flex justify-center items-center py-20">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
+      <p class="ml-4 text-slate-300">Cargando ventas...</p>
+    </div>
     }
 
     <!-- Tabla de ventas -->
     @if (!isLoading() && paginatedSales().length > 0) {
-      <div class="bg-slate-900/50 border border-white/10 rounded-2xl overflow-x-auto">
-        <table class="min-w-full leading-normal">
-          <thead>
-            <tr class="border-b border-slate-700 bg-slate-800/50 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              <th class="px-5 py-3">Detalles</th>
-              <th class="px-5 py-3">Transacción</th>
-              <th class="px-5 py-3">Cliente</th>
-              <th class="px-5 py-3 text-center">Total</th>
-              <th class="px-5 py-3 text-center">Estado</th>
-              <th class="px-5 py-3">Fecha</th>
-              @if (isAdmin()) {
-                <th class="px-5 py-3 text-center">Acciones</th>
-              } @else {
-                <!-- DEBUG: isAdmin is false, user role: {{ currentUser()?.rol }} -->
-              }
-            </tr>
-          </thead>
-          <tbody class="text-slate-300">
-            @for (sale of paginatedSales(); track sale._id) {
-              <tr 
-                id="sale-{{ sale._id }}"
-                class="border-b border-slate-800 hover:bg-slate-800/70 transition-all duration-300">
-                <td class="px-5 py-4">
-                  <button (click)="toggleDetails(sale._id)" class="text-lime-400 hover:text-lime-300 font-medium text-sm">
-                    {{ isDetailsVisible(sale._id) ? 'Ocultar' : 'Ver' }}
-                  </button>
-                </td>
-                <td class="px-5 py-4 text-sm whitespace-nowrap font-mono">{{ sale.n_transaccion }}</td>
-                <td class="px-5 py-4">
-                  <div class="flex items-center">
-                    <div class="text-sm">
-                      <p class="font-medium">{{ sale.user.name }} {{ sale.user.surname }}</p>
-                      <p class="text-slate-400 text-xs">{{ sale.user.email }}</p>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-5 py-4 text-center">
-                  <div class="flex flex-col items-center gap-1">
-                    <span class="font-semibold text-sm" 
-                          [ngClass]="sale.refund?.status === 'completed' ? 'line-through text-slate-500' : 'text-white'">
-                      {{ sale.total | currency:'USD' }}
-                    </span>
-                    
-                    <!-- 🔥 NUEVO: Mostrar monto reembolsado -->
-                    @if (sale.refund?.status === 'completed') {
-                      <span class="text-xs font-medium text-orange-400 flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
-                        </svg>
-                        ${{ (sale.refund?.calculations?.refundAmount ?? sale.total) | number:'1.2-2' }}
-                      </span>
-                    }
-                  </div>
-                </td>
-                <td class="px-5 py-4 text-center">
-                  <div class="flex flex-col items-center gap-2">
-                    <span
-                      [ngClass]="{
+    <div class="bg-slate-900/50 border border-white/10 rounded-2xl overflow-x-auto">
+      <table class="min-w-full leading-normal">
+        <thead>
+          <tr
+            class="border-b border-slate-700 bg-slate-800/50 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <th class="px-5 py-3">Detalles</th>
+            <th class="px-5 py-3">Transacción</th>
+            <th class="px-5 py-3">Cliente</th>
+            <th class="px-5 py-3 text-center">Total</th>
+            <th class="px-5 py-3 text-center">Estado</th>
+            <th class="px-5 py-3">Fecha</th>
+            @if (isAdmin()) {
+            <th class="px-5 py-3 text-center">Acciones</th>
+            } @else {
+            <!-- DEBUG: isAdmin is false, user role: {{ currentUser()?.rol }} -->
+            }
+          </tr>
+        </thead>
+        <tbody class="text-slate-300">
+          @for (sale of paginatedSales(); track sale._id) {
+          <tr id="sale-{{ sale._id }}"
+            class="border-b border-slate-800 hover:bg-slate-800/70 transition-all duration-300">
+            <td class="px-5 py-4">
+              <button (click)="toggleDetails(sale._id)" class="text-lime-400 hover:text-lime-300 font-medium text-sm">
+                {{ isDetailsVisible(sale._id) ? 'Ocultar' : 'Ver' }}
+              </button>
+            </td>
+            <td class="px-5 py-4 text-sm whitespace-nowrap font-mono">{{ sale.n_transaccion }}</td>
+            <td class="px-5 py-4">
+              <div class="flex items-center">
+                <div class="text-sm">
+                  <p class="font-medium">{{ sale.user.name }} {{ sale.user.surname }}</p>
+                  <p class="text-slate-400 text-xs">{{ sale.user.email }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-4 text-center">
+              <div class="flex flex-col items-center gap-1">
+                <span class="font-semibold text-sm"
+                  [ngClass]="sale.refund?.status === 'completed' ? 'line-through text-slate-500' : 'text-white'">
+                  {{ sale.total | currency:'USD' }}
+                </span>
+
+                <!-- 🔥 NUEVO: Mostrar monto reembolsado -->
+                @if (sale.refund?.status === 'completed') {
+                <span class="text-xs font-medium text-orange-400 flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                  </svg>
+                  ${{ (sale.refund?.calculations?.refundAmount ?? sale.total) | number:'1.2-2' }}
+                </span>
+                }
+              </div>
+            </td>
+            <td class="px-5 py-4 text-center">
+              <div class="flex flex-col items-center gap-2">
+                <span [ngClass]="{
                         'bg-green-500/10 text-green-400 ring-1 ring-green-500/30': sale.status === 'Pagado' && !sale.refund,
                         'bg-yellow-500/10 text-yellow-400 ring-1 ring-yellow-500/30': sale.status === 'Pendiente',
                         'bg-red-500/10 text-red-400 ring-1 ring-red-500/30': sale.status === 'Anulado',
                         'bg-slate-700/50 text-slate-400 ring-1 ring-slate-600': sale.refund?.status === 'completed'
                       }"
-                      class="inline-flex items-center gap-2 py-1.5 px-3 rounded-full text-xs font-medium transition-all">
-                      {{ sale.status }}
-                    </span>
-                    
-                    <!-- 🔥 NUEVO: Badge de reembolso más visible -->
-                    @if (sale.refund?.status === 'completed') {
-                      <span class="px-3 py-1 bg-gradient-to-r from-orange-600 to-red-600 text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1.5">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        REEMBOLSADO
-                      </span>
-                    }
-                  </div>
-                </td>
-                <td class="px-5 py-4 text-sm">{{ sale.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
-                @if (isAdmin()) {
-                  <td class="px-5 py-4 text-center">
-                    @if (sale.status === 'Pendiente') {
-                      <div class="flex items-center justify-center gap-2">
-                        <button (click)="updateStatus(sale._id, 'Pagado')" [disabled]="updatingStatusId() === sale._id"
-                          class="bg-lime-500 text-slate-900 text-xs font-bold py-2 px-3 rounded-md hover:bg-lime-400 disabled:bg-slate-600 disabled:cursor-not-allowed flex items-center justify-center">
-                          @if (updatingStatusId() === sale._id && currentStatusAction() === 'Pagado') {
-                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          } @else {
-                            <span>Aprobar</span>
-                          }
-                        </button>
-                        <button (click)="updateStatus(sale._id, 'Anulado')" [disabled]="updatingStatusId() === sale._id"
-                          class="bg-red-500/80 text-white text-xs font-bold py-2 px-3 rounded-md hover:bg-red-500 disabled:bg-slate-600 disabled:cursor-not-allowed flex items-center justify-center">
-                          @if (updatingStatusId() === sale._id && currentStatusAction() === 'Anulado') {
-                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          } @else {
-                            <span>Cancelar</span>
-                          }
-                        </button>
-                      </div>
-                    } @else {
-                      <span class="text-slate-500 text-sm">-</span>
-                    }
-                  </td>
+                  class="inline-flex items-center gap-2 py-1.5 px-3 rounded-full text-xs font-medium transition-all">
+                  {{ sale.status }}
+                </span>
+
+                <!-- 🔥 NUEVO: Badge de reembolso más visible -->
+                @if (sale.refund?.status === 'completed') {
+                <span
+                  class="px-3 py-1 bg-gradient-to-r from-orange-600 to-red-600 text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1.5">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                    </path>
+                  </svg>
+                  REEMBOLSADO
+                </span>
                 }
-              </tr>
-              <!-- Fila de detalles (desplegable) -->
-              @if (isDetailsVisible(sale._id)) {
-                <tr class="bg-slate-800/50">
-                  <td [attr.colspan]="isAdmin() ? 7 : 6" class="p-4 border-t border-slate-700">
-                    <h4 class="text-md font-semibold mb-3 text-slate-300">Productos en esta venta:</h4>
-                    <div class="space-y-3">
-                      @for (item of sale.detail; track item.product._id) {
-                        <div class="flex items-center p-3 bg-slate-900 rounded-lg border border-slate-700">
-                          <img [src]="getProductImageUrl(item)" alt="{{ item.product.title }}" class="w-24 h-16 object-cover rounded-md mr-4">
-                          <div class="flex-grow">
-                            <p class="font-bold text-white">{{ item.product.title || 'Producto no disponible' }}</p>
-                            <p class="text-sm text-slate-400">{{ item.product_type === 'course' ? 'Curso' : 'Proyecto' }}</p>
-                          </div>
-                          <div class="text-right">
-                            <p class="font-semibold text-lime-400">{{ item.price_unit | currency:'USD' }}</p>
-                          </div>
-                        </div>
-                      }
-                    </div>
-                  </td>
-                </tr>
+              </div>
+            </td>
+            <td class="px-5 py-4 text-sm">{{ sale.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            @if (isAdmin()) {
+            <td class="px-5 py-4 text-center">
+              @if (sale.status === 'Pendiente') {
+              <div class="flex flex-col gap-2">
+                @if (sale.voucher_image) {
+                <a [href]="buildVoucherUrl(sale.voucher_image)" target="_blank"
+                  class="flex items-center justify-center gap-1 w-full bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-xs font-bold py-1.5 px-3 rounded-md transition-colors mb-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                    </path>
+                  </svg>
+                  Ver Voucher
+                </a>
+                }
+                <div class="flex items-center justify-center gap-2">
+                  <button (click)="updateStatus(sale._id, 'Pagado')" [disabled]="updatingStatusId() === sale._id"
+                    class="bg-lime-500 text-slate-900 text-xs font-bold py-2 px-3 rounded-md hover:bg-lime-400 disabled:bg-slate-600 disabled:cursor-not-allowed flex items-center justify-center flex-1">
+                    @if (updatingStatusId() === sale._id && currentStatusAction() === 'Pagado') {
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    } @else {
+                    <span>Aprobar</span>
+                    }
+                  </button>
+                  <button (click)="updateStatus(sale._id, 'Anulado')" [disabled]="updatingStatusId() === sale._id"
+                    class="bg-red-500/80 text-white text-xs font-bold py-2 px-3 rounded-md hover:bg-red-500 disabled:bg-slate-600 disabled:cursor-not-allowed flex items-center justify-center flex-1">
+                    @if (updatingStatusId() === sale._id && currentStatusAction() === 'Anulado') {
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    } @else {
+                    <span>Cancelar</span>
+                    }
+                  </button>
+                </div>
+              </div>
+              } @else {
+              <span class="text-slate-500 text-sm">-</span>
               }
+            </td>
             }
-          </tbody>
-        </table>
+          </tr>
+          <!-- Fila de detalles (desplegable) -->
+          @if (isDetailsVisible(sale._id)) {
+          <tr class="bg-slate-800/50">
+            <td [attr.colspan]="isAdmin() ? 7 : 6" class="p-4 border-t border-slate-700">
+              <h4 class="text-md font-semibold mb-3 text-slate-300">Productos en esta venta:</h4>
+              <div class="space-y-3">
+                @for (item of sale.detail; track item.product._id) {
+                <div class="flex items-center p-3 bg-slate-900 rounded-lg border border-slate-700">
+                  <img [src]="getProductImageUrl(item)" alt="{{ item.product.title }}"
+                    class="w-24 h-16 object-cover rounded-md mr-4">
+                  <div class="flex-grow">
+                    <p class="font-bold text-white">{{ item.product.title || 'Producto no disponible' }}</p>
+                    <p class="text-sm text-slate-400">{{ item.product_type === 'course' ? 'Curso' : 'Proyecto' }}</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="font-semibold text-lime-400">{{ item.price_unit | currency:'USD' }}</p>
+                  </div>
+                </div>
+                }
+              </div>
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Controles de Paginación (Abajo) -->
+    @if (totalPages() > 1) {
+    <div class="flex items-center justify-center gap-4 mt-8">
+      <!-- Botón Anterior -->
+      <button (click)="previousPage()" [disabled]="currentPage() === 1"
+        class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        <span>Anterior</span>
+      </button>
+
+      <!-- Números de página -->
+      <div class="hidden md:flex items-center gap-1">
+        @for (pageNum of pageNumbers(); track pageNum) {
+        @if (typeof pageNum === 'number') {
+        <button (click)="changePage(pageNum)" [class.bg-lime-400]="pageNum === currentPage()"
+          [class.text-slate-900]="pageNum === currentPage()" [class.bg-slate-800]="pageNum !== currentPage()"
+          [class.text-white]="pageNum !== currentPage()"
+          class="min-w-[40px] px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 transition-colors font-medium text-sm">
+          {{ pageNum }}
+        </button>
+        } @else {
+        <span class="px-2 text-slate-500">…</span>
+        }
+        }
       </div>
 
-      <!-- Controles de Paginación (Abajo) -->
-      @if (totalPages() > 1) {
-        <div class="flex items-center justify-center gap-4 mt-8">
-          <!-- Botón Anterior -->
-          <button (click)="previousPage()" [disabled]="currentPage() === 1"
-                  class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-            <span>Anterior</span>
-          </button>
-
-          <!-- Números de página -->
-          <div class="hidden md:flex items-center gap-1">
-            @for (pageNum of pageNumbers(); track pageNum) {
-              @if (typeof pageNum === 'number') {
-                <button (click)="changePage(pageNum)"
-                        [class.bg-lime-400]="pageNum === currentPage()"
-                        [class.text-slate-900]="pageNum === currentPage()"
-                        [class.bg-slate-800]="pageNum !== currentPage()"
-                        [class.text-white]="pageNum !== currentPage()"
-                        class="min-w-[40px] px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 transition-colors font-medium text-sm">
-                  {{ pageNum }}
-                </button>
-              } @else {
-                <span class="px-2 text-slate-500">…</span>
-              }
-            }
-          </div>
-
-          <!-- Botón Siguiente -->
-          <button (click)="nextPage()" [disabled]="currentPage() === totalPages()"
-                  class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-            <span>Siguiente</span>
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-          </button>
-        </div>
-      }
+      <!-- Botón Siguiente -->
+      <button (click)="nextPage()" [disabled]="currentPage() === totalPages()"
+        class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <span>Siguiente</span>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </button>
+    </div>
+    }
     }
 
     <!-- Mensaje si no hay ventas -->
     @if (!isLoading() && sales().length === 0 && (searchTerm() || statusFilter() || selectedMonth())) {
-      <div class="text-center py-20 bg-slate-900/50 border border-white/10 rounded-2xl">
-        <h3 class="mt-2 text-sm font-medium text-slate-300">No se encontraron ventas con los filtros aplicados</h3>
-        <p class="mt-1 text-sm text-slate-500">Intenta ajustar o limpiar los filtros para ver más resultados.</p>
-        <button (click)="clearFilters()" class="mt-4 px-4 py-2 bg-lime-400 text-slate-900 font-semibold rounded-lg hover:bg-lime-300 transition">
-          Limpiar filtros
-        </button>
-      </div>
+    <div class="text-center py-20 bg-slate-900/50 border border-white/10 rounded-2xl">
+      <h3 class="mt-2 text-sm font-medium text-slate-300">No se encontraron ventas con los filtros aplicados</h3>
+      <p class="mt-1 text-sm text-slate-500">Intenta ajustar o limpiar los filtros para ver más resultados.</p>
+      <button (click)="clearFilters()"
+        class="mt-4 px-4 py-2 bg-lime-400 text-slate-900 font-semibold rounded-lg hover:bg-lime-300 transition">
+        Limpiar filtros
+      </button>
+    </div>
     } @else if (!isLoading() && sales().length === 0) {
-      <div class="text-center py-20 bg-slate-900/50 border border-white/10 rounded-2xl">
-        <svg class="mx-auto h-12 w-12 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-          <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        <h3 class="mt-2 text-sm font-medium text-slate-300">No se encontraron ventas</h3>
-        <p class="mt-1 text-sm text-slate-500">
-          @if (isInstructor()) {
-            Aún no tienes ventas registradas de tus cursos y proyectos.
-          } @else {
-            Aún no se ha registrado ninguna transacción.
-          }
-        </p>
-      </div>
+    <div class="text-center py-20 bg-slate-900/50 border border-white/10 rounded-2xl">
+      <svg class="mx-auto h-12 w-12 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+        aria-hidden="true">
+        <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-slate-300">No se encontraron ventas</h3>
+      <p class="mt-1 text-sm text-slate-500">
+        @if (isInstructor()) {
+        Aún no tienes ventas registradas de tus cursos y proyectos.
+        } @else {
+        Aún no se ha registrado ninguna transacción.
+        }
+      </p>
+    </div>
     }
   </div>
 </div>

@@ -2,23 +2,24 @@
 
 <div class="min-h-screen bg-slate-950">
 
-  <!-- ERROR DEL RESOURCE -->
-  @if (hasHomeError()) {
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-      <div class="rounded-xl border border-red-400/40 bg-red-500/10 text-red-200 p-4">
-        <div class="font-semibold mb-1">No se pudo cargar el Home</div>
-        <div class="text-xs opacity-80 break-all">{{ homeErrorMessage() }}</div>
-        <button
-          class="mt-3 px-3 py-2 rounded-lg border border-white/10 hover:border-lime-400/40 hover:text-lime-300 transition"
-          (click)="reload()">
-          Reintentar
-        </button>
-      </div>
+  <!-- ✅ ERROR DEL RESOURCE -->
+  @if (hasError()) {
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+    <div class="rounded-xl border border-red-400/40 bg-red-500/10 text-red-200 p-4">
+      <div class="font-semibold mb-1">No se pudo cargar el Home</div>
+      <div class="text-xs opacity-80 break-all">No se pudo cargar el contenido. Por favor, verifica tu conexión a
+        internet e intenta de nuevo.</div>
+      <button
+        class="mt-3 px-3 py-2 rounded-lg border border-white/10 hover:border-lime-400/40 hover:text-lime-300 transition"
+        (click)="reload()">
+        Reintentar
+      </button>
     </div>
+  </div>
   }
 
   <!-- HERO + BUSCADOR -->
-    <app-header></app-header>
+  <app-header></app-header>
   <section class="relative">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div class="grid md:grid-cols-2 gap-8 items-center">
@@ -33,872 +34,834 @@
             <div class="relative">
               <!-- Input Container con Glass Morphism -->
               <div class="relative group">
-                <div class="absolute -inset-0.5 bg-gradient-to-r from-lime-400/20 via-yellow-400/20 to-emerald-400/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-300"></div>
+                <div
+                  class="absolute -inset-0.5 bg-gradient-to-r from-lime-400/20 via-yellow-400/20 to-emerald-400/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-300">
+                </div>
 
-                <div class="relative rounded-2xl bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl border border-white/10 shadow-2xl">
+                <div
+                  class="relative rounded-2xl bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl border border-white/10 shadow-2xl">
                   <div class="flex items-center px-5 h-14 gap-3">
                     <!-- Icono de búsqueda mejorado -->
                     <div class="flex items-center justify-center flex-shrink-0">
                       <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
                     </div>
 
                     <!-- Input -->
-                    <input
-                      type="text"
-                      [value]="q()"
-                      (input)="onSearchInput($any($event.target).value)"
-                      (keydown)="onSearchKeydown($event)"
-                      (focus)="isResultsVisible.set(true)"
+                    <input type="text" [value]="q()" (input)="onSearchInput($any($event.target).value)"
+                      (keydown)="onSearchKeydown($event)" (focus)="isResultsVisible.set(true)"
                       placeholder="Buscar cursos, proyectos o habilidades..."
                       class="w-full bg-transparent text-white placeholder:text-slate-500 focus:outline-none text-base font-medium"
                       autocomplete="off" />
 
                     <!-- Botón limpiar con animación -->
                     @if (q()) {
-                      <button
-                        class="flex-shrink-0 text-slate-400 hover:text-lime-300 hover:scale-110 transition-all duration-200 p-1 rounded-lg hover:bg-white/5"
-                        (click)="clearSearch(); $event.stopPropagation()"
-                        aria-label="Limpiar búsqueda"
-                        title="Limpiar búsqueda"
-                      >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                      </button>
+                    <button
+                      class="flex-shrink-0 text-slate-400 hover:text-lime-300 hover:scale-110 transition-all duration-200 p-1 rounded-lg hover:bg-white/5"
+                      (click)="clearSearch(); $event.stopPropagation()" aria-label="Limpiar búsqueda"
+                      title="Limpiar búsqueda">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                      </svg>
+                    </button>
                     }
                   </div>
 
                   <!-- Loading Indicator -->
                   @if (isSearchLoading()) {
-                    <div class="px-5 pb-3">
-                      <div class="flex items-center gap-2 text-sm text-lime-400">
-                        <div class="animate-spin h-4 w-4 border-2 border-lime-400 border-t-transparent rounded-full"></div>
-                        <span class="font-medium">Buscando...</span>
+                  <div class="px-5 pb-3">
+                    <div class="flex items-center gap-2 text-sm text-lime-400">
+                      <div class="animate-spin h-4 w-4 border-2 border-lime-400 border-t-transparent rounded-full">
                       </div>
+                      <span class="font-medium">Buscando...</span>
                     </div>
+                  </div>
                   }
 
                   <!-- Hint de mínimo caracteres -->
-                  @if (!selectedCategorie() && q().trim().length > 0 && q().trim().length < minLen) {
-                    <div class="px-5 pb-3">
-                      <div class="text-xs text-amber-400 font-medium flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                  @if (!selectedCategorie() && q().trim().length > 0 && q().trim().length < minLen) { <div
+                    class="px-5 pb-3">
+                    <div class="text-xs text-amber-400 font-medium flex items-center gap-1">
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                          d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                          clip-rule="evenodd"></path>
+                      </svg>
+                      Escribe al menos {{ minLen }} caracteres para buscar
+                    </div>
+                </div>
+                }
+              </div>
+            </div>
+
+            <!-- Panel de Resultados Ultra Moderno -->
+            @if (isResultsVisible() && q().length > 0) {
+            <div class="absolute top-full left-0 right-0 z-50 mt-3 animate-in slide-in-from-top-2 duration-300">
+              <div class="relative">
+                <!-- Sombra animada -->
+                <div
+                  class="absolute -inset-1 bg-gradient-to-r from-lime-500/20 via-yellow-500/20 to-emerald-500/20 rounded-3xl blur-xl opacity-75">
+                </div>
+
+                <div
+                  class="relative bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 border border-white/10 rounded-3xl shadow-2xl backdrop-blur-xl overflow-hidden">
+                  <!-- Header Elegante -->
+                  @if (!isSearchLoading() && searchRows().length > 0) {
+                  <div
+                    class="bg-gradient-to-r from-lime-500/10 to-emerald-500/10 border-b border-white/10 px-6 py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="p-2 bg-lime-500/20 rounded-xl">
+                        <svg class="w-5 h-5 text-lime-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+                          <path fill-rule="evenodd"
+                            d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clip-rule="evenodd"></path>
                         </svg>
-                        Escribe al menos {{ minLen }} caracteres para buscar
+                      </div>
+                      <div>
+                        <p class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Resultados</p>
+                        <p class="text-lg font-bold text-white">
+                          {{ searchRows().length }} {{ searchRows().length === 1 ? 'encontrado' : 'encontrados' }}
+                        </p>
                       </div>
                     </div>
+                    <button (click)="isResultsVisible.set(false); $event.stopPropagation()"
+                      class="p-2 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                      </svg>
+                    </button>
+                  </div>
+                  }
+
+                  <!-- Lista de resultados con scroll suave -->
+                  <div class="max-h-[60vh] overflow-y-auto overscroll-contain custom-scrollbar">
+                    <!-- Resultados -->
+                    @if (!isSearchLoading() && searchRows().length > 0) {
+                    <ul class="divide-y divide-white/5">
+                      @for (item of searchRows(); track item._id) {
+                      <li
+                        class="group hover:bg-gradient-to-r hover:from-lime-500/5 hover:to-emerald-500/5 transition-all">
+                        <a (mousedown)="navigateToDetail(item)" class="flex items-start gap-4 px-6 py-4 cursor-pointer">
+                          <!-- Imagen con efecto hover -->
+                          <div class="relative flex-shrink-0">
+                            <img
+                              [src]="item.item_type === 'course' ? getCourseImageUrl(item.imagen) : buildProjectImageUrl(item.imagen)"
+                              [alt]="item.title"
+                              class="w-16 h-16 rounded-xl object-cover border-2 border-slate-700 group-hover:border-lime-400/50 transition-all duration-300 group-hover:scale-105 shadow-lg group-hover:shadow-lime-500/20" />
+                            <!-- Badge de tipo -->
+                            <span class="absolute -top-1 -right-1 px-2 py-0.5 rounded-lg text-xs font-bold shadow-lg"
+                              [ngClass]="{
+                                        'bg-lime-500 text-slate-900': item.item_type === 'course',
+                                        'bg-cyan-500 text-slate-900': item.item_type === 'project'
+                                      }">
+                              {{ item.item_type === 'course' ? 'C' : 'P' }}
+                            </span>
+                          </div>
+
+                          <!-- Contenido -->
+                          <div class="flex-1 min-w-0">
+                            <h4
+                              class="text-base font-bold text-white group-hover:text-lime-300 transition-colors line-clamp-1">
+                              {{ item.title }}
+                            </h4>
+                            @if (item.subtitle) {
+                            <p class="text-sm text-slate-400 line-clamp-1 mt-1">{{ item.subtitle }}</p>
+                            }
+                            <div class="flex items-center gap-2 mt-2 flex-wrap">
+                              <!-- Precio -->
+                              @if (item['isFree'] || item.price_usd === 0) {
+                              <span
+                                class="inline-flex items-center px-3 py-1 rounded-lg bg-green-500/20 text-green-400 text-xs font-bold border border-green-500/30">
+                                🎁 GRATIS
+                              </span>
+                              } @else if (item.price_usd) {
+                              <span class="text-sm font-bold text-lime-300">${{ item.price_usd }}</span>
+                              }
+                            </div>
+                          </div>
+
+                          <!-- Icono de flecha -->
+                          <div
+                            class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                            <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                            </svg>
+                          </div>
+                        </a>
+                      </li>
+                      }
+                    </ul>
+                    }
+
+                    <!-- Sin resultados -->
+                    @if (!isSearchLoading() && searchRows().length === 0 && q().length > 2) {
+                    <div class="px-6 py-12 text-center">
+                      <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-700/50 mb-4">
+                        <svg class="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                      </div>
+                      <p class="text-base font-semibold text-slate-300 mb-1">No se encontraron resultados</p>
+                      <p class="text-sm text-slate-500">para "<span class="text-lime-400">{{ q() }}</span>"</p>
+                    </div>
+                    }
+                  </div>
+
+                  <!-- Footer con atajos de teclado -->
+                  @if (searchRows().length > 0) {
+                  <div class="bg-gradient-to-r from-slate-800 to-slate-900 border-t border-white/10 px-6 py-3">
+                    <div class="flex items-center justify-center gap-4 text-xs text-slate-500">
+                      <span class="flex items-center gap-1">
+                        <kbd class="px-2 py-0.5 bg-slate-700 border border-slate-600 rounded text-xs">↑</kbd>
+                        <kbd class="px-2 py-0.5 bg-slate-700 border border-slate-600 rounded text-xs">↓</kbd>
+                        <span class="ml-1">Navegar</span>
+                      </span>
+                      <span class="flex items-center gap-1">
+                        <kbd class="px-2 py-0.5 bg-slate-700 border border-slate-600 rounded text-xs">↵</kbd>
+                        <span class="ml-1">Seleccionar</span>
+                      </span>
+                      <span class="flex items-center gap-1">
+                        <kbd class="px-2 py-0.5 bg-slate-700 border border-slate-600 rounded text-xs">Esc</kbd>
+                        <span class="ml-1">Cerrar</span>
+                      </span>
+                    </div>
+                  </div>
                   }
                 </div>
               </div>
-
-              <!-- Panel de Resultados Ultra Moderno -->
-              @if (isResultsVisible() && q().length > 0) {
-                <div class="absolute top-full left-0 right-0 z-50 mt-3 animate-in slide-in-from-top-2 duration-300">
-                  <div class="relative">
-                    <!-- Sombra animada -->
-                    <div class="absolute -inset-1 bg-gradient-to-r from-lime-500/20 via-yellow-500/20 to-emerald-500/20 rounded-3xl blur-xl opacity-75"></div>
-
-                    <div class="relative bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 border border-white/10 rounded-3xl shadow-2xl backdrop-blur-xl overflow-hidden">
-                      <!-- Header Elegante -->
-                      @if (!isSearchLoading() && searchRows().length > 0) {
-                        <div class="bg-gradient-to-r from-lime-500/10 to-emerald-500/10 border-b border-white/10 px-6 py-4 flex items-center justify-between">
-                          <div class="flex items-center gap-3">
-                            <div class="p-2 bg-lime-500/20 rounded-xl">
-                              <svg class="w-5 h-5 text-lime-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
-                                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                              </svg>
-                            </div>
-                            <div>
-                              <p class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Resultados</p>
-                              <p class="text-lg font-bold text-white">
-                                {{ searchRows().length }} {{ searchRows().length === 1 ? 'encontrado' : 'encontrados' }}
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            (click)="isResultsVisible.set(false); $event.stopPropagation()"
-                            class="p-2 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all"
-                          >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                          </button>
-                        </div>
-                      }
-
-                      <!-- Lista de resultados con scroll suave -->
-                      <div class="max-h-[60vh] overflow-y-auto overscroll-contain custom-scrollbar">
-                        <!-- Resultados -->
-                        @if (!isSearchLoading() && searchRows().length > 0) {
-                          <ul class="divide-y divide-white/5">
-                            @for (item of searchRows(); track item._id) {
-                              <li class="group hover:bg-gradient-to-r hover:from-lime-500/5 hover:to-emerald-500/5 transition-all">
-                                <a
-                                  (mousedown)="navigateToDetail(item)"
-                                  class="flex items-start gap-4 px-6 py-4 cursor-pointer"
-                                >
-                                  <!-- Imagen con efecto hover -->
-                                  <div class="relative flex-shrink-0">
-                                    <img
-                                      [src]="item.item_type === 'course' ? getCourseImageUrl(item.imagen) : buildProjectImageUrl(item.imagen)"
-                                      [alt]="item.title"
-                                      class="w-16 h-16 rounded-xl object-cover border-2 border-slate-700 group-hover:border-lime-400/50 transition-all duration-300 group-hover:scale-105 shadow-lg group-hover:shadow-lime-500/20"
-                                    />
-                                    <!-- Badge de tipo -->
-                                    <span
-                                      class="absolute -top-1 -right-1 px-2 py-0.5 rounded-lg text-xs font-bold shadow-lg"
-                                      [ngClass]="{
-                                        'bg-lime-500 text-slate-900': item.item_type === 'course',
-                                        'bg-cyan-500 text-slate-900': item.item_type === 'project'
-                                      }"
-                                    >
-                                      {{ item.item_type === 'course' ? 'C' : 'P' }}
-                                    </span>
-                                  </div>
-
-                                  <!-- Contenido -->
-                                  <div class="flex-1 min-w-0">
-                                    <h4 class="text-base font-bold text-white group-hover:text-lime-300 transition-colors line-clamp-1">
-                                      {{ item.title }}
-                                    </h4>
-                                    @if (item.subtitle) {
-                                      <p class="text-sm text-slate-400 line-clamp-1 mt-1">{{ item.subtitle }}</p>
-                                    }
-                                    <div class="flex items-center gap-2 mt-2 flex-wrap">
-                                      <!-- Precio -->
-                                      @if (item['isFree'] || item.price_usd === 0) {
-                                        <span class="inline-flex items-center px-3 py-1 rounded-lg bg-green-500/20 text-green-400 text-xs font-bold border border-green-500/30">
-                                          🎁 GRATIS
-                                        </span>
-                                      } @else if (item.price_usd) {
-                                        <span class="text-sm font-bold text-lime-300">${{ item.price_usd }}</span>
-                                      }
-                                    </div>
-                                  </div>
-
-                                  <!-- Icono de flecha -->
-                                  <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                                    <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                                    </svg>
-                                  </div>
-                                </a>
-                              </li>
-                            }
-                          </ul>
-                        }
-
-                        <!-- Sin resultados -->
-                        @if (!isSearchLoading() && searchRows().length === 0 && q().length > 2) {
-                          <div class="px-6 py-12 text-center">
-                            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-700/50 mb-4">
-                              <svg class="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                              </svg>
-                            </div>
-                            <p class="text-base font-semibold text-slate-300 mb-1">No se encontraron resultados</p>
-                            <p class="text-sm text-slate-500">para "<span class="text-lime-400">{{ q() }}</span>"</p>
-                          </div>
-                        }
-                      </div>
-
-                      <!-- Footer con atajos de teclado -->
-                      @if (searchRows().length > 0) {
-                        <div class="bg-gradient-to-r from-slate-800 to-slate-900 border-t border-white/10 px-6 py-3">
-                          <div class="flex items-center justify-center gap-4 text-xs text-slate-500">
-                            <span class="flex items-center gap-1">
-                              <kbd class="px-2 py-0.5 bg-slate-700 border border-slate-600 rounded text-xs">↑</kbd>
-                              <kbd class="px-2 py-0.5 bg-slate-700 border border-slate-600 rounded text-xs">↓</kbd>
-                              <span class="ml-1">Navegar</span>
-                            </span>
-                            <span class="flex items-center gap-1">
-                              <kbd class="px-2 py-0.5 bg-slate-700 border border-slate-600 rounded text-xs">↵</kbd>
-                              <span class="ml-1">Seleccionar</span>
-                            </span>
-                            <span class="flex items-center gap-1">
-                              <kbd class="px-2 py-0.5 bg-slate-700 border border-slate-600 rounded text-xs">Esc</kbd>
-                              <span class="ml-1">Cerrar</span>
-                            </span>
-                          </div>
-                        </div>
-                      }
-                    </div>
-                  </div>
-                </div>
-              }
-
             </div>
+            }
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Banner / carrusel (placeholder; integra Flowbite si quieres) -->
+      <app-carousel></app-carousel>
+    </div>
+</div>
+</section>
+
+<!-- LOADING / RESULTADOS -->
+@if (isLoading()) {
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    @for (s of [1,2,3,4,5,6]; track s) {
+    <div class="rounded-2xl border border-white/10 bg-white/5 h-56 animate-pulse"></div>
+    }
+  </div>
+</div>
+} @else {
+<!-- ✅ Solo muestra la sección de cursos si hay una búsqueda o si los destacados están habilitados Y hay cursos -->
+@if ((q().trim() && searchRows().length > 0) || (!q().trim() && featuredCoursesEnabled() && featuredSafe().length > 0))
+{
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Encabezado de la sección -->
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-white/90 font-semibold">
+      @if (q().trim() || selectedCategorie()) { Resultados de búsqueda } @else { Cursos destacados }
+    </h2>
+    <div class="text-xs text-white/50">{{ featuredSafe().length }} cursos</div>
+  </div>
+
+  <!-- Contenido: Carrusel horizontal o mensaje de "no hay resultados" -->
+  @if (featuredSafe().length > 0) {
+  @if (q().trim() || selectedCategorie()) {
+  <!-- Si es búsqueda, mostrar en grid -->
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    @for (c of featuredSafe(); track c._id) {
+    <course-card [course]="c" (click)="navigateToCourse(c, $event)"
+      (buyNowClick)="buyCourseDirect($event)"></course-card>
+    }
+  </div>
+  } @else {
+  <!-- Si son destacados, mostrar en carrusel -->
+  <div class="relative group">
+    <!-- Contenedor del carrusel -->
+    <div id="featured-courses-carousel" class="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+      style="scroll-snap-type: x mandatory;">
+      @for (c of featuredSafe(); track c._id) {
+      <div class="flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px]" style="scroll-snap-align: start;">
+        <course-card [course]="c" (click)="navigateToCourse(c, $event)"
+          (buyNowClick)="buyCourseDirect($event)"></course-card>
+      </div>
+      }
+    </div>
+
+    <!-- Botón izquierda -->
+    <button (click)="scrollFeaturedCourses('left')"
+      class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-slate-900/90 hover:bg-slate-800 border border-white/10 rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity arrow-button"
+      aria-label="Anterior">
+      <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+    </button>
+
+    <!-- Botón derecha -->
+    <button (click)="scrollFeaturedCourses('right')"
+      class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-slate-900/90 hover:bg-slate-800 border border-white/10 rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity arrow-button"
+      aria-label="Siguiente">
+      <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+    </button>
+  </div>
+  }
+  } @else {
+  <!-- Este mensaje solo se mostrará si la sección es visible pero no hay cursos (ej. búsqueda sin resultados) -->
+  <div class="rounded-2xl border border-white/10 bg-white/5 p-6 text-white/70">
+    No encontramos cursos con esos criterios.
+  </div>
+  }
+</section>
+}
+}
+
+<!-- PROYECTOS DESTACADOS -->
+@if (!isLoading() && featuredProjects().length > 0) {
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-white/90 font-semibold">Proyectos Destacados</h2>
+    <div class="text-xs text-white/50">{{ featuredProjects().length }} proyectos</div>
+  </div>
+
+  <!-- Carrusel de proyectos -->
+  <div class="relative group">
+    <!-- Contenedor del carrusel -->
+    <div id="featured-projects-carousel" class="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+      style="scroll-snap-type: x mandatory;">
+      @for (project of featuredProjects(); track project._id) {
+      <div class="flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px]" style="scroll-snap-align: start;">
+        <app-projects-card [project]="project" (click)="openVideoModal(project.url_video)"
+          (buyNowClick)="buyProjectDirect($event)"></app-projects-card>
+      </div>
+      }
+    </div>
+
+    <!-- Botón izquierda -->
+    <button (click)="scrollFeaturedProjects('left')"
+      class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-slate-900/90 hover:bg-slate-800 border border-white/10 rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity arrow-button"
+      aria-label="Anterior">
+      <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+    </button>
+
+    <!-- Botón derecha -->
+    <button (click)="scrollFeaturedProjects('right')"
+      class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-slate-900/90 hover:bg-slate-800 border border-white/10 rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity arrow-button"
+      aria-label="Siguiente">
+      <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+    </button>
+  </div>
+</section>
+}
+
+<!-- INSTRUCTORES -->
+@if (!isLoading() && instructors().length > 0) {
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Header con búsqueda -->
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+    <div>
+      <h2 class="text-white/90 font-semibold text-2xl mb-1">Instructores</h2>
+      <div class="text-xs text-white/50">
+        {{ filteredInstructors().length }} de {{ instructors().length }} instructor{{ instructors().length !== 1 ? 'es'
+        : '' }}
+      </div>
+    </div>
+
+    <!-- Buscador de instructores -->
+    <div class="relative w-full sm:w-80">
+      <input type="text" [value]="searchInstructorTerm()" (input)="onSearchInstructor($event)"
+        placeholder="Buscar instructores..."
+        class="w-full px-4 py-2.5 pl-11 pr-10 bg-slate-800/50 border border-white/10 rounded-lg text-white/90 placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-lime-400/50 focus:border-lime-400/50 transition-all" />
+
+      <!-- Icono de búsqueda -->
+      <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" fill="none" stroke="currentColor"
+        viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+
+      <!-- Botón limpiar búsqueda -->
+      @if (searchInstructorTerm()) {
+      <button (click)="clearInstructorSearch()"
+        class="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
+        aria-label="Limpiar búsqueda">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+      }
+    </div>
+  </div>
+
+  <!-- Mensaje cuando no hay resultados -->
+  @if (filteredInstructors().length === 0) {
+  <div class="rounded-xl border border-white/10 bg-slate-800/50 p-8 text-center">
+    <svg class="w-12 h-12 mx-auto mb-3 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+    </svg>
+    <p class="text-white/70 font-medium mb-1">No se encontraron instructores</p>
+    <p class="text-white/50 text-sm">Intenta con otro término de búsqueda</p>
+  </div>
+  } @else {
+  <!-- Carrusel de instructores -->
+  <div class="relative group">
+    <!-- Contenedor del carrusel -->
+    <div id="instructors-carousel" class="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+      style="scroll-snap-type: x mandatory;">
+      @for (instructor of filteredInstructors(); track instructor._id) {
+      <div class="flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px]" style="scroll-snap-align: start;">
+        <app-instructor-card [instructor]="instructor"></app-instructor-card>
+      </div>
+      }
+    </div>
+
+    <!-- Botón izquierda -->
+    <button (click)="scrollInstructors('left')"
+      class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-slate-900/90 hover:bg-slate-800 border border-white/10 rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity arrow-button"
+      aria-label="Anterior">
+      <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+    </button>
+
+    <!-- Botón derecha -->
+    <button (click)="scrollInstructors('right')"
+      class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-slate-900/90 hover:bg-slate-800 border border-white/10 rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity arrow-button"
+      aria-label="Siguiente">
+      <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+    </button>
+  </div>
+  }
+</section>
+}
+
+<!-- CATÁLOGO COMPLETO CON FILTROS -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class="mb-8">
+    <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">Explora todo nuestro catálogo</h2>
+    <p class="text-white/70">Encuentra el curso o proyecto perfecto para ti</p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <!-- SIDEBAR DE FILTROS -->
+    <div class="lg:col-span-1">
+      <!-- Botón toggle para móvil -->
+      <button (click)="toggleCatalogFilters()"
+        class="lg:hidden w-full mb-4 px-4 py-3 rounded-lg border border-white/10 bg-slate-800/50 text-white font-medium flex items-center justify-between hover:bg-slate-700/50 transition">
+        <span class="flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
+            </path>
+          </svg>
+          Filtros
+          @if (hasActiveFilters()) {
+          <span class="px-2 py-0.5 rounded-full bg-lime-400 text-slate-900 text-xs font-bold">{{ activeFiltersCount()
+            }}</span>
+          }
+        </span>
+        <svg [class]="'w-5 h-5 transition-transform ' + (showCatalogFilters() ? 'rotate-180' : '')" fill="none"
+          stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </button>
+
+      <!-- Panel de filtros -->
+      <div [class]="'space-y-4 ' + (showCatalogFilters() ? 'block' : 'hidden lg:block')">
+        <!-- Tipo de Contenido -->
+        <div class="rounded-xl border border-white/10 bg-slate-800/50 p-4">
+          <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z">
+              </path>
+            </svg>
+            Tipo
+          </h3>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input type="checkbox" [checked]="catalogShowCourses()"
+                (change)="catalogShowCourses.set($any($event.target).checked)"
+                class="w-4 h-4 rounded border-white/20 bg-slate-700 text-lime-400 focus:ring-lime-400 focus:ring-offset-slate-900" />
+              <span class="text-sm text-white/80 group-hover:text-white">Cursos</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input type="checkbox" [checked]="catalogShowProjects()"
+                (change)="catalogShowProjects.set($any($event.target).checked)"
+                class="w-4 h-4 rounded border-white/20 bg-slate-700 text-lime-400 focus:ring-lime-400 focus:ring-offset-slate-900" />
+              <span class="text-sm text-white/80 group-hover:text-white">Proyectos</span>
+            </label>
           </div>
         </div>
 
-        <!-- Banner / carrusel (placeholder; integra Flowbite si quieres) -->
-        <app-carousel></app-carousel>
-      </div>
-    </div>
-  </section>
-
-  <!-- LOADING / RESULTADOS -->
-  @if (isLoading()) {
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        @for (s of [1,2,3,4,5,6]; track s) {
-          <div class="rounded-2xl border border-white/10 bg-white/5 h-56 animate-pulse"></div>
-        }
-      </div>
-    </div>
-  } @else {
-    <!-- Solo muestra la sección de cursos si hay una búsqueda o si los destacados están habilitados Y hay cursos -->
-    @if ((q().trim() && searchRows().length > 0) || (!q().trim() && featuredCoursesEnabled() && courses().length > 0)) {
-      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Encabezado de la sección -->
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-white/90 font-semibold">
-            @if (q().trim() || selectedCategorie()) { Resultados de búsqueda } @else { Cursos destacados }
-          </h2>
-          <div class="text-xs text-white/50">{{ courses().length }} cursos</div>
+        <!-- Categorías -->
+        <div class="rounded-xl border border-white/10 bg-slate-800/50 p-4">
+          <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01">
+              </path>
+            </svg>
+            Categoría
+          </h3>
+          <select [value]="catalogCategory()" (change)="catalogCategory.set($any($event.target).value)"
+            class="w-full border text-base rounded-lg p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500">
+            <option value="">Todas las categorías</option>
+            @for (cat of categoriesService.categories(); track cat._id) {
+            <option [value]="cat._id">{{ cat.title }}</option>
+            }
+            @if (categoriesService.isLoading()) {
+            <option value="" disabled>Cargando categorías...</option>
+            }
+          </select>
         </div>
 
-        <!-- Contenido: Carrusel horizontal o mensaje de "no hay resultados" -->
-        @if (courses().length > 0) {
-          @if (q().trim() || selectedCategorie()) {
-            <!-- Si es búsqueda, mostrar en grid -->
-            <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              @for (c of courses(); track c._id) {
-                <course-card
-                  [course]="c"
-                  (click)="navigateToCourse(c, $event)"
-                  (buyNowClick)="buyCourseDirect($event)"
-                ></course-card>
+        <!-- Rango de Precio -->
+        <div class="rounded-xl border border-white/10 bg-slate-800/50 p-4">
+          <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+              </path>
+            </svg>
+            Precio
+          </h3>
+          <select [value]="catalogPriceRange()" (change)="catalogPriceRange.set($any($event.target).value)"
+            class="w-full border text-base rounded-lg p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500">
+            <option value="">Cualquier precio</option>
+            <option value="0-50">Menos de $50</option>
+            <option value="50-100">$50 - $100</option>
+            <option value="100-200">$100 - $200</option>
+            <option value="200-">Más de $200</option>
+          </select>
+        </div>
+
+        <!-- Nivel (solo para cursos) -->
+        @if (catalogShowCourses()) {
+        <div class="rounded-xl border border-white/10 bg-slate-800/50 p-4">
+          <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6">
+              </path>
+            </svg>
+            Nivel
+          </h3>
+          <select [value]="catalogLevel()" (change)="catalogLevel.set($any($event.target).value)"
+            class="w-full border text-base rounded-lg p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500">
+            <option value="">Todos los niveles</option>
+            <option value="Basico">Básico</option>
+            <option value="Intermedio">Intermedio</option>
+            <option value="Avanzado">Avanzado</option>
+          </select>
+        </div>
+        }
+
+        <!-- Botón Limpiar Filtros -->
+        <button (click)="clearCatalogFilters()"
+          class="w-full px-4 py-2.5 rounded-lg border border-white/10 text-white/80 hover:text-white hover:border-lime-400/40 hover:bg-slate-700/50 transition text-sm font-medium">
+          Limpiar filtros
+        </button>
+      </div>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div class="lg:col-span-3">
+      <!-- Header de resultados -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+        <p class="text-sm text-slate-400">
+          Mostrando <span class="font-bold text-white">{{ catalogResultsPaginated().length }}</span> de
+          <span class="font-bold text-white">{{ catalogTotalItems() }}</span> resultados
+        </p>
+
+        <div class="flex items-center gap-2">
+          <label class="text-sm text-slate-400">Mostrar:</label>
+          <select [value]="catalogItemsPerPage()" (change)="changeItemsPerPage(+$any($event.target).value)"
+            class="bg-slate-800 border border-slate-700 text-white text-base rounded-lg px-3 py-1.5 focus:ring-lime-400 focus:border-lime-400">
+            <option [value]="10">10</option>
+            <option [value]="15">15</option>
+            <option [value]="20">20</option>
+          </select>
+        </div>
+        <select [value]="catalogSortBy()" (change)="catalogSortBy.set($any($event.target).value)"
+          class="border text-base rounded-lg p-2 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500 w-full sm:w-auto">
+          <option value="recent">Más recientes</option>
+          <option value="price-low">Precio: menor a mayor</option>
+          <option value="price-high">Precio: mayor a menor</option>
+          <option value="popular">Más populares</option>
+        </select>
+      </div>
+
+      <!-- Lista de resultados -->
+      <div class="space-y-4">
+        @for (item of catalogResultsPaginated(); track item._id) {
+        <div class="rounded-xl border border-white/10 bg-slate-800/50 hover:bg-slate-700/50 transition-all group">
+          <div class="flex flex-col sm:flex-row gap-4 p-4">
+            <!-- Imagen -->
+            <div class="relative flex-shrink-0 w-full sm:w-48 h-40 sm:h-32 rounded-lg overflow-hidden"
+              [class.cursor-pointer]="item.type === 'project' && item.url_video"
+              (click)="item.type === 'project' && item.url_video ? openVideoModal(item.url_video) : null">
+              <img [src]="item.type === 'course' ? getCourseImageUrl(item.imagen) : buildProjectImageUrl(item.imagen)"
+                [alt]="item.title"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+              @if (item.type === 'course') {
+              <div class="absolute top-2 left-2 bg-lime-500/90 text-slate-900 px-2 py-0.5 rounded text-xs font-bold">
+                Curso
+              </div>
+              } @else {
+              <div class="absolute top-2 left-2 bg-cyan-500/90 text-slate-900 px-2 py-0.5 rounded text-xs font-bold">
+                Proyecto
+              </div>
+              }
+              <!-- Icono de play para proyectos con video -->
+              @if (item.type === 'project' && item.url_video) {
+              <div
+                class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                    clip-rule="evenodd"></path>
+                </svg>
+              </div>
               }
             </div>
-          } @else {
-            <!-- Si son destacados, mostrar en carrusel -->
-            <div class="relative group">
-              <!-- Contenedor del carrusel -->
-              <div
-                id="featured-courses-carousel"
-                class="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
-                style="scroll-snap-type: x mandatory;"
-              >
-                @for (c of courses(); track c._id) {
-                  <div class="flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px]" style="scroll-snap-align: start;">
-                    <course-card
-                      [course]="c"
-                      (click)="navigateToCourse(c, $event)"
-                      (buyNowClick)="buyCourseDirect($event)"
-                    ></course-card>
-                  </div>
+
+            <!-- Contenido -->
+            <div class="flex-1 min-w-0 flex flex-col">
+              <h3
+                class="text-white font-semibold text-lg mb-1 line-clamp-2 sm:line-clamp-1 group-hover:text-lime-300 transition-colors">
+                {{ item.title }}
+              </h3>
+              <p class="text-white/60 text-sm mb-3 line-clamp-2">
+                {{ item.subtitle }}
+              </p>
+
+              <div class="flex flex-wrap items-center gap-3 text-xs text-white/50 mb-3">
+                @if (item.user && typeof item.user === 'object' && (item.user.name || item.user.surname)) {
+                <span class="flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                      clip-rule="evenodd"></path>
+                  </svg>
+                  {{ item.user.name }} {{ item.user.surname }}
+                </span>
+                }
+                @if (item.categorie?.title) {
+                <span class="flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z">
+                    </path>
+                  </svg>
+                  {{ item.categorie.title }}
+                </span>
+                }
+                @if (item.type === 'course' && item.level) {
+                <span class="flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z">
+                    </path>
+                  </svg>
+                  {{ item.level }}
+                </span>
                 }
               </div>
 
-              <!-- Botón izquierda -->
-              <button
-                (click)="scrollFeaturedCourses('left')"
-                class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-slate-900/90 hover:bg-slate-800 border border-white/10 rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity arrow-button"
-                aria-label="Anterior"
-              >
-                <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
-              </button>
+              <!-- Precio y botones -->
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-auto">
+                <div class="flex items-baseline gap-2">
+                  @if (item['isFree'] || item.price_usd === 0) {
+                  <!-- Badge de GRATUITO si el curso/proyecto es gratis O tiene precio $0 -->
+                  <span
+                    class="inline-flex items-center px-4 py-2 text-lg font-bold text-green-400 bg-green-500/10 border border-green-500/30 rounded-lg">
+                    🎁 GRATUITO
+                  </span>
+                  } @else if (item.discount_active && item.final_price_usd !== undefined) {
+                  <!-- Precio con descuento -->
+                  <div class="text-xl sm:text-2xl font-bold text-lime-300">
+                    ${{ item.final_price_usd | number:'1.0-2' }}
+                  </div>
+                  <!-- Precio original tachado -->
+                  <div class="text-sm text-white/50 line-through">
+                    ${{ item.price_usd | number:'1.0-2' }}
+                  </div>
+                  <!-- Badge de descuento -->
+                  <span
+                    class="px-2 py-0.5 rounded bg-lime-500/20 text-lime-300 text-xs font-bold border border-lime-500/30">
+                    -{{ item.discount_active.discount }}{{ item.discount_active.type_discount === 1 ? '%' : ' USD' }}
+                  </span>
+                  } @else {
+                  <!-- Precio normal sin descuento -->
+                  <div class="text-xl sm:text-2xl font-bold text-lime-300">${{ item.price_usd | number:'1.0-2' }}</div>
+                  <span class="text-white/60 text-sm">USD</span>
+                  }
+                </div>
 
-              <!-- Botón derecha -->
-              <button
-                (click)="scrollFeaturedCourses('right')"
-                class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-slate-900/90 hover:bg-slate-800 border border-white/10 rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity arrow-button"
-                aria-label="Siguiente"
-              >
-                <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-              </button>
-            </div>
-          }
-        } @else {
-          <!-- Este mensaje solo se mostrará si la sección es visible pero no hay cursos (ej. búsqueda sin resultados) -->
-          <div class="rounded-2xl border border-white/10 bg-white/5 p-6 text-white/70">
-            No encontramos cursos con esos criterios.
-          </div>
-        }
-      </section>
-    }
-  }
-
-  <!-- PROYECTOS DESTACADOS -->
-  @if (!isLoading() && featuredProjects().length > 0) {
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-white/90 font-semibold">Proyectos Destacados</h2>
-        <div class="text-xs text-white/50">{{ featuredProjects().length }} proyectos</div>
-      </div>
-
-      <!-- Carrusel de proyectos -->
-      <div class="relative group">
-        <!-- Contenedor del carrusel -->
-        <div
-          id="featured-projects-carousel"
-          class="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
-          style="scroll-snap-type: x mandatory;"
-        >
-          @for (project of featuredProjects(); track project._id) {
-            <div class="flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px]" style="scroll-snap-align: start;">
-              <app-projects-card
-                [project]="project"
-                (click)="openVideoModal(project.url_video)"
-                (buyNowClick)="buyProjectDirect($event)"
-              ></app-projects-card>
-            </div>
-          }
-        </div>
-
-        <!-- Botón izquierda -->
-        <button
-          (click)="scrollFeaturedProjects('left')"
-          class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-slate-900/90 hover:bg-slate-800 border border-white/10 rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity arrow-button"
-          aria-label="Anterior"
-        >
-          <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-          </svg>
-        </button>
-
-        <!-- Botón derecha -->
-        <button
-          (click)="scrollFeaturedProjects('right')"
-          class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-slate-900/90 hover:bg-slate-800 border border-white/10 rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity arrow-button"
-          aria-label="Siguiente"
-        >
-          <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-          </svg>
-        </button>
-      </div>
-    </section>
-  }
-
-  <!-- INSTRUCTORES -->
-  @if (!isLoading() && instructors().length > 0) {
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Header con búsqueda -->
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h2 class="text-white/90 font-semibold text-2xl mb-1">Instructores</h2>
-          <div class="text-xs text-white/50">
-            {{ filteredInstructors().length }} de {{ instructors().length }} instructor{{ instructors().length !== 1 ? 'es' : '' }}
-          </div>
-        </div>
-
-        <!-- Buscador de instructores -->
-        <div class="relative w-full sm:w-80">
-          <input
-            type="text"
-            [value]="searchInstructorTerm()"
-            (input)="onSearchInstructor($event)"
-            placeholder="Buscar instructores..."
-            class="w-full px-4 py-2.5 pl-11 pr-10 bg-slate-800/50 border border-white/10 rounded-lg text-white/90 placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-lime-400/50 focus:border-lime-400/50 transition-all"
-          />
-
-          <!-- Icono de búsqueda -->
-          <svg
-            class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
-
-          <!-- Botón limpiar búsqueda -->
-          @if (searchInstructorTerm()) {
-            <button
-              (click)="clearInstructorSearch()"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
-              aria-label="Limpiar búsqueda"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
-          }
-        </div>
-      </div>
-
-      <!-- Mensaje cuando no hay resultados -->
-      @if (filteredInstructors().length === 0) {
-        <div class="rounded-xl border border-white/10 bg-slate-800/50 p-8 text-center">
-          <svg class="w-12 h-12 mx-auto mb-3 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
-          <p class="text-white/70 font-medium mb-1">No se encontraron instructores</p>
-          <p class="text-white/50 text-sm">Intenta con otro término de búsqueda</p>
-        </div>
-      } @else {
-        <!-- Carrusel de instructores -->
-        <div class="relative group">
-          <!-- Contenedor del carrusel -->
-          <div
-            id="instructors-carousel"
-            class="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
-            style="scroll-snap-type: x mandatory;"
-          >
-            @for (instructor of filteredInstructors(); track instructor._id) {
-              <div class="flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px]" style="scroll-snap-align: start;">
-                <app-instructor-card [instructor]="instructor"></app-instructor-card>
+                <!-- Botones de acción -->
+                <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  @if (item.type === 'course') {
+                  @if (isCourseEnrolled(item._id)) {
+                  <button
+                    class="px-4 py-2 rounded-lg bg-sky-600/50 text-sky-300 text-sm font-semibold cursor-not-allowed"
+                    disabled>
+                    Ya adquirido
+                  </button>
+                  } @else {
+                  <button (click)="buyCourseDirect(item)" [disabled]="!authService.isLoggedIn()"
+                    class="px-4 py-2 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                      </path>
+                    </svg>
+                    Comprar - ${{ item.discount_active ? item.final_price_usd : item.price_usd }}
+                  </button>
+                  }
+                  <button (click)="navigateToCourse(item, $event)"
+                    class="px-4 py-2 rounded-lg border border-white/20 text-white hover:border-lime-400 hover:text-lime-300 transition text-sm font-semibold">
+                    Ver detalles
+                  </button>
+                  } @else {
+                  @if (isProjectPurchased(item._id)) {
+                  <button
+                    class="px-4 py-2 rounded-lg bg-sky-600/50 text-sky-300 text-sm font-semibold cursor-not-allowed"
+                    disabled>
+                    Ya adquirido
+                  </button>
+                  } @else {
+                  <button (click)="buyProjectDirect(item)" [disabled]="!authService.isLoggedIn()"
+                    class="px-4 py-2 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                      </path>
+                    </svg>
+                    Comprar - ${{ item.discount_active ? item.final_price_usd : item.price_usd }}
+                  </button>
+                  }
+                  <!-- Botón de ver video si el proyecto tiene url_video -->
+                  @if (item.url_video) {
+                  <button (click)="openVideoModal(item.url_video)"
+                    class="px-4 py-2 rounded-lg border border-white/20 text-white hover:border-cyan-400 hover:text-cyan-300 transition text-sm font-semibold flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                        clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="hidden sm:inline">Ver demo</span>
+                  </button>
+                  }
+                  }
+                </div>
               </div>
-            }
+            </div>
           </div>
+        </div>
+        } @empty {
+        <div class="rounded-xl border border-white/10 bg-slate-800/50 p-12 text-center">
+          <svg class="w-16 h-16 mx-auto mb-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <p class="text-white/70 text-lg font-medium mb-1">No se encontraron resultados</p>
+          <p class="text-white/50 text-sm">Intenta ajustar tus filtros</p>
+        </div>
+        }
+      </div>
 
-          <!-- Botón izquierda -->
-          <button
-            (click)="scrollInstructors('left')"
-            class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-slate-900/90 hover:bg-slate-800 border border-white/10 rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity arrow-button"
-            aria-label="Anterior"
-          >
-            <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <!-- Controles de Paginación -->
+      @if (catalogTotalPages() > 1) {
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-6 border-t border-slate-700">
+        <!-- Info de página actual -->
+        <div class="text-sm text-slate-400">
+          Página {{ catalogPage() }} de {{ catalogTotalPages() }}
+        </div>
+
+        <!-- Botones de paginación -->
+        <div class="flex items-center gap-2">
+          <!-- Botón Anterior -->
+          <button (click)="prevPage()" [disabled]="catalogPage() === 1"
+            class="px-3 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
             </svg>
           </button>
 
-          <!-- Botón derecha -->
-          <button
-            (click)="scrollInstructors('right')"
-            class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-slate-900/90 hover:bg-slate-800 border border-white/10 rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity arrow-button"
-            aria-label="Siguiente"
-          >
-            <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- Números de página -->
+          <div class="flex items-center gap-1">
+            @for (pageNum of visiblePages(); track pageNum) {
+            @if (pageNum !== '...') {
+            <button (click)="goToPage(+pageNum)" [class.bg-lime-400]="+pageNum === catalogPage()"
+              [class.text-slate-900]="+pageNum === catalogPage()" [class.bg-slate-800]="+pageNum !== catalogPage()"
+              [class.text-white]="+pageNum !== catalogPage()"
+              class="min-w-[40px] px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 transition-colors font-medium text-sm">
+              {{ pageNum }}
+            </button>
+            } @else {
+            <span class="px-2 text-slate-500">…</span>
+            }
+            }
+          </div>
+
+          <!-- Botón Siguiente -->
+          <button (click)="nextPage()" [disabled]="catalogPage() === catalogTotalPages()"
+            class="px-3 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
             </svg>
           </button>
         </div>
+      </div>
       }
-    </section>
-  }
-
-  <!-- CATÁLOGO COMPLETO CON FILTROS -->
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <div class="mb-8">
-      <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">Explora todo nuestro catálogo</h2>
-      <p class="text-white/70">Encuentra el curso o proyecto perfecto para ti</p>
     </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <!-- SIDEBAR DE FILTROS -->
-      <div class="lg:col-span-1">
-        <!-- Botón toggle para móvil -->
-        <button
-          (click)="toggleCatalogFilters()"
-          class="lg:hidden w-full mb-4 px-4 py-3 rounded-lg border border-white/10 bg-slate-800/50 text-white font-medium flex items-center justify-between hover:bg-slate-700/50 transition"
-        >
-          <span class="flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
-            </svg>
-            Filtros
-            @if (hasActiveFilters()) {
-              <span class="px-2 py-0.5 rounded-full bg-lime-400 text-slate-900 text-xs font-bold">{{ activeFiltersCount() }}</span>
-            }
-          </span>
-          <svg [class]="'w-5 h-5 transition-transform ' + (showCatalogFilters() ? 'rotate-180' : '')" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
-        </button>
-
-        <!-- Panel de filtros -->
-        <div [class]="'space-y-4 ' + (showCatalogFilters() ? 'block' : 'hidden lg:block')">
-          <!-- Tipo de Contenido -->
-          <div class="rounded-xl border border-white/10 bg-slate-800/50 p-4">
-            <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
-              <svg class="w-5 h-5 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-              </svg>
-              Tipo
-            </h3>
-            <div class="space-y-2">
-              <label class="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  [checked]="catalogShowCourses()"
-                  (change)="catalogShowCourses.set($any($event.target).checked)"
-                  class="w-4 h-4 rounded border-white/20 bg-slate-700 text-lime-400 focus:ring-lime-400 focus:ring-offset-slate-900"
-                />
-                <span class="text-sm text-white/80 group-hover:text-white">Cursos</span>
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  [checked]="catalogShowProjects()"
-                  (change)="catalogShowProjects.set($any($event.target).checked)"
-                  class="w-4 h-4 rounded border-white/20 bg-slate-700 text-lime-400 focus:ring-lime-400 focus:ring-offset-slate-900"
-                />
-                <span class="text-sm text-white/80 group-hover:text-white">Proyectos</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Categorías -->
-          <div class="rounded-xl border border-white/10 bg-slate-800/50 p-4">
-            <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
-              <svg class="w-5 h-5 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
-              </svg>
-              Categoría
-            </h3>
-            <select
-              [value]="catalogCategory()"
-              (change)="catalogCategory.set($any($event.target).value)"
-              class="w-full border text-base rounded-lg p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500"
-            >
-              <option value="">Todas las categorías</option>
-              @for (cat of categoriesService.categories(); track cat._id) {
-                <option [value]="cat._id">{{ cat.title }}</option>
-              }
-              @if (categoriesService.isLoading()) {
-                <option value="" disabled>Cargando categorías...</option>
-              }
-            </select>
-          </div>
-
-          <!-- Rango de Precio -->
-          <div class="rounded-xl border border-white/10 bg-slate-800/50 p-4">
-            <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
-              <svg class="w-5 h-5 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              Precio
-            </h3>
-            <select
-              [value]="catalogPriceRange()"
-              (change)="catalogPriceRange.set($any($event.target).value)"
-              class="w-full border text-base rounded-lg p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500"
-            >
-              <option value="">Cualquier precio</option>
-              <option value="0-50">Menos de $50</option>
-              <option value="50-100">$50 - $100</option>
-              <option value="100-200">$100 - $200</option>
-              <option value="200-">Más de $200</option>
-            </select>
-          </div>
-
-          <!-- Nivel (solo para cursos) -->
-          @if (catalogShowCourses()) {
-            <div class="rounded-xl border border-white/10 bg-slate-800/50 p-4">
-              <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
-                <svg class="w-5 h-5 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                </svg>
-                Nivel
-              </h3>
-              <select
-                [value]="catalogLevel()"
-                (change)="catalogLevel.set($any($event.target).value)"
-                class="w-full border text-base rounded-lg p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500"
-              >
-                <option value="">Todos los niveles</option>
-                <option value="Basico">Básico</option>
-                <option value="Intermedio">Intermedio</option>
-                <option value="Avanzado">Avanzado</option>
-              </select>
-            </div>
-          }
-
-          <!-- Botón Limpiar Filtros -->
-          <button
-            (click)="clearCatalogFilters()"
-            class="w-full px-4 py-2.5 rounded-lg border border-white/10 text-white/80 hover:text-white hover:border-lime-400/40 hover:bg-slate-700/50 transition text-sm font-medium"
-          >
-            Limpiar filtros
-          </button>
-        </div>
-      </div>
-
-      <!-- RESULTADOS -->
-      <div class="lg:col-span-3">
-        <!-- Header de resultados -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-          <p class="text-sm text-slate-400">
-            Mostrando <span class="font-bold text-white">{{ catalogResultsPaginated().length }}</span> de
-            <span class="font-bold text-white">{{ catalogTotalItems() }}</span> resultados
-          </p>
-
-          <div class="flex items-center gap-2">
-            <label class="text-sm text-slate-400">Mostrar:</label>
-            <select
-              [value]="catalogItemsPerPage()"
-              (change)="changeItemsPerPage(+$any($event.target).value)"
-              class="bg-slate-800 border border-slate-700 text-white text-base rounded-lg px-3 py-1.5 focus:ring-lime-400 focus:border-lime-400"
-            >
-              <option [value]="10">10</option>
-              <option [value]="15">15</option>
-              <option [value]="20">20</option>
-            </select>
-          </div>
-          <select
-            [value]="catalogSortBy()"
-            (change)="catalogSortBy.set($any($event.target).value)"
-            class="border text-base rounded-lg p-2 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500 w-full sm:w-auto"
-          >
-            <option value="recent">Más recientes</option>
-            <option value="price-low">Precio: menor a mayor</option>
-            <option value="price-high">Precio: mayor a menor</option>
-            <option value="popular">Más populares</option>
-          </select>
-        </div>
-
-        <!-- Lista de resultados -->
-        <div class="space-y-4">
-          @for (item of catalogResultsPaginated(); track item._id) {
-            <div class="rounded-xl border border-white/10 bg-slate-800/50 hover:bg-slate-700/50 transition-all group">
-              <div class="flex flex-col sm:flex-row gap-4 p-4">
-                <!-- Imagen -->
-                <div
-                  class="relative flex-shrink-0 w-full sm:w-48 h-40 sm:h-32 rounded-lg overflow-hidden"
-                  [class.cursor-pointer]="item.type === 'project' && item.url_video"
-                  (click)="item.type === 'project' && item.url_video ? openVideoModal(item.url_video) : null"
-                >
-                  <img
-                    [src]="item.type === 'course' ? getCourseImageUrl(item.imagen) : buildProjectImageUrl(item.imagen)"
-                    [alt]="item.title"
-                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  @if (item.type === 'course') {
-                    <div class="absolute top-2 left-2 bg-lime-500/90 text-slate-900 px-2 py-0.5 rounded text-xs font-bold">
-                      Curso
-                    </div>
-                  } @else {
-                    <div class="absolute top-2 left-2 bg-cyan-500/90 text-slate-900 px-2 py-0.5 rounded text-xs font-bold">
-                      Proyecto
-                    </div>
-                  }
-                  <!-- Icono de play para proyectos con video -->
-                  @if (item.type === 'project' && item.url_video) {
-                    <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
-                      </svg>
-                    </div>
-                  }
-                </div>
-
-                <!-- Contenido -->
-                <div class="flex-1 min-w-0 flex flex-col">
-                  <h3 class="text-white font-semibold text-lg mb-1 line-clamp-2 sm:line-clamp-1 group-hover:text-lime-300 transition-colors">
-                    {{ item.title }}
-                  </h3>
-                  <p class="text-white/60 text-sm mb-3 line-clamp-2">
-                    {{ item.subtitle }}
-                  </p>
-
-                  <div class="flex flex-wrap items-center gap-3 text-xs text-white/50 mb-3">
-                    @if (item.user && typeof item.user === 'object' && (item.user.name || item.user.surname)) {
-                      <span class="flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
-                        </svg>
-                        {{ item.user.name }} {{ item.user.surname }}
-                      </span>
-                    }
-                    @if (item.categorie?.title) {
-                      <span class="flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"></path>
-                        </svg>
-                        {{ item.categorie.title }}
-                      </span>
-                    }
-                    @if (item.type === 'course' && item.level) {
-                      <span class="flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"></path>
-                        </svg>
-                        {{ item.level }}
-                      </span>
-                    }
-                  </div>
-
-                  <!-- Precio y botones -->
-                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-auto">
-                    <div class="flex items-baseline gap-2">
-                      @if (item['isFree'] || item.price_usd === 0) {
-                        <!-- Badge de GRATUITO si el curso/proyecto es gratis O tiene precio $0 -->
-                        <span class="inline-flex items-center px-4 py-2 text-lg font-bold text-green-400 bg-green-500/10 border border-green-500/30 rounded-lg">
-                          🎁 GRATUITO
-                        </span>
-                      } @else if (item.discount_active && item.final_price_usd !== undefined) {
-                        <!-- Precio con descuento -->
-                        <div class="text-xl sm:text-2xl font-bold text-lime-300">
-                          ${{ item.final_price_usd | number:'1.0-2' }}
-                        </div>
-                        <!-- Precio original tachado -->
-                        <div class="text-sm text-white/50 line-through">
-                          ${{ item.price_usd | number:'1.0-2' }}
-                        </div>
-                        <!-- Badge de descuento -->
-                        <span class="px-2 py-0.5 rounded bg-lime-500/20 text-lime-300 text-xs font-bold border border-lime-500/30">
-                          -{{ item.discount_active.discount }}{{ item.discount_active.type_discount === 1 ? '%' : ' USD' }}
-                        </span>
-                      } @else {
-                        <!-- Precio normal sin descuento -->
-                        <div class="text-xl sm:text-2xl font-bold text-lime-300">${{ item.price_usd | number:'1.0-2' }}</div>
-                        <span class="text-white/60 text-sm">USD</span>
-                      }
-                    </div>
-
-                    <!-- Botones de acción -->
-                    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                      @if (item.type === 'course') {
-                        @if (isCourseEnrolled(item._id)) {
-                          <button class="px-4 py-2 rounded-lg bg-sky-600/50 text-sky-300 text-sm font-semibold cursor-not-allowed" disabled>
-                            Ya adquirido
-                          </button>
-                        } @else {
-                          <button
-                            (click)="buyCourseDirect(item)"
-                            [disabled]="!authService.isLoggedIn()"
-                            class="px-4 py-2 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                          >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                            Comprar - ${{ item.discount_active ? item.final_price_usd : item.price_usd }}
-                          </button>
-                        }
-                        <button
-                          (click)="navigateToCourse(item, $event)"
-                          class="px-4 py-2 rounded-lg border border-white/20 text-white hover:border-lime-400 hover:text-lime-300 transition text-sm font-semibold"
-                        >
-                          Ver detalles
-                        </button>
-                      } @else {
-                        @if (isProjectPurchased(item._id)) {
-                          <button class="px-4 py-2 rounded-lg bg-sky-600/50 text-sky-300 text-sm font-semibold cursor-not-allowed" disabled>
-                            Ya adquirido
-                          </button>
-                        } @else {
-                          <button
-                            (click)="buyProjectDirect(item)"
-                            [disabled]="!authService.isLoggedIn()"
-                            class="px-4 py-2 rounded-lg bg-lime-400 text-slate-900 text-sm font-bold hover:bg-lime-300 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                          >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                            Comprar - ${{ item.discount_active ? item.final_price_usd : item.price_usd }}
-                          </button>
-                        }
-                        <!-- Botón de ver video si el proyecto tiene url_video -->
-                        @if (item.url_video) {
-                          <button
-                            (click)="openVideoModal(item.url_video)"
-                            class="px-4 py-2 rounded-lg border border-white/20 text-white hover:border-cyan-400 hover:text-cyan-300 transition text-sm font-semibold flex items-center gap-2"
-                          >
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
-                            </svg>
-                            <span class="hidden sm:inline">Ver demo</span>
-                          </button>
-                        }
-                      }
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          } @empty {
-            <div class="rounded-xl border border-white/10 bg-slate-800/50 p-12 text-center">
-              <svg class="w-16 h-16 mx-auto mb-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <p class="text-white/70 text-lg font-medium mb-1">No se encontraron resultados</p>
-              <p class="text-white/50 text-sm">Intenta ajustar tus filtros</p>
-            </div>
-          }
-        </div>
-
-        <!-- Controles de Paginación -->
-        @if (catalogTotalPages() > 1) {
-          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-6 border-t border-slate-700">
-            <!-- Info de página actual -->
-            <div class="text-sm text-slate-400">
-              Página {{ catalogPage() }} de {{ catalogTotalPages() }}
-            </div>
-
-            <!-- Botones de paginación -->
-            <div class="flex items-center gap-2">
-              <!-- Botón Anterior -->
-              <button
-                (click)="prevPage()"
-                [disabled]="catalogPage() === 1"
-                class="px-3 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
-              </button>
-
-              <!-- Números de página -->
-              <div class="flex items-center gap-1">
-                @for (pageNum of visiblePages(); track pageNum) {
-                  @if (pageNum !== '...') {
-                    <button
-                      (click)="goToPage(+pageNum)"
-                      [class.bg-lime-400]="+pageNum === catalogPage()"
-                      [class.text-slate-900]="+pageNum === catalogPage()"
-                      [class.bg-slate-800]="+pageNum !== catalogPage()"
-                      [class.text-white]="+pageNum !== catalogPage()"
-                      class="min-w-[40px] px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 transition-colors font-medium text-sm"
-                    >
-                      {{ pageNum }}
-                    </button>
-                  } @else {
-                    <span class="px-2 text-slate-500">…</span>
-                  }
-                }
-              </div>
-
-              <!-- Botón Siguiente -->
-              <button (click)="nextPage()" [disabled]="catalogPage() === catalogTotalPages()" class="px-3 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-              </button>
-            </div>
-          </div>
-        }
-      </div>
-    </div>
-  </section>
-
-  <!-- VIDEO MODAL -->
-  @if (videoModalUrl()) {
-    <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto overscroll-contain touch-pan-y" (click)="videoModalUrl.set(null)">
-      <div class="relative w-full max-w-4xl aspect-video" (click)="$event.stopPropagation()">
-        <!-- Close Button -->
-        <button (click)="videoModalUrl.set(null)" class="absolute -top-10 -right-2 text-white text-4xl hover:text-lime-400 transition-colors">
-          &times;
-        </button>
-
-        @if (sanitizedVideoUrl(); as safeUrl) {
-          <iframe [src]="safeUrl" class="w-full h-full rounded-lg" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
-        } @else {
-          <div class="w-full h-full bg-slate-800 rounded-lg flex items-center justify-center text-red-400">
-            URL de video no válida o no soportada.
-          </div>
-        }
-      </div>
-    </div>
-  }
-
-  <!-- 📜 LEGAL MODAL -->
-  <app-legal-modal
-    [isOpen]="isLegalModalOpen()"
-    [modalType]="legalModalType()"
-    (close)="closeLegalModal()"
-  ></app-legal-modal>
-
-  <!-- 🔥 Footer -->
-  <div class="relative z-10 mt-16">
-    <app-footer (openLegalModalEvent)="openLegalModal($event)"></app-footer>
   </div>
+</section>
+
+<!-- VIDEO MODAL -->
+@if (videoModalUrl()) {
+<div
+  class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto overscroll-contain touch-pan-y"
+  (click)="videoModalUrl.set(null)">
+  <div class="relative w-full max-w-4xl aspect-video" (click)="$event.stopPropagation()">
+    <!-- Close Button -->
+    <button (click)="videoModalUrl.set(null)"
+      class="absolute -top-10 -right-2 text-white text-4xl hover:text-lime-400 transition-colors">
+      &times;
+    </button>
+
+    @if (sanitizedVideoUrl(); as safeUrl) {
+    <iframe [src]="safeUrl" class="w-full h-full rounded-lg" frameborder="0"
+      allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+    } @else {
+    <div class="w-full h-full bg-slate-800 rounded-lg flex items-center justify-center text-red-400">
+      URL de video no válida o no soportada.
+    </div>
+    }
+  </div>
+</div>
+}
+
+<!-- 📜 LEGAL MODAL -->
+<app-legal-modal [isOpen]="isLegalModalOpen()" [modalType]="legalModalType()"
+  (close)="closeLegalModal()"></app-legal-modal>
+
+<!-- 🔥 Footer -->
+<div class="relative z-10 mt-16">
+  <app-footer (openLegalModalEvent)="openLegalModal($event)"></app-footer>
+</div>
 </div>

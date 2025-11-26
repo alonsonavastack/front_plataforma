@@ -1,37 +1,29 @@
 <div class="bg-slate-950 text-white min-h-screen flex flex-col lg:flex-row">
   <!-- 🔥 SIDEBAR LATERAL MEJORADO -->
-  <aside id="dashboard-drawer"
-         class="fixed top-0 left-0 z-40 h-screen transition-all duration-300 -translate-x-full
+  <aside id="dashboard-drawer" class="fixed top-0 left-0 z-40 h-screen transition-all duration-300 -translate-x-full
                 lg:translate-x-0 lg:relative lg:flex-shrink-0
                 bg-slate-900/95 backdrop-blur-xl border-r border-white/5
-                shadow-2xl shadow-black/50"
-         [class.w-72]="!isSidebarCollapsed()"
-         [class.w-20]="isSidebarCollapsed()"
-         [class.lg:w-72]="!isSidebarCollapsed()"
-         [class.lg:w-20]="isSidebarCollapsed()"
-         tabindex="-1"
-         aria-labelledby="drawer-label"
-         (animate.enter)="animate.animateFadeInDashboard($event)">
+                shadow-2xl shadow-black/50" [class.w-72]="!isSidebarCollapsed()" [class.w-20]="isSidebarCollapsed()"
+    [class.lg:w-72]="!isSidebarCollapsed()" [class.lg:w-20]="isSidebarCollapsed()" tabindex="-1"
+    aria-labelledby="drawer-label" (animate.enter)="animate.animateFadeInDashboard($event)">
 
     <div class="h-full flex flex-col overflow-hidden">
       <!-- 🔥 HEADER DEL SIDEBAR -->
       <div class="flex-shrink-0 border-b border-white/5">
         <!-- Branding -->
-        <a routerLink="/"
-           class="flex items-center gap-3 px-5 py-6 hover:bg-white/5 transition-colors duration-200"
-           [class.justify-center]="isSidebarCollapsed()">
+        <a routerLink="/" class="flex items-center gap-3 px-5 py-6 hover:bg-white/5 transition-colors duration-200"
+          [class.justify-center]="isSidebarCollapsed()">
           <!-- Logo dinámico -->
           @if (systemConfigService.config()?.logo) {
-            <img
-              [src]="'http://localhost:3000/api/system-config/logo/' + systemConfigService.config()?.logo"
-              [alt]="(systemConfigService.config()?.siteName || 'Dev-Sharks') + ' logo'"
-              class="h-10 w-10 rounded-xl object-cover shrink-0 ring-2 ring-white/10"
-              (error)="$event.target.style.display='none'"
-            />
+          <img [src]="'http://localhost:3000/api/system-config/logo/' + systemConfigService.config()?.logo"
+            [alt]="(systemConfigService.config()?.siteName || 'Dev-Sharks') + ' logo'"
+            class="h-10 w-10 rounded-xl object-cover shrink-0 ring-2 ring-white/10"
+            (error)="$event.target.style.display='none'" />
           } @else {
-            <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-lime-400 via-emerald-400 to-cyan-400 grid place-items-center text-slate-900 font-black shrink-0 shadow-lg shadow-lime-500/30">
-              {{ (systemConfigService.config()?.siteName || 'Dev-Sharks').charAt(0).toUpperCase() }}
-            </div>
+          <div
+            class="h-10 w-10 rounded-xl bg-gradient-to-br from-lime-400 via-emerald-400 to-cyan-400 grid place-items-center text-slate-900 font-black shrink-0 shadow-lg shadow-lime-500/30">
+            {{ (systemConfigService.config()?.siteName || 'Dev-Sharks').charAt(0).toUpperCase() }}
+          </div>
           }
 
           <!-- Nombre dinámico -->
@@ -45,47 +37,40 @@
 
         <!-- Botón collapse (solo desktop) -->
         <div class="hidden lg:flex justify-end px-3 pb-3" [class.justify-center]="isSidebarCollapsed()">
-          <button
-            (click)="toggleCollapse()"
-            type="button"
+          <button (click)="toggleCollapse()" type="button"
             class="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all duration-200"
             [title]="isSidebarCollapsed() ? 'Expandir sidebar' : 'Colapsar sidebar'">
-            <svg class="w-4 h-4 transition-transform duration-200"
-                 [class.rotate-180]="isSidebarCollapsed()"
-                 fill="none"
-                 stroke="currentColor"
-                 viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+            <svg class="w-4 h-4 transition-transform duration-200" [class.rotate-180]="isSidebarCollapsed()" fill="none"
+              stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7">
+              </path>
             </svg>
           </button>
         </div>
       </div>
 
       <!-- 🔥 NAVIGATION -->
-      <app-sidebar
-        class="flex-1 min-h-0"
-        [selected]="active"
-        [items]="items()"
-        [isCollapsed]="isSidebarCollapsed()"
+      <app-sidebar class="flex-1 min-h-0" [selected]="active" [items]="items()" [isCollapsed]="isSidebarCollapsed()"
         (navigate)="setActive($event)">
       </app-sidebar>
 
       <!-- 🔥 FOOTER DEL SIDEBAR (Usuario) -->
       <div class="flex-shrink-0 border-t border-white/5 p-4" [class.px-2]="isSidebarCollapsed()">
         <div class="flex items-center gap-3" [class.justify-center]="isSidebarCollapsed()">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-lime-400 to-emerald-400 grid place-items-center text-slate-900 font-bold shrink-0 ring-2 ring-white/10">
+          <div
+            class="w-10 h-10 rounded-full bg-gradient-to-br from-lime-400 to-emerald-400 grid place-items-center text-slate-900 font-bold shrink-0 ring-2 ring-white/10">
             {{ getUserInitial() }}
           </div>
 
           @if (!isSidebarCollapsed()) {
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-white truncate">
-                {{ authService.user()?.name }}
-              </p>
-              <p class="text-xs text-slate-400 capitalize truncate">
-                {{ authService.user()?.rol }}
-              </p>
-            </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-white truncate">
+              {{ authService.user()?.name }}
+            </p>
+            <p class="text-xs text-slate-400 capitalize truncate">
+              {{ authService.user()?.rol }}
+            </p>
+          </div>
           }
         </div>
       </div>
@@ -94,14 +79,12 @@
 
   <!-- 🔥 OVERLAY MEJORADO (Fondo para cerrar en móvil) -->
   <div data-drawer-backdrop="dashboard-drawer"
-       class="bg-slate-950/80 backdrop-blur-sm fixed inset-0 z-30 lg:hidden hidden transition-opacity duration-300"></div>
+    class="bg-slate-950/80 backdrop-blur-sm fixed inset-0 z-30 lg:hidden hidden transition-opacity duration-300"></div>
 
   <!-- CONTENIDO PRINCIPAL -->
   <main class="flex-1 relative min-h-screen overflow-y-auto touch-pan-y overscroll-contain" tabindex="-1">
     <!-- TOPBAR (Ahora dentro del main) -->
-    <app-topbar
-      [isSidebarCollapsed]="isSidebarCollapsed()"
-      (toggleSidebar)="toggleSidebar()">
+    <app-topbar [isSidebarCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()">
     </app-topbar>
 
     <!-- Contenido de la sección -->
@@ -110,310 +93,313 @@
       @switch (active) {
 
 
-        <!-- 💎 DASHBOARD EJECUTIVO (Solo Admin) -->
-        @case ('executive-dashboard') {
-          @if (dashboardService.isLoadingExecutiveMetrics()) {
-            <!-- Loading State -->
-            <div class="flex justify-center items-center py-20">
-              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
-            </div>
-          } @else if (dashboardService.executiveMetrics(); as metrics) {
-            <!-- Header -->
-            <div class="mb-8">
-              <div class="flex items-center gap-3 mb-2">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-lime-400 via-emerald-400 to-cyan-400 grid place-items-center">
-                  <svg class="w-7 h-7 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                  </svg>
-                </div>
-                <div>
-                  <h1 class="text-3xl md:text-4xl font-bold text-white">Dashboard Ejecutivo</h1>
-                  <p class="text-slate-400">Métricas financieras y operativas completas</p>
-                </div>
-              </div>
-            </div>
+      <!-- 💎 DASHBOARD EJECUTIVO (Solo Admin) -->
+      @case ('executive-dashboard') {
+      @if (dashboardService.isLoadingExecutiveMetrics()) {
+      <!-- Loading State -->
+      <div class="flex justify-center items-center py-20">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
+      </div>
+      } @else if (dashboardService.executiveMetrics(); as metrics) {
+      <!-- Header -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <div
+            class="w-12 h-12 rounded-xl bg-gradient-to-br from-lime-400 via-emerald-400 to-cyan-400 grid place-items-center">
+            <svg class="w-7 h-7 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+              </path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-3xl md:text-4xl font-bold text-white">Dashboard Ejecutivo</h1>
+            <p class="text-slate-400">Métricas financieras y operativas completas</p>
+          </div>
+        </div>
+      </div>
 
-            <!-- 📊 Métricas Principales -->
-            <div class="grid md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-              <!-- Ingresos Brutos -->
-              <div class="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-lime-900/20 to-lime-800/10 p-6 backdrop-blur-xl hover:scale-105 transition-all duration-300">
-                <div class="absolute inset-0 bg-gradient-to-br from-lime-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="relative z-10">
-                  <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 rounded-xl bg-lime-500/10 text-lime-400 flex items-center justify-center ring-1 ring-lime-500/20">
-                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                    </div>
-                  </div>
-                  <p class="text-sm font-medium text-lime-400/80 mb-2">{{ metrics.income.gross.label }}</p>
-                  <p class="text-3xl font-extrabold text-lime-300 mb-1">{{ formatCurrency(metrics.income.gross.total) }}</p>
-                  <p class="text-xs text-slate-400">{{ metrics.income.gross.description }}</p>
-                  <div class="mt-3 pt-3 border-t border-lime-500/10">
-                    <p class="text-xs text-lime-400/60">Mes actual: {{ formatCurrency(metrics.income.gross.currentMonth) }}</p>
-                  </div>
-                </div>
-              </div>
+      <!-- AGREGAR ESTE TOGGLE -->
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-slate-200">Métricas Ejecutivas</h2>
 
-              <!-- Ingresos Netos -->
-              <div class="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-emerald-900/20 to-emerald-800/10 p-6 backdrop-blur-xl hover:scale-105 transition-all duration-300">
-                <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="relative z-10">
-                  <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center ring-1 ring-emerald-500/20">
-                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                    </div>
-                    <div class="px-2 py-1 rounded-full text-xs font-bold"
-                         [ngClass]="metrics.income.net.delta >= 0 ? 'bg-lime-500/10 text-lime-400 ring-1 ring-lime-500/20' : 'bg-red-500/10 text-red-400 ring-1 ring-red-500/20'">
-                      {{ metrics.income.net.delta >= 0 ? '↑' : '↓' }} {{ metrics.income.net.delta }}%
-                    </div>
-                  </div>
-                  <p class="text-sm font-medium text-emerald-400/80 mb-2">{{ metrics.income.net.label }}</p>
-                  <p class="text-3xl font-extrabold text-emerald-300 mb-1">{{ formatCurrency(metrics.income.net.total) }}</p>
-                  <p class="text-xs text-slate-400">{{ metrics.income.net.description }}</p>
-                  <div class="mt-3 pt-3 border-t border-emerald-500/10 space-y-1">
-                    <p class="text-xs text-emerald-400/60">Mes actual: {{ formatCurrency(metrics.income.net.currentMonth) }}</p>
-                    <p class="text-xs text-slate-500">Año: {{ formatCurrency(metrics.income.net.currentYear) }}</p>
-                  </div>
-                </div>
-              </div>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" [checked]="dashboardService.excludeTestData()"
+            (change)="dashboardService.toggleTestDataFilter()"
+            class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-500">
+          <span class="text-sm text-slate-400">Excluir datos de prueba</span>
 
-              <!-- Reembolsos -->
-              <div class="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-red-900/20 to-red-800/10 p-6 backdrop-blur-xl hover:scale-105 transition-all duration-300">
-                <div class="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="relative z-10">
-                  <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center ring-1 ring-red-500/20">
-                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
-                      </svg>
-                    </div>
-                    @if (metrics.refunds.pending > 0) {
-                      <div class="px-2 py-1 rounded-full bg-orange-500/10 text-orange-400 text-xs font-bold ring-1 ring-orange-500/20">
-                        {{ metrics.refunds.pending }} pendientes
-                      </div>
-                    }
-                  </div>
-                  <p class="text-sm font-medium text-red-400/80 mb-2">{{ metrics.refunds.label }}</p>
-                  <p class="text-3xl font-extrabold text-red-300 mb-1">{{ formatCurrency(metrics.refunds.totalAmount) }}</p>
-                  <p class="text-xs text-slate-400">{{ metrics.refunds.description }}</p>
-                  <div class="mt-3 pt-3 border-t border-red-500/10 space-y-1">
-                    <p class="text-xs text-red-400/60">Total solicitudes: {{ metrics.refunds.total }}</p>
-                    <p class="text-xs text-slate-500">Tasa: {{ metrics.refunds.rate }}%</p>
-                    <p class="text-xs text-lime-400 font-medium">💰 Retenidas: {{ formatCurrency(metrics.refunds.platformFeesRetained) }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Comisiones Plataforma -->
-              <div class="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-cyan-900/20 to-cyan-800/10 p-6 backdrop-blur-xl hover:scale-105 transition-all duration-300">
-                <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="relative z-10">
-                  <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center ring-1 ring-cyan-500/20">
-                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                      </svg>
-                    </div>
-                  </div>
-                  <p class="text-sm font-medium text-cyan-400/80 mb-2">{{ metrics.commissions.platform.label }}</p>
-                  <p class="text-3xl font-extrabold text-cyan-300 mb-1">{{ formatCurrency(metrics.commissions.platform.amount) }}</p>
-                  <p class="text-xs text-slate-400">{{ metrics.commissions.platform.description }}</p>
-                  <div class="mt-3 pt-3 border-t border-cyan-500/10">
-                    <p class="text-xs text-cyan-400/60">Tasa: {{ metrics.commissions.platform.rate }}%</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 💰 Desglose de Comisiones Retenidas de Reembolsos -->
-            <div class="grid md:grid-cols-3 gap-6 mb-8">
-              <!-- Comisiones Retenidas -->
-              <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-lime-900/20 to-lime-800/10 p-6 backdrop-blur-xl hover:scale-105 transition-all duration-300">
-                <div class="flex items-center gap-3 mb-4">
-                  <div class="w-10 h-10 rounded-lg bg-lime-500/10 text-lime-400 flex items-center justify-center ring-1 ring-lime-500/20">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <p class="text-sm text-slate-400">Comisiones de Reembolsos</p>
-                    <p class="text-xs text-slate-500">Retenidas por la plataforma</p>
-                  </div>
-                </div>
-                <p class="text-3xl font-bold text-lime-300">{{ formatCurrency(metrics.refunds.platformFeesRetained) }}</p>
-                <p class="text-xs text-slate-400 mt-2">Este monto NO se devolvió al cliente</p>
-              </div>
-
-              <!-- Gastos de Procesamiento -->
-              <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-orange-900/20 to-orange-800/10 p-6 backdrop-blur-xl hover:scale-105 transition-all duration-300">
-                <div class="flex items-center gap-3 mb-4">
-                  <div class="w-10 h-10 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center ring-1 ring-orange-500/20">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <p class="text-sm text-slate-400">Gastos de Procesamiento</p>
-                    <p class="text-xs text-slate-500">No recuperables</p>
-                  </div>
-                </div>
-                <p class="text-3xl font-bold text-orange-300">{{ formatCurrency(metrics.refunds.processingFees) }}</p>
-                <p class="text-xs text-slate-400 mt-2">Costo asumido por la plataforma</p>
-              </div>
-
-              <!-- Impacto Neto -->
-              <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-emerald-900/20 to-emerald-800/10 p-6 backdrop-blur-xl hover:scale-105 transition-all duration-300">
-                <div class="flex items-center gap-3 mb-4">
-                  <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center ring-1 ring-emerald-500/20">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <p class="text-sm text-slate-400">Impacto Neto en Reembolsos</p>
-                    <p class="text-xs text-slate-500">Pérdida real</p>
-                  </div>
-                </div>
-                <p class="text-3xl font-bold text-emerald-300">{{ formatCurrency(metrics.refunds.totalAmount - metrics.refunds.platformFeesRetained) }}</p>
-                <p class="text-xs text-slate-400 mt-2">Después de comisiones retenidas</p>
-              </div>
-            </div>
-
-            <!-- 📈 Gráfico de Diferencia Ingresos Brutos vs Netos -->
-            <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/50 p-6 backdrop-blur-xl mb-8">
-              <h3 class="text-xl font-bold text-white mb-4">Análisis de Márgenes</h3>
-              <div class="grid md:grid-cols-3 gap-6">
-                <div class="md:col-span-2">
-                  <div class="bg-white/5 rounded-xl p-6">
-                    <div class="flex items-end justify-between h-48">
-                      <div class="flex-1 flex flex-col justify-end items-center gap-2">
-                        <div class="w-full bg-gradient-to-t from-lime-500 to-lime-300 rounded-t-lg" [style.height]="'90%'">
-                          <div class="h-full flex items-start justify-center pt-3">
-                            <span class="text-xs font-bold text-slate-900">{{ formatCurrency(metrics.income.gross.total) }}</span>
-                          </div>
-                        </div>
-                        <span class="text-sm text-lime-400 font-medium">Ingresos Brutos</span>
-                      </div>
-                      <div class="flex-1 flex flex-col justify-end items-center gap-2">
-                        <div class="w-full bg-gradient-to-t from-emerald-500 to-emerald-300 rounded-t-lg" [style.height]="(metrics.income.net.total / metrics.income.gross.total * 90) + '%'">
-                          <div class="h-full flex items-start justify-center pt-3">
-                            <span class="text-xs font-bold text-slate-900">{{ formatCurrency(metrics.income.net.total) }}</span>
-                          </div>
-                        </div>
-                        <span class="text-sm text-emerald-400 font-medium">Ingresos Netos</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="flex flex-col justify-center">
-                  <div class="bg-white/5 rounded-xl p-6">
-                    <p class="text-sm text-slate-400 mb-2">{{ metrics.income.difference.label }}</p>
-                    <p class="text-4xl font-extrabold text-orange-400 mb-1">{{ formatCurrency(metrics.income.difference.amount) }}</p>
-                    <p class="text-sm text-slate-500">{{ metrics.income.difference.percentage }} del total</p>
-                    <div class="mt-4 pt-4 border-t border-white/10">
-                      <p class="text-xs text-slate-400 mb-2">Composición:</p>
-                      <div class="space-y-2">
-                        <div class="flex justify-between text-xs">
-                          <span class="text-slate-500">Comisiones</span>
-                          <span class="text-white font-medium">{{ formatCurrency(metrics.commissions.platform.amount + metrics.commissions.instructors.amount) }}</span>
-                        </div>
-                        <div class="flex justify-between text-xs">
-                          <span class="text-slate-500">Reembolsos</span>
-                          <span class="text-red-400 font-medium">{{ formatCurrency(metrics.refunds.totalAmount) }}</span>
-                        </div>
-                        <div class="flex justify-between text-xs font-bold pt-2 border-t border-white/5">
-                          <span class="text-lime-300">Comisiones retenidas</span>
-                          <span class="text-lime-300">{{ formatCurrency(metrics.refunds.platformFeesRetained) }}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 🔢 Contadores Operativos -->
-            <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-              <div class="rounded-xl bg-white/5 p-4 text-center">
-                <p class="text-2xl font-bold text-white">{{ metrics.counters.students }}</p>
-                <p class="text-xs text-slate-400">Estudiantes</p>
-              </div>
-              <div class="rounded-xl bg-white/5 p-4 text-center">
-                <p class="text-2xl font-bold text-white">{{ metrics.counters.instructors }}</p>
-                <p class="text-xs text-slate-400">Instructores</p>
-              </div>
-              <div class="rounded-xl bg-white/5 p-4 text-center">
-                <p class="text-2xl font-bold text-white">{{ metrics.counters.activeCourses }}</p>
-                <p class="text-xs text-slate-400">Cursos Activos</p>
-              </div>
-              <div class="rounded-xl bg-white/5 p-4 text-center">
-                <p class="text-2xl font-bold text-white">{{ metrics.counters.activeProjects }}</p>
-                <p class="text-xs text-slate-400">Proyectos Activos</p>
-              </div>
-              <div class="rounded-xl bg-white/5 p-4 text-center">
-                <p class="text-2xl font-bold text-white">{{ metrics.counters.totalSales }}</p>
-                <p class="text-xs text-slate-400">Ventas Totales</p>
-              </div>
-              <div class="rounded-xl bg-white/5 p-4 text-center">
-                <p class="text-2xl font-bold text-white">{{ metrics.counters.activeSales }}</p>
-                <p class="text-xs text-slate-400">Ventas Activas</p>
-              </div>
-            </div>
-
-            <!-- 🚨 Alertas y Acciones Rápidas -->
-            @if (metrics.alerts.length > 0) {
-              <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/50 p-6 backdrop-blur-xl">
-                <div class="flex items-center gap-2 mb-4">
-                  <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                  </svg>
-                  <h3 class="text-xl font-bold text-white">Alertas del Sistema</h3>
-                </div>
-                <div class="space-y-3">
-                  @for (alert of metrics.alerts; track $index) {
-                    <div class="flex items-start gap-3 p-4 rounded-xl border"
-                         [ngClass]="getAlertClass(alert.type)">
-                      <span class="text-2xl">{{ getAlertIcon(alert.type) }}</span>
-                      <div class="flex-1">
-                        <p class="text-sm font-medium">{{ alert.message }}</p>
-                      </div>
-                      <span class="px-2 py-1 rounded-full text-xs font-bold"
-                            [ngClass]="getPriorityBadgeClass(alert.priority)">
-                        {{ alert.priority === 'high' ? 'Alta' : alert.priority === 'medium' ? 'Media' : 'Baja' }}
-                      </span>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
+          @if (dashboardService.excludeTestData()) {
+          <span class="px-2 py-1 text-xs font-medium bg-blue-500/10 text-blue-400 rounded">
+            ✓ Solo datos reales
+          </span>
           }
-        }
+        </label>
+      </div>
 
-        <!-- Otras secciones del dashboard -->
-        @case ('users') { <app-users /> }
-        @case ('carousel-dashboard') { <app-carousel-dashboard></app-carousel-dashboard> }
-        @case ('categories') { <app-categories /> }
-        @case ('courses') { <app-courses /> }
-        @case ('discounts') { <app-discounts /> }
-        @case ('sales') { <app-sales /> }
-        @case ('projects') { <app-projects /> }
-        @case ('students') { <app-students /> }
-        @case ('reports') { <app-reports /> }
-        @case ('settings') { <app-settings /> }
-        @case ('appearance') { <app-appearance></app-appearance> }
-        @case ('instructor-earnings') { <app-instructor-earnings /> }
-        @case ('instructor-payment-history') { <app-instructor-payment-history /> }
-        @case ('instructor-payment-config') { <app-instructor-payment-config /> }
-        @case ('admin-instructor-payments') { <app-admin-instructor-payments /> }
-        @case ('admin-payment-history') { <app-admin-payment-history /> }
-        @case ('admin-commission-settings') { <app-admin-commission-settings /> }
-        @case ('admin-bank-verification') { <app-admin-bank-verification /> }
-        @case ('system-settings') { <app-system-settings /> }
-        @case ('refunds') { <app-refunds /> }
-        @case ('wallets') { <app-admin-wallets /> }
+      <!-- 📊 Métricas Principales -->
+      <div class="grid md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+        <!-- Ingresos Brutos -->
+        <div
+          class="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-lime-900/20 to-lime-800/10 p-6 backdrop-blur-xl hover:scale-105 transition-all duration-300">
+          <div
+            class="absolute inset-0 bg-gradient-to-br from-lime-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+          </div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+              <div
+                class="w-12 h-12 rounded-xl bg-lime-500/10 text-lime-400 flex items-center justify-center ring-1 ring-lime-500/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                  </path>
+                </svg>
+              </div>
+            </div>
+            <p class="text-sm font-medium text-lime-400/80 mb-2">{{ metrics.income.gross.label }}</p>
+            <p class="text-3xl font-extrabold text-lime-300 mb-1">{{ formatCurrency(metrics.income.gross.total) }}</p>
+            <p class="text-xs text-slate-400">{{ metrics.income.gross.description }}</p>
+            <div class="mt-3 pt-3 border-t border-lime-500/10">
+              <p class="text-xs text-lime-400/60">Mes actual: {{ formatCurrency(metrics.income.gross.currentMonth) }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ingresos Netos -->
+        <div
+          class="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-emerald-900/20 to-emerald-800/10 p-6 backdrop-blur-xl hover:scale-105 transition-all duration-300">
+          <div
+            class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+          </div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+              <div
+                class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center ring-1 ring-emerald-500/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div class="px-2 py-1 rounded-full text-xs font-bold"
+                [ngClass]="metrics.income.net.delta >= 0 ? 'bg-lime-500/10 text-lime-400 ring-1 ring-lime-500/20' : 'bg-red-500/10 text-red-400 ring-1 ring-red-500/20'">
+                {{ metrics.income.net.delta >= 0 ? '↑' : '↓' }} {{ metrics.income.net.delta }}%
+              </div>
+            </div>
+            <p class="text-sm font-medium text-emerald-400/80 mb-2">{{ metrics.income.net.label }}</p>
+            <p class="text-3xl font-extrabold text-emerald-300 mb-1">{{ formatCurrency(metrics.income.net.total) }}</p>
+            <p class="text-xs text-slate-400">{{ metrics.income.net.description }}</p>
+            <div class="mt-3 pt-3 border-t border-emerald-500/10 space-y-1">
+              <p class="text-xs text-emerald-400/60">Mes actual: {{ formatCurrency(metrics.income.net.currentMonth) }}
+              </p>
+              <p class="text-xs text-slate-500">Año: {{ formatCurrency(metrics.income.net.currentYear) }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reembolsos -->
+        <div
+          class="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-red-900/20 to-red-800/10 p-6 backdrop-blur-xl hover:scale-105 transition-all duration-300">
+          <div
+            class="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+          </div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+              <div
+                class="w-12 h-12 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center ring-1 ring-red-500/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                </svg>
+              </div>
+              @if (metrics.refunds.pending > 0) {
+              <div
+                class="px-2 py-1 rounded-full bg-orange-500/10 text-orange-400 text-xs font-bold ring-1 ring-orange-500/20">
+                {{ metrics.refunds.pending }} pendientes
+              </div>
+              }
+            </div>
+            <p class="text-sm font-medium text-red-400/80 mb-2">{{ metrics.refunds.label }}</p>
+            <p class="text-3xl font-extrabold text-red-300 mb-1">{{ formatCurrency(metrics.refunds.totalAmount) }}</p>
+            <p class="text-xs text-slate-400">{{ metrics.refunds.description }}</p>
+            <div class="mt-3 pt-3 border-t border-red-500/10 space-y-1">
+              <p class="text-xs text-red-400/60">Total solicitudes: {{ metrics.refunds.total }}</p>
+              <p class="text-xs text-slate-500">Tasa: {{ metrics.refunds.rate }}%</p>
+            </div>
+
+            <!-- Dentro de la card de reembolsos, AL FINAL -->
+            <div class="border-t border-red-500/10 pt-3 mt-3">
+              @if (metrics.refunds.testDataExcluded) {
+              <p class="text-xs text-green-400">✓ Datos de prueba excluidos</p>
+              } @else {
+              <p class="text-xs text-orange-400">⚠️ Incluye compras de prueba</p>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Comisiones Plataforma -->
+        <div
+          class="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-cyan-900/20 to-cyan-800/10 p-6 backdrop-blur-xl hover:scale-105 transition-all duration-300">
+          <div
+            class="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+          </div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+              <div
+                class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center ring-1 ring-cyan-500/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+              </div>
+            </div>
+            <p class="text-sm font-medium text-cyan-400/80 mb-2">{{ metrics.commissions.platform.label }}</p>
+            <p class="text-3xl font-extrabold text-cyan-300 mb-1">{{ formatCurrency(metrics.commissions.platform.amount)
+              }}</p>
+            <p class="text-xs text-slate-400">{{ metrics.commissions.platform.description }}</p>
+            <div class="mt-3 pt-3 border-t border-cyan-500/10">
+              <p class="text-xs text-cyan-400/60">Tasa: {{ metrics.commissions.platform.rate }}%</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 📈 Gráfico de Diferencia Ingresos Brutos vs Netos -->
+      <div
+        class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/50 p-6 backdrop-blur-xl mb-8">
+        <h3 class="text-xl font-bold text-white mb-4">Análisis de Márgenes</h3>
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="md:col-span-2">
+            <div class="bg-white/5 rounded-xl p-6">
+              <div class="flex items-end justify-between h-48">
+                <div class="flex-1 flex flex-col justify-end items-center gap-2">
+                  <div class="w-full bg-gradient-to-t from-lime-500 to-lime-300 rounded-t-lg" [style.height]="'90%'">
+                    <div class="h-full flex items-start justify-center pt-3">
+                      <span class="text-xs font-bold text-slate-900">{{ formatCurrency(metrics.income.gross.total)
+                        }}</span>
+                    </div>
+                  </div>
+                  <span class="text-sm text-lime-400 font-medium">Ingresos Brutos</span>
+                </div>
+                <div class="flex-1 flex flex-col justify-end items-center gap-2">
+                  <div class="w-full bg-gradient-to-t from-emerald-500 to-emerald-300 rounded-t-lg"
+                    [style.height]="(metrics.income.net.total / metrics.income.gross.total * 90) + '%'">
+                    <div class="h-full flex items-start justify-center pt-3">
+                      <span class="text-xs font-bold text-slate-900">{{ formatCurrency(metrics.income.net.total)
+                        }}</span>
+                    </div>
+                  </div>
+                  <span class="text-sm text-emerald-400 font-medium">Ingresos Netos</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col justify-center">
+            <div class="bg-white/5 rounded-xl p-6">
+              <p class="text-sm text-slate-400 mb-2">{{ metrics.income.difference.label }}</p>
+              <p class="text-4xl font-extrabold text-orange-400 mb-1">{{
+                formatCurrency(metrics.income.difference.amount) }}</p>
+              <p class="text-sm text-slate-500">{{ metrics.income.difference.percentage }} del total</p>
+              <div class="mt-4 pt-4 border-t border-white/10">
+                <p class="text-xs text-slate-400 mb-2">Composición:</p>
+                <div class="space-y-2">
+                  <div class="flex justify-between text-xs">
+                    <span class="text-slate-500">Comisiones</span>
+                    <span class="text-white font-medium">{{ formatCurrency(metrics.commissions.platform.amount +
+                      metrics.commissions.instructors.amount) }}</span>
+                  </div>
+                  <div class="flex justify-between text-xs">
+                    <span class="text-slate-500">Reembolsos</span>
+                    <span class="text-red-400 font-medium">{{ formatCurrency(metrics.refunds.totalAmount) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🔢 Contadores Operativos -->
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+        <div class="rounded-xl bg-white/5 p-4 text-center">
+          <p class="text-2xl font-bold text-white">{{ metrics.counters.students }}</p>
+          <p class="text-xs text-slate-400">Estudiantes</p>
+        </div>
+        <div class="rounded-xl bg-white/5 p-4 text-center">
+          <p class="text-2xl font-bold text-white">{{ metrics.counters.instructors }}</p>
+          <p class="text-xs text-slate-400">Instructores</p>
+        </div>
+        <div class="rounded-xl bg-white/5 p-4 text-center">
+          <p class="text-2xl font-bold text-white">{{ metrics.counters.activeCourses }}</p>
+          <p class="text-xs text-slate-400">Cursos Activos</p>
+        </div>
+        <div class="rounded-xl bg-white/5 p-4 text-center">
+          <p class="text-2xl font-bold text-white">{{ metrics.counters.activeProjects }}</p>
+          <p class="text-xs text-slate-400">Proyectos Activos</p>
+        </div>
+        <div class="rounded-xl bg-white/5 p-4 text-center">
+          <p class="text-2xl font-bold text-white">{{ metrics.counters.totalSales }}</p>
+          <p class="text-xs text-slate-400">Ventas Totales</p>
+        </div>
+        <div class="rounded-xl bg-white/5 p-4 text-center">
+          <p class="text-2xl font-bold text-white">{{ metrics.counters.activeSales }}</p>
+          <p class="text-xs text-slate-400">Ventas Activas</p>
+        </div>
+      </div>
+
+      <!-- 🚨 Alertas y Acciones Rápidas -->
+      @if (metrics.alerts.length > 0) {
+      <div
+        class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/50 p-6 backdrop-blur-xl">
+        <div class="flex items-center gap-2 mb-4">
+          <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+            </path>
+          </svg>
+          <h3 class="text-xl font-bold text-white">Alertas del Sistema</h3>
+        </div>
+        <div class="space-y-3">
+          @for (alert of metrics.alerts; track $index) {
+          <div class="flex items-start gap-3 p-4 rounded-xl border" [ngClass]="getAlertClass(alert.type)">
+            <span class="text-2xl">{{ getAlertIcon(alert.type) }}</span>
+            <div class="flex-1">
+              <p class="text-sm font-medium">{{ alert.message }}</p>
+            </div>
+            <span class="px-2 py-1 rounded-full text-xs font-bold" [ngClass]="getPriorityBadgeClass(alert.priority)">
+              {{ alert.priority === 'high' ? 'Alta' : alert.priority === 'medium' ? 'Media' : 'Baja' }}
+            </span>
+          </div>
+          }
+        </div>
+      </div>
+      }
+      }
+      }
+
+      <!-- Otras secciones del dashboard -->
+      @case ('users') { <app-users /> }
+      @case ('carousel-dashboard') { <app-carousel-dashboard></app-carousel-dashboard> }
+      @case ('categories') { <app-categories /> }
+      @case ('courses') { <app-courses /> }
+      @case ('discounts') { <app-discounts /> }
+      @case ('sales') { <app-sales /> }
+      @case ('projects') { <app-projects /> }
+      @case ('students') { <app-students /> }
+      @case ('reports') { <app-reports /> }
+      @case ('settings') { <app-settings /> }
+      @case ('appearance') { <app-appearance></app-appearance> }
+      @case ('instructor-earnings') { <app-instructor-earnings /> }
+      @case ('instructor-payment-history') { <app-instructor-payment-history /> }
+      @case ('instructor-payment-config') { <app-instructor-payment-config /> }
+      @case ('admin-instructor-payments') { <app-admin-instructor-payments /> }
+      @case ('admin-payment-history') { <app-admin-payment-history /> }
+      @case ('admin-commission-settings') { <app-admin-commission-settings /> }
+      @case ('admin-bank-verification') { <app-admin-bank-verification /> }
+      @case ('system-settings') { <app-system-settings /> }
+      @case ('refunds') { <app-refunds /> }
+      @case ('wallets') { <app-admin-wallets /> }
       }
     </div>
   </main>

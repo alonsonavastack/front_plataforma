@@ -171,7 +171,7 @@
     }
 
     <!-- Earnings Table -->
-    @if (!isLoading() && earnings().length > 0) {
+    @if (!isLoading() && validEarnings().length > 0) {
       <div class="bg-slate-800/50 rounded-lg border border-white/10 overflow-hidden">
         <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-white/10">
@@ -317,8 +317,8 @@
               <!-- Contador -->
               <div class="text-sm text-slate-400">
                 Mostrando {{ (currentPage() - 1) * itemsPerPage() + 1 }} - 
-                {{ Math.min(currentPage() * itemsPerPage(), earnings().length) }} 
-                de {{ earnings().length }}
+                {{ Math.min(currentPage() * itemsPerPage(), validEarnings().length) }} 
+                de {{ validEarnings().length }}
               </div>
             </div>
           </div>
@@ -327,7 +327,7 @@
     }
 
     <!-- Empty State -->
-    @if (!isLoading() && earnings().length === 0) {
+    @if (!isLoading() && validEarnings().length === 0) {
       <div class="bg-slate-800/50 rounded-lg border border-white/10 p-12 text-center">
         <svg class="mx-auto h-16 w-16 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>

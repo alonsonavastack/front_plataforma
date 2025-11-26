@@ -62,7 +62,7 @@ import { ReportsComponent } from '../reports/reports.component';
     SystemSettingsComponent,
     RefundsComponent,
     AdminWalletsComponent
-],
+  ],
   templateUrl: './dashboard.html',
 })
 export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -158,7 +158,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // 💎 NUEVO: Recargar métricas ejecutivas al entrar a la sección
     if (s === 'executive-dashboard' && this.authService.user()?.rol === 'admin') {
-      console.log('🔄 [setActive] Entrando a executive-dashboard, recargando métricas...');
       setTimeout(() => {
         this.dashboardService.loadExecutiveMetrics();
       }, 100);
@@ -199,17 +198,17 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private allItems: NavItem[] = [
     // 💎 DASHBOARD EJECUTIVO (Solo Admin)
     { id: 'executive-dashboard', label: 'Dashboard Ejecutivo', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', adminOnly: true },
-    { id: 'users',    label: 'Usuarios',     icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z', adminOnly: true },
+    { id: 'users', label: 'Usuarios', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z', adminOnly: true },
     { id: 'categories', label: 'Categorías', icon: 'M4 6h16M4 12h16M4 18h16', adminOnly: true },
-    { id: 'courses',  label: 'Cursos',       icon: 'M4 6h16M4 12h16M4 18h16' },
-    { id: 'discounts', label: 'Descuentos',  icon: 'M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z', adminOnly: true },
+    { id: 'courses', label: 'Cursos', icon: 'M4 6h16M4 12h16M4 18h16' },
+    { id: 'discounts', label: 'Descuentos', icon: 'M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z', adminOnly: true },
     { id: 'sales', label: 'Ventas', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
-    { id: 'projects', label: 'Proyectos',    icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' },
-    { id: 'students', label: 'Estudiantes',  icon: 'M15 11a3 3 0 1 0-6 0m10 10a7 7 0 0 0-14 0' },
+    { id: 'projects', label: 'Proyectos', icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' },
+    { id: 'students', label: 'Estudiantes', icon: 'M15 11a3 3 0 1 0-6 0m10 10a7 7 0 0 0-14 0' },
     { id: 'carousel-dashboard', label: 'Carrusel', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z', adminOnly: true },
-    { id: 'reports',  label: 'Reportes',     icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', adminOnly: true },
+    { id: 'reports', label: 'Reportes', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', adminOnly: true },
     { id: 'appearance', label: 'Apariencia', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z', adminOnly: true },
-    { id: 'settings', label: 'Destacados',   icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z', adminOnly: true },
+    { id: 'settings', label: 'Destacados', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z', adminOnly: true },
     { id: 'system-settings', label: 'Configuración', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.608 3.292 0z M12 12a3 3 0 100-6 3 3 0 000 6z', adminOnly: true },
     // Admin - Pagos
     { id: 'admin-instructor-payments', label: 'Pagos a Instructores', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', adminOnly: true },
@@ -324,26 +323,17 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // 💎 NUEVO: Cargar métricas ejecutivas si es admin
     if (this.authService.user()?.rol === 'admin') {
-      console.log('👑 [DashboardComponent] Usuario es admin, cargando métricas ejecutivas...');
       this.dashboardService.loadExecutiveMetrics();
 
       // 🔍 Verificar después de 2 segundos
       setTimeout(() => {
         const metrics = this.dashboardService.executiveMetrics();
-        console.log('📊 [DashboardComponent] Métricas ejecutivas después de 2s:', metrics);
 
         if (metrics) {
-          console.log('   • Ingresos Brutos:', metrics.income.gross.total);
-          console.log('   • Ingresos Netos:', metrics.income.net.total);
-          console.log('   • Comisiones Plataforma:', metrics.commissions.platform.amount);
-          console.log('   • Reembolsos Total:', metrics.refunds.totalAmount);
-          console.log('   • Comisiones Retenidas:', metrics.refunds.platformFeesRetained);
         } else {
-          console.warn('⚠️ [DashboardComponent] Métricas ejecutivas son NULL!');
         }
       }, 2000);
     } else {
-      console.log('👤 [DashboardComponent] Usuario no es admin, rol:', this.authService.user()?.rol);
     }
   }
 

@@ -1,0 +1,153 @@
+<app-header></app-header>
+
+<div class="bg-slate-950 min-h-screen text-slate-300 font-sans">
+    <div class="max-w-4xl mx-auto px-6 py-16">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Política de Privacidad</h1>
+            <p class="text-lg text-slate-400">Última actualización: {{ currentDate | date:'longDate' }}</p>
+        </div>
+
+        <!-- Content -->
+        <div class="space-y-12">
+
+            <!-- Introducción -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span
+                        class="w-8 h-8 rounded-lg bg-lime-400/10 flex items-center justify-center text-lime-400 text-sm">01</span>
+                    Introducción
+                </h2>
+                <p class="leading-relaxed">
+                    En Dev-Sharks, nos comprometemos a proteger tu privacidad y a garantizar la transparencia en el
+                    manejo de tus datos.
+                    Esta política explica cómo recopilamos, usamos y protegemos tu información personal cuando utilizas
+                    nuestra plataforma.
+                </p>
+            </section>
+
+            <!-- Recopilación de Datos -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span
+                        class="w-8 h-8 rounded-lg bg-lime-400/10 flex items-center justify-center text-lime-400 text-sm">02</span>
+                    Información que Recopilamos
+                </h2>
+                <ul class="list-disc list-inside space-y-2 ml-4">
+                    <li><strong class="text-white">Información de Cuenta:</strong> Nombre, correo electrónico,
+                        contraseña y foto de perfil.</li>
+                    <li><strong class="text-white">Información de Pago:</strong> Datos necesarios para procesar compras
+                        y transferencias (no almacenamos números completos de tarjetas).</li>
+                    <li><strong class="text-white">Contenido del Usuario:</strong> Cursos, proyectos y archivos que
+                        subes a la plataforma.</li>
+                    <li><strong class="text-white">Datos de Uso:</strong> Información sobre cómo interactúas con
+                        nuestros servicios.</li>
+                </ul>
+            </section>
+
+            <!-- Uso de la Información -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span
+                        class="w-8 h-8 rounded-lg bg-lime-400/10 flex items-center justify-center text-lime-400 text-sm">03</span>
+                    Uso de tu Información
+                </h2>
+                <p class="leading-relaxed mb-4">
+                    Utilizamos tu información para:
+                </p>
+                <ul class="list-disc list-inside space-y-2 ml-4">
+                    <li>Proporcionar, mantener y mejorar nuestros servicios.</li>
+                    <li>Procesar transacciones y enviar notificaciones relacionadas.</li>
+                    <li>Verificar tu identidad y prevenir fraudes.</li>
+                    <li>Cumplir con obligaciones legales y fiscales.</li>
+                </ul>
+            </section>
+
+            <!-- Transparencia Financiera (CRÍTICO) -->
+            <section class="bg-slate-900/50 border border-lime-400/20 rounded-2xl p-6">
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span
+                        class="w-8 h-8 rounded-lg bg-lime-400/10 flex items-center justify-center text-lime-400 text-sm">04</span>
+                    Transparencia Financiera y Datos de Ventas
+                </h2>
+                <p class="leading-relaxed mb-4">
+                    Para garantizar la sostenibilidad de la plataforma y el cumplimiento legal, es importante que
+                    entiendas cómo manejamos los datos financieros de las ventas de cursos y proyectos:
+                </p>
+                <div class="space-y-4">
+                    <div class="flex gap-4">
+                        <div
+                            class="flex-shrink-0 w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                            <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Registros de Ventas</h3>
+                            <p class="text-sm">Mantenemos registros detallados de todas las transacciones para fines
+                                contables y fiscales. Estos datos incluyen el monto total de la venta, las comisiones de
+                                la plataforma y los impuestos aplicables.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div
+                            class="flex-shrink-0 w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                            <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Comisiones y Deducciones</h3>
+                            <p class="text-sm">
+                                Al registrarte como instructor, aceptas que la plataforma retiene un porcentaje de cada
+                                venta (detallado en los Términos y Condiciones) para cubrir costos operativos críticos
+                                como:
+                            </p>
+                            <ul class="list-disc list-inside mt-2 text-slate-400 text-sm pl-2">
+                                <li>Mantenimiento de servidores y almacenamiento en la nube.</li>
+                                <li>Impuestos (IVA/VAT) y retenciones fiscales obligatorias.</li>
+                                <li>Comisiones de pasarelas de pago.</li>
+                                <li>Desarrollo y mejora continua de la plataforma.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Seguridad -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span
+                        class="w-8 h-8 rounded-lg bg-lime-400/10 flex items-center justify-center text-lime-400 text-sm">05</span>
+                    Seguridad de los Datos
+                </h2>
+                <p class="leading-relaxed">
+                    Implementamos medidas de seguridad técnicas y organizativas para proteger tus datos contra el acceso
+                    no autorizado, la pérdida o la alteración. Sin embargo, ningún sistema es 100% seguro, por lo que no
+                    podemos garantizar la seguridad absoluta.
+                </p>
+            </section>
+
+            <!-- Contacto -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span
+                        class="w-8 h-8 rounded-lg bg-lime-400/10 flex items-center justify-center text-lime-400 text-sm">06</span>
+                    Contacto
+                </h2>
+                <p class="leading-relaxed">
+                    Si tienes preguntas sobre esta política, puedes contactarnos en: <a
+                        href="mailto:legal@dev-sharks.com"
+                        class="text-lime-400 hover:underline">legal@dev-sharks.com</a>
+                </p>
+            </section>
+
+        </div>
+    </div>
+</div>
+
+<app-footer></app-footer>

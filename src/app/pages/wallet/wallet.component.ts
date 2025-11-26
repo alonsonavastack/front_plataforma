@@ -39,39 +39,89 @@ export class WalletComponent implements OnInit {
     return txs.filter(t => t.type === this.typeFilter);
   });
 
-  // Computed: Estadísticas
+  // Filtros de fecha para estadísticas detalladas
+  startDate = signal<string>('');
+  endDate = signal<string>('');
+
+  // Computed: Estadísticas Principales (Refinadas/Netas)
   stats = computed(() => {
     const txs = this.transactions();
-    
-    // 💰 TOTAL RECIBIDO: Solo sumar los ingresos (credits)
-    // Esto incluye: reembolsos, créditos manuales, etc.
+
+    // 💰 TOTAL RECIBIDO (Ingreso Real):
+    // Solo sumar créditos que NO sean reembolsos (ej. depósitos manuales, regalos)
     const totalCredits = txs
-      .filter(t => t.type === 'credit')
+      .filter(t => t.type === 'credit' && t.metadata?.reason !== 'refund')
       .reduce((sum, t) => sum + t.amount, 0);
-    
-    // 💳 TOTAL GASTADO: Solo sumar los gastos (debits)
-    // Esto incluye SOLO compras hechas CON DINERO DE LA WALLET
-    const totalDebits = txs
+
+    // 🔄 TOTAL REEMBOLSADO:
+    // Sumar créditos que SÍ sean reembolsos
+    const totalRefunded = txs
+      .filter(t => t.type === 'credit' && t.metadata?.reason === 'refund')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    // 💳 TOTAL DEBITADO (Gasto Bruto):
+    // Suma de todas las compras
+    const grossDebits = txs
       .filter(t => t.type === 'debit')
       .reduce((sum, t) => sum + t.amount, 0);
-    
-    // 📊 BALANCE NETO: La diferencia entre lo recibido y lo gastado
-    // Esto debería coincidir con el balance actual de la wallet
-    const netBalance = totalCredits - totalDebits;
-    
-    console.log('📊 [Wallet Stats]', {
-      totalTransactions: txs.length,
-      totalCredits,
-      totalDebits,
-      netBalance,
-      currentBalance: this.balance()
-    });
-    
+
+    // 📉 TOTAL GASTADO (Gasto Neto):
+    // Gasto Bruto - Total Reembolsado
+    // Esto refleja lo que realmente "salió" de la billetera y no volvió
+    const netDebits = Math.max(0, grossDebits - totalRefunded);
+
+    // 📊 BALANCE NETO:
+    // Ingreso Real - Gasto Neto
+    const netBalance = totalCredits - netDebits;
+
     return {
       totalTransactions: txs.length,
-      totalCredits,
-      totalDebits,
+      totalCredits, // Ahora es Ingreso Real
+      totalDebits: netDebits, // Ahora es Gasto Neto
       netBalance
+    };
+  });
+
+  // Computed: Estadísticas Detalladas (Brutas con Filtros)
+  detailedStats = computed(() => {
+    let txs = this.transactions();
+    const start = this.startDate();
+    const end = this.endDate();
+
+    // Filtrar por fecha si existen
+    if (start && end) {
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+      // Ajustar fin del día para incluir transacciones de ese día
+      endDate.setHours(23, 59, 59, 999);
+
+      txs = txs.filter(t => {
+        const date = new Date(t.createdAt);
+        return date >= startDate && date <= endDate;
+      });
+    }
+
+    // Cálculos Brutos (Total Absoluto)
+    const grossIncome = txs
+      .filter(t => t.type === 'credit')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const grossExpenses = txs
+      .filter(t => t.type === 'debit')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const refunds = txs
+      .filter(t => t.type === 'credit' && t.metadata?.reason === 'refund')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const netPeriodBalance = grossIncome - grossExpenses;
+
+    return {
+      grossIncome,
+      grossExpenses,
+      refunds,
+      netPeriodBalance,
+      transactionCount: txs.length
     };
   });
 
@@ -128,7 +178,7 @@ export class WalletComponent implements OnInit {
     try {
       await this.walletService.loadWallet();
     } catch (error) {
-      console.error('Error loading wallet:', error);
+
       alert('❌ Error al cargar la billetera. Por favor, intenta de nuevo.');
     }
   }

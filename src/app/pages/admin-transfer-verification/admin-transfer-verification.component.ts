@@ -22,15 +22,15 @@ export class AdminTransferVerificationComponent implements OnInit {
   selectedTransfer = signal<TransferSale | null>(null);
   showVerifyModal = signal(false);
   showRejectModal = signal(false);
-  
+
   // Formulario de verificación
   verificationNotes = signal('');
   receiptFile = signal<File | null>(null);
   receiptPreview = signal<string | null>(null);
-  
+
   // Formulario de rechazo
   rejectionReason = signal('');
-  
+
   // Loading states
   isVerifying = signal(false);
   isRejecting = signal(false);
@@ -39,15 +39,14 @@ export class AdminTransferVerificationComponent implements OnInit {
   transfers = computed(() => this.transferService.transfers());
   stats = computed(() => this.transferService.stats());
   isLoading = computed(() => this.transferService.isLoading());
-  
+
   hasPendingTransfers = computed(() => this.transfers().length > 0);
-  
+
   totalPendingAmount = computed(() => {
     return this.transfers().reduce((sum, t) => sum + t.total, 0);
   });
 
   ngOnInit(): void {
-    console.log('🏦 [TransferVerification] Componente inicializado');
     this.loadData();
   }
 
@@ -67,8 +66,7 @@ export class AdminTransferVerificationComponent implements OnInit {
     this.receiptFile.set(null);
     this.receiptPreview.set(null);
     this.showVerifyModal.set(true);
-    
-    console.log('📋 [TransferVerification] Modal de verificación abierto:', transfer._id);
+
   }
 
   /**
@@ -78,8 +76,7 @@ export class AdminTransferVerificationComponent implements OnInit {
     this.selectedTransfer.set(transfer);
     this.rejectionReason.set('');
     this.showRejectModal.set(true);
-    
-    console.log('❌ [TransferVerification] Modal de rechazo abierto:', transfer._id);
+
   }
 
   /**
@@ -115,7 +112,6 @@ export class AdminTransferVerificationComponent implements OnInit {
       this.receiptPreview.set(null);
     }
 
-    console.log('📎 [TransferVerification] Archivo seleccionado:', file.name);
   }
 
   /**
@@ -141,13 +137,11 @@ export class AdminTransferVerificationComponent implements OnInit {
 
     this.transferService.verifyTransfer(transfer._id, data).subscribe({
       next: (response) => {
-        console.log('✅ [TransferVerification] Transferencia verificada exitosamente');
         alert(`✅ Transferencia verificada exitosamente\n\n${response.enrollments_created} inscripciones creadas`);
         this.closeVerifyModal();
         this.loadData();
       },
       error: (error) => {
-        console.error('❌ [TransferVerification] Error:', error);
         alert('Error al verificar transferencia: ' + (error.error?.message || error.message));
       },
       complete: () => {
@@ -177,13 +171,11 @@ export class AdminTransferVerificationComponent implements OnInit {
 
     this.transferService.rejectTransfer(transfer._id, reason).subscribe({
       next: () => {
-        console.log('✅ [TransferVerification] Transferencia rechazada');
         alert('✅ Transferencia rechazada exitosamente');
         this.closeRejectModal();
         this.loadData();
       },
       error: (error) => {
-        console.error('❌ [TransferVerification] Error:', error);
         alert('Error al rechazar transferencia: ' + (error.error?.message || error.message));
       },
       complete: () => {
@@ -260,7 +252,6 @@ export class AdminTransferVerificationComponent implements OnInit {
    * 🔄 RECARGAR
    */
   refresh(): void {
-    console.log('🔄 [TransferVerification] Recargando datos...');
     this.loadData();
   }
 }

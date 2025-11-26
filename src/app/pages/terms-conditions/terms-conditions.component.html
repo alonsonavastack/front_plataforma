@@ -1,0 +1,164 @@
+<app-header></app-header>
+
+<div class="bg-slate-950 min-h-screen text-slate-300 font-sans">
+    <div class="max-w-4xl mx-auto px-6 py-16">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Términos y Condiciones</h1>
+            <p class="text-lg text-slate-400">Última actualización: {{ currentDate | date:'longDate' }}</p>
+        </div>
+
+        <!-- Content -->
+        <div class="space-y-12">
+
+            <!-- Aceptación -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span
+                        class="w-8 h-8 rounded-lg bg-lime-400/10 flex items-center justify-center text-lime-400 text-sm">01</span>
+                    Aceptación de los Términos
+                </h2>
+                <p class="leading-relaxed">
+                    Al acceder y utilizar la plataforma Dev-Sharks, aceptas cumplir y estar sujeto a estos Términos y
+                    Condiciones. Si no estás de acuerdo con alguna parte de estos términos, no podrás utilizar nuestros
+                    servicios.
+                </p>
+            </section>
+
+            <!-- Cuentas de Usuario -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span
+                        class="w-8 h-8 rounded-lg bg-lime-400/10 flex items-center justify-center text-lime-400 text-sm">02</span>
+                    Cuentas de Usuario
+                </h2>
+                <p class="leading-relaxed mb-4">
+                    Eres responsable de mantener la confidencialidad de tu cuenta y contraseña. Nos reservamos el
+                    derecho de suspender o eliminar cuentas que violen nuestras políticas o realicen actividades
+                    fraudulentas.
+                </p>
+            </section>
+
+            <!-- 🔥 TÉRMINOS PARA INSTRUCTORES (CRÍTICO) -->
+            <section
+                class="bg-gradient-to-br from-slate-900 to-slate-800 border border-lime-400/30 rounded-2xl p-8 shadow-2xl shadow-lime-400/5 relative overflow-hidden">
+                <!-- Background Decoration -->
+                <div
+                    class="absolute top-0 right-0 w-64 h-64 bg-lime-400/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none">
+                </div>
+
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2 relative z-10">
+                    <span
+                        class="w-8 h-8 rounded-lg bg-lime-400 flex items-center justify-center text-slate-900 text-sm font-bold">03</span>
+                    Términos para Instructores y Ventas
+                </h2>
+
+                <div class="space-y-6 relative z-10">
+                    <p class="leading-relaxed text-white">
+                        Al publicar y vender cursos o proyectos en Dev-Sharks, aceptas explícitamente la siguiente
+                        estructura de comisiones y pagos. Esta estructura es necesaria para garantizar la operación
+                        continua, legal y técnica de la plataforma.
+                    </p>
+
+                    <div class="bg-slate-950/50 rounded-xl p-6 border border-white/10">
+                        <h3 class="text-xl font-bold text-lime-400 mb-4">💰 Estructura de Ganancias (50/50)</h3>
+                        <p class="mb-4">
+                            Por cada venta realizada de tu contenido, recibirás el <strong class="text-white">50% del
+                                valor neto</strong> de la venta. La plataforma retiene el 50% restante.
+                        </p>
+
+                        <div class="grid md:grid-cols-2 gap-4 mt-4">
+                            <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                                <p class="text-sm text-slate-400 mb-1">Tu Ganancia</p>
+                                <p class="text-2xl font-bold text-green-400">50%</p>
+                                <p class="text-xs text-slate-500 mt-2">Pagado a tu billetera/cuenta</p>
+                            </div>
+                            <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                                <p class="text-sm text-slate-400 mb-1">Comisión de Plataforma</p>
+                                <p class="text-2xl font-bold text-lime-400">50%</p>
+                                <p class="text-xs text-slate-500 mt-2">Retenido por Dev-Sharks</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold text-white mb-3">¿Por qué retenemos el 50%?</h3>
+                        <p class="text-sm text-slate-400 mb-4">
+                            Esta comisión no es solo ganancia para la plataforma; se utiliza para cubrir costos
+                            operativos obligatorios y técnicos que se deducen directamente del pago del cliente:
+                        </p>
+                        <ul class="grid md:grid-cols-2 gap-3">
+                            <li class="flex items-start gap-2 bg-slate-800/50 p-3 rounded-lg">
+                                <svg class="w-5 h-5 text-lime-400 mt-0.5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="text-sm"><strong>Impuestos (IVA/VAT):</strong> Pago de obligaciones
+                                    fiscales.</span>
+                            </li>
+                            <li class="flex items-start gap-2 bg-slate-800/50 p-3 rounded-lg">
+                                <svg class="w-5 h-5 text-lime-400 mt-0.5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="text-sm"><strong>Servidores y Streaming:</strong> Costos de alojamiento de
+                                    video y datos.</span>
+                            </li>
+                            <li class="flex items-start gap-2 bg-slate-800/50 p-3 rounded-lg">
+                                <svg class="w-5 h-5 text-lime-400 mt-0.5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="text-sm"><strong>Pasarelas de Pago:</strong> Comisiones bancarias y de
+                                    procesamiento.</span>
+                            </li>
+                            <li class="flex items-start gap-2 bg-slate-800/50 p-3 rounded-lg">
+                                <svg class="w-5 h-5 text-lime-400 mt-0.5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="text-sm"><strong>Mantenimiento:</strong> Desarrollo y soporte
+                                    técnico.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Propiedad Intelectual -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span
+                        class="w-8 h-8 rounded-lg bg-lime-400/10 flex items-center justify-center text-lime-400 text-sm">04</span>
+                    Propiedad Intelectual
+                </h2>
+                <p class="leading-relaxed">
+                    Conservas los derechos de autor de todo el contenido que subas. Sin embargo, al publicar en
+                    Dev-Sharks, nos otorgas una licencia mundial, no exclusiva y libre de regalías para distribuir,
+                    reproducir y mostrar tu contenido en relación con el servicio.
+                </p>
+            </section>
+
+            <!-- Modificaciones -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span
+                        class="w-8 h-8 rounded-lg bg-lime-400/10 flex items-center justify-center text-lime-400 text-sm">05</span>
+                    Modificaciones a los Términos
+                </h2>
+                <p class="leading-relaxed">
+                    Nos reservamos el derecho de modificar estos términos en cualquier momento. Te notificaremos sobre
+                    cambios significativos a través de la plataforma o por correo electrónico. El uso continuado del
+                    servicio implica la aceptación de los nuevos términos.
+                </p>
+            </section>
+
+        </div>
+    </div>
+</div>
+
+<app-footer></app-footer>

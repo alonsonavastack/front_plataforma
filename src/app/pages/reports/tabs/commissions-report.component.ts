@@ -3,6 +3,8 @@ import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ReportsService, CommissionsSummary } from '../../../core/services/reports.service';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 @Component({
   selector: 'app-commissions-report',
@@ -101,6 +103,13 @@ import * as XLSX from 'xlsx';
           >
             📊 Exportar Excel
           </button>
+
+          <button 
+            (click)="exportToPDF()"
+            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
+          >
+            <span>📄</span> Exportar PDF
+          </button>
         </div>
       </div>
 
@@ -170,16 +179,14 @@ export class CommissionsReportComponent implements OnInit {
         this.startDate || undefined,
         this.endDate || undefined
       ).toPromise();
-      
+
       if (response) {
         this.summary.set(response);
       }
     } catch (error: any) {
-      console.error('❌ Error cargando comisiones:', error);
-      
+
       // 🔒 Si es un error 403 (sin permisos), mostrar mensaje amigable
       if (error.status === 403) {
-        console.warn('⚠️ Acceso denegado: Solo administradores pueden ver comisiones');
         // No hacer nada más - el interceptor NO cerrará sesión porque manejamos el error aquí
       }
     } finally {
@@ -214,6 +221,60 @@ export class CommissionsReportComponent implements OnInit {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Comisiones');
     XLSX.writeFile(wb, `comisiones_${new Date().toISOString().split('T')[0]}.xlsx`);
+  }
+
+  exportToPDF() {
+    const s = this.summary();
+    if (!s) return;
+
+    const doc = new jsPDF();
+
+    doc.text('Reporte de Comisiones', 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, 14, 28);
+
+    const stats = [
+      `Período: ${s.period}`,
+      `Ventas Brutas: ${this.formatCurrency(s.summary.total_ventas_bruto)}`,
+      `Neto Plataforma: ${this.formatCurrency(s.summary.neto_plataforma)}`
+    ];
+    doc.text(stats, 14, 34);
+
+    const tableData = [[
+      this.formatCurrency(s.summary.total_ventas_bruto),
+      this.formatCurrency(s.summary.total_comisiones_plataforma),
+      this.formatCurrency(s.summary.total_pago_instructores),
+      this.formatCurrency(s.summary.total_impuestos),
+      this.formatCurrency(s.summary.neto_plataforma)
+    ]];
+
+    autoTable(doc, {
+      head: [['Ventas Brutas', 'Comisiones', 'Pago Instr.', 'Impuestos', 'Neto']],
+      body: tableData,
+      startY: 50,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [132, 204, 22] } // Lime-500
+    });
+
+    // Tabla de Impuestos
+    doc.text('Desglose de Impuestos', 14, (doc as any).lastAutoTable.finalY + 15);
+
+    const taxData = [[
+      this.formatCurrency(s.fiscal.iva),
+      this.formatCurrency(s.fiscal.retencion_iva),
+      this.formatCurrency(s.fiscal.isr),
+      this.formatCurrency(s.fiscal.total)
+    ]];
+
+    autoTable(doc, {
+      head: [['IVA', 'Retención IVA', 'ISR', 'Total Impuestos']],
+      body: taxData,
+      startY: (doc as any).lastAutoTable.finalY + 20,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [132, 204, 22] }
+    });
+
+    doc.save(`comisiones_${new Date().toISOString().split('T')[0]}.pdf`);
   }
 
   formatCurrency(amount: number): string {

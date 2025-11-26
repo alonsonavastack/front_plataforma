@@ -55,7 +55,7 @@ import { WalletService } from '../../core/services/wallet.service'; // 💰 Para
   ],
   templateUrl: "./home.html",
 })
-export class HomeComponent implements OnInit, OnDestroy {
+export class HomeComponent implements OnInit {
   api = inject(HomeService);
   private sanitizer = inject(DomSanitizer);
   private router = inject(Router);
@@ -72,10 +72,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   refundsService = inject(RefundsService); // 🔥 NUEVO
   walletService = inject(WalletService); // 💰 Para billetera
 
-  // 🚨 Control de errores: Evitar múltiples toasts
-  private hasShownConnectionError = signal<boolean>(false);
-  private errorToastShown = false; // Flag simple para evitar duplicados
-  private errorSubscription?: Subscription; // Para cleanup
+  // 🚨 Control de errores
+  private errorToastShown = false;
 
   // Signals para instructores
   instructors = signal<Instructor[]>([]);
@@ -118,8 +116,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   q = signal<string>("");
   selectedCategorie = signal<string | undefined>(undefined);
 
-  // Loading del httpResource
+  // ✅ Loading del httpResource
   isLoading = this.api.isLoadingHome;
+  hasError = this.api.hasErrorHome;
+  homeError = this.api.errorHome; // ✅ Signal de error
 
   // Cursos del usuario
   enrolledCourses = this.profileService.enrolledCourses;
@@ -316,80 +316,21 @@ export class HomeComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
-    // 🔇 LOGS SILENCIADOS - Solo toasts para usuario
-    // Los effects se mantienen pero sin logs en consola
-
-    // 🔍 DEBUG: Inspect purchased products
+    // ✅ Effect: Mostrar toast SOLO UNA VEZ cuando hay error
     effect(() => {
-      const projects = this.profileService.purchasedProjects();
-      const purchases = this.purchasesService.getPurchasedProducts()();
-      const isLoading = this.purchasesService.isLoading();
-      const isLoaded = this.purchasesService.isLoaded();
-      
-      console.log('🔍 [Home Debug] Estado de compras:', {
-        isLoading,
-        isLoaded,
-        purchasesCount: purchases.size,
-        projectsCount: projects.length,
-        isLoggedIn: this.authService.isLoggedIn()
-      });
-      
-      if (isLoaded && purchases.size > 0) {
-        console.log('👁️ [Home Debug] IDs de compras:', Array.from(purchases));
+      const error = this.homeError();
+      if (error && !this.errorToastShown) {
+        this.errorToastShown = true;
+        this.toast.networkError();
       }
     });
   }
 
-  // ---------- Error-safe helpers ----------
-  hasHomeError(): boolean {
-    try {
-      this.api.home();
-      return false;
-    } catch {
-      return true;
-    }
-  }
-
-  homeErrorMessage(): string {
-    try {
-      this.api.home();
-      return "";
-    } catch (e: any) {
-      return "No se pudo cargar el contenido. Por favor, verifica tu conexión a internet e intenta de nuevo.";
-    }
-  }
-
-  categoriesSafe(): any[] {
-    try {
-      return this.api.home().categories ?? [];
-    } catch {
-      return [];
-    }
-  }
-
-  featuredSafe(): CoursePublic[] {
-    try {
-      return this.api.home().courses_featured ?? [];
-    } catch {
-      return [];
-    }
-  }
-
-  featuredCoursesEnabled = computed<boolean>(() => {
-    try {
-      return Array.isArray(this.api.home().courses_featured);
-    } catch {
-      return false;
-    }
-  });
-
-  featuredProjects = computed<Project[]>(() => {
-    try {
-      return this.api.home().projects_featured ?? [];
-    } catch {
-      return [];
-    }
-  });
+  // ✅ Computed helpers - httpResource maneja los errores automáticamente
+  categoriesSafe = computed(() => this.api.home().categories ?? []);
+  featuredSafe = computed(() => this.api.home().courses_featured ?? []);
+  featuredCoursesEnabled = computed(() => Array.isArray(this.api.home().courses_featured));
+  featuredProjects = computed(() => this.api.home().projects_featured ?? []);
 
   // --- Video Modal State ---
   videoModalUrl = signal<string | null>(null);
@@ -462,12 +403,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     // El backend ya filtra productos reembolsados, así que confiamos en esa lógica
     const isPurchased = this.purchasesService.isPurchased(courseId);
 
-    console.log('🔍 [Home] Verificando curso:', {
-      courseId,
-      isPurchased,
-      purchasesLoaded: this.purchasesService.isLoaded()
-    });
-
     return isPurchased;
   }
 
@@ -480,12 +415,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     // ✅ SOLUCIÓN CORRECTA: Solo usar PurchasesService
     // El backend ya filtra productos reembolsados, así que confiamos en esa lógica
     const isPurchased = this.purchasesService.isPurchased(projectId);
-
-    console.log('🔍 [Home] Verificando proyecto:', {
-      projectId,
-      isPurchased,
-      purchasesLoaded: this.purchasesService.isLoaded()
-    });
 
     return isPurchased;
   }
@@ -514,41 +443,18 @@ export class HomeComponent implements OnInit, OnDestroy {
     // 🔥 Cargar configuración del sistema PRIMERO
     this.systemConfigService.getConfig();
 
-    // 🚨 Suscribirse a errores del home service (SOLO UNA VEZ)
-    this.errorSubscription = this.api.onHomeError$.subscribe(() => {
-      if (!this.errorToastShown) {
-        this.errorToastShown = true;
-        this.hasShownConnectionError.set(true);
-        this.toast.networkError();
-      }
-    });
-
-    // Cargar datos del home
+    // ✅ httpResource carga automáticamente, pero forzamos reload con timestamp
     this.api.reloadHome();
     this.api.reloadAllCourses();
     this.api.reloadAllProjects();
 
     // Cargar datos del usuario si está autenticado
     if (this.authService.isLoggedIn()) {
-      console.log('👤 [Home] Usuario autenticado, cargando datos...');
-      
       this.profileService.reloadProfile();
       this.purchasesService.loadPurchasedProducts();
 
       // 💰 Cargar saldo de billetera
       this.walletService.loadWallet();
-
-      // 🔎 DEBUG: Verificar estado después de 3 segundos
-      setTimeout(() => {
-        console.log('📄 [Home] Estado después de cargar:', {
-          enrolled: this.enrolledCourses().length,
-          projects: this.purchasedProjects().length,
-          purchasesLoaded: this.purchasesService.isLoaded(),
-          purchasesCount: this.purchasesService.getPurchasedProducts()().size
-        });
-      }, 3000);
-    } else {
-      console.log('⚠️ [Home] Usuario NO autenticado');
     }
 
     // Cargar categorías e instructores (silencioso si falla)
@@ -556,10 +462,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadInstructors();
   }
 
-  ngOnDestroy(): void {
-    // 🧿 Cleanup: Cancelar suscripción para evitar memory leaks
-    this.errorSubscription?.unsubscribe();
-  }
 
   // ---------- Handlers de búsqueda ----------
   private sanitizeTerm(v: string): string {
@@ -632,9 +534,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   // ---------- Recargar ----------
   reload(): void {
     clearTimeout(this.debounceId);
-    this.errorToastShown = false; // 🔄 Resetear ambos flags
-    this.hasShownConnectionError.set(false);
+    this.errorToastShown = false; // 🔄 Resetear flag de error
     this.api.reloadHome();
+    this.api.reloadAllCourses();
+    this.api.reloadAllProjects();
     this.clearSearch();
   }
 

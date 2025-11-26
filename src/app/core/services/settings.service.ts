@@ -168,7 +168,6 @@ export class SettingsService {
    * 📥 Cargar toda la configuración del sistema
    */
   loadSettings(): Observable<any> {
-    console.log('📥 [SettingsService] === INICIANDO CARGA DE SETTINGS ===');
 
     this.settingsState.update(state => ({ ...state, isLoading: true }));
 
@@ -176,15 +175,11 @@ export class SettingsService {
 
     obs.subscribe({
       next: (response) => {
-        console.log('✅ [SettingsService] Respuesta recibida:', response);
-        console.log('📊 [SettingsService] response.settings:', response.settings);
-        console.log('📊 [SettingsService] Tipo:', typeof response.settings);
-        
+
         // 🔥 TRANSFORMAR ARRAY A OBJETO
         let settingsObject: Record<string, SettingDetail> = {};
-        
+
         if (Array.isArray(response.settings)) {
-          console.log('🔄 [SettingsService] Transformando array a objeto...');
           response.settings.forEach((setting: any) => {
             settingsObject[setting.key] = {
               key: setting.key,
@@ -195,7 +190,6 @@ export class SettingsService {
               type: setting.type || 'text'
             };
           });
-          console.log('✅ [SettingsService] Transformación completada:', Object.keys(settingsObject));
         } else {
           // Si ya es objeto, usarlo directamente
           settingsObject = response.settings || {};
@@ -207,12 +201,8 @@ export class SettingsService {
           lastUpdate: new Date()
         });
 
-        console.log('✅ [SettingsService] Estado actualizado');
-        console.log('📊 [SettingsService] Verificar signal:', this.settings());
-        console.log('📊 [SettingsService] platform_name:', this.settings()['platform_name']);
       },
       error: (error) => {
-        console.error('❌ [SettingsService] Error al cargar configuración:', error);
         this.settingsState.update(state => ({ ...state, isLoading: false }));
       }
     });
@@ -382,7 +372,6 @@ export class SettingsService {
    * 💾 Actualizar configuración del sistema (sin logo)
    */
   updateSettings(settings: Record<string, any>): Observable<any> {
-    console.log('💾 [SettingsService] Actualizando configuración:', settings);
     return this.http.put<any>(`${environment.url}settings/update`, settings);
   }
 

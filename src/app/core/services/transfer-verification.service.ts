@@ -82,7 +82,7 @@ export class TransferVerificationService {
   stats = computed(() => this.state().stats);
   isLoading = computed(() => this.state().isLoading);
   error = computed(() => this.state().error);
-  
+
   pendingCount = computed(() => this.state().stats?.pending.count || 0);
   pendingAmount = computed(() => this.state().stats?.pending.amount || 0);
 
@@ -106,7 +106,6 @@ export class TransferVerificationService {
     return this.http.get<{ transfers: TransferSale[]; count: number }>(`${this.API_URL}/pending`, { params }).pipe(
       tap({
         next: (response) => {
-          console.log('✅ [TransferService] Transferencias cargadas:', response.count);
           this.state.update(s => ({
             ...s,
             transfers: response.transfers,
@@ -114,7 +113,6 @@ export class TransferVerificationService {
           }));
         },
         error: (error) => {
-          console.error('❌ [TransferService] Error al cargar transferencias:', error);
           this.state.update(s => ({
             ...s,
             isLoading: false,
@@ -133,22 +131,20 @@ export class TransferVerificationService {
     verification_notes?: string;
   }): Observable<any> {
     const formData = new FormData();
-    
+
     if (data.receipt) {
       formData.append('receipt', data.receipt);
     }
-    
+
     if (data.verification_notes) {
       formData.append('verification_notes', data.verification_notes);
     }
 
-    console.log('🔍 [TransferService] Verificando transferencia:', saleId);
 
     return this.http.post(`${this.API_URL}/verify/${saleId}`, formData).pipe(
       tap({
         next: (response: any) => {
-          console.log('✅ [TransferService] Transferencia verificada:', response);
-          
+
           // Actualizar la lista local
           this.state.update(s => ({
             ...s,
@@ -156,7 +152,6 @@ export class TransferVerificationService {
           }));
         },
         error: (error) => {
-          console.error('❌ [TransferService] Error al verificar:', error);
         }
       })
     );
@@ -166,13 +161,11 @@ export class TransferVerificationService {
    * 🔄 RECHAZAR TRANSFERENCIA
    */
   rejectTransfer(saleId: string, rejection_reason: string): Observable<any> {
-    console.log('🚫 [TransferService] Rechazando transferencia:', saleId);
 
     return this.http.post(`${this.API_URL}/reject/${saleId}`, { rejection_reason }).pipe(
       tap({
         next: (response) => {
-          console.log('✅ [TransferService] Transferencia rechazada:', response);
-          
+
           // Actualizar la lista local
           this.state.update(s => ({
             ...s,
@@ -180,7 +173,6 @@ export class TransferVerificationService {
           }));
         },
         error: (error) => {
-          console.error('❌ [TransferService] Error al rechazar:', error);
         }
       })
     );
@@ -193,11 +185,9 @@ export class TransferVerificationService {
     return this.http.get<TransferStats>(`${this.API_URL}/stats`).pipe(
       tap({
         next: (stats) => {
-          console.log('📊 [TransferService] Estadísticas cargadas:', stats);
           this.state.update(s => ({ ...s, stats }));
         },
         error: (error) => {
-          console.error('❌ [TransferService] Error al cargar estadísticas:', error);
         }
       })
     );

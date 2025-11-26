@@ -17,7 +17,7 @@ import { RefundCompleteModalComponent } from './components/refund-complete-modal
     RefundDetailsModalComponent,
     RefundReviewModalComponent,
     RefundCompleteModalComponent
-],
+  ],
   templateUrl: './refunds.component.html'
 })
 export class RefundsComponent implements OnInit {
@@ -67,10 +67,10 @@ export class RefundsComponent implements OnInit {
         const amount = r.originalAmount.toString();
 
         return userName.includes(search) ||
-               userSurname.includes(search) ||
-               courseName.includes(search) ||
-               projectName.includes(search) ||
-               amount.includes(search);
+          userSurname.includes(search) ||
+          courseName.includes(search) ||
+          projectName.includes(search) ||
+          amount.includes(search);
       });
     }
 
@@ -146,7 +146,7 @@ export class RefundsComponent implements OnInit {
       this.closeReviewModal();
     } catch (error) {
       alert('❌ Error al aprobar reembolso');
-      console.error(error);
+
     }
   }
 
@@ -161,7 +161,7 @@ export class RefundsComponent implements OnInit {
       this.closeReviewModal();
     } catch (error) {
       alert('❌ Error al rechazar reembolso');
-      console.error(error);
+
     }
   }
 
@@ -188,7 +188,7 @@ export class RefundsComponent implements OnInit {
       this.closeCompleteModal();
     } catch (error) {
       alert('❌ Error al completar reembolso');
-      console.error(error);
+
     }
   }
 

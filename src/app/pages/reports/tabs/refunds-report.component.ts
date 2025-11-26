@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReportsService } from '../../../core/services/reports.service';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface RefundRecord {
   _id: string;
@@ -114,6 +116,13 @@ interface RefundRecord {
             class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
           >
             📊 Exportar Excel
+          </button>
+
+          <button 
+            (click)="exportToPDF()"
+            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
+          >
+            <span>📄</span> Exportar PDF
           </button>
         </div>
       </div>
@@ -279,7 +288,7 @@ export class RefundsReportComponent implements OnInit {
         this.refunds.set(response.refunds);
       }
     } catch (error) {
-      console.error('❌ Error cargando reembolsos:', error);
+
     } finally {
       this.isLoading.set(false);
     }
@@ -313,6 +322,40 @@ export class RefundsReportComponent implements OnInit {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Reembolsos');
     XLSX.writeFile(wb, `reembolsos_${new Date().toISOString().split('T')[0]}.xlsx`);
+  }
+
+  exportToPDF() {
+    const doc = new jsPDF();
+
+    doc.text('Reporte de Reembolsos', 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, 14, 28);
+
+    const stats = [
+      `Total Reembolsos: ${this.filteredRefunds().length}`,
+      `Monto Total: ${this.formatCurrency(this.totalAmount())}`,
+      `Pendientes: ${this.pendingRefunds().length}`
+    ];
+    doc.text(stats, 14, 34);
+
+    const tableData = this.filteredRefunds().map(r => [
+      `${r.user.name} ${r.user.surname}`,
+      r.course?.title || r.project?.title || 'N/A',
+      this.formatDate(r.requestedAt),
+      this.formatCurrency(r.refundAmount),
+      this.getStatusText(r.status),
+      r.reason.type
+    ]);
+
+    autoTable(doc, {
+      head: [['Usuario', 'Producto', 'Fecha', 'Monto', 'Estado', 'Motivo']],
+      body: tableData,
+      startY: 45,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [132, 204, 22] } // Lime-500
+    });
+
+    doc.save(`reembolsos_${new Date().toISOString().split('T')[0]}.pdf`);
   }
 
   getStatusClass(status: string): string {

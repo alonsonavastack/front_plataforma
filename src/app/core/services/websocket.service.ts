@@ -71,7 +71,7 @@ export class WebsocketService {
   public newRefundRequest$ = this.newRefundRequestSubject.asObservable(); // 🆕
   public connection$ = this.connectionSubject.asObservable();
 
-  constructor() {}
+  constructor() { }
 
   /**
    * Conecta al servidor WebSocket
@@ -135,7 +135,6 @@ export class WebsocketService {
 
     // 🆕 Evento: Nueva solicitud de reembolso
     this.socket.on('new_refund_request', (refund: RefundNotification) => {
-      console.log('🔔 [WebSocket] Nueva solicitud de reembolso recibida:', refund);
       this.newRefundRequestSubject.next(refund);
     });
 

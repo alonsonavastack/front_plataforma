@@ -1,6 +1,7 @@
-import { Component, inject, effect, signal, OnInit, OnDestroy, computed, HostListener } from '@angular/core';
+import { Component, inject, effect, signal, OnInit, OnDestroy, computed, HostListener, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { HeaderComponent } from '../../layout/header/header';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -25,6 +26,7 @@ export const passwordsMatchValidator: ValidatorFn = (control: AbstractControl): 
 import { WalletService } from '../../core/services/wallet.service';
 import { lastValueFrom } from 'rxjs';
 import { ToastService } from '../../core/services/toast.service';
+import { ModalService } from '../../core/services/modal.service';
 
 @Component({
   standalone: true,
@@ -39,11 +41,18 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
   projectService = inject(ProjectService);
   checkoutService = inject(CheckoutService);
   authService = inject(AuthService);
-  walletService = inject(WalletService);
+  walletService: WalletService = inject(WalletService);
   private toast = inject(ToastService);
+  private modalService = inject(ModalService);
   private sanitizer = inject(DomSanitizer);
   private http = inject(HttpClient);
   private route = inject(ActivatedRoute);
+
+  // 🆕 SIGNALS PARA ROUTING
+  // Query params como signal con tipado adecuado
+  private queryParams = toSignal(this.route.queryParams, { initialValue: {} as Record<string, string> });
+  // Fragment como signal
+  private fragment = toSignal(this.route.fragment, { initialValue: null });
 
   // Exponer Math para usarlo en el template
   Math = Math;
@@ -51,10 +60,42 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
   // Exponer datos bancarios para la plantilla
   bankDetails = this.checkoutService.bankDetails;
 
-  // Señal para manejar la pestaña activa (inicializada desde localStorage si existe)
-  activeSection = signal<ProfileSection>(
-    (typeof window !== 'undefined' && localStorage.getItem('profile-active-section') as ProfileSection) || 'courses'
-  );
+  // 🆕 Signal privado para controlar cambios manuales
+  private _manualSection = signal<ProfileSection | null>(null);
+
+  // 🆕 Señal reactiva para manejar la pestaña activa
+  // Ahora responde a cambios en URL fragment y manual section
+  activeSection = computed(() => {
+    // Prioridad 1: Cambio manual (tiene máxima prioridad)
+    const manual = this._manualSection();
+    if (manual) {
+      return manual;
+    }
+
+    // Prioridad 2: Fragment en URL
+    const frag = this.fragment();
+    if (frag && ['courses', 'projects', 'purchases', 'edit', 'refunds', 'wallet'].includes(frag)) {
+      return frag as ProfileSection;
+    }
+
+    // Prioridad 3: Query param
+    const params = this.queryParams();
+    const querySection = params?.['section'];
+    if (querySection && ['courses', 'projects', 'purchases', 'edit', 'refunds', 'wallet'].includes(querySection)) {
+      return querySection as ProfileSection;
+    }
+
+    // Prioridad 4: localStorage
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('profile-active-section') as ProfileSection | null;
+      if (stored && ['courses', 'projects', 'purchases', 'edit', 'refunds', 'wallet'].includes(stored)) {
+        return stored;
+      }
+    }
+
+    // Default: courses
+    return 'courses';
+  });
 
   // Señal para el estado de envío del formulario
   isSubmitting = signal(false);
@@ -64,6 +105,12 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
 
   // Señal para mostrar un indicador de carga en el archivo que se está descargando
   downloadingFileId = signal<string | null>(null);
+
+  // ✅ NUEVO: Señal para mostrar indicador de carga al subir comprobante
+  uploadingVoucherId = signal<string | null>(null);
+
+  // ✅ NUEVO: Map para guardar los archivos seleccionados temporalmente (antes de confirmar)
+  selectedVoucherFiles = new Map<string, File>();
 
   // Señal para el código de país seleccionado
   selectedCountryCode = signal('+52'); // Por defecto México
@@ -112,11 +159,7 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
       return refundProductId === productId;
     }).length;
 
-    console.log('📊 [getCompletedRefundsCountForProduct]', {
-      productId,
-      completedCount,
-      maxAllowed: 2
-    });
+
 
     return completedCount;
   }
@@ -125,20 +168,15 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
   hasRefundForProduct(saleId: string, productId: string): boolean {
     const refundList = this.refunds() as any[];
     if (!refundList || refundList.length === 0) {
-      console.log('📊 [hasRefundForProduct] No hay reembolsos - Resultado: false');
+
       return false;
     }
 
-    console.log('🔍 [hasRefundForProduct] Verificando:', {
-      saleId,
-      productId,
-      totalRefunds: refundList.length
-    });
 
     const hasRefund = refundList.some((refund: any) => {
       // 🔥 CRÍTICO: Considerar solo reembolsos activos (no rechazados ni cancelados)
       if (!['pending', 'approved', 'processing', 'completed'].includes(refund.status)) {
-        console.log('⏭️ [hasRefundForProduct] Reembolso no activo:', refund.status);
+
         return false;
       }
 
@@ -150,32 +188,22 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
       const match = refundSaleId === saleId && refundProductId === productId;
 
       if (match) {
-        console.log('✅ [hasRefundForProduct] Producto ya tiene reembolso activo:', {
-          refundId: refund._id,
-          status: refund.status
-        });
+
       }
 
       return match;
     });
-
-    console.log('📊 [hasRefundForProduct] Resultado:', hasRefund);
     return hasRefund;
   }
 
-  // 🔥 NUEVO: Verificar si la compra está dentro del período de reembolso (7 días)
+  // 🔥 NUEVO: Verificar si la compra está dentro del período de reembolso (3 días)
   isWithinRefundPeriod(saleDate: string | Date): boolean {
     const purchaseDate = new Date(saleDate);
     const now = new Date();
     const diffInDays = Math.floor((now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24));
-    const isWithin = diffInDays <= 7;
+    const isWithin = diffInDays <= 3; // 🔥 CAMBIO: 3 días
 
-    console.log('📅 [isWithinRefundPeriod]', {
-      purchaseDate: purchaseDate.toISOString(),
-      diffInDays,
-      isWithin,
-      daysLeft: 7 - diffInDays
-    });
+
 
     return isWithin;
   }
@@ -190,20 +218,14 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
   // 🔥 NUEVO: Método helper para calcular días restantes (para usar en template)
   getDaysLeftForRefund(saleDate: string | Date): number {
     const daysSince = this.getDaysSincePurchase(saleDate);
-    return Math.max(0, 7 - daysSince);
+    return Math.max(0, 3 - daysSince);
   }
 
   // 🔥 NUEVO: Obtener productos reembolsables de una venta
   getRefundableProducts(sale: Sale): any[] {
     if (!sale || !sale.detail) {
-      console.log('⚠️ [getRefundableProducts] Sale o detail undefined');
       return [];
     }
-
-    console.log('🔍 [getRefundableProducts] Analizando venta:', {
-      saleId: sale._id,
-      totalProducts: sale.detail.length
-    });
 
     const refundableProducts = sale.detail.filter(item => {
       // ✅ CORRECCIÓN: Extraer correctamente el productId con validación de null
@@ -214,57 +236,49 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
           : null;
 
       if (!productId) {
-        console.log('⚠️ [getRefundableProducts] ProductId no encontrado:', item);
         return false;
       }
 
       // 🔥 VALIDACIÓN 1: Verificar si ya tiene reembolso activo para esta compra
       const hasActiveRefund = this.hasRefundForProduct(sale._id, productId);
-      
+
       // 🔥 VALIDACIÓN 2: Verificar límite de reembolsos completados (2 máximo)
       const completedCount = this.getCompletedRefundsCountForProduct(productId);
       const reachedLimit = completedCount >= 2;
 
-      console.log('📦 [getRefundableProducts] Producto:', {
-        productId,
-        title: item.title,
-        hasActiveRefund,
-        completedCount,
-        reachedLimit,
-        isRefundable: !hasActiveRefund && !reachedLimit
-      });
+
 
       // Solo es reembolsable si NO tiene reembolso activo Y NO ha alcanzado el límite
       return !hasActiveRefund && !reachedLimit;
     });
 
-    console.log('✅ [getRefundableProducts] Productos reembolsables:', refundableProducts.length);
     return refundableProducts;
   }
 
   // 🔥 NUEVO: Verificar si la venta tiene al menos un producto reembolsable
   hasRefundableProducts(sale: Sale): boolean {
-    console.log('🎯 [hasRefundableProducts] Verificando venta:', sale._id);
 
     if (!sale) {
-      console.log('❌ [hasRefundableProducts] Sale undefined');
       return false;
     }
 
+    // 🔥 CRITICAL: Solo permitir reembolsos en compras PAGADAS
+    if (sale.status !== 'Pagado') {
+      return false;
+    }
+
+    // 🔥 NUEVO: Verificar si la venta está anulada (dinero ya fue devuelto)
+    // El check anterior (sale.status !== 'Pagado') ya cubre 'Anulado' y 'Pendiente'
+    // por lo que este bloque era código muerto que causaba error de TS.
+
+
     const withinPeriod = this.isWithinRefundPeriod(sale.createdAt);
     if (!withinPeriod) {
-      console.log('⏰ [hasRefundableProducts] Fuera del período de 7 días');
       return false;
     }
 
     const refundableProducts = this.getRefundableProducts(sale);
     const hasProducts = refundableProducts.length > 0;
-
-    console.log('📊 [hasRefundableProducts] Resultado:', {
-      withinPeriod,
-      refundableCount: refundableProducts.length,
-      hasProducts
-    });
 
     return hasProducts;
   }
@@ -276,18 +290,15 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
 
     if (newSet.has(productId)) {
       newSet.delete(productId);
-      console.log('➖ [toggleProductSelection] Producto deseleccionado:', productId);
     } else {
       newSet.add(productId);
-      console.log('➕ [toggleProductSelection] Producto seleccionado:', productId);
     }
 
     this.selectedProductsForRefund.set(newSet);
-    console.log('📋 [toggleProductSelection] Total seleccionados:', newSet.size);
   }
 
   // 🆕 Enviar solicitud de reembolso parcial
-  submitPartialRefund(): void {
+  async submitPartialRefund() {
     const sale = this.selectedSale();
     const selectedIds = this.selectedProductsForRefund();
     const reason = this.refundReason();
@@ -295,36 +306,54 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
 
     // Validaciones
     if (!sale) {
-      alert('⚠️ No se encontró la venta');
+      this.modalService.alert({
+        title: 'Error',
+        message: '⚠️ No se encontró la venta',
+        icon: 'error'
+      });
       return;
     }
 
     if (selectedIds.size === 0) {
-      alert('⚠️ Debes seleccionar al menos un producto');
+      this.modalService.alert({
+        title: 'Atención',
+        message: '⚠️ Debes seleccionar al menos un producto',
+        icon: 'warning'
+      });
       return;
     }
 
     if (!reason.trim()) {
-      alert('⚠️ Debes proporcionar una razón para el reembolso');
+      this.modalService.alert({
+        title: 'Atención',
+        message: '⚠️ Debes proporcionar una razón para el reembolso',
+        icon: 'warning'
+      });
       return;
     }
 
     // 🔥 DEBUG: Validar valores antes de enviar
-    console.log('🔍 [submitPartialRefund] Valores capturados:', {
-      reasonType,
-      reason,
-      selectedProducts: Array.from(selectedIds)
-    });
 
     // ✅ VALIDACIÓN: Asegurar que reasonType es un valor válido
     const validReasonTypes = ['not_expected', 'technical_issues', 'quality', 'duplicate_purchase', 'other'];
     if (!validReasonTypes.includes(reasonType)) {
-      console.error('❌ [submitPartialRefund] Reason type inválido:', reasonType);
-      alert('⚠️ Error: Tipo de motivo inválido. Por favor, selecciona una opción válida.');
+      this.modalService.alert({
+        title: 'Error',
+        message: '⚠️ Error: Tipo de motivo inválido. Por favor, selecciona una opción válida.',
+        icon: 'error'
+      });
       return;
     }
 
-    if (!confirm(`¿Confirmas solicitar el reembolso de ${selectedIds.size} producto(s) por un total de ${this.selectedRefundTotal().toFixed(2)} USD?`)) {
+    const confirmed = await this.modalService.confirm({
+      title: 'Confirmar Reembolso',
+      message: `¿Confirmas solicitar el reembolso de ${selectedIds.size} producto(s) por un total de ${this.selectedRefundTotal().toFixed(2)} USD?`,
+      icon: 'warning',
+      confirmText: 'Sí, solicitar reembolso',
+      cancelText: 'Cancelar'
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -335,22 +364,20 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
       const item = sale.detail.find((d: any) => (d.product._id || d.product) === productId);
 
       if (!item) {
-        console.warn('⚠️ [submitPartialRefund] Producto no encontrado:', productId);
         return Promise.resolve();
       }
 
       // ✅ VALIDACIÓN CRÃTICA: Asegurar que productId NO sea undefined
-      const extractedProductId = typeof item.product === 'object' && item.product?._id 
-        ? item.product._id 
+      const extractedProductId = typeof item.product === 'object' && item.product?._id
+        ? item.product._id
         : item.product;
 
       if (!extractedProductId) {
-        console.error('❌ [submitPartialRefund] product_id es undefined o null:', item);
-        return Promise.reject({ 
-          error: { 
+        return Promise.reject({
+          error: {
             message: 'Error al procesar el producto. Por favor, intenta nuevamente.',
             reason: 'invalid_product_id'
-          } 
+          }
         });
       }
 
@@ -363,11 +390,6 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
         reason_description: reason.trim()
       };
 
-      console.log('📤 [submitPartialRefund] Enviando payload completo:', {
-        ...refundData,
-        itemTitle: item.title,
-        itemPrice: item.price_unit
-      });
 
       return lastValueFrom(this.profileStudentService.requestRefund(sale._id, refundData));
     });
@@ -386,31 +408,26 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
         this.showRefundProductSelector.set(false);
 
         // 🔥 CRITICAL: Recargar inmediatamente con múltiples intentos
-        console.log('🔄 [submitPartialRefund] Iniciando recarga múltiple del perfil...');
-        
+
         // Primera recarga inmediata
         this.profileStudentService.reloadProfile();
-        
+
         // Segunda recarga después de 500ms
         setTimeout(() => {
-          console.log('🔄 [submitPartialRefund] Recarga 2/3...');
           this.profileStudentService.reloadProfile();
         }, 500);
-        
+
         // Tercera recarga después de 1500ms (por si acaso)
         setTimeout(() => {
-          console.log('🔄 [submitPartialRefund] Recarga 3/3 (final)...');
           this.profileStudentService.reloadProfile();
-          console.log('✅ [submitPartialRefund] Proceso de recarga completado');
         }, 1500);
       })
       .catch(error => {
-        console.error('❌ Error al solicitar reembolso:', error);
-        
+
         // 🔥 MANEJO MEJORADO: Verificar si es límite de reembolsos
         const errorMessage = error.error?.message || error.message || 'Error al procesar la solicitud.';
         const isMaxRefundsError = error.error?.reason === 'max_refunds_reached' || error.error?.show_toast;
-        
+
         if (isMaxRefundsError) {
           // 🎨 TOAST de advertencia (no error) para límite alcanzado
           this.toast.warning(
@@ -641,41 +658,46 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
         document.body.style.overflow = '';
       }
     });
+
+    // 🆕 Effect para reaccionar a cambios en la sección activa
+    effect(() => {
+      const section = this.activeSection();
+
+      // Guardar en localStorage para persistir
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('profile-active-section', section);
+      }
+
+      // Si es billetera, cargar datos
+      if (section === 'wallet' && this.authService.isLoggedIn()) {
+        this.walletService.loadWallet();
+      }
+    }); // ✅ Removido allowSignalWrites (deprecado en Angular 18+)
   }
 
   ngOnInit(): void {
+
     // 🔥 SIEMPRE recargar el perfil al entrar a la página
     // Esto asegura que después de una compra se muestren los nuevos productos
-    console.log('🔄 [ProfileStudent] Recargando perfil al iniciar...');
-    
-    // 🔥 SOLUCIÓN: Usar setTimeout para dar tiempo al backend de procesar
-    // Si venimos desde checkout, el backend puede tardar hasta 1s en procesar
-    setTimeout(() => {
-      console.log('🔄 [ProfileStudent] Disparando recarga del perfil...');
-      this.profileStudentService.reloadProfile();
-    }, 500); // 500ms es suficiente para sincronizar
+
+    // 🔥 POLLING: Intentar recargar varias veces para asegurar que el backend haya procesado la transacción
+    const reloadDelays = [1000, 3000, 5000];
+
+    reloadDelays.forEach(delay => {
+      setTimeout(() => {
+        this.profileStudentService.reloadProfile();
+      }, delay);
+    });
 
     // 💼 Cargar billetera siempre que el usuario esté logueado
     if (this.authService.isLoggedIn()) {
       this.walletService.loadWallet();
     }
-
-    // Verificar si hay un fragment en la URL para cambiar de sección
-    this.route.fragment.subscribe(fragment => {
-      if (fragment === 'purchases') {
-        this.setActiveSection('purchases');
-      } else if (fragment === 'projects') {
-        this.setActiveSection('projects');
-      } else if (fragment === 'courses') {
-        this.setActiveSection('courses');
-      }
-    });
   }
 
   // 🗑️ Método legacy - ya no es necesario con rxResource
   loadRefunds(): void {
     // Ya no hace nada - los reembolsos se cargan automáticamente
-    console.log('⚠️ [ProfileStudent] loadRefunds() es legacy - usando rxResource');
   }
 
   ngOnDestroy(): void {
@@ -683,25 +705,23 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
     document.body.style.overflow = '';
   }
 
-  // Cambia la sección activa y la guarda en localStorage
+  // 🆕 VERSIÓN MEJORADA: Cambia la sección activa usando routing
   setActiveSection(section: ProfileSection | 'refunds') {
     // Validar que la sección sea válida
     if (!['courses', 'projects', 'purchases', 'edit', 'refunds', 'wallet'].includes(section)) {
       return;
     }
 
-    this.activeSection.set(section as ProfileSection);
 
-    // 💎 Si se selecciona la billetera, cargar los datos
-    if (section === 'wallet') {
-      console.log('💼 [ProfileStudent] Cargando billetera...');
-      this.walletService.loadWallet();
-    }
+    // 🆕 Actualizar el signal manual (tiene prioridad sobre computed)
+    this._manualSection.set(section as ProfileSection);
 
-    // 🔥 Guardar en localStorage para persistir entre recargas
-    try {
-      localStorage.setItem('profile-active-section', section);
-    } catch (error) {
+    // 🆕 Actualizar localStorage (para persistencia)
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('profile-active-section', section);
+      } catch (error) {
+      }
     }
   }
 
@@ -749,11 +769,12 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
         this.profileForm.reset(updatedUser);
 
         this.profileStudentService.loadProfile().subscribe();
-        alert('¡Perfil actualizado con éxito!');
+        this.toast.success('Perfil actualizado', 'Tus datos han sido guardados exitosamente.');
+        this.profileStudentService.reloadProfile();
         this.isSubmitting.set(false);
       },
       error: (err) => {
-        alert('Ocurrió un error al actualizar tu perfil.');
+        this.toast.error('Error', 'Ocurrió un error al actualizar tu perfil.');
         this.isSubmitting.set(false);
       },
     });
@@ -773,13 +794,13 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
 
     this.http.post<any>(`${environment.url}profile-student/update-password`, payload).subscribe({
       next: () => {
-        alert('¡Contraseña actualizada con éxito! Se cerrará la sesión por seguridad.');
+        this.toast.success('Contraseña actualizada', 'Se cerrará la sesión por seguridad.');
         this.passwordForm.reset();
         this.isPasswordSubmitting.set(false);
         this.authService.logout(); // Cierra la sesión y redirige a /login
       },
       error: (err) => {
-        alert(err.error.message_text || 'Ocurrió un error al cambiar tu contraseña.');
+        this.toast.error('Error', err.error.message_text || 'Ocurrió un error al cambiar tu contraseña.');
         this.isPasswordSubmitting.set(false);
       },
     });
@@ -797,10 +818,11 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
           if (response.user) {
             this.authService.user.set(response.user);
           }
-          alert('¡Avatar actualizado con éxito!');
+          this.toast.success('Avatar actualizado', 'Tu imagen de perfil ha sido actualizada.');
+          this.profileStudentService.reloadProfile();
         },
         error: (err) => {
-          alert('Ocurrió un error al subir tu avatar.');
+          this.toast.error('Error', 'Ocurrió un error al subir tu avatar.');
         }
       });
     }
@@ -1089,6 +1111,16 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
    */
   // 🔥 NUEVO: Abrir modal con selección de productos
   openRefundModal(sale: any): void {
+    // 🔥 NUEVO: Verificar que la venta NO esté anulada
+    if (sale.status === 'Anulado') {
+      this.toast.warning(
+        'Compra Anulada',
+        'Esta compra fue anulada y el dinero ya fue devuelto a tu billetera. No puedes solicitar un reembolso adicional.',
+        6000
+      );
+      return;
+    }
+
     // Verificar que la venta tenga productos
     if (!sale.detail || sale.detail.length === 0) {
       alert('⚠️ Esta venta no tiene productos');
@@ -1116,7 +1148,6 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
       const product = refundableProducts[0].product;
       const productId = typeof product === 'object' && product._id ? product._id : product;
       this.selectedProductsForRefund.set(new Set([productId]));
-      console.log('⚡ [ProfileStudent] Producto único autoseleccionado:', productId);
     } else {
       this.selectedProductsForRefund.set(new Set());
     }
@@ -1125,19 +1156,12 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
     this.refundReasonType.set('not_expected');
     this.showRefundProductSelector.set(true);
 
-    console.log('📦 [ProfileStudent] Modal de reembolso abierto:', {
-      saleId: sale._id,
-      totalProducts: sale.detail.length,
-      refundableProducts: refundableProducts.length,
-      withinPeriod: this.isWithinRefundPeriod(sale.createdAt)
-    });
   }
 
   /**
    * Cerrar el modal de reembolso
    */
   closeRefundModal(): void {
-    console.log('🚪 [ProfileStudent] Cerrando modal de reembolso');
     this.showRefundModal.set(false);
     this.selectedSaleForRefund.set(null);
   }
@@ -1146,11 +1170,9 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
    * Manejar el envío de la solicitud de reembolso
    */
   handleRefundSubmit(refundData: any): void {
-    console.log('📤 [ProfileStudent] Enviando solicitud de reembolso:', refundData);
 
     this.profileStudentService.requestRefund(refundData.sale_id, refundData).subscribe({
       next: (response) => {
-        console.log('✅ [ProfileStudent] Solicitud exitosa:', response);
 
         // Cerrar modal
         this.closeRefundModal();
@@ -1165,17 +1187,14 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
         // Recargar perfil
         this.profileStudentService.loadProfile().subscribe({
           next: () => {
-            console.log('🔄 [ProfileStudent] Perfil recargado');
           },
           error: (err) => {
-            console.error('❌ [ProfileStudent] Error al recargar perfil:', err);
           }
         });
       },
       error: (err) => {
-        console.error('❌ [ProfileStudent] Error en solicitud:', err);
         const errorMessage = err.error?.message || 'Ocurrió un error al procesar tu solicitud.';
-        
+
         // 🎨 Toast de error profesional
         this.toast.error(
           'Error en Solicitud',
@@ -1245,6 +1264,77 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
     if (!imageName) return '';
     const cleanImageName = imageName.trim();
     return `${environment.url}refunds/receipt-image/${cleanImageName}`;
+  }
+
+  // ✅ NUEVO: Construir URL del comprobante de pago
+  buildVoucherUrl(imageName?: string): string {
+    if (!imageName) return '';
+    // Asumiendo que hay un endpoint para ver la imagen del voucher o se sirve estáticamente
+    return `${environment.url}sales/voucher-image/${imageName}`;
+  }
+
+  // ✅ NUEVO: Manejar selección de comprobante (Paso 1)
+  onVoucherSelected(event: Event, sale: Sale): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+
+      // Validar tamaño (ej. 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.toast.error('Archivo muy grande', 'El comprobante no debe superar los 5MB.');
+        return;
+      }
+
+      // Guardar en el mapa temporal
+      this.selectedVoucherFiles.set(sale._id, file);
+
+      // Forzar detección de cambios (aunque Angular Signals lo maneja, el Map no es reactivo por sí solo si no se usa un signal wrapper, 
+      // pero podemos usar un signal auxiliar o simplemente forzar actualización si fuera necesario. 
+      // En este caso, usaremos un método helper en el template para leer el mapa).
+    }
+  }
+
+  // ✅ NUEVO: Helper para verificar si hay archivo seleccionado
+  hasSelectedVoucher(saleId: string): boolean {
+    return this.selectedVoucherFiles.has(saleId);
+  }
+
+  // ✅ NUEVO: Helper para obtener nombre del archivo
+  getSelectedVoucherName(saleId: string): string {
+    return this.selectedVoucherFiles.get(saleId)?.name || '';
+  }
+
+  // ✅ NUEVO: Cancelar selección
+  cancelVoucherSelection(saleId: string): void {
+    this.selectedVoucherFiles.delete(saleId);
+    // Resetear input file si fuera necesario (requiere ViewChild o similar, pero por ahora basta con limpiar el estado)
+  }
+
+  // ✅ NUEVO: Confirmar pago y subir comprobante (Paso 2)
+  confirmPayment(sale: Sale): void {
+    const file = this.selectedVoucherFiles.get(sale._id);
+
+    if (!file) {
+      this.toast.warning('Atención', 'Debes seleccionar un comprobante primero.');
+      return;
+    }
+
+    this.uploadingVoucherId.set(sale._id);
+
+    this.profileStudentService.uploadVoucher(sale._id, file).subscribe({
+      next: (response) => {
+        this.toast.success('Pago Confirmado', 'Tu comprobante se ha enviado correctamente. El administrador verificará tu pago pronto.');
+        this.uploadingVoucherId.set(null);
+        this.selectedVoucherFiles.delete(sale._id); // Limpiar selección
+        // Recargar perfil para actualizar estado
+        this.profileStudentService.reloadProfile();
+      },
+      error: (err) => {
+        console.error(err);
+        this.toast.error('Error', 'No se pudo subir el comprobante. Inténtalo de nuevo.');
+        this.uploadingVoucherId.set(null);
+      }
+    });
   }
 
 }

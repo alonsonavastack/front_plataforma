@@ -1,9 +1,10 @@
 // src/app/pages/course-detail/course-detail.ts
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, OnDestroy, computed, inject, signal, effect } from '@angular/core';
+import { Component, computed, inject, signal, effect } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { Subscription } from 'rxjs';
+import { ToastService } from '../../core/services/toast.service';
 
 import { environment } from '../../../environments/environment';
 import { HeaderComponent } from '../../layout/header/header';
@@ -21,14 +22,18 @@ type TabType = 'overview' | 'curriculum' | 'instructor' | 'reviews';
   imports: [CommonModule, RouterLink, HeaderComponent, CourseReviewsComponent],
   templateUrl: './course-detail.html',
 })
-export class CourseDetailComponent implements OnInit, OnDestroy {
+export class CourseDetailComponent {
   private route = inject(ActivatedRoute);
   private api = inject(HomeService);
   private http = inject(HttpClient);
   public authService = inject(AuthService);
   private router = inject(Router);
   private sanitizer = inject(DomSanitizer);
-  private routeSubscription?: Subscription;
+  private toast = inject(ToastService);
+
+  // ✅ Router signals
+  private params = toSignal(this.route.paramMap, { initialValue: null });
+  private errorToastShown = false;
 
   // Estado de tabs
   activeTab = signal<TabType>('overview');
@@ -36,8 +41,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     this.activeTab.set(tab);
   }
 
-  // slug de la ruta
-  slug = signal<string>('');
+  // ✅ slug reactivo desde router
+  slug = computed(() => this.params()?.get('slug') || '');
 
   // resource para el detalle
   detailRes = this.api.coursePublicResource(() => this.slug());
@@ -66,49 +71,35 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     return `${environment.images.user}${encodeURIComponent(a)}`;
   }
 
-  // ----- helpers seguros (try/catch para evitar ResourceValueError) -----
-  safeDetail(): any {
-    try {
-      return this.detailRes.value();
-    } catch (error) {
-
-      return {
-        course: undefined,
-        reviews: [],
-        course_instructor: [],
-        course_relateds: [],
-        student_have_course: false,
-      };
-    }
-  }
-
-  hasError(): boolean {
-    try {
-      this.detailRes.value();
-      return false;
-    } catch {
-      return true;
-    }
-  }
-
-  errorMessage(): string {
-    try {
-      this.detailRes.value();
-      return '';
-    } catch (e: any) {
-      const cause = e?.cause ?? e;
-      return (
-        (typeof cause?.message === 'string' && cause.message) ||
-        'Error al cargar el curso'
-      );
-    }
-  }
-
-  course = computed<any>(() => this.safeDetail().course);
-  reviews = computed<any[]>(() => this.safeDetail().reviews ?? []);
-  moreFromInstructor = computed<any[]>(() => this.safeDetail().course_instructor ?? []);
-  relatedCourses = computed<any[]>(() => this.safeDetail().course_relateds ?? []);
-  studentHasCourse = computed<boolean>(() => !!this.safeDetail().student_have_course);
+  // ✅ Computed desde resource con tipado correcto
+  hasError = this.detailRes.hasError;
+  error = this.detailRes.error;
+  
+  // ✅ Computed con acceso seguro a propiedades
+  course = computed<any>(() => {
+    const detail = this.detailRes.value();
+    return detail ? detail.course : undefined;
+  });
+  
+  reviews = computed<any[]>(() => {
+    const detail = this.detailRes.value();
+    return detail?.reviews ?? [];
+  });
+  
+  moreFromInstructor = computed<any[]>(() => {
+    const detail = this.detailRes.value();
+    return detail?.course_instructor ?? [];
+  });
+  
+  relatedCourses = computed<any[]>(() => {
+    const detail = this.detailRes.value();
+    return detail?.course_relateds ?? [];
+  });
+  
+  studentHasCourse = computed<boolean>(() => {
+    const detail = this.detailRes.value();
+    return !!detail?.student_have_course;
+  });
 
   // NOTE: Cart removed — purchases are direct via API
 
@@ -290,15 +281,13 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
   // Métodos para manejar eventos del componente de reviews
   onReviewAdded(review: Review) {
-
-    // Aquí podrías actualizar las métricas del curso si es necesario
-    // o mostrar una notificación de éxito
+    this.toast.success('¡Review publicada!', 'Tu review ha sido publicada exitosamente');
+    this.reload();
   }
 
   onReviewUpdated(review: Review) {
-
-    // Aquí podrías actualizar las métricas del curso si es necesario
-    // o mostrar una notificación de éxito
+    this.toast.success('¡Review actualizada!', 'Tu review ha sido actualizada exitosamente');
+    this.reload();
   }
 
   // Método para navegar a otro curso
@@ -308,22 +297,22 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  ngOnInit(): void {
-    // Suscribirse a cambios en los parámetros de la ruta
-    this.routeSubscription = this.route.paramMap.subscribe(params => {
-      const slug = params.get('slug') ?? '';
-      if (slug && slug !== this.slug()) {
-        this.slug.set(slug);
-        // Recargar los datos del curso
-        this.reload();
+  constructor() {
+    // ✅ Effect: Mostrar toast SOLO UNA VEZ cuando hay error
+    effect(() => {
+      const error = this.error();
+      if (error && !this.errorToastShown) {
+        this.errorToastShown = true;
+        this.toast.error('Error al cargar', 'No se pudo cargar el curso. Verifica tu conexión.');
       }
     });
   }
 
+  ngOnInit(): void {
+    // ✅ Router signals manejan automáticamente los cambios de slug
+  }
+
   ngOnDestroy(): void {
-    // Limpiar la suscripción para evitar memory leaks
-    if (this.routeSubscription) {
-      this.routeSubscription.unsubscribe();
-    }
+    // ✅ Sin cleanup manual - router signals se limpian solos
   }
 }

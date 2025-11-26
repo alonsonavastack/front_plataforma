@@ -200,7 +200,7 @@ export class RefundCompleteModalComponent {
   handleFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    
+
     if (file) {
       // Validar tamaño (máx 5MB)
       if (file.size > 5 * 1024 * 1024) {
@@ -219,7 +219,7 @@ export class RefundCompleteModalComponent {
 
       // Guardar el archivo real
       this.receiptFile = file;
-      console.log('📄 Archivo seleccionado:', file.name, file.type, file.size);
+
     }
   }
 

@@ -9,6 +9,8 @@ import { WalletService } from '../../core/services/wallet.service';
 import { PurchasesService } from '../../core/services/purchases.service';
 import { ProfileService } from '../../core/services/profile.service'; // 🔥 NUEVO
 import { ProfileStudentService } from '../../core/services/profile-student.service'; // 🔥 CRÍTICO
+import { ModalService } from '../../core/services/modal.service';
+import { DiscountService } from '../../core/services/discount.service'; // 🔥 NUEVO
 import { environment } from '../../../environments/environment';
 
 interface CheckoutProduct {
@@ -19,6 +21,7 @@ interface CheckoutProduct {
   imagen?: string;
   slug?: string;
   type: 'course' | 'project';
+  categorie?: any; // 🔥 Necesario para descuentos por categoría
 }
 
 @Component({
@@ -33,6 +36,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   walletService = inject(WalletService);
   purchasesService = inject(PurchasesService);
   profileService = inject(ProfileService); // 🔥 NUEVO
+  modalService = inject(ModalService);
+  discountService = inject(DiscountService); // 🔥 NUEVO
   router = inject(Router);
 
   // 🔥 IMPORTAR ProfileStudentService para recargar correctamente
@@ -50,13 +55,86 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   errorMessage = signal<string>('');
   transactionNumber = signal<string>('');
 
+
   // 🆕 Wallet state
   walletBalance = computed(() => this.walletService.balance());
   useWalletBalance = signal(false);
   walletAmount = signal(0);
 
-  // 🆕 Total y restante
-  subtotal = computed(() => this.product()?.price_usd || 0);
+  // 🆕 Descuentos
+  discounts = computed(() => this.discountService.discounts());
+
+  // 🔥 Calcular el mejor descuento disponible
+  bestDiscount = computed(() => {
+    const prod = this.product();
+    const type = this.productType();
+    const allDiscounts = this.discounts();
+
+    if (!prod || !type || !allDiscounts.length) return null;
+
+    const now = Date.now();
+    // Filtrar descuentos activos
+    const activeDiscounts = allDiscounts.filter(d => d.state && d.start_date_num <= now && d.end_date_num >= now);
+
+    let best = null;
+    let finalPrice = prod.price_usd;
+
+    for (const discount of activeDiscounts) {
+      let applies = false;
+
+      // 1. Por Curso
+      if (discount.type_segment === 1 && type === 'course') {
+        if (discount.courses && discount.courses.some((c: any) => c._id === prod._id || c === prod._id)) {
+          applies = true;
+        }
+      }
+      // 2. Por Categoría
+      else if (discount.type_segment === 2) {
+        // Necesitamos la categoría del producto. Si viene populada en prod.categorie
+        const catId = prod.categorie?._id || prod.categorie;
+        if (catId && discount.categories && discount.categories.some((c: any) => c._id === catId || c === catId)) {
+          applies = true;
+        }
+      }
+      // 3. Por Proyecto
+      else if (discount.type_segment === 3 && type === 'project') {
+        if (discount.projects && discount.projects.some((p: any) => p._id === prod._id || p === prod._id)) {
+          applies = true;
+        }
+      }
+
+      if (applies) {
+        let calculatedPrice = finalPrice;
+        if (discount.type_discount === 1) { // Porcentaje
+          calculatedPrice = prod.price_usd - (prod.price_usd * discount.discount / 100);
+        } else { // Monto fijo
+          calculatedPrice = prod.price_usd - discount.discount;
+        }
+
+        if (calculatedPrice < 0) calculatedPrice = 0;
+
+        // Si este descuento da un precio menor, es el mejor
+        if (calculatedPrice < finalPrice) {
+          finalPrice = calculatedPrice;
+          best = {
+            ...discount,
+            finalPrice,
+            savedAmount: prod.price_usd - finalPrice
+          };
+        }
+      }
+    }
+
+    return best;
+  });
+
+  // 🆕 Total y restante (considerando descuento)
+  subtotal = computed(() => {
+    const discount = this.bestDiscount();
+    return discount ? discount.finalPrice : (this.product()?.price_usd || 0);
+  });
+
+  originalPrice = computed(() => this.product()?.price_usd || 0);
 
   remainingAmount = computed(() => {
     if (!this.useWalletBalance()) return this.subtotal();
@@ -110,7 +188,6 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     effect(() => {
       const prod = this.product();
       if (!prod && !this.showSuccess()) {
-        console.log('⚠️ [Checkout] No hay producto, redirigiendo a home');
         this.router.navigate(['/']);
       }
     });
@@ -127,7 +204,6 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state || (history.state as any);
 
-    console.log('🛒 [Checkout] Navigation state:', state);
 
     if (state && state.product && state.productType) {
       const prod: CheckoutProduct = {
@@ -137,15 +213,16 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       this.product.set(prod);
       this.productType.set(state.productType);
 
-      console.log('✅ [Checkout] Producto cargado:', prod);
     } else {
-      console.log('❌ [Checkout] No se recibió producto, redirigiendo...');
       this.router.navigate(['/']);
       return;
     }
 
     // 🆕 Cargar saldo de billetera y transacciones
     this.walletService.loadWallet();
+
+    // 🆕 Cargar descuentos
+    this.discountService.loadDiscounts().subscribe();
 
     // Pre-llenar el formulario con datos del usuario
     const currentUser = this.user();
@@ -168,11 +245,6 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       const balance = this.walletBalance();
       const total = this.subtotal();
 
-      console.log('💰 [Checkout] Validando selección de billetera:', {
-        balance,
-        total,
-        sufficient: balance >= total
-      });
 
       // Si el saldo no cubre el total, mostrar error y no permitir selección
       if (balance < total) {
@@ -203,12 +275,6 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       const amountToUse = Math.min(balance, total);
       this.walletAmount.set(amountToUse);
 
-      console.log('💰 [Checkout] Toggle billetera activado:', {
-        total,
-        balance,
-        amountToUse,
-        coversTotal: amountToUse >= total
-      });
     } else {
       this.walletAmount.set(0);
       // Si se desactiva y estaba en wallet, limpiar selección
@@ -218,10 +284,28 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     }
   }
 
-  processPayment(): void {
+  async processPayment() {
     // 🔥 Prevenir múltiples clics
     if (this.isProcessing() || this.showSuccess()) {
-      console.log('⚠️ Pago ya en proceso o completado. Ignorando clic adicional.');
+      return;
+    }
+
+    // AGREGAR ESTE CÓDIGO AL INICIO:
+    // ⚠️ POLÍTICA DE REEMBOLSOS
+    const confirmed = await this.modalService.confirm({
+      title: 'Política de Reembolsos',
+      icon: 'warning',
+      message: `✓ Tienes 3 DÍAS para solicitar reembolso
+✓ No puedes haber visto más del 20% del contenido
+✓ Máximo 1 reembolso por curso
+✓ Máximo 3 reembolsos totales en 6 meses
+
+¿Deseas continuar con la compra?`,
+      confirmText: 'Aceptar y Continuar',
+      cancelText: 'Cancelar'
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -253,43 +337,33 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('🚀 Iniciando proceso de pago...');
     this.isProcessing.set(true);
     this.errorMessage.set('');
 
     // ════════════════════════════════════════════════════════════════
     // 🔥 CORRECCIÓN CRÍTICA: Determinar el método de pago correctamente
     // ════════════════════════════════════════════════════════════════
-    
+
     const walletIsActive = this.useWalletBalance();
     const walletAmountUsed = this.walletAmount();
     const remaining = this.remainingAmount();
-    
+
     let finalPaymentMethod: string;
     let finalWalletAmount: number;
     let finalRemainingAmount: number;
-
-    console.log('💰 [DEBUG] Estado de billetera:', {
-      walletIsActive,
-      walletAmountUsed,
-      remaining,
-      selectedMethod: this.selectedPaymentMethod()
-    });
 
     // CASO 1: Pago 100% con billetera (toggle activo Y saldo cubre todo)
     if (walletIsActive && remaining === 0 && walletAmountUsed > 0) {
       finalPaymentMethod = 'wallet';
       finalWalletAmount = walletAmountUsed;
       finalRemainingAmount = 0;
-      console.log('✅ CASO 1: Pago 100% con billetera');
     }
     // CASO 2: Pago mixto (billetera + otro método)
     else if (walletIsActive && walletAmountUsed > 0 && remaining > 0) {
       finalPaymentMethod = this.selectedPaymentMethod() || 'transfer';
       finalWalletAmount = walletAmountUsed;
       finalRemainingAmount = remaining;
-      console.log('✅ CASO 2: Pago mixto - billetera + ' + finalPaymentMethod);
-      
+
       // Validar que seleccionó un método para el restante
       if (!this.selectedPaymentMethod()) {
         this.errorMessage.set('Por favor selecciona un método de pago para el saldo restante');
@@ -302,8 +376,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       finalPaymentMethod = this.selectedPaymentMethod() || '';
       finalWalletAmount = 0;
       finalRemainingAmount = this.subtotal();
-      console.log('✅ CASO 3: Pago sin billetera - método: ' + finalPaymentMethod);
-      
+
       // Validar que seleccionó un método
       if (!finalPaymentMethod) {
         this.errorMessage.set('Por favor selecciona un método de pago');
@@ -312,27 +385,25 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       }
     }
 
-    console.log('📤 [ENVÍO] Datos finales:', {
-      method_payment: finalPaymentMethod,
-      use_wallet: walletIsActive && walletAmountUsed > 0,
-      wallet_amount: finalWalletAmount,
-      remaining_amount: finalRemainingAmount
-    });
 
     // Preparar datos de la venta
+    const discount = this.bestDiscount();
+
     const checkoutData: any = {
       method_payment: finalPaymentMethod,
       currency_total: 'USD',
       currency_payment: 'USD',
-      total: this.subtotal(),
+      total: this.subtotal(), // 🔥 Precio final con descuento
       n_transaccion: this.checkoutService.generateTransactionNumber(),
       price_dolar: this.checkoutService.getExchangeRate(),
       detail: [{
         product: prod._id,
         product_type: prod.type,
         title: prod.title,
-        price_unit: prod.price_usd,
-        discount: 0
+        price_unit: this.subtotal(), // 🔥 Precio unitario es el precio final
+        discount: discount ? discount.discount : 0,
+        type_discount: discount ? discount.type_discount : 0,
+        campaign_discount: discount ? discount.type_campaign : null
       }],
       // 🔥 SIEMPRE enviar estos campos con valores correctos
       use_wallet: walletIsActive && finalWalletAmount > 0,
@@ -345,58 +416,30 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     // Procesar la venta
     this.checkoutService.processSale(checkoutData).subscribe({
       next: (response) => {
-        console.log('✅ Venta exitosa:', response);
-        console.log('📦 Respuesta completa del backend:', JSON.stringify(response, null, 2));
-        
+
         this.isProcessing.set(false);
         this.showSuccess.set(true);
 
         // 🔄 Recargar servicios después de una venta exitosa
-        console.log('🔄 [Checkout] Iniciando recarga de servicios...');
-        
+
         // 1. Recargar billetera inmediatamente si se usó
         if (walletIsActive && finalWalletAmount > 0) {
-          console.log('💰 [Checkout] Recargando saldo de billetera...');
           this.walletService.loadWallet();
         }
 
         // 2. Recargar perfil con un pequeño delay para asegurar que el backend terminó
         setTimeout(() => {
-          console.log('🔄 [Checkout] Recargando datos del perfil...');
-          console.log('🕒 [Checkout] Timestamp:', new Date().toISOString());
-          
-          // 🔥 CRÍTICO: Llamar a loadProfile() que hace request HTTP directo
-          this.profileStudentService.loadProfile().subscribe({
-            next: (profileData) => {
-              console.log('✅ [Checkout] Perfil recargado exitosamente');
-              console.log('📦 [Checkout] Proyectos en perfil:', profileData.projects?.length || 0);
-              
-              if (profileData.projects && profileData.projects.length > 0) {
-                console.log('📦 [Checkout] Lista de proyectos:');
-                profileData.projects.forEach((p, i) => {
-                  console.log(`   ${i + 1}. ${p.title}`);
-                });
-              }
-              
-              // También recargar otros servicios
-              this.purchasesService.loadPurchasedProducts();
-              this.profileService.reloadProfile();
-              
-              console.log('✅ [Checkout] Todos los servicios recargados exitosamente');
-            },
-            error: (err) => {
-              console.error('❌ [Checkout] Error al recargar perfil:', err);
-              // Aún así, intentar recargar otros servicios
-              this.purchasesService.loadPurchasedProducts();
-              this.profileService.reloadProfile();
-              this.profileStudentService.reloadProfile();
-            }
-          });
+
+          // 🔥 CRÍTICO: Llamar a reloadProfile() para actualizar el estado global
+          this.profileStudentService.reloadProfile();
+
+          // También recargar otros servicios
+          this.purchasesService.loadPurchasedProducts();
+          this.profileService.reloadProfile();
+
         }, 2000); // Aumentado a 2 segundos para dar más tiempo al backend
       },
       error: (error) => {
-        console.error('❌ Error al procesar la venta:', error);
-        console.error('📋 Detalles del error:', JSON.stringify(error, null, 2));
         this.errorMessage.set(
           error.error?.message || 'Hubo un error al procesar tu pago. Por favor intenta de nuevo.'
         );
@@ -410,11 +453,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
     // 🔥 FIX: Si pagó 100% con billetera, NO mostrar modal de advertencia
     if (this.isFullWalletPayment()) {
-      console.log('✨ Pago 100% con billetera - Omitiendo modal de advertencia');
       // Redirigir directo sin mostrar el modal de transferencia
       const productType = this.productType();
       const fragment = productType === 'project' ? 'projects' : 'courses';
-      console.log(`📨 Redirigiendo a profile-student#${fragment}`);
       this.router.navigate(['/profile-student'], { fragment });
       return;
     }
@@ -426,13 +467,12 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   // 🔥 Cerrar el modal de advertencia y redirigir
   closeWarningAndRedirect(): void {
     this.showWarningModal.set(false);
-    
+
     // Redirigir al perfil del estudiante a la sección correcta según el tipo de producto
     const productType = this.productType();
     const fragment = productType === 'project' ? 'projects' : 'courses';
-    
-    console.log(`📨 Redirigiendo a profile-student#${fragment}`);
-    
+
+
     // 🔥 SOLUCIÓN OPTIMIZADA: Navegación con Angular Router
     // Al llegar a profile-student, los datos ya estarán actualizados gracias al setTimeout previo
     this.router.navigate(['/profile-student'], { fragment });
@@ -475,10 +515,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   // 📋 Función para copiar al portapapeles
   copyToClipboard(text: string, type: string): void {
     navigator.clipboard.writeText(text).then(() => {
-      console.log(`✅ ${type} copiado al portapapeles:`, text);
       alert(`✅ ${type === 'cuenta' ? 'Número de cuenta' : type === 'clabe' ? 'CLABE' : 'Número de transacción'} copiado al portapapeles`);
     }).catch(err => {
-      console.error('❌ Error al copiar:', err);
       alert('❌ No se pudo copiar. Por favor, copia manualmente.');
     });
   }

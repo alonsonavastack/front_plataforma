@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReportsService } from '../../../core/services/reports.service';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface ProductRecord {
   _id: string;
@@ -50,7 +52,7 @@ export class ProductsReportComponent implements OnInit {
     // Filtro por búsqueda
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(p => 
+      filtered = filtered.filter(p =>
         p.title.toLowerCase().includes(term) ||
         p.category.toLowerCase().includes(term) ||
         p.instructor.toLowerCase().includes(term)
@@ -103,7 +105,7 @@ export class ProductsReportComponent implements OnInit {
         this.products.set(response.products);
       }
     } catch (error) {
-      console.error('❌ Error cargando productos:', error);
+
     } finally {
       this.isLoading.set(false);
     }
@@ -139,8 +141,37 @@ export class ProductsReportComponent implements OnInit {
   }
 
   exportToPDF() {
-    alert('Función de exportar PDF en desarrollo');
-    // TODO: Implementar exportación a PDF
+    const doc = new jsPDF();
+
+    doc.text('Reporte de Productos', 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, 14, 28);
+
+    const stats = [
+      `Total Productos: ${this.filteredProducts().length}`,
+      `Ingresos Totales: ${this.formatCurrency(this.totalRevenue())}`,
+      `Ventas Totales: ${this.totalSales()}`
+    ];
+    doc.text(stats, 14, 34);
+
+    const tableData = this.filteredProducts().map(p => [
+      p.type === 'course' ? 'Curso' : 'Proyecto',
+      p.title,
+      p.category,
+      p.totalSales,
+      this.formatCurrency(p.totalRevenue),
+      p.averageRating ? p.averageRating.toFixed(1) : 'N/A'
+    ]);
+
+    autoTable(doc, {
+      head: [['Tipo', 'Título', 'Categoría', 'Ventas', 'Ingresos', 'Rating']],
+      body: tableData,
+      startY: 45,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [132, 204, 22] } // Lime-500
+    });
+
+    doc.save(`productos_${new Date().toISOString().split('T')[0]}.pdf`);
   }
 
   formatCurrency(amount: number): string {

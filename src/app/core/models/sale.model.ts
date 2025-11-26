@@ -48,7 +48,10 @@ export interface Sale {
   currency_total?: string;
   detail: SaleDetailItem[];
   isRefundable?: boolean; // Añadido para la lógica de reembolsos
-  
+
   // ✅ NUEVO: Información de reembolso asociado
   refund?: RefundInfo | null;
+
+  // ✅ NUEVO: Comprobante de pago
+  voucher_image?: string;
 }

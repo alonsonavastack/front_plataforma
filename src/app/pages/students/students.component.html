@@ -93,7 +93,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (student of students(); track student._id) {
+          @for (student of filteredStudents(); track student._id) {
             <tr [class]="'border-b border-gray-700 hover:bg-slate-700/50 transition-colors ' + (isStudentActive(student) ? 'bg-slate-800/50' : 'bg-slate-800/30 opacity-60')">
               <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white">
                 <div class="flex items-center gap-3">
@@ -142,6 +142,15 @@
               </td>
               <td class="px-6 py-4 text-right">
                 <div class="flex items-center justify-end gap-2">
+                  <!-- 🔍 Botón temporal de debug -->
+                  <button
+                    (click)="debugStudent(student)"
+                    class="font-medium text-yellow-400 hover:underline text-xs"
+                    title="Ver datos en consola"
+                  >
+                    🔍 Debug
+                  </button>
+                  <span class="text-gray-600">|</span>
                   @if (isAdmin()) {
                     <!-- Solo admins pueden editar -->
                     <button

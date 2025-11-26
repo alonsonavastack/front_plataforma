@@ -36,11 +36,8 @@ export class LearningComponent implements OnInit {
 
   // Extrae el curso de la respuesta de la API de forma segura
   course = computed(() => {
-    try {
-      return this.courseDetail.value()?.course;
-    } catch {
-      return null;
-    }
+    const detail = this.courseDetail.value();
+    return detail ? detail.course : null;
   });
 
   // Extrae la malla curricular

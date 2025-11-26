@@ -1,12 +1,12 @@
-// src/app/core/services/home.service.ts
+// src/app/core/services/home.ts
 import { HttpClient } from "@angular/common/http";
-import { computed, inject, Injectable, signal, effect } from "@angular/core";
+import { computed, effect, inject, Injectable, signal } from "@angular/core";
 import { environment } from "../../../environments/environment";
 import { CoursePublic, Project, SearchCourseBody } from "../models/home.models";
 import { toQuery } from "../utils/resource-helpers";
-import { map, catchError, throwError, tap } from "rxjs";
-import { Subject } from "rxjs";
+import { map, catchError, throwError } from "rxjs";
 
+// 📦 Interfaces
 interface HomeApiResponse {
   categories: any[];
   courses_top: CoursePublic[];
@@ -20,17 +20,16 @@ interface HomeApiResponse {
   campaing_banner: any;
   courses_flash: CoursePublic[];
   campaing_flash: any;
-  projects_featured?: Project[]; // Añadido para proyectos destacados
-  courses_featured?: CoursePublic[]; // Añadido para cursos destacados
+  projects_featured?: Project[];
+  courses_featured?: CoursePublic[];
 }
 
-// Extendemos la interfaz CoursePublic para incluir las propiedades que faltan
 export interface CoursePublicWithMalla extends CoursePublic {
   malla_curricular?: any[];
   malla?: any[];
 }
 
-interface CourseDetailResponse {
+export interface CourseDetailResponse {
   course: CoursePublicWithMalla | undefined;
   reviews: any[];
   course_instructor: CoursePublic[];
@@ -40,129 +39,46 @@ interface CourseDetailResponse {
 
 @Injectable({ providedIn: "root" })
 export class HomeService {
-  http = inject(HttpClient);
-  base = environment.url;
+  private http = inject(HttpClient);
+  private base = environment.url;
 
-  // 🚨 Subject para notificar errores al componente (SOLO UNA VEZ)
-  private onHomeError = new Subject<any>();
-  onHomeError$ = this.onHomeError.asObservable();
-  private hasEmittedError = false; // Flag para evitar múltiples emisiones
-
-  private homeState = signal<{ data: HomeApiResponse, isLoading: boolean, error: any }>({
-    data: {
-      categories: [],
-      courses_top: [],
-      categories_sections: [],
-      courses_banners: [],
-      campaing_banner: null,
-      courses_flash: [],
-      campaing_flash: null,
-      projects_featured: [],
-      courses_featured: [],
-    },
-    isLoading: false,
-    error: null,
+  // ✅ Signals manuales con estado - SIMPLE Y EFECTIVO
+  private homeData = signal<HomeApiResponse>({
+    categories: [],
+    courses_top: [],
+    categories_sections: [],
+    courses_banners: [],
+    campaing_banner: null,
+    courses_flash: [],
+    campaing_flash: null,
+    projects_featured: [],
+    courses_featured: [],
   });
+  
+  private homeLoading = signal(false);
+  private homeError = signal<any>(null);
+  
+  private coursesData = signal<CoursePublic[]>([]);
+  private coursesLoading = signal(false);
+  
+  private projectsData = signal<Project[]>([]);
+  private projectsLoading = signal(false);
 
-  // --- State for All Courses (for catalog) ---
-  private allCoursesState = signal<{ data: CoursePublic[], isLoading: boolean, error: any }>({
-    data: [],
-    isLoading: false,
-    error: null,
-  });
+  // 📊 Signals públicos readonly
+  home = this.homeData.asReadonly();
+  isLoadingHome = this.homeLoading.asReadonly();
+  hasErrorHome = computed(() => !!this.homeError());
+  errorHome = this.homeError.asReadonly();
 
-  // --- State for All Projects (for catalog) ---
-  private allProjectsState = signal<{ data: Project[], isLoading: boolean, error: any }>({
-    data: [],
-    isLoading: false,
-    error: null,
-  });
+  allCourses = this.coursesData.asReadonly();
+  allProjects = this.projectsData.asReadonly();
+  
+  isLoadingCourses = this.coursesLoading.asReadonly();
+  isLoadingProjects = this.projectsLoading.asReadonly();
 
-  // Public computed signals for catalog
-  allCourses = computed(() => this.allCoursesState().data);
-  allProjects = computed(() => this.allProjectsState().data);
-
-  // ---- filtros reactivos (opcional) ----
-  private filtro = signal<{ q?: string; categorie?: string }>({});
-  setFiltro(patch: { q?: string; categorie?: string }) {
-    this.filtro.set({ ...this.filtro(), ...patch });
-  }
-  clearFiltro() {
-    this.filtro.set({});
-  }
-
-  // Valor del recurso (¡OJO! si el resource está en error, .value() lanza en el componente)
-  home = computed(() => {
-    if (this.homeState().error) {
-      // Lanza el error para que los componentes puedan atraparlo
-      throw new Error('Failed to load home data', { cause: this.homeState().error });
-    }
-    return this.homeState().data;
-  });
-  isLoadingHome = computed(() => this.homeState().isLoading);
-
-  reloadHome() {
-    this.homeState.update(s => ({ ...s, isLoading: true }));
-    const url = `${this.base}home/list${toQuery({ TIME_NOW: Date.now() })}`;
-    this.http.get<HomeApiResponse>(url).subscribe({
-      next: (data) => {
-        this.homeState.set({ data, isLoading: false, error: null });
-        this.hasEmittedError = false; // 🔄 Resetear flag cuando carga exitosa
-      },
-      error: (err) => {
-        // 🔇 SILENCIADO: El error se propaga al computed home()
-        // El componente maneja el error y muestra toast
-        this.homeState.update(s => ({ ...s, isLoading: false, error: err }));
-        
-        // 🚨 Emitir evento de error SOLO UNA VEZ
-        if (!this.hasEmittedError) {
-          this.hasEmittedError = true;
-          this.onHomeError.next(err);
-        }
-      }
-    });
-  }
-
-  reloadAllCourses() {
-    this.allCoursesState.update(s => ({ ...s, isLoading: true }));
-    const url = `${this.base}home/get_all_courses`;
-    this.http.get<{ courses: CoursePublic[] }>(url).subscribe({
-      next: (data) => {
-        this.allCoursesState.set({ data: data.courses, isLoading: false, error: null });
-      },
-      error: (err) => {
-        // 🔇 SILENCIADO: Carga de catálogo en background
-        this.allCoursesState.update(s => ({ ...s, isLoading: false, error: err }));
-      }
-    });
-  }
-
-  reloadAllProjects() {
-    this.allProjectsState.update(s => ({ ...s, isLoading: true }));
-    const url = `${this.base}home/get_all_projects`;
-    this.http.get<{ projects: Project[] }>(url).subscribe({
-      next: (data) => {
-        this.allProjectsState.set({ data: data.projects, isLoading: false, error: null });
-      },
-      error: (err) => {
-        // 🔇 SILENCIADO: Carga de proyectos en background
-        this.allProjectsState.update(s => ({ ...s, isLoading: false, error: err }));
-      }
-    });
-  }
-
-  /**
-   * featuredCourses: une y desduplica los cursos que vienen en:
-   * - courses_top
-   * - categories_sections[].courses
-   * - courses_banners
-   * - courses_flash
-   *
-   * Nota: prioriza la última aparición por _id (mismo shape).
-   */
+  // 🎯 Featured courses
   featuredCourses = computed<CoursePublic[]>(() => {
     const h = this.home();
-
     const top = (h.courses_top ?? []) as CoursePublic[];
     const fromCats = (h.categories_sections ?? []).flatMap(
       (cs: { courses?: CoursePublic[] }) => cs.courses ?? []
@@ -178,21 +94,65 @@ export class HomeService {
     return Array.from(map.values());
   });
 
-  // ---- SEARCH: /home/search_course (POST) ----
-  // src/app/core/services/home.service.ts
-  // src/app/core/services/home.service.ts
-  searchCourses(body: SearchCourseBody) {
-    // Corregido: el controlador usa 'search_course' con guion bajo
-    const url = `${this.base}home/search_course${toQuery({
-      TIME_NOW: Date.now(),
-    })}`;
+  // 🔄 Métodos de carga - SIMPLE
+  reloadHome() {
+    this.homeLoading.set(true);
+    this.homeError.set(null);
+    const url = `${this.base}home/list${toQuery({ TIME_NOW: Date.now() })}`;
+    
+    this.http.get<HomeApiResponse>(url).subscribe({
+      next: (data) => {
+        this.homeData.set(data);
+        this.homeLoading.set(false);
+      },
+      error: (err) => {
+        this.homeError.set(err);
+        this.homeLoading.set(false);
+      }
+    });
+  }
 
+  reloadAllCourses() {
+    this.coursesLoading.set(true);
+    const url = `${this.base}home/get_all_courses`;
+    
+    this.http.get<{ courses: CoursePublic[] }>(url).pipe(
+      map(response => response.courses || [])
+    ).subscribe({
+      next: (data) => {
+        this.coursesData.set(data);
+        this.coursesLoading.set(false);
+      },
+      error: () => {
+        this.coursesLoading.set(false);
+      }
+    });
+  }
+
+  reloadAllProjects() {
+    this.projectsLoading.set(true);
+    const url = `${this.base}home/get_all_projects`;
+    
+    this.http.get<{ projects: Project[] }>(url).pipe(
+      map(response => response.projects || [])
+    ).subscribe({
+      next: (data) => {
+        this.projectsData.set(data);
+        this.projectsLoading.set(false);
+      },
+      error: () => {
+        this.projectsLoading.set(false);
+      }
+    });
+  }
+
+  // 🔍 Búsqueda
+  searchCourses(body: SearchCourseBody) {
+    const url = `${this.base}home/search_course${toQuery({ TIME_NOW: Date.now() })}`;
     const term = (body.q ?? "").trim();
     const payload: any = {
-      // compat con tu controlador (lee req.body.search)
       q: term || undefined,
       search: term || undefined,
-      // compat para categoría
       categorie: body.categorie || undefined,
       categorie_id: body.categorie || undefined,
     };
@@ -209,52 +169,53 @@ export class HomeService {
     );
   }
 
-  // ---- SHOW: /home/show_course/:slug (GET) ----
-  // src/app/core/services/home.service.ts
+  // 📄 Detalle de curso - REACTIVO AUTOMÁTICO con effect
   coursePublicResource = (slugSignal: () => string) => {
-    const state = signal<{
-      value: CourseDetailResponse;
-      isLoading: boolean;
-      error: any;
-    }>({
-      value: {
-        course: undefined,
-        reviews: [],
-        course_instructor: [],
-        course_relateds: [],
-        student_have_course: false,
-      },
-      isLoading: false,
-      error: null,
+    const data = signal<CourseDetailResponse>({
+      course: undefined,
+      reviews: [],
+      course_instructor: [],
+      course_relateds: [],
+      student_have_course: false,
     });
+    const loading = signal(false);
+    const error = signal<any>(null);
+    let lastSlug = '';
 
-    const reload = () => {
+    const load = () => {
       const slug = slugSignal();
-      if (!slug) return;
-
-      state.update(s => ({ ...s, isLoading: true }));
+      
+      if (!slug || slug === lastSlug) return;
+      lastSlug = slug;
+      
+      loading.set(true);
+      error.set(null);
       const url = `${this.base}home/landing-curso/${slug}${toQuery({ TIME_NOW: Date.now() })}`;
-
+      
       this.http.get<CourseDetailResponse>(url).subscribe({
-        next: (data) => state.set({ value: data, isLoading: false, error: null }),
-        error: (err) => state.update(s => ({ ...s, value: { course: undefined, reviews: [], course_instructor: [], course_relateds: [], student_have_course: false }, isLoading: false, error: err })),
+        next: (response) => {
+          data.set(response);
+          loading.set(false);
+        },
+        error: (err) => {
+          error.set(err);
+          loading.set(false);
+        }
       });
     };
 
+    // ✅ Effect detecta cambios AUTOMÁTICAMENTE
     effect(() => {
-      reload();
-    });
+      load();
+    }, { allowSignalWrites: true });
 
     return {
-      value: computed(() => {
-        if (state().error) {
-          throw new Error('Failed to load course details', { cause: state().error });
-        }
-        return state().value;
-      }),
-      isLoading: computed(() => state().isLoading),
-      reload,
-      }
+      value: data.asReadonly(),
+      isLoading: loading.asReadonly(),
+      hasError: computed(() => !!error()),
+      error: error.asReadonly(),
+      reload: load,
+    };
   };
 
   buildCourseImageUrl(imageName?: string): string {

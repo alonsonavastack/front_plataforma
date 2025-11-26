@@ -220,6 +220,20 @@ export const routes: Routes = [
       ),
   },
   {
+    path: "privacy-policy",
+    loadComponent: () =>
+      import("./pages/privacy-policy/privacy-policy.component").then(
+        (m) => m.PrivacyPolicyComponent
+      ),
+  },
+  {
+    path: "terms-conditions",
+    loadComponent: () =>
+      import("./pages/terms-conditions/terms-conditions.component").then(
+        (m) => m.TermsConditionsComponent
+      ),
+  },
+  {
     // Redirige cualquier otra ruta a la página de inicio
     path: "**",
     redirectTo: "",

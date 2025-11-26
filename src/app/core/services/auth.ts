@@ -169,7 +169,7 @@ export class AuthService {
       const payload = this.decodeTokenPayload(token);
 
       if (!payload) {
-        console.error('❌ Token corrupto al cargar');
+
         this.forceLogout('Token inválido');
         return;
       }
@@ -179,16 +179,16 @@ export class AuthService {
       const isExpired = now > exp;
 
       if (isExpired) {
-        console.log('⏰ Token expiró, logout inmediato');
+
         this.forceLogout('Tu sesión ha expirado');
       } else {
         // Token válido, programar logout para cuando expire
         const expiresIn = exp - now;
-        console.log(`✅ Token válido. Expira en ${Math.round(expiresIn / 1000 / 60)} minutos`);
+
         this.scheduleLogoutOnExpiration(expiresIn);
       }
     } catch (error) {
-      console.error('❌ Error al verificar token:', error);
+
       this.forceLogout('Error de autenticación');
     }
   }
@@ -205,11 +205,11 @@ export class AuthService {
 
     // Programar logout para cuando expire el token
     this.logoutTimer = setTimeout(() => {
-      console.log('⏰ Token expirado, haciendo logout automático...');
+
       this.forceLogout('Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
     }, expiresIn);
 
-    console.log(`⏰ Logout programado para ${new Date(Date.now() + expiresIn).toLocaleString()}`);
+
   }
 
   /**
@@ -235,7 +235,7 @@ export class AuthService {
    * @param message Mensaje a mostrar al usuario
    */
   private forceLogout(message: string): void {
-    console.log('🔐 Forzando logout:', message);
+
 
     // Limpiar timer si existe
     if (this.logoutTimer) {
@@ -338,8 +338,8 @@ export class AuthService {
           this.toast.success(
             `¡Bienvenido ${fullUser.name}!`,
             fullUser.rol === 'admin' ? 'Acceso como administrador' :
-            fullUser.rol === 'instructor' ? 'Acceso como instructor' :
-            'Has iniciado sesión correctamente'
+              fullUser.rol === 'instructor' ? 'Acceso como instructor' :
+                'Has iniciado sesión correctamente'
           );
 
           // Cargar las compras del usuario después del login

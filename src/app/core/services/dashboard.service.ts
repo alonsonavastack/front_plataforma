@@ -68,6 +68,7 @@ export interface ExecutiveMetrics {
     rate: number;
     label: string;
     description: string;
+    testDataExcluded?: boolean; // 🔥 NUEVO
   };
   commissions: {
     platform: {
@@ -146,6 +147,9 @@ export class DashboardService {
   isLoadingExecutiveMetrics = computed(() => this.state().isLoadingExecutiveMetrics); // 💎 NUEVO
   error = computed(() => this.state().error);
 
+  // AGREGAR ESTE SIGNAL:
+  excludeTestData = signal(false);
+
   // --- MÉTODOS PARA CARGAR DATOS ---
 
   reloadKpis() {
@@ -196,27 +200,32 @@ export class DashboardService {
 
   // 💎 NUEVO: Cargar métricas ejecutivas (Solo Admin)
   loadExecutiveMetrics() {
-    console.log('📊 [DashboardService] Cargando métricas ejecutivas...');
     this.state.update(s => ({ ...s, isLoadingExecutiveMetrics: true }));
-    
-    this.http.get<ExecutiveMetrics>(`${this.base}dashboard/executive-metrics`).pipe(
+
+    const params = this.excludeTestData() ? '?excludeTests=true' : '';
+    this.http.get<ExecutiveMetrics>(`${this.base}dashboard/executive-metrics${params}`).pipe(
       tap(metrics => {
-        console.log('✅ [DashboardService] Métricas ejecutivas cargadas:', metrics);
-        this.state.update(s => ({ 
-          ...s, 
-          executiveMetrics: metrics, 
-          isLoadingExecutiveMetrics: false 
+
+        this.state.update(s => ({
+          ...s,
+          executiveMetrics: metrics,
+          isLoadingExecutiveMetrics: false
         }));
       }),
       catchError(err => {
-        console.error('❌ [DashboardService] Error cargando métricas ejecutivas:', err);
-        this.state.update(s => ({ 
-          ...s, 
-          error: err, 
-          isLoadingExecutiveMetrics: false 
+        this.state.update(s => ({
+          ...s,
+          error: err,
+          isLoadingExecutiveMetrics: false
         }));
         return throwError(() => err);
       })
     ).subscribe();
+  }
+
+  // AGREGAR AL FINAL DE LA CLASE:
+  toggleTestDataFilter() {
+    this.excludeTestData.update(v => !v);
+    this.loadExecutiveMetrics();
   }
 }

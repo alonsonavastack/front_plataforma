@@ -1,7 +1,8 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { WebsocketService } from './websocket.service'; // 🆕
+import { ToastService } from './toast.service';
 
 export interface RefundNotification {
   _id: string;
@@ -40,6 +41,7 @@ export interface RefundNotification {
 export class RefundNotificationsService {
   private http = inject(HttpClient);
   private websocketService = inject(WebsocketService); // 🆕
+  private toastService = inject(ToastService);
   private apiUrl = `${environment.url}refunds`;
 
   // 📊 Estado
@@ -53,11 +55,11 @@ export class RefundNotificationsService {
   });
 
   // 🔢 Computed: Reembolsos por estado
-  pendingRefunds = computed(() => 
+  pendingRefunds = computed(() =>
     this.notifications().filter(n => n.status === 'pending')
   );
 
-  processingRefunds = computed(() => 
+  processingRefunds = computed(() =>
     this.notifications().filter(n => n.status === 'processing')
   );
 
@@ -68,7 +70,6 @@ export class RefundNotificationsService {
   constructor() {
     // 🆕 Suscribirse a nuevas solicitudes de reembolso via WebSocket
     this.websocketService.newRefundRequest$.subscribe(refund => {
-      console.log('📨 [RefundNotifications] Nueva solicitud recibida vía WebSocket:', refund);
       this.addNewRefund(refund);
     });
   }
@@ -78,11 +79,10 @@ export class RefundNotificationsService {
    */
   private addNewRefund(refund: RefundNotification): void {
     const current = this.notifications();
-    
+
     // Verificar que no exista ya
     const exists = current.some(r => r._id === refund._id);
     if (exists) {
-      console.log('⚠️ [RefundNotifications] Reembolso ya existe:', refund._id);
       return;
     }
 
@@ -90,7 +90,6 @@ export class RefundNotificationsService {
     if (refund.status === 'pending' || refund.status === 'processing') {
       const updated = [refund, ...current];
       this.notifications.set(updated);
-      console.log('✅ [RefundNotifications] Reembolso agregado. Total:', updated.length);
     }
   }
 
@@ -99,22 +98,37 @@ export class RefundNotificationsService {
    */
   loadNotifications() {
     this.isLoading.set(true);
-    
+
     this.http.get<RefundNotification[]>(`${this.apiUrl}/list`).subscribe({
       next: (refunds) => {
-        console.log('🔔 [RefundNotifications] Reembolsos cargados:', refunds.length);
-        
+
         // Filtrar solo pendientes y en proceso
-        const activeRefunds = refunds.filter(r => 
+        const activeRefunds = refunds.filter(r =>
           r.status === 'pending' || r.status === 'processing'
         );
-        
+
         this.notifications.set(activeRefunds);
         this.lastCheck.set(new Date());
         this.isLoading.set(false);
       },
-      error: (err) => {
-        console.error('❌ [RefundNotifications] Error al cargar:', err);
+      error: (err: HttpErrorResponse) => {
+
+        // Manejar errores específicos
+        if (err.status === 403 || err.status === 401) {
+          // No mostrar toast de sesión expirada si es un problema de permisos
+          // ya que esto puede ser normal para usuarios no-admin
+        } else if (err.status === 0) {
+          this.toastService.networkError();
+        } else if (err.status >= 500) {
+          this.toastService.serverError();
+        } else if (err.status !== 403 && err.status !== 401) {
+          // Solo mostrar error genérico si NO es problema de autenticación
+          this.toastService.error(
+            'Error al cargar notificaciones',
+            'No se pudieron cargar las notificaciones de reembolsos'
+          );
+        }
+
         this.isLoading.set(false);
       }
     });
@@ -124,11 +138,10 @@ export class RefundNotificationsService {
    * ▶️ Iniciar polling automático
    */
   startPolling() {
-    console.log('▶️ [RefundNotifications] Iniciando polling...');
-    
+
     // Cargar inmediatamente
     this.loadNotifications();
-    
+
     // Iniciar polling
     this.pollingInterval = setInterval(() => {
       this.loadNotifications();
@@ -140,7 +153,6 @@ export class RefundNotificationsService {
    */
   stopPolling() {
     if (this.pollingInterval) {
-      console.log('⏹️ [RefundNotifications] Deteniendo polling');
       clearInterval(this.pollingInterval);
       this.pollingInterval = null;
     }
@@ -206,10 +218,10 @@ export class RefundNotificationsService {
     if (diffMins < 60) return `Hace ${diffMins} min`;
     if (diffHours < 24) return `Hace ${diffHours}h`;
     if (diffDays < 7) return `Hace ${diffDays}d`;
-    
-    return date.toLocaleDateString('es-ES', { 
-      day: 'numeric', 
-      month: 'short' 
+
+    return date.toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'short'
     });
   }
 }

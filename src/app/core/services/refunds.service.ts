@@ -95,28 +95,28 @@ export class RefundsService {
   error = computed(() => this.state().error);
 
   // Filtros por estado
-  pendingRefunds = computed(() => 
+  pendingRefunds = computed(() =>
     this.refunds().filter(r => r.status === 'pending')
   );
-  
-  processingRefunds = computed(() => 
+
+  processingRefunds = computed(() =>
     this.refunds().filter(r => r.status === 'processing')
   );
-  
-  completedRefunds = computed(() => 
+
+  completedRefunds = computed(() =>
     this.refunds().filter(r => r.status === 'completed')
   );
 
   // Estadísticas
   totalRefunds = computed(() => this.refunds().length);
-  totalOriginalAmount = computed(() => 
+  totalOriginalAmount = computed(() =>
     this.refunds().reduce((sum, r) => sum + r.originalAmount, 0)
   );
-  totalRefundedAmount = computed(() => 
+  totalRefundedAmount = computed(() =>
     this.refunds().reduce((sum, r) => sum + (r.calculations?.refundAmount || 0), 0)
   );
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // Cargar lista de reembolsos
   async loadRefunds(): Promise<void> {
@@ -133,9 +133,7 @@ export class RefundsService {
         isLoading: false
       }));
 
-      console.log('✅ [RefundsService] Reembolsos cargados:', response?.length);
     } catch (error: any) {
-      console.error('❌ [RefundsService] Error al cargar reembolsos:', error);
       this.state.update(s => ({
         ...s,
         isLoading: false,
@@ -151,10 +149,8 @@ export class RefundsService {
         `${this.url}refunds/check-eligibility?sale_id=${saleId}`
       ).toPromise();
 
-      console.log('🔍 [RefundsService] Elegibilidad verificada:', response);
       return response || null;
     } catch (error: any) {
-      console.error('❌ [RefundsService] Error al verificar elegibilidad:', error);
       throw error;
     }
   }
@@ -166,10 +162,8 @@ export class RefundsService {
         `${this.url}refunds/calculate-preview?sale_id=${saleId}`
       ).toPromise();
 
-      console.log('💰 [RefundsService] Preview calculado:', response);
       return response;
     } catch (error: any) {
-      console.error('❌ [RefundsService] Error al calcular preview:', error);
       throw error;
     }
   }
@@ -189,22 +183,20 @@ export class RefundsService {
         data
       ).toPromise();
 
-      console.log('✅ [RefundsService] Reembolso creado:', response);
-      
+
       // Recargar lista
       await this.loadRefunds();
-      
+
       return response;
     } catch (error: any) {
-      console.error('❌ [RefundsService] Error al crear reembolso:', error);
       throw error;
     }
   }
 
   // Revisar reembolso (aprobar/rechazar)
   async reviewRefund(
-    refundId: string, 
-    status: 'approved' | 'rejected', 
+    refundId: string,
+    status: 'approved' | 'rejected',
     adminNotes?: string
   ): Promise<any> {
     try {
@@ -213,14 +205,12 @@ export class RefundsService {
         { status, admin_notes: adminNotes }
       ).toPromise();
 
-      console.log('✅ [RefundsService] Reembolso revisado:', response);
-      
+
       // Recargar lista
       await this.loadRefunds();
-      
+
       return response;
     } catch (error: any) {
-      console.error('❌ [RefundsService] Error al revisar reembolso:', error);
       throw error;
     }
   }
@@ -237,14 +227,12 @@ export class RefundsService {
         { receipt_number: receiptNumber, receipt_image: receiptImage }
       ).toPromise();
 
-      console.log('✅ [RefundsService] Reembolso completado:', response);
-      
+
       // Recargar lista
       await this.loadRefunds();
-      
+
       return response;
     } catch (error: any) {
-      console.error('❌ [RefundsService] Error al completar reembolso:', error);
       throw error;
     }
   }
@@ -256,10 +244,8 @@ export class RefundsService {
         `${this.url}refunds/statistics`
       ).toPromise();
 
-      console.log('📊 [RefundsService] Estadísticas:', response);
       return response;
     } catch (error: any) {
-      console.error('❌ [RefundsService] Error al cargar estadísticas:', error);
       throw error;
     }
   }
@@ -268,12 +254,11 @@ export class RefundsService {
   // NOTA: Este método ya NO se usa para verificar compras en el HOME
   // porque no distingue entre múltiples compras del mismo producto
   hasCourseRefund(courseId: string): boolean {
-    const refundsCount = this.refunds().filter(r => 
-      r.status === 'completed' && 
+    const refundsCount = this.refunds().filter(r =>
+      r.status === 'completed' &&
       r.course?._id === courseId
     ).length;
-    
-    console.log(`🔍 [RefundsService] Curso ${courseId} tiene ${refundsCount} reembolsos completados`);
+
     return refundsCount > 0;
   }
 
@@ -281,23 +266,21 @@ export class RefundsService {
   // NOTA: Este método ya NO se usa para verificar compras en el HOME
   // porque no distingue entre múltiples compras del mismo producto
   hasProjectRefund(projectId: string): boolean {
-    const refundsCount = this.refunds().filter(r => 
-      r.status === 'completed' && 
+    const refundsCount = this.refunds().filter(r =>
+      r.status === 'completed' &&
       r.project?._id === projectId
     ).length;
-    
-    console.log(`🔍 [RefundsService] Proyecto ${projectId} tiene ${refundsCount} reembolsos completados`);
+
     return refundsCount > 0;
   }
 
   // ✅ NUEVO: Verificar si una venta específica tiene reembolso completado
   hasSaleRefund(saleId: string): boolean {
-    const hasRefund = this.refunds().some(r => 
-      r.status === 'completed' && 
+    const hasRefund = this.refunds().some(r =>
+      r.status === 'completed' &&
       r.sale?._id === saleId
     );
-    
-    console.log(`🔍 [RefundsService] Sale ${saleId} tiene reembolso: ${hasRefund}`);
+
     return hasRefund;
   }
 }

@@ -55,11 +55,6 @@ export class BasicInfoComponent {
       return;
     }
 
-    console.log('🖼️ [BasicInfoComponent] Logo seleccionado:', {
-      name: file.name,
-      size: `${(file.size / (1024 * 1024)).toFixed(2)}MB`,
-      type: file.type
-    });
 
     this.logoFile.set(file);
 
@@ -78,8 +73,6 @@ export class BasicInfoComponent {
           size: `${(file.size / (1024 * 1024)).toFixed(2)}MB`
         };
         this.logoInfo.set(sizeInfo);
-
-        console.log('📊 Dimensiones del logo:', `${img.width}x${img.height}`, sizeInfo.size);
       };
       img.src = previewUrl;
     };

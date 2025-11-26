@@ -18,7 +18,7 @@ import { AuthService } from '../../core/services/auth';
     BasicInfoComponent,
     ContactInfoComponent,
     SocialMediaComponent
-],
+  ],
   templateUrl: './system-settings.component.html'
 })
 export class SystemSettingsComponent implements OnInit {
@@ -46,12 +46,10 @@ export class SystemSettingsComponent implements OnInit {
   isFormValid = computed(() => this.formIsValid());
 
   ngOnInit(): void {
-    console.log('🎨 [SystemSettingsComponent] Inicializando componente');
 
     // Verificar que sea admin
     const user = this.authService.user();
     if (!user || user.rol !== 'admin') {
-      console.warn('⚠️ [SystemSettingsComponent] Usuario no autorizado');
       this.router.navigate(['/dashboard']);
       return;
     }
@@ -63,13 +61,6 @@ export class SystemSettingsComponent implements OnInit {
     this.configForm.statusChanges.subscribe(() => {
       const siteName = this.configForm.get('siteName');
       const isValid = !!(siteName?.valid && siteName.value?.trim().length >= 3); // 🔥 !! fuerza boolean
-
-      console.log('🔄 [Form Status Changed]', {
-        siteName: siteName?.value,
-        valid: isValid,
-        formValid: this.configForm.valid
-      });
-
       this.formIsValid.set(isValid);
     });
 
@@ -85,7 +76,6 @@ export class SystemSettingsComponent implements OnInit {
       const siteName = this.configForm.get('siteName');
       const isValid = !!(siteName?.valid && siteName.value?.trim().length >= 3); // 🔥 !! fuerza boolean
       this.formIsValid.set(isValid);
-      console.log('🔍 [Initial Form State]', { isValid });
     }, 1000);
   }
 
@@ -134,7 +124,6 @@ export class SystemSettingsComponent implements OnInit {
    * Llenar formulario con datos existentes
    */
   private fillForm(config: any): void {
-    console.log('📝 [SystemSettingsComponent] Llenando formulario con:', config);
 
     this.configForm.patchValue({
       siteName: config.siteName || '',
@@ -161,7 +150,6 @@ export class SystemSettingsComponent implements OnInit {
       const siteName = this.configForm.get('siteName');
       const isValid = !!(siteName?.valid && siteName.value?.trim().length >= 3); // 🔥 !! fuerza boolean
       this.formIsValid.set(isValid);
-      console.log('🔍 [After Fill Form]', { siteName: siteName?.value, isValid });
     }, 100);
   }
 
@@ -172,59 +160,26 @@ export class SystemSettingsComponent implements OnInit {
     this.activeTab.set(tab);
   }
 
-  /* 🔥 COMENTADO: Método de debugging ya no necesario
-  async forceSubmit(): Promise<void> {
-    console.log('⚠️ [SystemSettingsComponent] FORZAR GUARDADO - ignorando validaciones');
-    console.log('  - Form value:', this.configForm.value);
-    console.log('  - Form valid:', this.configForm.valid);
-    console.log('  - Form errors:', this.configForm.errors);
 
-    Object.keys(this.configForm.controls).forEach(key => {
-      const control = this.configForm.get(key);
-      if (control?.invalid) {
-        console.log(`  ❌ ${key}:`, {
-          value: control.value,
-          errors: control.errors,
-          touched: control.touched,
-          dirty: control.dirty
-        });
-      }
-    });
-
-    if (this.isSaving()) {
-      console.warn('⚠️ Ya se está guardando');
-      return;
-    }
-
-    await this.submitForm();
-  }
-  */
 
   /**
    * Enviar formulario
    */
   async onSubmit(): Promise<void> {
-    console.log('📝 [SystemSettingsComponent] onSubmit() llamado');
-    console.log('  - Form valid:', this.configForm.valid);
-    console.log('  - Form value:', this.configForm.value);
-    console.log('  - Form errors:', this.configForm.errors);
 
     // Verificar cada control del formulario
     Object.keys(this.configForm.controls).forEach(key => {
       const control = this.configForm.get(key);
       if (control?.invalid) {
-        console.log(`  ❌ Campo inválido: ${key}`, control.errors);
       }
     });
 
     if (this.configForm.invalid) {
-      console.warn('⚠️ [SystemSettingsComponent] Formulario inválido');
       alert('❌ Por favor completa todos los campos requeridos');
       return;
     }
 
     if (this.isSaving()) {
-      console.warn('⚠️ [SystemSettingsComponent] Ya se está guardando');
       return;
     }
 
@@ -235,7 +190,6 @@ export class SystemSettingsComponent implements OnInit {
    * Lógica de guardado (compartida entre onSubmit y forceSubmit)
    */
   private async submitForm(): Promise<void> {
-    console.log('💾 [SystemSettingsComponent] Guardando configuración');
     this.isSaving.set(true);
 
     try {
@@ -270,7 +224,6 @@ export class SystemSettingsComponent implements OnInit {
       // Enviar al backend
       await this.systemConfigService.updateConfig(formData).toPromise();
 
-      console.log('✅ [SystemSettingsComponent] Configuración guardada exitosamente');
 
       // Mostrar mensaje de éxito
       this.showSuccess.set(true);
@@ -283,7 +236,6 @@ export class SystemSettingsComponent implements OnInit {
       this.systemConfigService.getConfig();
 
     } catch (error: any) {
-      console.error('❌ [SystemSettingsComponent] Error al guardar:', error);
       alert(`❌ Error al guardar: ${error.error?.message || 'Error desconocido'}`);
     } finally {
       this.isSaving.set(false);

@@ -3,6 +3,8 @@ import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ReportsService } from '../../../core/services/reports.service';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface StudentRecord {
   _id: string;
@@ -130,6 +132,13 @@ interface StudentRecord {
             class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
           >
             📊 Exportar Excel
+          </button>
+
+          <button 
+            (click)="exportToPDF()"
+            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
+          >
+            <span>📄</span> Exportar PDF
           </button>
         </div>
       </div>
@@ -269,7 +278,7 @@ export class StudentsReportComponent implements OnInit {
     }
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(s => 
+      filtered = filtered.filter(s =>
         s.name.toLowerCase().includes(term) ||
         s.surname.toLowerCase().includes(term) ||
         s.email.toLowerCase().includes(term)
@@ -306,7 +315,7 @@ export class StudentsReportComponent implements OnInit {
         this.students.set(response.students);
       }
     } catch (error) {
-      console.error('❌ Error cargando estudiantes:', error);
+
     } finally {
       this.isLoading.set(false);
     }
@@ -338,6 +347,41 @@ export class StudentsReportComponent implements OnInit {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Estudiantes');
     XLSX.writeFile(wb, `estudiantes_${new Date().toISOString().split('T')[0]}.xlsx`);
+  }
+
+  exportToPDF() {
+    const doc = new jsPDF();
+
+    doc.text('Reporte de Estudiantes', 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, 14, 28);
+
+    const stats = [
+      `Total Estudiantes: ${this.filteredStudents().length}`,
+      `Gasto Total: ${this.formatCurrency(this.totalSpent())}`,
+      `Compras Totales: ${this.totalPurchases()}`
+    ];
+    doc.text(stats, 14, 34);
+
+    const tableData = this.filteredStudents().map(s => [
+      `${s.name} ${s.surname}`,
+      s.email,
+      this.formatDate(s.registrationDate),
+      s.totalPurchases,
+      s.coursesEnrolled || 0,
+      s.projectsEnrolled || 0,
+      this.formatCurrency(s.totalSpent)
+    ]);
+
+    autoTable(doc, {
+      head: [['Estudiante', 'Email', 'Registro', 'Compras', 'Cursos', 'Proyectos', 'Gasto']],
+      body: tableData,
+      startY: 45,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [132, 204, 22] } // Lime-500
+    });
+
+    doc.save(`estudiantes_${new Date().toISOString().split('T')[0]}.pdf`);
   }
 
   formatCurrency(amount: number): string {

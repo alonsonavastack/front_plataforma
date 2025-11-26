@@ -32,9 +32,10 @@ export class SystemConfigService {
   /**
    * Obtener configuración del sistema (pública)
    */
+  /**
+   * Obtener configuración del sistema (pública)
+   */
   getConfig(): void {
-    console.log('📋 [SystemConfigService] Obteniendo configuración del sistema (pública)');
-
     this.state.set({
       ...this.state(),
       isLoading: true,
@@ -43,7 +44,6 @@ export class SystemConfigService {
 
     this.http.get<{ config: SystemConfig }>(`${this.API_URL}/get-public`).pipe(
       tap(response => {
-        console.log('✅ [SystemConfigService] Configuración obtenida:', response.config);
         this.state.set({
           config: response.config,
           isLoading: false,
@@ -51,7 +51,6 @@ export class SystemConfigService {
         });
       }),
       catchError(error => {
-        console.error('❌ [SystemConfigService] Error al obtener configuración:', error);
         this.state.set({
           ...this.state(),
           isLoading: false,
@@ -66,12 +65,8 @@ export class SystemConfigService {
    * Actualizar configuración del sistema
    */
   updateConfig(formData: FormData): Observable<any> {
-    console.log('🔄 [SystemConfigService] Actualizando configuración');
-
     return this.http.put<{ message: string; config: SystemConfig }>(`${this.API_URL}/update`, formData).pipe(
       tap((response) => {
-        console.log('✅ [SystemConfigService] Configuración actualizada:', response);
-
         // Actualizar estado local
         this.state.set({
           config: response.config,
@@ -80,7 +75,6 @@ export class SystemConfigService {
         });
       }),
       catchError(error => {
-        console.error('❌ [SystemConfigService] Error al actualizar:', error);
         throw error;
       })
     );

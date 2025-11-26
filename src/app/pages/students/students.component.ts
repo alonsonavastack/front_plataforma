@@ -17,7 +17,8 @@ export class StudentsComponent implements OnInit {
   authService = inject(AuthService);
 
   // Signals del servicio
-  students = this.studentService.filteredStudents;
+  students = this.studentService.students; // ✅ Signal de todos los estudiantes
+  filteredStudents = this.studentService.filteredStudents; // ✅ Signal filtrado
   isLoading = this.studentService.isLoading;
 
   // Computed para verificar rol
@@ -45,10 +46,21 @@ export class StudentsComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.studentService.loadStudents().subscribe({
-      next: () => {},
-      error: (err) => {}
-    });
+    // ✅ httpResource carga automáticamente, no necesitas subscribe
+
+    // 🔍 Log de verificación cuando los datos estén listos
+    setTimeout(() => {
+      const students = this.students();
+      if (students.length > 0) {
+      }
+    }, 1000);
+  }
+
+  // 🔍 Método temporal de debug
+  debugStudent(student: Student): void {
+    if (student.sales && student.sales.length > 0) {
+    }
+    alert(`Cursos: ${student.purchased_courses_count || 0}, Proyectos: ${student.purchased_projects_count || 0}`);
   }
 
   onSearch(event: Event): void {
@@ -58,11 +70,7 @@ export class StudentsComponent implements OnInit {
 
   onStateFilter(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
-    if (value === '') {
-      this.studentService.setStateFilter('');
-    } else {
-      this.studentService.setStateFilter(value === 'true');
-    }
+    this.studentService.setStateFilter(value === '' ? '' : value === 'true');
   }
 
   openEditModal(student: Student): void {
@@ -91,9 +99,8 @@ export class StudentsComponent implements OnInit {
   }
 
   toggleStudentState(student: Student): void {
-    // Solo admins pueden cambiar el estado
     if (!this.isAdmin()) {
-      alert('⚠️ Solo los administradores pueden cambiar el estado de los estudiantes');
+      alert('⚠️ Solo los administradores pueden cambiar el estado');
       return;
     }
 
@@ -101,27 +108,16 @@ export class StudentsComponent implements OnInit {
     const newState = !currentState;
     const action = newState ? 'activar' : 'desactivar';
 
-    const confirmChange = confirm(`¿Estás seguro de ${action} a ${student.name} ${student.surname}?`);
-    if (!confirmChange) return;
+    if (!confirm(`¿Estás seguro de ${action} a ${student.name} ${student.surname}?`)) return;
 
-    // Mostrar feedback visual inmediato
+    // ✅ Service maneja reload automático
     this.studentService.updateStudentState(student._id, newState).subscribe({
-      next: (response) => {
-        alert(`Estudiante ${action === 'activar' ? 'activado' : 'desactivado'} exitosamente`);
-        // Recargar la lista completa para asegurar consistencia
-        this.studentService.loadStudents().subscribe();
-      },
       error: (error) => {
-        const errorMessage = error.error?.message_text || error.error?.message || 'Error al cambiar el estado del estudiante';
-        alert(errorMessage);
-        // Recargar en caso de error para mantener consistencia
-        this.studentService.loadStudents().subscribe();
       }
     });
   }
 
   saveStudent(): void {
-    // Solo admins pueden editar estudiantes
     if (!this.isAdmin()) {
       alert('⚠️ Solo los administradores pueden editar estudiantes');
       return;
@@ -147,14 +143,12 @@ export class StudentsComponent implements OnInit {
       state: formValue.state ?? true,
     };
 
+    // ✅ Service maneja reload y toast automático
     this.studentService.updateStudent(currentStudent._id, data).subscribe({
       next: () => {
-        alert('Estudiante actualizado exitosamente');
         this.closeModal();
-        this.studentService.loadStudents().subscribe();
       },
       error: (error) => {
-        alert(error.error?.message_text || 'Error al actualizar el estudiante');
       }
     });
   }

@@ -427,7 +427,7 @@ export class DiscountsComponent implements OnInit {
     }
     const paths: Record<string, string> = {
       course: 'courses/imagen-course',
-      project: 'project/imagen-project',
+      project: 'projects/imagen-project',
       category: 'categories/imagen-categorie',
     };
     return `${environment.url}${paths[type]}/${imagen}`;

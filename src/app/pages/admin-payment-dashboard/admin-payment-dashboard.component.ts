@@ -73,7 +73,6 @@ export class AdminPaymentDashboardComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    console.log('📊 [PaymentDashboard] Componente inicializado');
     this.loadDashboard();
   }
 
@@ -103,7 +102,7 @@ export class AdminPaymentDashboardComponent implements OnInit {
   updateFilter(filterKey: keyof SalesFilter, value: any): void {
     const currentFilters = this.filters();
     (currentFilters as any)[filterKey] = value;
-    this.filters.set({...currentFilters});
+    this.filters.set({ ...currentFilters });
   }
 
   /**
@@ -112,7 +111,7 @@ export class AdminPaymentDashboardComponent implements OnInit {
   applyFilters(): void {
     const currentFilters = this.filters();
     currentFilters.page = 1; // Reset a página 1
-    this.filters.set({...currentFilters});
+    this.filters.set({ ...currentFilters });
     this.dashboardService.loadSales(currentFilters).subscribe();
   }
 
@@ -140,7 +139,7 @@ export class AdminPaymentDashboardComponent implements OnInit {
 
     const currentFilters = this.filters();
     currentFilters.page = page;
-    this.filters.set({...currentFilters});
+    this.filters.set({ ...currentFilters });
     this.dashboardService.loadSales(currentFilters).subscribe();
   }
 
@@ -183,13 +182,11 @@ export class AdminPaymentDashboardComponent implements OnInit {
       verification_notes: this.verificationNotes()
     }).subscribe({
       next: (response) => {
-        console.log('✅ Transferencia verificada');
         alert('✅ Transferencia verificada exitosamente');
         this.closeVerifyModal();
         this.loadDashboard();
       },
       error: (error) => {
-        console.error('❌ Error:', error);
         alert('Error: ' + (error.error?.message || error.message));
       },
       complete: () => {
@@ -230,7 +227,6 @@ export class AdminPaymentDashboardComponent implements OnInit {
    * 🔄 RECARGAR
    */
   refresh(): void {
-    console.log('🔄 Recargando dashboard...');
     this.loadDashboard();
   }
 

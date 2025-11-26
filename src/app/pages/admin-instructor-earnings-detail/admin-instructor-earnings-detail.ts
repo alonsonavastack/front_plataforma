@@ -20,6 +20,16 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
   instructor = signal<any>(null);
   paymentConfig = signal<any>(null);
   earnings = signal<Earning[]>([]);
+  
+  // ⚠️ FILTRO: Earnings válidos (sin reembolsos completados)
+  // TODO: El backend debería filtrar esto, no el frontend
+  validEarnings = computed(() => {
+    return this.earnings().filter(earning => {
+      // ⚠️ TEMPORAL: Por ahora mostramos todos porque el backend no envía info de refunds
+      // TODO: Filtrar earnings donde sale.has_refund === true o sale.refund_status === 'completed'
+      return true;
+    });
+  });
   totals = signal<any>({});
   isLoading = signal(true);
   error = signal<string | null>(null);
@@ -47,7 +57,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
 
   selectedTotal = computed(() => {
     const selectedIds = this.selectedIdsSet();
-    return this.earnings()
+    return this.validEarnings() // ✅ Usar validEarnings
       .filter(e => selectedIds.has(e._id))
       .reduce((sum, e) => sum + e.instructor_earning, 0);
   });
@@ -68,7 +78,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
   itemsPerPage = signal(10);
 
   paginatedEarnings = computed(() => {
-    const earnings = this.earnings();
+    const earnings = this.validEarnings(); // ✅ Usar validEarnings en lugar de earnings()
     const page = this.currentPage();
     const perPage = this.itemsPerPage();
     const start = (page - 1) * perPage;
@@ -77,7 +87,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
   });
 
   totalPages = computed(() => {
-    const total = this.earnings().length;
+    const total = this.validEarnings().length; // ✅ Usar validEarnings
     return Math.ceil(total / this.itemsPerPage());
   });
 
@@ -194,7 +204,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
 
   selectAll() {
     // Solo seleccionar ganancias con estado 'available'
-    const availableEarningIds = this.earnings()
+    const availableEarningIds = this.validEarnings() // ✅ Usar validEarnings
       .filter(e => e.status === 'available')
       .map(e => e._id);
     this.selectedEarnings.set(availableEarningIds);

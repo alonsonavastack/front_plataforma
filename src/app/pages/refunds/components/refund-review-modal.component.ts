@@ -1,4 +1,5 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, input, output, signal, inject } from '@angular/core';
+import { ModalService } from '../../../core/services/modal.service';
 
 import { FormsModule } from '@angular/forms';
 import { Refund } from '../../../core/services/refunds.service';
@@ -211,27 +212,47 @@ export class RefundReviewModalComponent {
     }
   }
 
-  handleApprove() {
+  private modalService = inject(ModalService);
+
+  async handleApprove() {
     const ref = this.refund();
     if (!ref || this.isProcessing()) return;
 
-    const confirmMsg = `¿Aprobar reembolso de ${this.formatCurrency(ref.calculations.refundAmount)}?\n\n💰 El saldo se acreditará AUTOMÁTICAMENTE a la billetera digital del estudiante.\n\n✅ No requiere transferencia bancaria manual.\n✅ El estudiante podrá usar el saldo inmediatamente.`;
+    const confirmed = await this.modalService.confirm({
+      title: `¿Aprobar reembolso de ${this.formatCurrency(ref.calculations.refundAmount)}?`,
+      message: `💰 El saldo se acreditará AUTOMÁTICAMENTE a la billetera digital del estudiante.\n\n✅ No requiere transferencia bancaria manual.\n✅ El estudiante podrá usar el saldo inmediatamente.`,
+      icon: 'success',
+      confirmText: 'Sí, Aprobar',
+      cancelText: 'Cancelar'
+    });
 
-    if (!confirm(confirmMsg)) return;
+    if (!confirmed) return;
 
     this.isProcessing.set(true);
     this.approve.emit(this.notes.trim());
   }
 
-  handleReject() {
+  async handleReject() {
     if (!this.refund() || this.isProcessing()) return;
 
     if (!this.notes.trim()) {
-      alert('⚠️ Debes proporcionar un motivo para rechazar la solicitud');
+      this.modalService.alert({
+        title: 'Atención',
+        message: '⚠️ Debes proporcionar un motivo para rechazar la solicitud',
+        icon: 'warning'
+      });
       return;
     }
 
-    if (!confirm('¿Rechazar esta solicitud de reembolso?\n\nEl cliente recibirá una notificación.')) return;
+    const confirmed = await this.modalService.confirm({
+      title: 'Rechazar Solicitud',
+      message: '¿Rechazar esta solicitud de reembolso?\n\nEl cliente recibirá una notificación.',
+      icon: 'error', // Using error icon for rejection warning
+      confirmText: 'Sí, Rechazar',
+      cancelText: 'Cancelar'
+    });
+
+    if (!confirmed) return;
 
     this.isProcessing.set(true);
     this.reject.emit(this.notes.trim());

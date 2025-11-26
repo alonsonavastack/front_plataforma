@@ -146,7 +146,6 @@ export class PaymentDashboardService {
     return this.http.get<DashboardStats>(`${this.API_URL}/stats`).pipe(
       tap({
         next: (stats) => {
-          console.log('✅ [PaymentDashboard] Estadísticas cargadas');
           this.state.update(s => ({
             ...s,
             stats,
@@ -154,7 +153,6 @@ export class PaymentDashboardService {
           }));
         },
         error: (error) => {
-          console.error('❌ [PaymentDashboard] Error al cargar stats:', error);
           this.state.update(s => ({
             ...s,
             isLoading: false,
@@ -184,7 +182,6 @@ export class PaymentDashboardService {
     return this.http.get<{ sales: SaleItem[]; pagination: any }>(`${this.API_URL}/sales`, { params }).pipe(
       tap({
         next: (response) => {
-          console.log(`✅ [PaymentDashboard] ${response.sales.length} ventas cargadas`);
           this.state.update(s => ({
             ...s,
             sales: response.sales,
@@ -193,7 +190,6 @@ export class PaymentDashboardService {
           }));
         },
         error: (error) => {
-          console.error('❌ [PaymentDashboard] Error al cargar ventas:', error);
           this.state.update(s => ({
             ...s,
             isLoading: false,
@@ -213,14 +209,12 @@ export class PaymentDashboardService {
     }).pipe(
       tap({
         next: (data) => {
-          console.log('✅ [PaymentDashboard] Análisis de métodos cargado');
           this.state.update(s => ({
             ...s,
             paymentMethodsAnalysis: data
           }));
         },
         error: (error) => {
-          console.error('❌ [PaymentDashboard] Error en análisis:', error);
         }
       })
     );
@@ -233,14 +227,12 @@ export class PaymentDashboardService {
     return this.http.get<any>(`${this.API_URL}/wallets-stats`).pipe(
       tap({
         next: (data) => {
-          console.log('✅ [PaymentDashboard] Stats de billeteras cargadas');
           this.state.update(s => ({
             ...s,
             walletsStats: data
           }));
         },
         error: (error) => {
-          console.error('❌ [PaymentDashboard] Error en wallets stats:', error);
         }
       })
     );
@@ -253,14 +245,12 @@ export class PaymentDashboardService {
     return this.http.get<any>(`${this.API_URL}/refunds-summary`).pipe(
       tap({
         next: (data) => {
-          console.log('✅ [PaymentDashboard] Resumen de reembolsos cargado');
           this.state.update(s => ({
             ...s,
             refundsSummary: data
           }));
         },
         error: (error) => {
-          console.error('❌ [PaymentDashboard] Error en refunds summary:', error);
         }
       })
     );
@@ -270,8 +260,7 @@ export class PaymentDashboardService {
    * 🔄 CARGAR TODO EL DASHBOARD
    */
   loadAll(): void {
-    console.log('📊 [PaymentDashboard] Cargando dashboard completo...');
-    
+
     forkJoin({
       stats: this.loadStats(),
       sales: this.loadSales({ limit: 20 }),
@@ -279,10 +268,8 @@ export class PaymentDashboardService {
       refunds: this.loadRefundsSummary()
     }).subscribe({
       next: () => {
-        console.log('✅ [PaymentDashboard] Dashboard cargado completamente');
       },
       error: (error) => {
-        console.error('❌ [PaymentDashboard] Error al cargar dashboard:', error);
       }
     });
   }

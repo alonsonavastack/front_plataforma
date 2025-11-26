@@ -6,6 +6,7 @@ import { SaleService } from '../../core/services/sale.service';
 import { Sale, SaleDetailItem } from '../../core/models/sale.model';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/services/auth';
+import { ModalService } from '../../core/services/modal.service';
 
 @Component({
   selector: 'app-sales',
@@ -17,6 +18,7 @@ import { AuthService } from '../../core/services/auth';
 export class SalesComponent implements OnInit {
   saleService = inject(SaleService);
   authService = inject(AuthService);
+  modalService = inject(ModalService);
   route = inject(ActivatedRoute);
   router = inject(Router);
 
@@ -189,10 +191,11 @@ export class SalesComponent implements OnInit {
         }, 300);
       }
 
-      // Limpiar los query params después de aplicar el filtro
+      // Limpiar los query params de notificación pero mantener la sección
       this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: {},
+        queryParams: { status: null, saleId: null },
+        queryParamsHandling: 'merge',
         replaceUrl: true
       });
     });
@@ -254,16 +257,29 @@ export class SalesComponent implements OnInit {
   /**
    * Actualiza el estado de una venta, mostrando un indicador de carga.
    */
-  updateStatus(saleId: string, newStatus: 'Pagado' | 'Anulado'): void {
+  async updateStatus(saleId: string, newStatus: 'Pagado' | 'Anulado'): Promise<void> {
     const confirmationMessage = `¿Estás seguro de que quieres cambiar el estado a "${newStatus}"?`;
-    if (confirm(confirmationMessage)) {
+
+    const confirmed = await this.modalService.confirm({
+      title: 'Confirmar Acción',
+      message: confirmationMessage,
+      icon: 'warning',
+      confirmText: 'Sí, cambiar',
+      cancelText: 'Cancelar'
+    });
+
+    if (confirmed) {
       this.updatingStatusId.set(saleId);
       this.currentStatusAction.set(newStatus);
       this.saleService.updateSaleStatus(saleId, newStatus).subscribe({
         next: () => {
         },
         error: (err) => {
-          alert('Ocurrió un error al actualizar el estado.');
+          this.modalService.alert({
+            title: 'Error',
+            message: 'Ocurrió un error al actualizar el estado.',
+            icon: 'error'
+          });
         },
         complete: () => {
           this.updatingStatusId.set(null);
@@ -278,6 +294,14 @@ export class SalesComponent implements OnInit {
    */
   toggleInstructorStats(): void {
     this.showInstructorStats.update(v => !v);
+  }
+
+  /**
+   * Construye la URL del comprobante de pago
+   */
+  buildVoucherUrl(imageName?: string): string {
+    if (!imageName) return '';
+    return `${environment.url}sales/voucher-image/${imageName}`;
   }
 
   /**
