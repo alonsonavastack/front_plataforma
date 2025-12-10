@@ -311,8 +311,8 @@ export class RefundsReportComponent implements OnInit {
       'Email': r.user.email,
       'Producto': r.course?.title || r.project?.title || 'N/A',
       'Fecha Solicitud': this.formatDate(r.requestedAt),
-      'Monto Original (USD)': r.originalAmount,
-      'Monto Reembolsado (USD)': r.refundAmount,
+      'Monto Original (MXN)': r.originalAmount,
+      'Monto Reembolsado (MXN)': r.refundAmount,
       'Estado': this.getStatusText(r.status),
       'Motivo': r.reason.type,
       'Descripción': r.reason.description
@@ -379,7 +379,7 @@ export class RefundsReportComponent implements OnInit {
   }
 
   formatCurrency(amount: number): string {
-    return `USD ${amount.toFixed(2)}`;
+    return `MXN ${amount.toFixed(2)}`;
   }
 
   formatDate(date: Date | string): string {

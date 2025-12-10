@@ -22,13 +22,13 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
         // 🎯 DISTINGUIR entre error de autenticación y validación de negocio
         const isBusinessValidation = error.error?.message_text &&
-                                     error.error?.message === 403 &&
-                                     (error.error?.blockedBy || error.error?.count !== undefined);
+          error.error?.message === 403 &&
+          (error.error?.blockedBy || error.error?.count !== undefined);
 
         const isAuthError = error.error?.message === 'NO ESTA PERMITIDO VISITAR ESTA PÁGINA' ||
-                           error.error?.message === 'EL TOKEN ES INVÁLIDO' ||
-                           error.error?.message === 'No se proporcionó un token de autenticación.' ||
-                           error.error?.message === 'Formato de token inválido. Se esperaba "Bearer <token>".';
+          error.error?.message === 'EL TOKEN ES INVÁLIDO' ||
+          error.error?.message === 'No se proporcionó un token de autenticación.' ||
+          error.error?.message === 'Formato de token inválido. Se esperaba "Bearer <token>".';
 
         // Solo hacer logout si NO es la petición de login/profile y SI es un error de autenticación
         const isLoginRequest = req.url.includes('/login');
@@ -62,6 +62,27 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
           }
         }
+      }
+
+      // 🔥 MANEJAR RATE LIMITING (429)
+      if (error.status === 429) {
+        const retryAfter = error.error?.retryAfter || 60;
+        const minutes = Math.ceil(retryAfter / 60);
+
+        toast.warning(
+          'Demasiadas peticiones',
+          `Por favor espera ${minutes} minuto${minutes > 1 ? 's' : ''} antes de intentar nuevamente.`
+        );
+      }
+
+      // 🔥 MANEJAR ERROR DE RED (0)
+      if (error.status === 0) {
+        toast.networkError();
+      }
+
+      // 🔥 MANEJAR ERROR DE SERVIDOR (500)
+      if (error.status === 500) {
+        toast.serverError();
       }
 
       // Re-lanzar el error para que los servicios puedan manejarlo

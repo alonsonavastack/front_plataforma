@@ -1,6 +1,7 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal, computed, resource } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
+// rxResource removed
 import { environment } from '../../../environments/environment';
 import { Earning } from '../models/instructor-earning.model';
 
@@ -11,6 +12,7 @@ export interface InstructorWithEarnings {
     email: string;
     surname?: string;
     avatar?: string;
+    country?: string;
   };
   earnings: {
     total: number;
@@ -23,6 +25,7 @@ export interface InstructorWithEarnings {
     preferredMethod: string;
     paypalConnected: boolean;
     bankVerified: boolean;
+    country?: string;
   };
 }
 
@@ -47,7 +50,7 @@ export interface CreatePaymentRequest {
 
 export interface PaymentResponse {
   _id: string;
-  instructor: string;
+  instructor: any;
   total_earnings: number;
   platform_deductions: number;
   final_amount: number;
@@ -56,7 +59,9 @@ export interface PaymentResponse {
   status: string;
   earnings_included: string[];
   created_by_admin_at: string;
+  createdAt?: string;
   admin_notes?: string;
+  payment_details?: any;
 }
 
 export interface CommissionSettings {
@@ -79,6 +84,25 @@ export interface CommissionSettings {
   }>;
 }
 
+interface InstructorFilters {
+  status: string;
+  minAmount: number;
+}
+
+interface EarningsFilters {
+  instructorId: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+interface PaymentHistoryFilters {
+  status?: string;
+  instructor?: string;
+  page: number;
+  limit: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -86,276 +110,255 @@ export class AdminPaymentService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.url}admin`;
 
-  /**
-   * Obtener instructores con ganancias disponibles
-   */
-  getInstructorsWithEarnings(
-    status: string = 'available',
-    minAmount: number = 0
-  ): Observable<{
-    success: boolean;
-    instructors: InstructorWithEarnings[];
-    summary: {
-      totalInstructors: number;
-      totalEarnings: string;
-    };
-  }> {
-    const params = new HttpParams()
-      .set('status', status)
-      .set('minAmount', minAmount.toString());
+  // 🔥 Signals para filtros de instructores con ganancias
+  private instructorStatusInput = signal('available');
+  private instructorMinAmountInput = signal(0);
 
-    return this.http.get<any>(`${this.apiUrl}/instructors/payments`, { params });
-  }
+  // 🔥 rxResource reemplazado por resource standard
+  private instructorsResource = resource({
+    loader: () => {
+      const params = new HttpParams()
+        .set('status', this.instructorStatusInput())
+        .set('minAmount', this.instructorMinAmountInput().toString());
 
-  /**
-   * Obtener ganancias detalladas de un instructor específico
-   */
-  getInstructorEarnings(
-    instructorId: string,
-    filters: {
-      status?: string;
-      startDate?: string;
-      endDate?: string;
-    } = {}
-  ): Observable<{
-    success: boolean;
-    instructor: any;
-    earnings: Earning[];
-    paymentConfig: any;
-    totals: any;
-  }> {
-    let params = new HttpParams();
-
-    if (filters.status) params = params.set('status', filters.status);
-    if (filters.startDate) params = params.set('startDate', filters.startDate);
-    if (filters.endDate) params = params.set('endDate', filters.endDate);
-
-    return this.http.get<any>(
-      `${this.apiUrl}/instructors/${instructorId}/earnings`,
-      { params }
-    );
-  }
-
-  /**
-   * Crear un nuevo pago para un instructor
-   */
-  createPayment(
-    instructorId: string,
-    data: CreatePaymentRequest
-  ): Observable<{
-    success: boolean;
-    message: string;
-    payment: PaymentResponse;
-  }> {
-    return this.http.post<any>(
-      `${this.apiUrl}/instructors/${instructorId}/payment`,
-      data
-    );
-  }
-
-  /**
-   * Procesar un pago (cambiar a status processing)
-   */
-  processPayment(
-    paymentId: string,
-    data: {
-      transaction_id?: string;
-      receipt_url?: string;
+      return firstValueFrom(this.http.get<{
+        success: boolean;
+        instructors: InstructorWithEarnings[];
+        summary: { totalInstructors: number; totalEarnings: string };
+      }>(`${this.apiUrl}/instructors/payments`, { params }));
     }
-  ): Observable<{
-    success: boolean;
-    message: string;
-    payment: PaymentResponse;
-  }> {
-    return this.http.put<any>(
-      `${this.apiUrl}/payments/${paymentId}/process`,
-      data
-    );
-  }
+  });
 
-  /**
-   * Completar un pago (cambiar a status completed)
-   */
-  completePayment(
-    paymentId: string
-  ): Observable<{
-    success: boolean;
-    message: string;
-    payment: PaymentResponse;
-  }> {
-    return this.http.put<any>(
-      `${this.apiUrl}/payments/${paymentId}/complete`,
-      {}
-    );
-  }
+  // 🔥 Señales públicas derivadas
+  public instructors = computed(() => this.instructorsResource.value()?.instructors ?? []);
+  public summary = computed(() => this.instructorsResource.value()?.summary ?? null);
+  public isLoadingInstructors = computed(() => this.instructorsResource.isLoading());
+  public instructorsError = computed(() => this.instructorsResource.error());
 
-  /**
-   * Obtener historial de todos los pagos
-   */
-  getPaymentHistory(
-    filters: {
-      status?: string;
-      instructor?: string;
-      page?: number;
-      limit?: number;
-    } = {}
-  ): Observable<{
-    success: boolean;
-    payments: PaymentResponse[];
-    pagination: any;
-  }> {
-    let params = new HttpParams();
+  // 🔥 Signals para filtros de ganancias de instructor específico
+  private earningsInstructorIdInput = signal('');
+  private earningsStatusInput = signal<string | undefined>(undefined);
+  private earningsStartDateInput = signal<string | undefined>(undefined);
+  private earningsEndDateInput = signal<string | undefined>(undefined);
 
-    if (filters.status) params = params.set('status', filters.status);
-    if (filters.instructor) params = params.set('instructor', filters.instructor);
-    if (filters.page) params = params.set('page', filters.page.toString());
-    if (filters.limit) params = params.set('limit', filters.limit.toString());
+  // 🔥 rxResource reemplazado por resource standard
+  private earningsResource = resource({
+    loader: () => {
+      const instructorId = this.earningsInstructorIdInput();
+      if (!instructorId) return Promise.resolve(null);
 
-    return this.http.get<any>(`${this.apiUrl}/payments`, { params });
-  }
+      let params = new HttpParams();
+      const status = this.earningsStatusInput();
+      if (status) params = params.set('status', status);
+      const startDate = this.earningsStartDateInput();
+      if (startDate) params = params.set('startDate', startDate);
+      const endDate = this.earningsEndDateInput();
+      if (endDate) params = params.set('endDate', endDate);
 
-  /**
-   * Obtener configuración de comisiones
-   */
-  getCommissionSettings(): Observable<{
-    success: boolean;
-    settings: CommissionSettings;
-  }> {
-    return this.http.get<any>(`${this.apiUrl}/commission-settings`);
-  }
-
-  /**
-   * Actualizar configuración global de comisiones
-   */
-  updateCommissionSettings(
-    data: {
-      default_commission_rate?: number;
-      days_until_available?: number;
-      minimum_payment_threshold?: number;
-      exchange_rate_usd_to_mxn?: number;
+      return firstValueFrom(this.http.get<{
+        success: boolean;
+        instructor: any;
+        earnings: Earning[];
+        paymentConfig: any;
+        totals: any;
+      }>(`${this.apiUrl}/instructors/${instructorId}/earnings`, { params }));
     }
-  ): Observable<{
-    success: boolean;
-    message: string;
-    settings: CommissionSettings;
-  }> {
-    return this.http.put<any>(`${this.apiUrl}/commission-settings`, data);
-  }
+  });
 
-  /**
-   * Establecer comisión personalizada para un instructor
-   */
-  setCustomCommission(
-    data: {
-      instructor_id: string;
-      commission_rate: number;
-      reason: string;
+  // 🔥 Señales públicas para ganancias
+  public earnings = computed(() => this.earningsResource.value()?.earnings ?? []);
+  public instructor = computed(() => this.earningsResource.value()?.instructor ?? null);
+  public paymentConfig = computed(() => this.earningsResource.value()?.paymentConfig ?? null);
+  public earningsTotals = computed(() => this.earningsResource.value()?.totals ?? null);
+  public isLoadingEarnings = computed(() => this.earningsResource.isLoading());
+  public earningsError = computed(() => this.earningsResource.error());
+
+  // 🔥 Signals para filtros de historial de pagos
+  private paymentHistoryStatusInput = signal<string | undefined>(undefined);
+  private paymentHistoryInstructorInput = signal<string | undefined>(undefined);
+  private paymentHistoryPageInput = signal(1);
+  private paymentHistoryLimitInput = signal(10);
+
+  // 🔥 rxResource reemplazado por resource standard
+  private paymentsHistoryResource = resource({
+    loader: () => {
+      let params = new HttpParams();
+      const status = this.paymentHistoryStatusInput();
+      if (status) params = params.set('status', status);
+      const instructor = this.paymentHistoryInstructorInput();
+      if (instructor) params = params.set('instructor', instructor);
+      params = params.set('page', this.paymentHistoryPageInput().toString());
+      params = params.set('limit', this.paymentHistoryLimitInput().toString());
+
+      return firstValueFrom(this.http.get<{
+        success: boolean;
+        payments: PaymentResponse[];
+        pagination: any;
+      }>(`${this.apiUrl}/payments`, { params }));
     }
-  ): Observable<{
-    success: boolean;
-    message: string;
-    settings: CommissionSettings;
-  }> {
-    return this.http.post<any>(
-      `${this.apiUrl}/commission-settings/custom`,
-      data
-    );
+  });
+
+  // 🔥 Señales públicas para historial
+  public paymentsHistory = computed(() => this.paymentsHistoryResource.value()?.payments ?? []);
+  public paymentsPagination = computed(() => this.paymentsHistoryResource.value()?.pagination ?? null);
+  public isLoadingPaymentsHistory = computed(() => this.paymentsHistoryResource.isLoading());
+  public paymentsHistoryError = computed(() => this.paymentsHistoryResource.error());
+
+  // 🔥 Signal para configuración de comisiones
+  private commissionReloadTrigger = signal(0);
+
+  // 🔥 rxResource reemplazado por resource standard
+  private commissionResource = resource({
+    loader: () => {
+      this.commissionReloadTrigger();
+      return firstValueFrom(this.http.get<{
+        success: boolean;
+        settings: CommissionSettings;
+      }>(`${this.apiUrl}/commission-settings`));
+    }
+  });
+
+  // 🔥 Señales públicas para comisiones
+  public commissionSettings = computed(() => this.commissionResource.value()?.settings ?? null);
+  public isLoadingCommission = computed(() => this.commissionResource.isLoading());
+  public commissionError = computed(() => this.commissionResource.error());
+
+  // 🔥 Métodos para actualizar filtros de instructores
+  setInstructorFilters(filters: Partial<InstructorFilters>): void {
+    if (filters.status !== undefined) this.instructorStatusInput.set(filters.status);
+    if (filters.minAmount !== undefined) this.instructorMinAmountInput.set(filters.minAmount);
   }
 
-  /**
-   * Eliminar comisión personalizada de un instructor
-   */
-  removeCustomCommission(
-    instructorId: string
-  ): Observable<{
-    success: boolean;
-    message: string;
-    settings: CommissionSettings;
-  }> {
-    return this.http.delete<any>(
-      `${this.apiUrl}/commission-settings/custom/${instructorId}`
-    );
+  // 🔥 Métodos para cargar ganancias de un instructor
+  loadInstructorEarnings(instructorId: string, filters?: Partial<EarningsFilters>): void {
+    this.earningsInstructorIdInput.set(instructorId);
+    if (filters?.status !== undefined) this.earningsStatusInput.set(filters.status);
+    if (filters?.startDate !== undefined) this.earningsStartDateInput.set(filters.startDate);
+    if (filters?.endDate !== undefined) this.earningsEndDateInput.set(filters.endDate);
   }
 
-  /**
-   * Obtener reporte de ganancias
-   */
-  getEarningsReport(
-    filters: {
-      period?: string;
-      startDate?: string;
-      endDate?: string;
-    } = {}
-  ): Observable<{
-    success: boolean;
-    report: any;
-  }> {
+  clearInstructorEarnings(): void {
+    this.earningsInstructorIdInput.set('');
+    this.earningsStatusInput.set(undefined);
+    this.earningsStartDateInput.set(undefined);
+    this.earningsEndDateInput.set(undefined);
+  }
+
+  // 🔥 Métodos para historial de pagos
+  setPaymentHistoryFilters(filters: Partial<PaymentHistoryFilters>): void {
+    if (filters.status !== undefined) this.paymentHistoryStatusInput.set(filters.status);
+    if (filters.instructor !== undefined) this.paymentHistoryInstructorInput.set(filters.instructor);
+    if (filters.page !== undefined) this.paymentHistoryPageInput.set(filters.page);
+    if (filters.limit !== undefined) this.paymentHistoryLimitInput.set(filters.limit);
+  }
+
+  // 🔥 Recargar datos manualmente
+  reloadInstructors(): void {
+    this.instructorsResource.reload();
+  }
+
+  reloadEarnings(): void {
+    this.earningsResource.reload();
+  }
+
+  reloadPaymentsHistory(): void {
+    this.paymentsHistoryResource.reload();
+  }
+
+  reloadCommissionSettings(): void {
+    this.commissionReloadTrigger.update(v => v + 1);
+  }
+
+  // 🔥 Métodos imperativos (para operaciones CRUD)
+  createPayment(instructorId: string, data: CreatePaymentRequest) {
+    return this.http.post<{
+      success: boolean;
+      message: string;
+      payment: PaymentResponse;
+    }>(`${this.apiUrl}/instructors/${instructorId}/payment`, data);
+  }
+
+  processPayment(paymentId: string, data: { transaction_id?: string; receipt_url?: string }) {
+    return this.http.put<{
+      success: boolean;
+      message: string;
+      payment: PaymentResponse;
+    }>(`${this.apiUrl}/payments/${paymentId}/process`, data);
+  }
+
+  completePayment(paymentId: string) {
+    return this.http.put<{
+      success: boolean;
+      message: string;
+      payment: PaymentResponse;
+    }>(`${this.apiUrl}/payments/${paymentId}/complete`, {});
+  }
+
+  updateCommissionSettings(data: {
+    default_commission_rate?: number;
+    days_until_available?: number;
+    minimum_payment_threshold?: number;
+    exchange_rate_usd_to_mxn?: number;
+  }) {
+    return this.http.put<{
+      success: boolean;
+      message: string;
+      settings: CommissionSettings;
+    }>(`${this.apiUrl}/commission-settings`, data);
+  }
+
+  setCustomCommission(data: {
+    instructor_id: string;
+    commission_rate: number;
+    reason: string;
+  }) {
+    return this.http.post<{
+      success: boolean;
+      message: string;
+      settings: CommissionSettings;
+    }>(`${this.apiUrl}/commission-settings/custom`, data);
+  }
+
+  removeCustomCommission(instructorId: string) {
+    return this.http.delete<{
+      success: boolean;
+      message: string;
+      settings: CommissionSettings;
+    }>(`${this.apiUrl}/commission-settings/custom/${instructorId}`);
+  }
+
+  getEarningsReport(filters: {
+    period?: string;
+    startDate?: string;
+    endDate?: string;
+  } = {}) {
     let params = new HttpParams();
-
     if (filters.period) params = params.set('period', filters.period);
     if (filters.startDate) params = params.set('startDate', filters.startDate);
     if (filters.endDate) params = params.set('endDate', filters.endDate);
 
-    return this.http.get<any>(`${this.apiUrl}/earnings/report`, { params });
+    return this.http.get<{ success: boolean; report: any }>(`${this.apiUrl}/earnings/report`, { params });
   }
 
-  /**
-   * 🔥 NUEVO: Obtener datos bancarios COMPLETOS (sin encriptar) de un instructor
-   * Este endpoint devuelve números de cuenta, CLABE y datos completos
-   * SOLO accesible por administradores
-   */
-  getInstructorPaymentMethodFull(
-    instructorId: string
-  ): Observable<{
-    success: boolean;
-    data: {
-      instructor: {
-        _id: string;
-        name: string;
-        email: string;
-        surname?: string;
+  getInstructorPaymentMethodFull(instructorId: string) {
+    return this.http.get<{
+      success: boolean;
+      data: {
+        instructor: { _id: string; name: string; email: string; surname?: string };
+        paymentMethod: 'bank_transfer' | 'paypal' | null;
+        paymentDetails: any;
       };
-      paymentMethod: 'bank_transfer' | 'paypal' | null;
-      paymentDetails: {
-        type: string;
-        bankName?: string;
-        accountNumber?: string; // 🔥 Número completo sin asteriscos
-        clabe?: string; // 🔥 CLABE completa sin asteriscos
-        accountHolder?: string;
-        accountType?: string;
-        cardBrand?: string;
-        swiftCode?: string;
-        verified?: boolean;
-        email?: string; // Para PayPal
-        merchantId?: string;
-        connected?: boolean;
-      } | null;
-    };
-  }> {
-    return this.http.get<any>(
-      `${this.apiUrl}/instructors/${instructorId}/payment-method-full`
-    );
+    }>(`${this.apiUrl}/instructors/${instructorId}/payment-method-full`);
   }
 
-  /**
-   * 🔧 Procesar ventas existentes (crear ganancias para ventas que no las tengan)
-   * Este endpoint escanea todas las ventas 'paid' y crea InstructorEarnings automáticamente
-   * si aún no existen.
-   */
-  processExistingSales(): Observable<{
-    success: boolean;
-    message: string;
-    processed: number;
-    skipped: number;
-    total: number;
-    sales_reviewed: number;
-    // Detalles para diagnóstico (opcionales)
-    processed_details?: Array<{ sale: string; product: string; title?: string }>;
-    skipped_details?: Array<{ sale: string; product: string; title?: string; reason?: string; error?: string }>;
-  }> {
-    return this.http.post<any>(
-      `${environment.url}sales/process-existing-sales`,
-      {}
-    );
+  processExistingSales() {
+    return this.http.post<{
+      success: boolean;
+      message: string;
+      processed: number;
+      skipped: number;
+      total: number;
+      sales_reviewed: number;
+    }>(`${environment.url}sales/process-existing-sales`, {});
   }
 }

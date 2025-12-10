@@ -29,6 +29,15 @@ export interface Earning { // Renombrado para coincidir con el uso en el compone
   platform_commission_rate: number;
   platform_commission_amount: number;
   instructor_earning: number;
+  
+  // 🔥 NUEVO: Información de descuentos
+  discount_info?: {
+    original_price: number;        // Precio sin descuento
+    discount_amount: number;       // Monto del descuento
+    discount_type: number;         // 1=porcentaje, 2=monto fijo
+    discount_percentage: number;   // % de descuento
+    campaign_discount?: string;    // ID de campaña de descuento
+  };
 
   // Estado y fechas
   status: 'pending' | 'available' | 'paid' | 'disputed';

@@ -321,7 +321,7 @@ export class DiscountsComponent implements OnInit {
   }
 
   confirmDelete(discount: Discount): void {
-    if (!window.confirm(`¿Estás seguro de eliminar este descuento de ${discount.discount}${discount.type_discount === 1 ? '%' : ' USD'}?`)) return;
+    if (!window.confirm(`¿Estás seguro de eliminar este descuento de ${discount.discount}${discount.type_discount === 1 ? '%' : ' MXN'}?`)) return;
 
     this.discountService.deleteDiscount(discount._id!).subscribe({
       next: () => {

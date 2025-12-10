@@ -1,5 +1,6 @@
 // checkout.component.ts - 🆕 SISTEMA DE COMPRA DIRECTA (SIN CARRITO)
 import { Component, OnInit, OnDestroy, inject, signal, computed, effect } from '@angular/core';
+import { MxnCurrencyPipe } from '../../shared/pipes/mxn-currency.pipe';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -11,23 +12,32 @@ import { ProfileService } from '../../core/services/profile.service'; // 🔥 NU
 import { ProfileStudentService } from '../../core/services/profile-student.service'; // 🔥 CRÍTICO
 import { ModalService } from '../../core/services/modal.service';
 import { DiscountService } from '../../core/services/discount.service'; // 🔥 NUEVO
+import { CartService, CartItem } from '../../core/services/cart.service'; // 🆕 CartService restaurado
+import { CurrencyService } from '../../services/currency.service'; // 🇲🇽 NUEVO
 import { environment } from '../../../environments/environment';
 
 interface CheckoutProduct {
   _id: string;
   title: string;
   subtitle?: string;
-  price_usd: number;
+  price_mxn: number;
   imagen?: string;
   slug?: string;
   type: 'course' | 'project';
   categorie?: any; // 🔥 Necesario para descuentos por categoría
 }
 
+interface Country {
+  code: string;
+  name: string;
+  currency: string;
+  symbol: string;
+}
+
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, MxnCurrencyPipe],
   templateUrl: './checkout.component.html',
 })
 export class CheckoutComponent implements OnInit, OnDestroy {
@@ -38,14 +48,20 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   profileService = inject(ProfileService); // 🔥 NUEVO
   modalService = inject(ModalService);
   discountService = inject(DiscountService); // 🔥 NUEVO
+  cartService = inject(CartService); // 🆕
+  currencyService = inject(CurrencyService); // 🇲🇽 NUEVO
   router = inject(Router);
 
   // 🔥 IMPORTAR ProfileStudentService para recargar correctamente
   private profileStudentService = inject(ProfileStudentService);
 
-  // 🆕 PRODUCTO ÚNICO EN CHECKOUT
+  // 🆕 PRODUCTO ÚNICO EN CHECKOUT (Compra Directa)
   product = signal<CheckoutProduct | null>(null);
   productType = signal<'course' | 'project' | null>(null);
+
+  // 🆕 CARRITO (Compra Mixta)
+  cartItems = computed(() => this.cartService.cart());
+  isDirectBuy = signal(true); // true = compra directa, false = carrito
 
   // State
   selectedPaymentMethod = signal<string>('');
@@ -56,6 +72,22 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   transactionNumber = signal<string>('');
 
 
+
+
+  // 🆕 Multi-country support - FROM SERVICE
+  countries = this.checkoutService.supportedCountries;
+  selectedCountry = signal<string>('MX'); // Default to Mexico
+  selectedCountryData = computed(() =>
+    this.countries().find((c: any) => c.code === this.selectedCountry())
+  );
+
+  // 🆕 Conversion state (simulated for UI before backend confirmation)
+  // In a real app, you might want to fetch live rates or use the backend response
+  // For now, we'll rely on the backend to do the actual conversion during payment
+  // but we can show an estimate if we had the rates. 
+  // Since the prompt says backend handles it, we will show the conversion *result* 
+  // after the user selects transfer or in the summary if we fetch rates.
+  // For this implementation, we will focus on sending the country.
   // 🆕 Wallet state
   walletBalance = computed(() => this.walletService.balance());
   useWalletBalance = signal(false);
@@ -64,8 +96,14 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   // 🆕 Descuentos
   discounts = computed(() => this.discountService.discounts());
 
-  // 🔥 Calcular el mejor descuento disponible
+  // 🔥 Calcular el mejor descuento disponible (para compra directa o carrito)
   bestDiscount = computed(() => {
+    // Si es carrito, no aplicamos descuentos individuales complejos por ahora
+    // O podríamos iterar sobre cada item. Para simplificar, en carrito usaremos descuentos simples si existen.
+    // EN ESTA VERSIÓN: Descuentos solo para Compra Directa por simplicidad, o implementar lógica iterativa.
+
+    if (!this.isDirectBuy()) return null; // TODO: Implementar descuentos globales o por item en carrito
+
     const prod = this.product();
     const type = this.productType();
     const allDiscounts = this.discounts();
@@ -77,7 +115,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     const activeDiscounts = allDiscounts.filter(d => d.state && d.start_date_num <= now && d.end_date_num >= now);
 
     let best = null;
-    let finalPrice = prod.price_usd;
+    let finalPrice = prod.price_mxn;
 
     for (const discount of activeDiscounts) {
       let applies = false;
@@ -106,9 +144,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       if (applies) {
         let calculatedPrice = finalPrice;
         if (discount.type_discount === 1) { // Porcentaje
-          calculatedPrice = prod.price_usd - (prod.price_usd * discount.discount / 100);
+          calculatedPrice = prod.price_mxn - (prod.price_mxn * discount.discount / 100);
         } else { // Monto fijo
-          calculatedPrice = prod.price_usd - discount.discount;
+          calculatedPrice = prod.price_mxn - discount.discount;
         }
 
         if (calculatedPrice < 0) calculatedPrice = 0;
@@ -119,7 +157,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
           best = {
             ...discount,
             finalPrice,
-            savedAmount: prod.price_usd - finalPrice
+            savedAmount: prod.price_mxn - finalPrice
           };
         }
       }
@@ -128,13 +166,30 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return best;
   });
 
-  // 🆕 Total y restante (considerando descuento)
+  // 🆕 Helper para saber si hay descuento activo
+  hasDiscount = computed(() => !!this.bestDiscount());
+
+  // 🆕 Total y restante (considerando descuento) - EN MXN
   subtotal = computed(() => {
-    const discount = this.bestDiscount();
-    return discount ? discount.finalPrice : (this.product()?.price_usd || 0);
+    if (this.isDirectBuy()) {
+      const discount = this.bestDiscount();
+      return discount ? discount.finalPrice : (this.product()?.price_mxn || 0);
+    } else {
+      // Suma del carrito
+      return this.cartService.total();
+    }
   });
 
-  originalPrice = computed(() => this.product()?.price_usd || 0);
+  originalPrice = computed(() => {
+    if (this.isDirectBuy()) {
+      return this.product()?.price_mxn || 0;
+    }
+    return this.subtotal(); // En carrito no mostramos precio "original" tachado global por ahora
+  });
+
+  // Legacy (mantener compatibilidad si algo lo usa, pero es redundante)
+  subtotalMXN = computed(() => this.subtotal());
+  originalPriceMXN = computed(() => this.originalPrice());
 
   remainingAmount = computed(() => {
     if (!this.useWalletBalance()) return this.subtotal();
@@ -157,10 +212,25 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return this.useWalletBalance() && this.walletAmount() > 0 && this.remainingAmount() > 0;
   });
 
+  // 🎁 NUEVO: Detectar si el producto es GRATIS (precio final = 0)
+  isFreeProduct = computed(() => {
+    return this.subtotal() === 0;
+  });
+
+  // 🎁 NUEVO: Métodos de pago permitidos (solo wallet si es gratis)
+  allowedPaymentMethods = computed(() => {
+    if (this.isFreeProduct()) {
+      // Si es gratis, solo permitir billetera
+      return this.paymentMethods().filter(m => m.id === 'wallet');
+    }
+    // Si no es gratis, permitir todos los métodos
+    return this.paymentMethods();
+  });
+
   user = computed(() => this.authService.user());
 
-  // Payment methods
-  paymentMethods = this.checkoutService.paymentMethods;
+  // Payment methods - FROM SERVICE
+  paymentMethods = this.checkoutService.availablePaymentMethods;
 
   // 🔥 Datos bancarios desde el servicio
   bankDetails = this.checkoutService.bankDetails;
@@ -184,10 +254,12 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       }
     });
 
-    // 🆕 Effect para validar que hay producto
+    // 🆕 Effect para validar que hay producto o carrito
     effect(() => {
       const prod = this.product();
-      if (!prod && !this.showSuccess()) {
+      const cartCount = this.cartService.count();
+
+      if (!prod && cartCount === 0 && !this.showSuccess()) {
         this.router.navigate(['/']);
       }
     });
@@ -206,16 +278,23 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
 
     if (state && state.product && state.productType) {
+      // MODO COMPRA DIRECTA
       const prod: CheckoutProduct = {
         ...state.product,
         type: state.productType
       };
       this.product.set(prod);
       this.productType.set(state.productType);
+      this.isDirectBuy.set(true);
 
     } else {
-      this.router.navigate(['/']);
-      return;
+      // MODO CARRITO
+      if (this.cartService.count() > 0) {
+        this.isDirectBuy.set(false);
+      } else {
+        this.router.navigate(['/']);
+        return;
+      }
     }
 
     // 🆕 Cargar saldo de billetera y transacciones
@@ -223,6 +302,12 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
     // 🆕 Cargar descuentos
     this.discountService.loadDiscounts().subscribe();
+
+    // 🆕 Recargar configuración del servicio para asegurar frescura
+    this.checkoutService.reloadConfig();
+
+    // NOTE: Countries and Payment Settings are now loaded via signals
+    // filtered in 'availablePaymentMethods' computed property of the service.
 
     // Pre-llenar el formulario con datos del usuario
     const currentUser = this.user();
@@ -232,6 +317,14 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         billingEmail: currentUser.email || '',
       });
     }
+
+    // 🎁 NUEVO: Si el producto es GRATIS, auto-seleccionar billetera
+    setTimeout(() => {
+      if (this.isFreeProduct()) {
+
+        this.selectPaymentMethod('wallet');
+      }
+    }, 100);
   }
 
   ngOnDestroy(): void {
@@ -249,8 +342,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       // Si el saldo no cubre el total, mostrar error y no permitir selección
       if (balance < total) {
         this.errorMessage.set(
-          `❌ Saldo insuficiente. Tienes $${balance.toFixed(2)} USD pero el total es $${total.toFixed(2)} USD. ` +
-          `Necesitas $${(total - balance).toFixed(2)} USD más. Por favor, selecciona otro método de pago o usa tu saldo parcialmente.`
+          `❌ Saldo insuficiente. Tienes $${balance.toFixed(2)} MXN pero el total es $${total.toFixed(2)} MXN. ` +
+          `Necesitas $${(total - balance).toFixed(2)} MXN más. Por favor, selecciona otro método de pago o usa tu saldo parcialmente.`
         );
         return; // No seleccionar el método
       }
@@ -285,8 +378,11 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   async processPayment() {
+
+
     // 🔥 Prevenir múltiples clics
     if (this.isProcessing() || this.showSuccess()) {
+
       return;
     }
 
@@ -306,12 +402,21 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     });
 
     if (!confirmed) {
+
       return;
     }
 
     const prod = this.product();
-    if (!prod) {
+    const isDirect = this.isDirectBuy();
+    const cartItems = this.cartItems();
+
+    if (isDirect && !prod) {
       this.errorMessage.set('Error: No hay producto seleccionado');
+      return;
+    }
+
+    if (!isDirect && cartItems.length === 0) {
+      this.errorMessage.set('Error: El carrito está vacío');
       return;
     }
 
@@ -322,14 +427,15 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
       if (balance < requestedAmount) {
         this.errorMessage.set(
-          `❌ Error crítico: Saldo insuficiente. Tienes ${balance.toFixed(2)} USD ` +
-          `pero intentas usar ${requestedAmount.toFixed(2)} USD. Por favor, recarga la página.`
+          `❌ Error crítico: Saldo insuficiente. Tienes ${balance.toFixed(2)} MXN ` +
+          `pero intentas usar ${requestedAmount.toFixed(2)} MXN. Por favor, recarga la página.`
         );
         return;
       }
     }
 
     if (this.checkoutForm.invalid) {
+
       Object.keys(this.checkoutForm.controls).forEach(key => {
         this.checkoutForm.get(key)?.markAsTouched();
       });
@@ -386,36 +492,83 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     }
 
 
-    // Preparar datos de la venta
+    // Preparar items de la venta
+    let detail = [];
+    // 🔥 FIX: Definir discount aquí para que esté disponible en el bloque if
     const discount = this.bestDiscount();
 
-    const checkoutData: any = {
-      method_payment: finalPaymentMethod,
-      currency_total: 'USD',
-      currency_payment: 'USD',
-      total: this.subtotal(), // 🔥 Precio final con descuento
-      n_transaccion: this.checkoutService.generateTransactionNumber(),
-      price_dolar: this.checkoutService.getExchangeRate(),
-      detail: [{
-        product: prod._id,
-        product_type: prod.type,
-        title: prod.title,
-        price_unit: this.subtotal(), // 🔥 Precio unitario es el precio final
+    if (isDirect) {
+      // Compra Directa
+      detail = [{
+        product: prod!._id,
+        product_type: prod!.type,
+        title: prod!.title,
+        price_unit: this.subtotal(), // Precio final con descuento
         discount: discount ? discount.discount : 0,
         type_discount: discount ? discount.type_discount : 0,
         campaign_discount: discount ? discount.type_campaign : null
-      }],
+      }];
+    } else {
+      // Compra de Carrito
+      detail = cartItems.map(item => ({
+        product: item._id,
+        product_type: item.type,
+        title: item.title,
+        price_unit: item.price_mxn,
+        discount: 0, // TODO: Implementar descuentos en carrito
+        type_discount: 0,
+        campaign_discount: null
+      }));
+    }
+
+    const checkoutData: any = {
+      method_payment: finalPaymentMethod,
+      currency_total: 'MXN',
+      currency_payment: 'MXN',
+      total: this.subtotal(), // 🔥 Precio final
+      n_transaccion: this.checkoutService.generateTransactionNumber(),
+      // price_dolar: this.checkoutService.getExchangeRate(), // REMOVED
+      detail: detail,
       // 🔥 SIEMPRE enviar estos campos con valores correctos
       use_wallet: walletIsActive && finalWalletAmount > 0,
       wallet_amount: finalWalletAmount,
-      remaining_amount: finalRemainingAmount
+      remaining_amount: finalRemainingAmount,
+      // country: this.selectedCountry() // REMOVED
     };
+
 
     this.transactionNumber.set(checkoutData.n_transaccion);
 
     // Procesar la venta
     this.checkoutService.processSale(checkoutData).subscribe({
-      next: (response) => {
+      next: (response: any) => {
+
+
+        // 🔥 MERCADO PAGO REDIRECTION
+        if (response.init_point) {
+
+
+          // ✅ CRÍTICO: Recargar billetera ANTES de redirigir
+          // Así el saldo se actualiza en segundo plano mientras carga MP
+          if (walletIsActive && finalWalletAmount > 0) {
+            this.walletService.loadWallet();
+          }
+
+          // Pequeño delay para asegurar que la petición se envió
+          setTimeout(() => {
+            window.location.href = response.init_point;
+          }, 100);
+
+          return;
+        }
+
+        // 🚨 ERROR: Si es Mercado Pago pero no hay link, mostrar error
+        if (finalPaymentMethod === 'mercadopago' && !response.init_point) {
+          console.error('❌ [processPayment] Error: Mercado Pago seleccionado pero no hay init_point');
+          this.errorMessage.set('Error: No se pudo generar el enlace de pago de Mercado Pago. Por favor contacta soporte.');
+          this.isProcessing.set(false);
+          return;
+        }
 
         this.isProcessing.set(false);
         this.showSuccess.set(true);
@@ -438,8 +591,14 @@ export class CheckoutComponent implements OnInit, OnDestroy {
           this.profileService.reloadProfile();
 
         }, 2000); // Aumentado a 2 segundos para dar más tiempo al backend
+
+        // 3. Limpiar carrito si fue compra de carrito
+        if (!this.isDirectBuy()) {
+          this.cartService.clearCart();
+        }
       },
       error: (error) => {
+        console.error('❌ [processPayment] Error en la petición:', error);
         this.errorMessage.set(
           error.error?.message || 'Hubo un error al procesar tu pago. Por favor intenta de nuevo.'
         );
@@ -454,9 +613,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     // 🔥 FIX: Si pagó 100% con billetera, NO mostrar modal de advertencia
     if (this.isFullWalletPayment()) {
       // Redirigir directo sin mostrar el modal de transferencia
-      const productType = this.productType();
-      const fragment = productType === 'project' ? 'projects' : 'courses';
-      this.router.navigate(['/profile-student'], { fragment });
+      // 🔥 FIX: Redirigir siempre a 'purchases' para que el usuario vea su historial y estado
+      this.router.navigate(['/profile-student'], { fragment: 'purchases' });
       return;
     }
 
@@ -468,14 +626,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   closeWarningAndRedirect(): void {
     this.showWarningModal.set(false);
 
-    // Redirigir al perfil del estudiante a la sección correcta según el tipo de producto
-    const productType = this.productType();
-    const fragment = productType === 'project' ? 'projects' : 'courses';
-
-
     // 🔥 SOLUCIÓN OPTIMIZADA: Navegación con Angular Router
-    // Al llegar a profile-student, los datos ya estarán actualizados gracias al setTimeout previo
-    this.router.navigate(['/profile-student'], { fragment });
+    // Redirigir siempre a 'purchases' para que el usuario vea su historial y pueda subir comprobantes si es necesario
+    this.router.navigate(['/profile-student'], { fragment: 'purchases' });
   }
 
   buildImageUrl(imagen?: string): string {
@@ -500,12 +653,18 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return `${environment.images.course}${img}`;
   }
 
+  // 🆕 Eliminar item del carrito
+  removeFromCart(itemId: string, type: 'course' | 'project') {
+    this.cartService.removeFromCart(itemId, type);
+    // Si el carrito queda vacío, el effect redirigirá al home
+  }
+
   formatPrice(price: number): string {
     return price.toFixed(2);
   }
 
   getPaymentMethodInfo(methodId: string): PaymentMethod | undefined {
-    return this.paymentMethods.find(m => m.id === methodId);
+    return this.paymentMethods().find(m => m.id === methodId);
   }
 
   getProductTypeName(type: string): string {

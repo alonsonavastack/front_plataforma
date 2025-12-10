@@ -1,0 +1,107 @@
+<div class="p-6">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-white mb-2">Solicitudes de Publicación</h1>
+        <p class="text-slate-400">Revisa y aprueba los cursos y proyectos pendientes de publicación.</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-4 mb-6 border-b border-white/10">
+        <button (click)="setActiveTab('courses')" class="pb-3 px-1 text-sm font-medium transition-colors relative"
+            [class.text-lime-400]="activeTab() === 'courses'" [class.text-slate-400]="activeTab() !== 'courses'">
+            Cursos Pendientes
+            <span *ngIf="pendingCourses().length > 0"
+                class="ml-2 bg-lime-500/10 text-lime-400 px-2 py-0.5 rounded-full text-xs">
+                {{ pendingCourses().length }}
+            </span>
+            <div *ngIf="activeTab() === 'courses'" class="absolute bottom-0 left-0 w-full h-0.5 bg-lime-400"></div>
+        </button>
+
+        <button (click)="setActiveTab('projects')" class="pb-3 px-1 text-sm font-medium transition-colors relative"
+            [class.text-cyan-400]="activeTab() === 'projects'" [class.text-slate-400]="activeTab() !== 'projects'">
+            Proyectos Pendientes
+            <span *ngIf="pendingProjects().length > 0"
+                class="ml-2 bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded-full text-xs">
+                {{ pendingProjects().length }}
+            </span>
+            <div *ngIf="activeTab() === 'projects'" class="absolute bottom-0 left-0 w-full h-0.5 bg-cyan-400"></div>
+        </button>
+    </div>
+
+    <!-- Content -->
+    <div class="space-y-4">
+        <div *ngIf="isLoading()" class="flex justify-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+        </div>
+
+        @if (!isLoading()) {
+        @if (activeTab() === 'courses') {
+        @if (pendingCourses().length === 0) {
+        <div class="text-center py-12 bg-white/5 rounded-xl border border-white/5">
+            <p class="text-slate-400">No hay cursos pendientes de revisión</p>
+        </div>
+        } @else {
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @for (course of pendingCourses(); track course._id) {
+            <div
+                class="bg-slate-900 border border-white/10 rounded-xl overflow-hidden hover:border-lime-500/30 transition-all">
+                <div class="h-40 bg-slate-800 relative">
+                    <img [src]="buildImageUrl(course.imagen, 'course')" class="w-full h-full object-cover"
+                        alt="Course cover">
+                    @if (course.state === 1) {
+                    <div
+                        class="absolute top-2 right-2 px-2 py-1 bg-yellow-500/20 text-yellow-500 text-xs font-bold rounded">
+                        Borrador
+                    </div>
+                    }
+                </div>
+                <div class="p-4">
+                    <h3 class="font-bold text-white mb-1 line-clamp-1">{{ course.title }}</h3>
+                    <p class="text-sm text-slate-400 mb-4">Instructor: {{ course.user?.full_name || course.user?.name +
+                        ' ' + course.user?.surname || 'Desconocido' }}</p>
+                    <button (click)="goToReview('course', course)"
+                        class="w-full py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium text-white transition-colors">
+                        Revisar Curso
+                    </button>
+                </div>
+            </div>
+            }
+        </div>
+        }
+        }
+
+        @if (activeTab() === 'projects') {
+        @if (pendingProjects().length === 0) {
+        <div class="text-center py-12 bg-white/5 rounded-xl border border-white/5">
+            <p class="text-slate-400">No hay proyectos pendientes de revisión</p>
+        </div>
+        } @else {
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @for (project of pendingProjects(); track project._id) {
+            <div
+                class="bg-slate-900 border border-white/10 rounded-xl overflow-hidden hover:border-cyan-500/30 transition-all">
+                <div class="h-40 bg-slate-800 relative">
+                    <img [src]="buildImageUrl(project.imagen, 'project')" class="w-full h-full object-cover"
+                        alt="Project cover">
+                    <div
+                        class="absolute top-2 right-2 px-2 py-1 bg-yellow-500/20 text-yellow-500 text-xs font-bold rounded">
+                        Borrador
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h3 class="font-bold text-white mb-1 line-clamp-1">{{ project.title }}</h3>
+                    <p class="text-sm text-slate-400 mb-4">Instructor: {{ project.user?.full_name || project.user?.name
+                        + ' ' + project.user?.surname || 'Desconocido' }}
+                    </p>
+                    <button (click)="goToReview('project', project)"
+                        class="w-full py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium text-white transition-colors">
+                        Revisar Proyecto
+                    </button>
+                </div>
+            </div>
+            }
+        </div>
+        }
+        }
+        }
+    </div>
+</div>

@@ -1,213 +1,207 @@
 <!-- 🔥 MODAL: Selección de Productos para Reembolso -->
 @if (showRefundProductSelector()) {
-  <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="w-full max-w-3xl bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+<div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="w-full max-w-3xl bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
 
-      <!-- Header -->
-      <div class="p-6 border-b border-slate-700 bg-gradient-to-r from-red-500/10 to-orange-500/10">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-1a4 4 0 00-4-4H8m0 0l-3 3m3-3l3 3m-3-3V4a2 2 0 012-2h2a2 2 0 012 2v1m-6 9h.01"></path>
-              </svg>
-            </div>
-            <div>
-              <h2 class="text-2xl font-bold text-white">Solicitar Reembolso</h2>
-              <p class="text-sm text-slate-400">Compra #{{ selectedSale()?.n_transaccion }}</p>
-            </div>
+    <!-- Header -->
+    <div class="p-6 border-b border-slate-700 bg-gradient-to-r from-red-500/10 to-orange-500/10">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 15v-1a4 4 0 00-4-4H8m0 0l-3 3m3-3l3 3m-3-3V4a2 2 0 012-2h2a2 2 0 012 2v1m-6 9h.01"></path>
+            </svg>
           </div>
-          <button
-            (click)="showRefundProductSelector.set(false)"
-            class="w-10 h-10 bg-slate-800 hover:bg-slate-700 rounded-lg flex items-center justify-center transition"
-          >
-            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Contenido -->
-      <div class="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-
-        <!-- Instrucciones -->
-        <div class="bg-blue-500/10 border border-blue-400/30 rounded-xl p-4">
-          <div class="flex gap-3">
-            <svg class="w-6 h-6 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <div>
-              <p class="text-sm text-blue-200 font-semibold mb-1">Selecciona los productos que deseas reembolsar</p>
-              <p class="text-xs text-blue-300/80">Solo se muestran los productos que aún no tienen un reembolso solicitado. El monto se acreditará a tu billetera.</p>
-            </div>
+          <div>
+            <h2 class="text-2xl font-bold text-white">Solicitar Reembolso</h2>
+            <p class="text-sm text-slate-400">Compra #{{ selectedSale()?.n_transaccion }}</p>
           </div>
         </div>
-
-        <!-- Lista de productos REEMBOLSABLES -->
-        <div class="space-y-3">
-        <h3 class="text-lg font-semibold text-white flex items-center gap-2">
-        <svg class="w-5 h-5 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-        </svg>
-        Productos disponibles para reembolso
-        @if (selectedSale()) {
-            <span class="text-sm text-slate-400">({{ getRefundableProducts(selectedSale()!).length }}/{{ selectedSale()!.detail?.length || 0 }})</span>
-            }
-        </h3>
-
-          <!-- 🔥 FILTRAR SOLO PRODUCTOS REEMBOLSABLES -->
-          @if (selectedSale(); as sale) {
-            @for (item of getRefundableProducts(sale); track $index) {
-            @let productId = (typeof item.product === 'object' && item.product._id) ? item.product._id : (typeof item.product === 'string' ? item.product : '');
-            @let isSelected = productId ? selectedProductsForRefund().has(productId) : false;
-
-            <button
-              type="button"
-              (click)="toggleProductSelection(productId)"
-              [class.border-lime-400]="isSelected"
-              [class.bg-lime-400/10]="isSelected"
-              [class.border-slate-700]="!isSelected"
-              [class.bg-slate-800/50]="!isSelected"
-              class="w-full p-4 rounded-xl border-2 transition-all duration-300 text-left hover:bg-slate-800"
-            >
-              <div class="flex items-center gap-4">
-                <!-- Checkbox -->
-                <div [class.border-lime-400]="isSelected" [class.bg-lime-400]="isSelected" [class.border-slate-600]="!isSelected" class="w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all">
-                  @if (isSelected) {
-                    <svg class="w-4 h-4 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                  }
-                </div>
-
-                <!-- Imagen -->
-                <img
-                  [src]="item.product_type === 'project' ? buildProjectImageUrl(item.product.imagen) : buildImageUrl(item.product.imagen)"
-                  [alt]="item.title"
-                  class="w-20 h-14 object-cover rounded-lg flex-shrink-0"
-                />
-
-                <!-- Info -->
-                <div class="flex-1 min-w-0">
-                  <p class="font-semibold text-white text-sm line-clamp-2">{{ item.title }}</p>
-                  <p class="text-xs text-slate-400 mt-1">
-                    {{ item.product_type === 'course' ? '📚 Curso' : '📁 Proyecto' }}
-                  </p>
-                </div>
-
-                <!-- Precio -->
-                <div class="text-right flex-shrink-0">
-                  <p [class.text-lime-400]="isSelected" [class.text-slate-300]="!isSelected" class="font-bold text-lg">
-                    ${{ item.price_unit | number:'1.2-2' }}
-                  </p>
-                  <p class="text-xs text-slate-500">USD</p>
-                </div>
-              </div>
-            </button>
-            }
-          }
-
-          <!-- Mensaje si no hay productos reembolsables -->
-          @if (selectedSale() && getRefundableProducts(selectedSale()!).length === 0) {
-            <div class="text-center py-8 bg-slate-800/30 rounded-xl border border-slate-700">
-              <svg class="w-12 h-12 text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <p class="text-slate-400">Todos los productos ya tienen un reembolso solicitado</p>
-            </div>
-          }
-        </div>
-
-        <!-- Total a reembolsar -->
-        @if (selectedProductsForRefund().size > 0) {
-          <div class="bg-lime-400/10 border border-lime-400/30 rounded-xl p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-lime-300 font-semibold">Total a reembolsar</p>
-                <p class="text-xs text-lime-400/70 mt-1">
-                  {{ selectedProductsForRefund().size }} producto{{ selectedProductsForRefund().size > 1 ? 's' : '' }} seleccionado{{ selectedProductsForRefund().size > 1 ? 's' : '' }}
-                </p>
-              </div>
-              <div class="text-right">
-                <p class="text-3xl font-bold text-lime-400">${{ selectedRefundTotal() | number:'1.2-2' }}</p>
-                <p class="text-sm text-lime-300/70">USD</p>
-              </div>
-            </div>
-          </div>
-        }
-
-        <!-- Motivo del reembolso -->
-        <div class="space-y-3">
-          <label class="block text-sm font-semibold text-white">
-            Motivo del reembolso *
-          </label>
-          <select
-            [value]="refundReasonType()"
-            (change)="refundReasonType.set($any($event.target).value)"
-            class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-lime-400 focus:border-transparent"
-          >
-            <option value="not_expected">No era lo que esperaba</option>
-            <option value="technical_issues">Problemas técnicos</option>
-            <option value="quality_issues">Problemas de calidad</option>
-            <option value="duplicate_purchase">Compra duplicada</option>
-            <option value="other">Otro motivo</option>
-          </select>
-
-          <textarea
-            [value]="refundReason()"
-            (input)="refundReason.set($any($event.target).value)"
-            placeholder="Describe brevemente por qué solicitas el reembolso..."
-            class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-lime-400 focus:border-transparent min-h-[100px] resize-none"
-            required
-          ></textarea>
-        </div>
-
-        <!-- Advertencia -->
-        <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
-          <div class="flex gap-3">
-            <svg class="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-            </svg>
-            <div>
-              <p class="text-sm text-yellow-200 font-semibold mb-1">Importante</p>
-              <ul class="text-xs text-yellow-300/90 space-y-1 list-disc list-inside">
-                <li>Al aprobar el reembolso, perderás el acceso a los productos seleccionados</li>
-                <li>El monto se acreditará a tu billetera dentro de 24-48 horas</li>
-                <li>Solo puedes solicitar reembolso dentro de los primeros 7 días</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer con botones -->
-      <div class="p-6 border-t border-slate-700 bg-slate-900/50 flex items-center justify-between gap-4">
-        <button
-          type="button"
-          (click)="showRefundProductSelector.set(false)"
-          class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold transition"
-        >
-          Cancelar
-        </button>
-
-        <button
-          type="button"
-          (click)="submitPartialRefund()"
-          [disabled]="selectedProductsForRefund().size === 0 || !refundReason().trim() || isSubmittingRefund()"
-          class="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          @if (isSubmittingRefund()) {
-            <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-            <span>Enviando...</span>
-          } @else {
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <span>Solicitar Reembolso @if (selectedProductsForRefund().size > 0) { (${{ selectedRefundTotal() | number:'1.2-2' }}) }</span>
-          }
+        <button (click)="showRefundProductSelector.set(false)"
+          class="w-10 h-10 bg-slate-800 hover:bg-slate-700 rounded-lg flex items-center justify-center transition">
+          <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
         </button>
       </div>
     </div>
+
+    <!-- Contenido -->
+    <div class="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+
+      <!-- Instrucciones -->
+      <div class="bg-blue-500/10 border border-blue-400/30 rounded-xl p-4">
+        <div class="flex gap-3">
+          <svg class="w-6 h-6 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <div>
+            <p class="text-sm text-blue-200 font-semibold mb-1">Selecciona los productos que deseas reembolsar</p>
+            <p class="text-xs text-blue-300/80">Solo se muestran los productos que aún no tienen un reembolso
+              solicitado. El monto se acreditará a tu billetera.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de productos REEMBOLSABLES -->
+      <div class="space-y-3">
+        <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+          <svg class="w-5 h-5 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+          </svg>
+          Productos disponibles para reembolso
+          @if (selectedSale()) {
+          <span class="text-sm text-slate-400">({{ getRefundableProducts(selectedSale()!).length }}/{{
+            selectedSale()!.detail?.length || 0 }})</span>
+          }
+        </h3>
+
+        <!-- 🔥 FILTRAR SOLO PRODUCTOS REEMBOLSABLES -->
+        @if (selectedSale(); as sale) {
+        @for (item of getRefundableProducts(sale); track $index) {
+        @let productId = (typeof item.product === 'object' && item.product._id) ? item.product._id : (typeof
+        item.product === 'string' ? item.product : '');
+        @let isSelected = productId ? selectedProductsForRefund().has(productId) : false;
+
+        <button type="button" (click)="toggleProductSelection(productId)" [class.border-lime-400]="isSelected"
+          [class.bg-lime-400/10]="isSelected" [class.border-slate-700]="!isSelected"
+          [class.bg-slate-800/50]="!isSelected"
+          class="w-full p-4 rounded-xl border-2 transition-all duration-300 text-left hover:bg-slate-800">
+          <div class="flex items-center gap-4">
+            <!-- Checkbox -->
+            <div [class.border-lime-400]="isSelected" [class.bg-lime-400]="isSelected"
+              [class.border-slate-600]="!isSelected"
+              class="w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all">
+              @if (isSelected) {
+              <svg class="w-4 h-4 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+              </svg>
+              }
+            </div>
+
+            <!-- Imagen -->
+            <img
+              [src]="item.product_type === 'project' ? buildProjectImageUrl(item.product.imagen) : buildImageUrl(item.product.imagen)"
+              [alt]="item.title" class="w-20 h-14 object-cover rounded-lg flex-shrink-0" />
+
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-white text-sm line-clamp-2">{{ item.title }}</p>
+              <p class="text-xs text-slate-400 mt-1">
+                {{ item.product_type === 'course' ? '📚 Curso' : '📁 Proyecto' }}
+              </p>
+            </div>
+
+            <!-- Precio -->
+            <div class="text-right flex-shrink-0">
+              <p [class.text-lime-400]="isSelected" [class.text-slate-300]="!isSelected" class="font-bold text-lg">
+                ${{ item.price_unit | number:'1.2-2' }}
+              </p>
+              <p class="text-xs text-slate-500">MXN</p>
+            </div>
+          </div>
+        </button>
+        }
+        }
+
+        <!-- Mensaje si no hay productos reembolsables -->
+        @if (selectedSale() && getRefundableProducts(selectedSale()!).length === 0) {
+        <div class="text-center py-8 bg-slate-800/30 rounded-xl border border-slate-700">
+          <svg class="w-12 h-12 text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <p class="text-slate-400">Todos los productos ya tienen un reembolso solicitado</p>
+        </div>
+        }
+      </div>
+
+      <!-- Total a reembolsar -->
+      @if (selectedProductsForRefund().size > 0) {
+      <div class="bg-lime-400/10 border border-lime-400/30 rounded-xl p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-lime-300 font-semibold">Total a reembolsar</p>
+            <p class="text-xs text-lime-400/70 mt-1">
+              {{ selectedProductsForRefund().size }} producto{{ selectedProductsForRefund().size > 1 ? 's' : '' }}
+              seleccionado{{ selectedProductsForRefund().size > 1 ? 's' : '' }}
+            </p>
+          </div>
+          <div class="text-right">
+            <p class="text-3xl font-bold text-lime-400">${{ selectedRefundTotal() | number:'1.2-2' }}</p>
+            <p class="text-sm text-lime-300/70">MXN</p>
+          </div>
+        </div>
+      </div>
+      }
+
+      <!-- Motivo del reembolso -->
+      <div class="space-y-3">
+        <label class="block text-sm font-semibold text-white">
+          Motivo del reembolso *
+        </label>
+        <select [value]="refundReasonType()" (change)="refundReasonType.set($any($event.target).value)"
+          class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-lime-400 focus:border-transparent">
+          <option value="not_expected">No era lo que esperaba</option>
+          <option value="technical_issues">Problemas técnicos</option>
+          <option value="quality_issues">Problemas de calidad</option>
+          <option value="duplicate_purchase">Compra duplicada</option>
+          <option value="other">Otro motivo</option>
+        </select>
+
+        <textarea [value]="refundReason()" (input)="refundReason.set($any($event.target).value)"
+          placeholder="Describe brevemente por qué solicitas el reembolso..."
+          class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-lime-400 focus:border-transparent min-h-[100px] resize-none"
+          required></textarea>
+      </div>
+
+      <!-- Advertencia -->
+      <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
+        <div class="flex gap-3">
+          <svg class="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+            </path>
+          </svg>
+          <div>
+            <p class="text-sm text-yellow-200 font-semibold mb-1">Importante</p>
+            <ul class="text-xs text-yellow-300/90 space-y-1 list-disc list-inside">
+              <li>Al aprobar el reembolso, perderás el acceso a los productos seleccionados</li>
+              <li>El monto se acreditará a tu billetera dentro de 24-48 horas</li>
+              <li>Solo puedes solicitar reembolso dentro de los primeros 7 días</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer con botones -->
+    <div class="p-6 border-t border-slate-700 bg-slate-900/50 flex items-center justify-between gap-4">
+      <button type="button" (click)="showRefundProductSelector.set(false)"
+        class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold transition">
+        Cancelar
+      </button>
+
+      <button type="button" (click)="submitPartialRefund()"
+        [disabled]="selectedProductsForRefund().size === 0 || !refundReason().trim() || isSubmittingRefund()"
+        class="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+        @if (isSubmittingRefund()) {
+        <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        <span>Enviando...</span>
+        } @else {
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>Solicitar Reembolso @if (selectedProductsForRefund().size > 0) { (${{ selectedRefundTotal() |
+          number:'1.2-2' }}) }</span>
+        }
+      </button>
+    </div>
   </div>
+</div>
 }

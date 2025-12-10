@@ -216,8 +216,8 @@ export class AdminTransferVerificationComponent implements OnInit {
   /**
    * 💰 FORMATEAR MONEDA
    */
-  formatCurrency(amount: number, currency: string = 'USD'): string {
-    return new Intl.NumberFormat('en-US', {
+  formatCurrency(amount: number, currency: string = 'MXN'): string {
+    return new Intl.NumberFormat('es-MX', {
       style: 'currency',
       currency: currency
     }).format(amount);

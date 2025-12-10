@@ -1,7 +1,7 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal, computed, resource } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
+// rxResource removed
 import { environment } from '../../../environments/environment';
 
 export interface PaymentConfig {
@@ -21,23 +21,27 @@ export interface PaymentConfig {
     card_brand?: string;
     verified?: boolean;
   };
-  preferred_payment_method?: 'paypal' | 'bank_transfer';
+  mercadopago?: {
+    account_type: 'email' | 'phone' | 'cvu';
+    account_value: string;
+    country: string;
+    verified: boolean;
+  };
+  preferred_payment_method?: 'paypal' | 'bank_transfer' | 'mercadopago';
 }
 
 export interface Earning {
   _id: string;
-  // Legacy support (cursos antiguos)
   course?: {
     _id: string;
     title: string;
     image: string;
   };
-  // Nuevo sistema unificado (cursos y proyectos)
   product?: {
     _id: string;
     title: string;
-    image?: string;  // Para cursos
-    imagen?: string; // Para proyectos
+    image?: string;
+    imagen?: string;
   };
   product_type?: 'course' | 'project';
   sale: any;
@@ -50,19 +54,16 @@ export interface Earning {
   earned_at: string;
   available_at: string;
   paid_at?: string;
-
-  isRefunded?: boolean;  // Si la venta fue reembolsada
+  isRefunded?: boolean;
   status_display?: 'pending' | 'available' | 'paid' | 'disputed' | 'refunded';
-  instructor_earning_original?: number;  // Ganancia antes del reembolso
+  instructor_earning_original?: number;
 }
-
 
 export interface EarningsStats {
   pending: { total: number; count: number };
   available: { total: number; count: number };
   paid: { total: number; count: number };
-    refunds: { count: number; total: number };
-
+  refunds: { count: number; total: number };
   total: { total: number; count: number };
   total_earned: number;
   total_sales: number;
@@ -92,8 +93,8 @@ export interface EarningsFilters {
   status?: string;
   startDate?: string;
   endDate?: string;
-  page?: number;
-  limit?: number;
+  page: number;
+  limit: number;
 }
 
 @Injectable({
@@ -103,35 +104,168 @@ export class InstructorPaymentService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.url}instructor`;
 
-  /**
-   * Obtiene la configuración de pago del instructor
-   */
-  getPaymentConfig(): Observable<{ success: boolean; data: PaymentConfig }> {
-    return this.http.get<{ success: boolean; config: PaymentConfig }>(
-      `${this.apiUrl}/payment-config`
-    ).pipe(
-      map(response => ({ success: response.success, data: response.config }))
-    );
+  // 🔥 Signal para recargar configuración de pago
+  private paymentConfigReloadTrigger = signal(0);
+
+  // 🔥 rxResource reemplazado por resource standard
+  private paymentConfigResource = resource({
+    loader: () => {
+      this.paymentConfigReloadTrigger();
+      return firstValueFrom(this.http.get<{ success: boolean; config: PaymentConfig }>(
+        `${this.apiUrl}/payment-config`
+      ));
+    }
+  });
+
+  // 🔥 Señales públicas para configuración de pago
+  public paymentConfig = computed(() => this.paymentConfigResource.value()?.config ?? null);
+  public isLoadingPaymentConfig = computed(() => this.paymentConfigResource.isLoading());
+  public paymentConfigError = computed(() => this.paymentConfigResource.error());
+
+  // 🔥 Signals para filtros de ganancias
+  private earningsStatusInput = signal<string | undefined>(undefined);
+  private earningsStartDateInput = signal<string | undefined>(undefined);
+  private earningsEndDateInput = signal<string | undefined>(undefined);
+  private earningsPageInput = signal(1);
+  private earningsLimitInput = signal(10);
+
+  // 🔥 rxResource reemplazado por resource standard
+  private earningsResource = resource({
+    loader: () => {
+      let params = new HttpParams();
+      const status = this.earningsStatusInput();
+      if (status) params = params.set('status', status);
+      const startDate = this.earningsStartDateInput();
+      if (startDate) params = params.set('startDate', startDate);
+      const endDate = this.earningsEndDateInput();
+      if (endDate) params = params.set('endDate', endDate);
+      params = params.set('page', this.earningsPageInput().toString());
+      params = params.set('limit', this.earningsLimitInput().toString());
+
+      return firstValueFrom(this.http.get<{
+        success: boolean;
+        earnings: Earning[];
+        pagination: any;
+      }>(`${this.apiUrl}/earnings`, { params }));
+    }
+  });
+
+  // 🔥 Señales públicas para ganancias
+  public earnings = computed(() => this.earningsResource.value()?.earnings ?? []);
+  public earningsPagination = computed(() => this.earningsResource.value()?.pagination ?? null);
+  public isLoadingEarnings = computed(() => this.earningsResource.isLoading());
+  public earningsError = computed(() => this.earningsResource.error());
+
+  // 🔥 Signal para recargar estadísticas
+  private statsReloadTrigger = signal(0);
+
+  // 🔥 rxResource reemplazado por resource standard
+  private statsResource = resource({
+    loader: () => {
+      this.statsReloadTrigger();
+      return firstValueFrom(this.http.get<{ success: boolean; stats: any }>(
+        `${this.apiUrl}/earnings/stats`
+      ));
+    }
+  });
+
+  // 🔥 Señales públicas para estadísticas (normalizadas)
+  public earningsStats = computed<EarningsStats | null>(() => {
+    const response = this.statsResource.value();
+    if (!response) return null;
+
+    const stats = response.stats;
+    return {
+      pending: stats.pending || { total: 0, count: 0 },
+      available: stats.available || { total: 0, count: 0 },
+      paid: stats.paid || { total: 0, count: 0 },
+      refunds: stats.refunds || { total: 0, count: 0 },
+      total: stats.total || { total: 0, count: 0 },
+      total_earned: stats.total?.total || 0,
+      total_sales: stats.totalCoursesSold || 0,
+      average_per_sale: parseFloat(stats.averagePerSale || 0),
+      earnings_by_month: stats.byMonth || []
+    };
+  });
+  public isLoadingStats = computed(() => this.statsResource.isLoading());
+  public statsError = computed(() => this.statsResource.error());
+
+  // 🔥 Signals para historial de pagos
+  private paymentHistoryPageInput = signal(1);
+  private paymentHistoryLimitInput = signal(10);
+
+  // 🔥 rxResource reemplazado por resource standard
+  private paymentHistoryResource = resource({
+    loader: () => {
+      const params = new HttpParams()
+        .set('page', this.paymentHistoryPageInput().toString())
+        .set('limit', this.paymentHistoryLimitInput().toString());
+
+      return firstValueFrom(this.http.get<{
+        success: boolean;
+        payments: Payment[];
+        pagination: any;
+      }>(`${this.apiUrl}/payments/history`, { params }));
+    }
+  });
+
+  // 🔥 Señales públicas para historial de pagos
+  public paymentHistory = computed(() => this.paymentHistoryResource.value()?.payments ?? []);
+  public paymentHistoryPagination = computed(() => this.paymentHistoryResource.value()?.pagination ?? null);
+  public isLoadingPaymentHistory = computed(() => this.paymentHistoryResource.isLoading());
+  public paymentHistoryError = computed(() => this.paymentHistoryResource.error());
+
+  // 🔥 Métodos para actualizar filtros de ganancias
+  setEarningsFilters(filters: Partial<EarningsFilters>): void {
+    if (filters.status !== undefined) this.earningsStatusInput.set(filters.status);
+    if (filters.startDate !== undefined) this.earningsStartDateInput.set(filters.startDate);
+    if (filters.endDate !== undefined) this.earningsEndDateInput.set(filters.endDate);
+    if (filters.page !== undefined) this.earningsPageInput.set(filters.page);
+    if (filters.limit !== undefined) this.earningsLimitInput.set(filters.limit);
   }
 
-  /**
-   * Actualiza la configuración de PayPal
-   */
-  updatePaypalConfig(data: {
-    paypal_email: string;
-    paypal_merchant_id?: string;
-  }): Observable<{ success: boolean; message: string; data: PaymentConfig }> {
+  clearEarningsFilters(): void {
+    this.earningsStatusInput.set(undefined);
+    this.earningsStartDateInput.set(undefined);
+    this.earningsEndDateInput.set(undefined);
+    this.earningsPageInput.set(1);
+    this.earningsLimitInput.set(10);
+  }
+
+  // 🔥 Métodos para paginación de historial
+  setPaymentHistoryPage(page: number): void {
+    this.paymentHistoryPageInput.set(page);
+  }
+
+  setPaymentHistoryLimit(limit: number): void {
+    this.paymentHistoryLimitInput.set(limit);
+  }
+
+  // 🔥 Recargar datos manualmente
+  reloadPaymentConfig(): void {
+    this.paymentConfigReloadTrigger.update(v => v + 1);
+  }
+
+  reloadEarnings(): void {
+    this.earningsResource.reload();
+  }
+
+  reloadStats(): void {
+    this.statsReloadTrigger.update(v => v + 1);
+  }
+
+  reloadPaymentHistory(): void {
+    this.paymentHistoryResource.reload();
+  }
+
+  // 🔥 Métodos imperativos para actualizar configuración
+  updatePaypalConfig(data: { paypal_email: string; paypal_merchant_id?: string }) {
     return this.http.post<{ success: boolean; message: string; config: PaymentConfig }>(
       `${this.apiUrl}/payment-config/paypal`,
       data
-    ).pipe(
-      map(response => ({ ...response, data: response.config }))
     );
   }
 
-  /**
-   * Actualiza la configuración de cuenta bancaria
-   */
   updateBankConfig(data: {
     account_holder_name: string;
     bank_name: string;
@@ -140,136 +274,46 @@ export class InstructorPaymentService {
     swift_code?: string;
     account_type: 'ahorros' | 'corriente' | 'debito' | 'credito';
     card_brand?: string;
-  }): Observable<{ success: boolean; message: string; data: PaymentConfig }> {
+  }) {
     return this.http.post<{ success: boolean; message: string; config: PaymentConfig }>(
       `${this.apiUrl}/payment-config/bank`,
       data
-    ).pipe(
-      map(response => ({ ...response, data: response.config }))
     );
   }
 
-  /**
-   * Actualiza el método de pago preferido
-   */
-  updatePreferredMethod(
-    method: 'paypal' | 'bank_transfer'
-  ): Observable<{ success: boolean; message: string; data: PaymentConfig }> {
+  updateMercadoPagoConfig(data: {
+    account_type: string;
+    account_value: string;
+    country: string;
+  }) {
+    return this.http.post<{ success: boolean; message: string; config: PaymentConfig }>(
+      `${this.apiUrl}/payment-config/mercadopago`,
+      data
+    );
+  }
+
+  deleteMercadoPagoConfig() {
+    return this.http.delete<{ success: boolean; message: string }>(
+      `${this.apiUrl}/payment-config/mercadopago`
+    );
+  }
+
+  updatePreferredMethod(method: 'paypal' | 'bank_transfer' | 'mercadopago') {
     return this.http.put<{ success: boolean; message: string; config: PaymentConfig }>(
       `${this.apiUrl}/payment-config`,
       { preferred_payment_method: method }
-    ).pipe(
-      map(response => ({ ...response, data: response.config }))
     );
   }
 
-  /**
-   * Elimina la configuración de PayPal
-   */
-  deletePaypalConfig(): Observable<{ success: boolean; message: string }> {
+  deletePaypalConfig() {
     return this.http.delete<{ success: boolean; message: string }>(
       `${this.apiUrl}/payment-config/paypal`
     );
   }
 
-  /**
-   * Elimina la configuración de cuenta bancaria
-   */
-  deleteBankConfig(): Observable<{ success: boolean; message: string }> {
+  deleteBankConfig() {
     return this.http.delete<{ success: boolean; message: string }>(
       `${this.apiUrl}/payment-config/bank`
-    );
-  }
-
-  /**
-   * Obtiene las ganancias del instructor con filtros
-   */
-  getEarnings(filters: EarningsFilters = {}): Observable<{
-    success: boolean;
-    data: Earning[];
-    pagination: {
-      total: number;
-      page: number;
-      pages: number;
-      limit: number;
-    };
-  }> {
-    let params = new HttpParams();
-
-    if (filters.status) params = params.set('status', filters.status);
-    if (filters.startDate) params = params.set('startDate', filters.startDate);
-    if (filters.endDate) params = params.set('endDate', filters.endDate);
-    if (filters.page) params = params.set('page', filters.page.toString());
-    if (filters.limit) params = params.set('limit', filters.limit.toString());
-
-    return this.http.get<{
-      success: boolean;
-      earnings: Earning[];
-      pagination: any;
-    }>(`${this.apiUrl}/earnings`, { params }).pipe(
-      map(response => ({
-        success: response.success,
-        data: response.earnings,
-        pagination: response.pagination
-      }))
-    );
-  }
-
-  /**
-   * Obtiene las estadísticas de ganancias
-   */
-  getEarningsStats(): Observable<{
-    success: boolean;
-    data: EarningsStats;
-  }> {
-    return this.http.get<{
-      success: boolean;
-      stats: any;
-    }>(`${this.apiUrl}/earnings/stats`).pipe(
-      map(response => {
-        // Normalizar el formato de stats para el frontend
-        const stats = response.stats;
-        const normalized: EarningsStats = {
-          pending: stats.pending || { total: 0, count: 0 },
-          available: stats.available || { total: 0, count: 0 },
-          paid: stats.paid || { total: 0, count: 0 },
-          refunds: stats.refunds || { total: 0, count: 0 },
-          total: stats.total || { total: 0, count: 0 },
-          total_earned: stats.total?.total || 0,
-          total_sales: stats.totalCoursesSold || 0,
-          average_per_sale: parseFloat(stats.averagePerSale || 0),
-          earnings_by_month: stats.byMonth || []
-        };
-        return { success: response.success, data: normalized };
-      })
-    );
-  }
-
-  /**
-   * Obtiene el historial de pagos recibidos
-   */
-  getPaymentHistory(
-    page: number = 1,
-    limit: number = 10
-  ): Observable<{
-    success: boolean;
-    data: Payment[];
-    pagination: any;
-  }> {
-    const params = new HttpParams()
-      .set('page', page.toString())
-      .set('limit', limit.toString());
-
-    return this.http.get<{
-      success: boolean;
-      payments: Payment[];
-      pagination: any;
-    }>(`${this.apiUrl}/payments/history`, { params }).pipe(
-      map(response => ({
-        success: response.success,
-        data: response.payments,
-        pagination: response.pagination
-      }))
     );
   }
 }

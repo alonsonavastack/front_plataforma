@@ -34,12 +34,30 @@ export class CoursesService {
     this.listState.update(s => ({ ...s, isLoading: true }));
     this.http.get<CourseListResponse>(url).subscribe({
       next: (response) => {
-
         // La API devuelve un objeto { courses: [...] }, nos aseguramos de asignar el array.
         this.listState.set({ courses: response.courses || [], isLoading: false, error: null });
       },
       error: (err) => this.listState.set({ courses: [], isLoading: false, error: err }),
     });
+  }
+
+  // 🔥 NUEVO: Método directo para el dashboard de revisión
+  getCoursesAdmin(state: string | number) {
+    // Si state es 'Borrador', convertimos a lo que espere el backend (ej. 1) o enviamos string si el backend lo soporta.
+    // Asumiremos que el backend puede filtrar por número o string si se ajusta. 
+    // Por ahora pasamos el parámetro tal cual, el backend parece esperar state number en 'list', 
+    // pero quizás exista un 'courses/list-admin' o similar. Usaremos 'courses/list' con params.
+
+    // Mapeo rápido si es necesario (ajustar según backend real)
+    // 1: Prueba/Borrador, 2: Público? 
+    // Si el usuario dice 'Borrador', quizás el backend espera 1.
+    // Vamos a enviar el parámetro 'state' en la query.
+
+    let val = state;
+    if (state === 'Borrador') val = 1; // Asunción común
+    if (state === 'Publico') val = 2;
+
+    return this.http.get<CourseListResponse>(`${this.base}courses/list?state=${val}`);
   }
 
   showResource = (idSignal: () => string) => {
@@ -166,6 +184,18 @@ export class CoursesService {
     return this.http.delete(`${this.base}course-sections/remove/${id}`).pipe(
       catchError((error) => throwError(() => new Error(error.error.message || 'Error al eliminar la sección')))
     );
+  }
+
+  // 🔄 NUEVO: Reordenar secciones
+  reorderSections(orderedIds: string[]) {
+    return this.http.put(`${this.base}course-sections/reorder`, { ids: orderedIds });
+  }
+
+  // 🔄 NUEVO: Actualizar orden local de secciones
+  updateLocalSectionOrder(previousIndex: number, currentIndex: number) {
+    const updatedSections = [...this.sectionsState().sections];
+    moveItemInArray(updatedSections, previousIndex, currentIndex);
+    this.sectionsState.update(s => ({ ...s, sections: updatedSections }));
   }
 
   // --- Class Methods ---

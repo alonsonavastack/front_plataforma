@@ -1,665 +1,759 @@
 @if (viewMode() === 'list') {
-  <!-- VISTA: LISTA DE CURSOS -->
-  <div class="space-y-6">
-    <div class="flex justify-between items-center">
-      <h2 class="text-2xl font-bold text-white">Gestión de Cursos</h2>
-      @if (authService.user()?.rol === 'admin' || authService.user()?.rol === 'instructor') {
-        <button (click)="openCreateModal()" class="h-10 px-5 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition">
-          Crear Curso
-        </button>
+<!-- VISTA: LISTA DE CURSOS -->
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <h2 class="text-2xl font-bold text-white">Gestión de Cursos</h2>
+    @if (authService.user()?.rol === 'admin' || authService.user()?.rol === 'instructor') {
+    <button (click)="openCreateModal()"
+      class="h-10 px-5 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition">
+      Crear Curso
+    </button>
+    }
+  </div>
+
+  <!-- Filtros de Búsqueda -->
+  <div class="bg-slate-800 p-4 rounded-lg my-6 border border-white/10">
+    <div class="flex flex-wrap gap-4 items-center">
+      <!-- Búsqueda por título -->
+      <div class="relative flex-grow min-w-[250px]">
+        <label for="search-course" class="sr-only">Buscar curso</label>
+        <input type="text" id="search-course" placeholder="Buscar por título..." [value]="searchTerm()"
+          (input)="onSearch($event)"
+          class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-lime-400 text-white placeholder-slate-500">
+        <svg class="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg"
+          fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+      </div>
+
+      <!-- Filtro de Categoría -->
+      <div class="min-w-[200px]">
+        <select (change)="onCategoryFilter($event)" [value]="categoryFilter()"
+          class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400 text-white">
+          <option value="">Todas las categorías</option>
+          @for(cat of coursesService.config().categories; track cat._id) {
+          <option [value]="cat._id">{{ cat.title }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Filtro de Instructor (solo para admin) -->
+      @if (authService.user()?.rol === 'admin') {
+      <div class="min-w-[200px]">
+        <select (change)="onInstructorFilter($event)" [value]="instructorFilter()"
+          class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400 text-white">
+          <option value="">Todos los instructores</option>
+          @for(instructor of coursesService.config().users; track instructor._id) {
+          <option [value]="instructor._id">{{ instructor.name }} {{ instructor.surname }}</option>
+          }
+        </select>
+      </div>
+      }
+
+      <!-- Botón para limpiar filtros -->
+      @if (searchTerm() || categoryFilter() || instructorFilter()) {
+      <button (click)="clearAllFilters()"
+        class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        Limpiar Filtros
+      </button>
       }
     </div>
 
-    <!-- Filtros de Búsqueda -->
-    <div class="bg-slate-800 p-4 rounded-lg my-6 border border-white/10">
-      <div class="flex flex-wrap gap-4 items-center">
-        <!-- Búsqueda por título -->
-        <div class="relative flex-grow min-w-[250px]">
-          <label for="search-course" class="sr-only">Buscar curso</label>
-          <input
-            type="text"
-            id="search-course"
-            placeholder="Buscar por título..."
-            [value]="searchTerm()"
-            (input)="onSearch($event)"
-            class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-lime-400 text-white placeholder-slate-500">
-          <svg class="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-          </svg>
-        </div>
+    <!-- Indicador de filtros activos -->
+    @if (searchTerm() || categoryFilter() || instructorFilter()) {
+    <div class="mt-4 p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+      <div class="flex flex-wrap items-center gap-2 text-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-lime-400" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+        </svg>
+        <span class="text-slate-300 font-medium">Filtrando por:</span>
+        @if (searchTerm()) {
+        <span class="px-3 py-1.5 bg-lime-500/20 text-lime-300 rounded-full border border-lime-500/30 font-medium">
+          🔍 "{{ searchTerm() }}"
+        </span>
+        }
+        @if (categoryFilter()) {
+        <span class="px-3 py-1.5 bg-cyan-500/20 text-cyan-300 rounded-full border border-cyan-500/30 font-medium">
+          📂 Categoría: {{ selectedCategoryName() }}
+        </span>
+        }
+        @if (instructorFilter() && authService.user()?.rol === 'admin') {
+        <span class="px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30 font-medium">
+          👨‍🏫 Instructor: {{ selectedInstructorName() }}
+        </span>
+        }
+        <span class="text-slate-400 ml-2">• {{ filteredCourses().length }} resultado(s)</span>
+      </div>
+    </div>
+    }
+  </div>
 
-        <!-- Filtro de Categoría -->
-        <div class="min-w-[200px]">
-          <select
-            (change)="onCategoryFilter($event)"
-            [value]="categoryFilter()"
-            class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400 text-white">
-            <option value="">Todas las categorías</option>
-            @for(cat of coursesService.config().categories; track cat._id) {
-              <option [value]="cat._id">{{ cat.title }}</option>
+  <!-- Controles de Paginación y Selector -->
+  @if (filteredCourses().length > 0) {
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-4 my-6">
+    <div class="text-sm text-slate-400">
+      Mostrando {{ (currentPage() - 1) * itemsPerPage() + 1 }} -
+      {{ Math.min(currentPage() * itemsPerPage(), filteredCourses().length) }}
+      de {{ filteredCourses().length }} cursos
+    </div>
+    <div class="flex items-center gap-2">
+      <label for="items-per-page" class="text-sm text-slate-400">Mostrar:</label>
+      <select id="items-per-page" [value]="itemsPerPage()" (change)="changePerPage(+$any($event.target).value)"
+        class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-1.5 focus:ring-lime-400 focus:border-lime-400">
+        <option [value]="10">10</option>
+        <option [value]="15">15</option>
+        <option [value]="20">20</option>
+      </select>
+    </div>
+  </div>
+  }
+
+  <!-- Tabla de Cursos -->
+  <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-white/10">
+    <table class="w-full text-sm text-left text-gray-400">
+      <thead class="text-xs uppercase bg-slate-900 text-gray-400">
+        <tr>
+          <th scope="col" class="px-6 py-3">Portada</th>
+          <th scope="col" class="px-6 py-3">Título</th>
+          <th scope="col" class="px-6 py-3">Categoría</th>
+          <th scope="col" class="px-6 py-3">Instructor</th>
+          <th scope="col" class="px-6 py-3">Estado</th>
+          <th scope="col" class="px-6 py-3">Precio</th>
+          <th scope="col" class="px-6 py-3 text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (coursesService.isLoadingList()) {
+        <tr class="border-b bg-slate-800/50 border-gray-700">
+          <td colspan="6" class="px-6 py-8 text-center text-gray-500">Cargando cursos...</td>
+        </tr>
+        } @else if (paginatedCourses().length === 0 && (searchTerm() || categoryFilter() || instructorFilter())) {
+        <tr class="border-b bg-slate-800/50 border-gray-700">
+          <td colspan="6" class="px-6 py-8 text-center text-slate-500">No se encontraron cursos con los filtros
+            aplicados.</td>
+        </tr>
+        } @else if (paginatedCourses().length === 0) {
+        <tr class="border-b bg-slate-800/50 border-gray-700">
+          <td colspan="6" class="px-6 py-8 text-center text-slate-500">No se encontraron cursos.</td>
+        </tr>
+        } @else {
+        <!-- Bucle actualizado para usar los cursos paginados -->
+        @for (course of paginatedCourses(); track course._id) {
+        <tr class="border-b bg-slate-800/50 border-gray-700 hover:bg-slate-700/50">
+          <td class="px-6 py-4 align-middle">
+            <img [src]="buildImageUrl(course.imagen)" alt="{{ course.title }}"
+              class="w-24 h-14 object-cover rounded-md">
+          </td>
+          <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white align-middle">
+            {{ course.title }}
+          </th>
+          <td class="px-6 py-4 align-middle">{{ course.categorie.title }}</td>
+          <td class="px-6 py-4 align-middle">{{ course.user.name }} {{ course.user.surname }}</td>
+          <!-- Estado -->
+          <td class="px-6 py-4 align-middle">
+            @if (course.state === 1) {
+            <span class="px-2 py-1 text-xs font-bold rounded bg-yellow-500/20 text-yellow-500">
+              Borrador
+            </span>
+            } @else if (course.state === 2) {
+            <span class="px-2 py-1 text-xs font-bold rounded bg-green-500/20 text-green-500">
+              Público
+            </span>
+            } @else if (course.state === 3) {
+            <span class="px-2 py-1 text-xs font-bold rounded bg-red-500/20 text-red-500">
+              Anulado
+            </span>
             }
-          </select>
-        </div>
+          </td>
+          <!-- Precio (con indicador de gratuito) -->
+          <td class="px-6 py-4 whitespace-nowrap align-middle">
+            @if (course.isFree) {
+            <span
+              class="inline-flex items-center px-3 py-1 text-xs font-medium text-green-400 bg-green-500/10 border border-green-500/30 rounded-full">
+              🎁 GRATUITO
+            </span>
+            } @else {
+            <span class="text-white font-semibold">{{ course.price_mxn | mxnCurrency }}</span>
+            }
+          </td>
+          <td class="px-6 py-4 text-right space-x-2 align-middle">
+            <button (click)="switchToContentView(course)"
+              class="font-medium text-cyan-400 hover:underline">Contenido</button>
+            <button (click)="openEditModal(course)" class="font-medium text-lime-400 hover:underline">Editar</button>
 
-        <!-- Filtro de Instructor (solo para admin) -->
-        @if (authService.user()?.rol === 'admin') {
-          <div class="min-w-[200px]">
-            <select
-              (change)="onInstructorFilter($event)"
-              [value]="instructorFilter()"
-              class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-lime-400 text-white">
-              <option value="">Todos los instructores</option>
-              @for(instructor of coursesService.config().users; track instructor._id) {
-                <option [value]="instructor._id">{{ instructor.name }} {{ instructor.surname }}</option>
+            <!-- Botón Eliminar con validación -->
+            @if (canDeleteCourse(course)) {
+            <button (click)="deleteCourse(course)" class="font-medium text-red-400 hover:underline">
+              Eliminar
+            </button>
+            } @else {
+            @if (courseSalesStatus().get(course._id)?.isChecking) {
+            <button disabled class="font-medium text-slate-500 cursor-wait" title="Verificando ventas y estudiantes...">
+              ⏳ Verificando...
+            </button>
+            } @else if (courseSalesStatus().get(course._id)?.hasSales) {
+            <button disabled class="font-medium text-slate-500 cursor-not-allowed"
+              title="No se puede eliminar: tiene ventas registradas">
+              🔒 Bloqueado (Ventas)
+            </button>
+            } @else if (courseSalesStatus().get(course._id)?.hasStudents) {
+            <button disabled class="font-medium text-slate-500 cursor-not-allowed"
+              title="No se puede eliminar: tiene estudiantes inscritos">
+              🔒 Bloqueado (Estudiantes)
+            </button>
+            } @else {
+            <button disabled class="font-medium text-slate-500 cursor-not-allowed"
+              title="No tienes permisos para eliminar este curso">
+              Sin permisos
+            </button>
+            }
+            }
+          </td>
+        </tr>
+        }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Controles de Paginación (Abajo) -->
+  @if (totalPages() > 1) {
+  <div class="flex items-center justify-center gap-4 mt-8">
+    <!-- Botón Anterior -->
+    <button (click)="previousPage()" [disabled]="currentPage() === 1"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+      <span>Anterior</span>
+    </button>
+
+    <!-- Números de página -->
+    <div class="hidden md:flex items-center gap-1">
+      @for (pageNum of pageNumbers(); track pageNum) {
+      @if (typeof pageNum === 'number') {
+      <button (click)="changePage(pageNum)" [class.bg-lime-400]="pageNum === currentPage()"
+        [class.text-slate-900]="pageNum === currentPage()" [class.bg-slate-800]="pageNum !== currentPage()"
+        [class.text-white]="pageNum !== currentPage()"
+        class="min-w-[40px] px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 transition-colors font-medium text-sm">
+        {{ pageNum }}
+      </button>
+      } @else {
+      <span class="px-2 text-slate-500">…</span>
+      }
+      }
+    </div>
+
+    <!-- Botón Siguiente -->
+    <button (click)="nextPage()" [disabled]="currentPage() === totalPages()"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+      <span>Siguiente</span>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+    </button>
+  </div>
+  }
+</div>
+
+<!-- Modal para Crear/Editar Curso -->
+@if (isModalOpen()) {
+<!-- Backdrop -->
+<div (click)="closeModal()" class="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm"></div>
+
+<!-- Modal -->
+<div class="fixed inset-0 z-[101] flex items-center justify-center p-4 overflow-y-auto">
+  <div (click)="$event.stopPropagation()"
+    class="relative w-full max-w-2xl my-8 bg-slate-800 rounded-xl shadow-2xl border border-white/20">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center py-5 px-6 border-b border-slate-700 bg-slate-800 rounded-t-xl">
+      <h3 class="text-xl font-bold text-white">{{ isEditing() ? 'Editar Curso' : 'Nuevo Curso' }}</h3>
+      <!-- ✨ NUEVO BOTÓN DE CERRAR ✨ -->
+      <button (click)="closeModal()" type="button"
+        class="text-gray-400 bg-transparent hover:bg-slate-700 hover:text-white rounded-lg text-sm p-1.5 inline-flex items-center transition-colors">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd"
+            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+            clip-rule="evenodd"></path>
+        </svg>
+        <span class="sr-only">Cerrar modal</span>
+      </button>
+    </div>
+
+    <!-- Body con scroll -->
+    <div class="max-h-[60vh] overflow-y-auto p-6">
+      <form id="course-form" class="space-y-4" [formGroup]="courseForm" (ngSubmit)="onSubmit()">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="title" class="block mb-2 text-sm font-medium text-gray-300">Título del curso</label>
+            <input type="text" id="title" formControlName="title"
+              class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500"
+              required>
+          </div>
+          <div>
+            <label for="subtitle" class="block mb-2 text-sm font-medium text-gray-300">Subtítulo</label>
+            <input type="text" id="subtitle" formControlName="subtitle"
+              class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500"
+              required>
+          </div>
+          <div>
+            <label for="categorie" class="block mb-2 text-sm font-medium text-gray-300">Categoría</label>
+            <select id="categorie" formControlName="categorie"
+              class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500"
+              required>
+              <option value="" disabled>Selecciona una categoría</option>
+              @for(cat of coursesService.config().categories; track cat._id) {
+              <option [value]="cat._id">{{ cat.title }}</option>
               }
             </select>
           </div>
-        }
-
-        <!-- Botón para limpiar filtros -->
-        @if (searchTerm() || categoryFilter() || instructorFilter()) {
-          <button
-            (click)="clearAllFilters()"
-            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Limpiar Filtros
-          </button>
-        }
-      </div>
-
-      <!-- Indicador de filtros activos -->
-      @if (searchTerm() || categoryFilter() || instructorFilter()) {
-        <div class="mt-4 p-3 bg-slate-900/50 rounded-lg border border-slate-700">
-          <div class="flex flex-wrap items-center gap-2 text-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-lime-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            <span class="text-slate-300 font-medium">Filtrando por:</span>
-            @if (searchTerm()) {
-              <span class="px-3 py-1.5 bg-lime-500/20 text-lime-300 rounded-full border border-lime-500/30 font-medium">
-                🔍 "{{ searchTerm() }}"
-              </span>
+          <div>
+            <label for="user" class="block mb-2 text-sm font-medium text-gray-300">Instructor</label>
+            <select id="user" formControlName="user"
+              class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500 disabled:bg-slate-900 disabled:text-gray-400"
+              required>
+              <option value="" disabled>Selecciona un instructor</option>
+              @for(instructor of coursesService.config().users; track instructor._id) {
+              <option [value]="instructor._id">{{ instructor.name }} {{ instructor.surname }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label for="level" class="block mb-2 text-sm font-medium text-gray-300">Nivel</label>
+            <select id="level" formControlName="level"
+              class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500"
+              required>
+              <option value="Basico">Básico</option>
+              <option value="Intermedio">Intermedio</option>
+              <option value="Avanzado">Avanzado</option>
+            </select>
+          </div>
+          <div>
+            <label for="idioma" class="block mb-2 text-sm font-medium text-gray-300">Idioma</label>
+            <select id="idioma" formControlName="idioma"
+              class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500"
+              required>
+              <option value="Español">Español</option>
+              <option value="Inglés">Inglés</option>
+            </select>
+          </div>
+          <!-- Campo de Estado - Solo para Admins -->
+          @if (authService.user()?.rol === 'admin') {
+          <div>
+            <label for="state" class="block mb-2 text-sm font-medium text-gray-300">Estado del Curso</label>
+            <select id="state" formControlName="state"
+              class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500">
+              <option [ngValue]="1">Borrador</option>
+              <option [ngValue]="2">Público</option>
+              <option [ngValue]="3">Anulado</option>
+            </select>
+          </div>
+          }
+          <div>
+            <label for="price_mxn" class="block mb-2 text-sm font-medium text-gray-300">Precio (MXN)</label>
+            <div (click)="showFreeCourseMessage()">
+              <input type="number" id="price_mxn" formControlName="price_mxn"
+                class="border text-sm rounded-lg block w-full p-2.5 bg-slate-900 border-slate-700 placeholder-gray-400 text-slate-500 cursor-not-allowed"
+                readonly>
+            </div>
+          </div>
+          <!-- Campo: Es Gratuito (Checkbox) -->
+          <div class="md:col-span-2">
+            <div (click)="showFreeCourseMessage()"
+              class="flex items-center space-x-3 p-4 bg-lime-500/5 rounded-lg border border-lime-500/20 cursor-not-allowed">
+              <input type="checkbox" id="isFree" formControlName="isFree"
+                class="w-5 h-5 text-lime-500 bg-slate-700 border-slate-600 rounded focus:ring-lime-500 focus:ring-2 cursor-not-allowed">
+              <label for="isFree" class="text-white font-medium cursor-pointer select-none">
+                🎁 Este curso es <span class="text-lime-400">GRATUITO</span>
+              </label>
+            </div>
+            @if (courseForm.get('isFree')?.value) {
+            <div class="mt-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <p class="text-green-400 text-sm">
+                ✅ El precio se mostrará como <strong>$0 MXN</strong> o <strong>GRATUITO</strong>
+              </p>
+            </div>
             }
-            @if (categoryFilter()) {
-              <span class="px-3 py-1.5 bg-cyan-500/20 text-cyan-300 rounded-full border border-cyan-500/30 font-medium">
-                📂 Categoría: {{ selectedCategoryName() }}
-              </span>
+          </div>
+          <div class="md:col-span-2">
+            <label for="description" class="block mb-2 text-sm font-medium text-gray-300">Descripción</label>
+            <textarea id="description" formControlName="description" rows="3"
+              class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500"></textarea>
+          </div>
+          <div class="md:col-span-2">
+            <label for="portada" class="block mb-2 text-sm font-medium text-gray-300">Imagen de Portada</label>
+            <input (change)="onFileSelected($event)"
+              class="block w-full text-sm border rounded-lg cursor-pointer text-gray-400 focus:outline-none bg-slate-700 border-slate-600 placeholder-gray-400"
+              id="portada" type="file" accept="image/*">
+            @if (imagePreview()) {
+            <div class="mt-4">
+              <img [src]="imagePreview()" alt="Vista previa" class="w-full h-40 object-cover rounded-lg">
+            </div>
             }
-            @if (instructorFilter() && authService.user()?.rol === 'admin') {
-              <span class="px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30 font-medium">
-                👨‍🏫 Instructor: {{ selectedInstructorName() }}
-              </span>
-            }
-            <span class="text-slate-400 ml-2">• {{ filteredCourses().length }} resultado(s)</span>
           </div>
         </div>
-      }
+      </form>
     </div>
 
-    <!-- Controles de Paginación y Selector -->
-    @if (filteredCourses().length > 0) {
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 my-6">
-        <div class="text-sm text-slate-400">
-          Mostrando {{ (currentPage() - 1) * itemsPerPage() + 1 }} -
-          {{ Math.min(currentPage() * itemsPerPage(), filteredCourses().length) }}
-          de {{ filteredCourses().length }} cursos
-        </div>
-        <div class="flex items-center gap-2">
-          <label for="items-per-page" class="text-sm text-slate-400">Mostrar:</label>
-          <select id="items-per-page" [value]="itemsPerPage()" (change)="changePerPage(+$any($event.target).value)" class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-1.5 focus:ring-lime-400 focus:border-lime-400">
-            <option [value]="10">10</option>
-            <option [value]="15">15</option>
-            <option [value]="20">20</option>
-          </select>
-        </div>
-      </div>
-    }
-
-    <!-- Tabla de Cursos -->
-    <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-white/10">
-      <table class="w-full text-sm text-left text-gray-400">
-        <thead class="text-xs uppercase bg-slate-900 text-gray-400">
-          <tr>
-            <th scope="col" class="px-6 py-3">Portada</th>
-            <th scope="col" class="px-6 py-3">Título</th>
-            <th scope="col" class="px-6 py-3">Categoría</th>
-            <th scope="col" class="px-6 py-3">Instructor</th>
-            <th scope="col" class="px-6 py-3">Precio</th>
-            <th scope="col" class="px-6 py-3 text-right">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          @if (coursesService.isLoadingList()) {
-            <tr class="border-b bg-slate-800/50 border-gray-700">
-              <td colspan="6" class="px-6 py-8 text-center text-gray-500">Cargando cursos...</td>
-            </tr>
-          } @else if (paginatedCourses().length === 0 && (searchTerm() || categoryFilter() || instructorFilter())) {
-            <tr class="border-b bg-slate-800/50 border-gray-700">
-              <td colspan="6" class="px-6 py-8 text-center text-slate-500">No se encontraron cursos con los filtros aplicados.</td>
-            </tr>
-          } @else if (paginatedCourses().length === 0) {
-            <tr class="border-b bg-slate-800/50 border-gray-700">
-              <td colspan="6" class="px-6 py-8 text-center text-slate-500">No se encontraron cursos.</td>
-            </tr>
-          } @else {
-          <!-- Bucle actualizado para usar los cursos paginados -->
-          @for (course of paginatedCourses(); track course._id) {
-              <tr class="border-b bg-slate-800/50 border-gray-700 hover:bg-slate-700/50">
-                <td class="px-6 py-4 align-middle">
-                  <img [src]="buildImageUrl(course.imagen)" alt="{{ course.title }}" class="w-24 h-14 object-cover rounded-md">
-                </td>
-                <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white align-middle">
-                  {{ course.title }}
-                </th>
-                <td class="px-6 py-4 align-middle">{{ course.categorie.title }}</td>
-                <td class="px-6 py-4 align-middle">{{ course.user.name }} {{ course.user.surname }}</td>
-                <!-- Precio (con indicador de gratuito) -->
-                <td class="px-6 py-4 whitespace-nowrap align-middle">
-                  @if (course.isFree) {
-                    <span class="inline-flex items-center px-3 py-1 text-xs font-medium text-green-400 bg-green-500/10 border border-green-500/30 rounded-full">
-                      🎁 GRATUITO
-                    </span>
-                  } @else {
-                    <span class="text-white font-semibold">${{ course.price_usd }} USD</span>
-                  }
-                </td>
-                <td class="px-6 py-4 text-right space-x-2 align-middle">
-                  <button (click)="switchToContentView(course)" class="font-medium text-cyan-400 hover:underline">Contenido</button>
-                  <button (click)="openEditModal(course)" class="font-medium text-lime-400 hover:underline">Editar</button>
-
-                  <!-- Botón Eliminar con validación -->
-                  @if (canDeleteCourse(course)) {
-                    <button (click)="deleteCourse(course)" class="font-medium text-red-400 hover:underline">
-                      Eliminar
-                    </button>
-                  } @else {
-                    @if (courseSalesStatus().get(course._id)?.isChecking) {
-                      <button disabled class="font-medium text-slate-500 cursor-wait" title="Verificando ventas y estudiantes...">
-                        ⏳ Verificando...
-                      </button>
-                    } @else if (courseSalesStatus().get(course._id)?.hasSales) {
-                      <button disabled class="font-medium text-slate-500 cursor-not-allowed" title="No se puede eliminar: tiene ventas registradas">
-                        🔒 Bloqueado (Ventas)
-                      </button>
-                    } @else if (courseSalesStatus().get(course._id)?.hasStudents) {
-                      <button disabled class="font-medium text-slate-500 cursor-not-allowed" title="No se puede eliminar: tiene estudiantes inscritos">
-                        🔒 Bloqueado (Estudiantes)
-                      </button>
-                    } @else {
-                      <button disabled class="font-medium text-slate-500 cursor-not-allowed" title="No tienes permisos para eliminar este curso">
-                        Sin permisos
-                      </button>
-                    }
-                  }
-                </td>
-              </tr>
-            }
-          }
-        </tbody>
-      </table>
+    <!-- Footer -->
+    <div class="p-4 border-t border-slate-700 bg-slate-800 rounded-b-xl flex gap-3">
+      <button type="button" (click)="closeModal()"
+        class="flex-1 px-5 py-3 rounded-lg border-2 border-slate-600 text-white font-medium hover:bg-slate-700 transition-all">Cancelar</button>
+      <button type="submit" form="course-form" [disabled]="courseForm.invalid"
+        class="flex-1 px-5 py-3 rounded-lg bg-lime-400 hover:bg-lime-500 text-slate-900 font-bold transition-all disabled:bg-slate-600 disabled:text-slate-400 disabled:cursor-not-allowed disabled:opacity-50">{{
+        isEditing() ? 'Guardar Cambios' : 'Crear Curso' }}</button>
     </div>
-
-    <!-- Controles de Paginación (Abajo) -->
-    @if (totalPages() > 1) {
-      <div class="flex items-center justify-center gap-4 mt-8">
-        <!-- Botón Anterior -->
-        <button (click)="previousPage()" [disabled]="currentPage() === 1"
-                class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-          <span>Anterior</span>
-        </button>
-
-        <!-- Números de página -->
-        <div class="hidden md:flex items-center gap-1">
-          @for (pageNum of pageNumbers(); track pageNum) {
-            @if (typeof pageNum === 'number') {
-              <button (click)="changePage(pageNum)"
-                      [class.bg-lime-400]="pageNum === currentPage()"
-                      [class.text-slate-900]="pageNum === currentPage()"
-                      [class.bg-slate-800]="pageNum !== currentPage()"
-                      [class.text-white]="pageNum !== currentPage()"
-                      class="min-w-[40px] px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 transition-colors font-medium text-sm">
-                {{ pageNum }}
-              </button>
-            } @else {
-              <span class="px-2 text-slate-500">…</span>
-            }
-          }
-        </div>
-
-        <!-- Botón Siguiente -->
-        <button (click)="nextPage()" [disabled]="currentPage() === totalPages()"
-                class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-          <span>Siguiente</span>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-        </button>
-      </div>
-    }
   </div>
-
-  <!-- Modal para Crear/Editar Curso -->
-  @if (isModalOpen()) {
-    <!-- Backdrop -->
-    <div (click)="closeModal()" class="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm"></div>
-
-    <!-- Modal -->
-    <div class="fixed inset-0 z-[101] flex items-center justify-center p-4 overflow-y-auto">
-      <div (click)="$event.stopPropagation()" class="relative w-full max-w-2xl my-8 bg-slate-800 rounded-xl shadow-2xl border border-white/20">
-
-        <!-- Header -->
-        <div class="flex justify-between items-center py-5 px-6 border-b border-slate-700 bg-slate-800 rounded-t-xl">
-          <h3 class="text-xl font-bold text-white">{{ isEditing() ? 'Editar Curso' : 'Nuevo Curso' }}</h3>
-          <!-- ✨ NUEVO BOTÓN DE CERRAR ✨ -->
-          <button (click)="closeModal()" type="button" class="text-gray-400 bg-transparent hover:bg-slate-700 hover:text-white rounded-lg text-sm p-1.5 inline-flex items-center transition-colors">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-            </svg>
-            <span class="sr-only">Cerrar modal</span>
-          </button>
-        </div>
-
-        <!-- Body con scroll -->
-        <div class="max-h-[60vh] overflow-y-auto p-6">
-          <form id="course-form" class="space-y-4" [formGroup]="courseForm" (ngSubmit)="onSubmit()">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label for="title" class="block mb-2 text-sm font-medium text-gray-300">Título del curso</label>
-                <input type="text" id="title" formControlName="title" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500" required>
-              </div>
-              <div>
-                <label for="subtitle" class="block mb-2 text-sm font-medium text-gray-300">Subtítulo</label>
-                <input type="text" id="subtitle" formControlName="subtitle" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500" required>
-              </div>
-              <div>
-                <label for="categorie" class="block mb-2 text-sm font-medium text-gray-300">Categoría</label>
-                <select id="categorie" formControlName="categorie" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500" required>
-                  <option value="" disabled>Selecciona una categoría</option>
-                  @for(cat of coursesService.config().categories; track cat._id) {
-                    <option [value]="cat._id">{{ cat.title }}</option>
-                  }
-                </select>
-              </div>
-              <div>
-                <label for="user" class="block mb-2 text-sm font-medium text-gray-300">Instructor</label>
-                <select id="user" formControlName="user" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500 disabled:bg-slate-900 disabled:text-gray-400" required>
-                  <option value="" disabled>Selecciona un instructor</option>
-                  @for(instructor of coursesService.config().users; track instructor._id) {
-                    <option [value]="instructor._id">{{ instructor.name }} {{ instructor.surname }}</option>
-                  }
-                </select>
-              </div>
-              <div>
-                <label for="level" class="block mb-2 text-sm font-medium text-gray-300">Nivel</label>
-                <select id="level" formControlName="level" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500" required>
-                  <option value="Basico">Básico</option>
-                  <option value="Intermedio">Intermedio</option>
-                  <option value="Avanzado">Avanzado</option>
-                </select>
-              </div>
-              <div>
-                <label for="idioma" class="block mb-2 text-sm font-medium text-gray-300">Idioma</label>
-                <select id="idioma" formControlName="idioma" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500" required>
-                  <option value="Español">Español</option>
-                  <option value="Inglés">Inglés</option>
-                </select>
-              </div>
-              <!-- Campo de Estado - Solo para Admins -->
-              @if (authService.user()?.rol === 'admin') {
-                <div>
-                  <label for="state" class="block mb-2 text-sm font-medium text-gray-300">Estado del Curso</label>
-                  <select id="state" formControlName="state" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500">
-                    <option [ngValue]="1">Borrador</option>
-                    <option [ngValue]="2">Público</option>
-                    <option [ngValue]="3">Anulado</option>
-                  </select>
-                </div>
-              }
-              <div>
-                <label for="price_usd" class="block mb-2 text-sm font-medium text-gray-300">Precio (USD)</label>
-                <div (click)="showFreeCourseMessage()">
-                  <input type="number" id="price_usd" formControlName="price_usd" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-900 border-slate-700 placeholder-gray-400 text-slate-500 cursor-not-allowed" readonly>
-                </div>
-              </div>
-              <!-- Campo: Es Gratuito (Checkbox) -->
-              <div class="md:col-span-2">
-                <div (click)="showFreeCourseMessage()" class="flex items-center space-x-3 p-4 bg-lime-500/5 rounded-lg border border-lime-500/20 cursor-not-allowed">
-                  <input
-                    type="checkbox"
-                    id="isFree"
-                    formControlName="isFree"
-                    class="w-5 h-5 text-lime-500 bg-slate-700 border-slate-600 rounded focus:ring-lime-500 focus:ring-2 cursor-not-allowed"
-                  >
-                  <label for="isFree" class="text-white font-medium cursor-pointer select-none">
-                    🎁 Este curso es <span class="text-lime-400">GRATUITO</span>
-                  </label>
-                </div>
-                @if (courseForm.get('isFree')?.value) {
-                  <div class="mt-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                    <p class="text-green-400 text-sm">
-                      ✅ El precio se mostrará como <strong>$0 USD</strong> o <strong>GRATUITO</strong>
-                    </p>
-                  </div>
-                }
-              </div>
-              <div class="md:col-span-2">
-                <label for="description" class="block mb-2 text-sm font-medium text-gray-300">Descripción</label>
-                <textarea id="description" formControlName="description" rows="3" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500"></textarea>
-              </div>
-              <div class="md:col-span-2">
-                <label for="portada" class="block mb-2 text-sm font-medium text-gray-300">Imagen de Portada</label>
-                <input (change)="onFileSelected($event)" class="block w-full text-sm border rounded-lg cursor-pointer text-gray-400 focus:outline-none bg-slate-700 border-slate-600 placeholder-gray-400" id="portada" type="file" accept="image/*">
-                @if (imagePreview()) {
-                  <div class="mt-4">
-                    <img [src]="imagePreview()" alt="Vista previa" class="w-full h-40 object-cover rounded-lg">
-                  </div>
-                }
-              </div>
-            </div>
-          </form>
-        </div>
-
-        <!-- Footer -->
-        <div class="p-4 border-t border-slate-700 bg-slate-800 rounded-b-xl flex gap-3">
-          <button type="button" (click)="closeModal()" class="flex-1 px-5 py-3 rounded-lg border-2 border-slate-600 text-white font-medium hover:bg-slate-700 transition-all">Cancelar</button>
-          <button type="submit" form="course-form" [disabled]="courseForm.invalid" class="flex-1 px-5 py-3 rounded-lg bg-lime-400 hover:bg-lime-500 text-slate-900 font-bold transition-all disabled:bg-slate-600 disabled:text-slate-400 disabled:cursor-not-allowed disabled:opacity-50">{{ isEditing() ? 'Guardar Cambios' : 'Crear Curso' }}</button>
-        </div>
-      </div>
-    </div>
-  }
+</div>
+}
 
 } @else if (viewMode() === 'content' && selectedCourse()) {
-  <!-- VISTA: GESTIÓN DE CONTENIDO DEL CURSO -->
-  <div class="space-y-6">
-    <div class="flex justify-between items-center">
-      <div>
-        <button (click)="switchToListView()" class="text-sm text-lime-400 hover:underline mb-2">← Volver a Cursos</button>
-        <h2 class="text-2xl font-bold text-white">Gestionar Contenido: <span class="font-normal">{{ selectedCourse()?.title }}</span></h2>
-      </div>
-      <button (click)="openCreateSectionModal()" class="h-10 px-5 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition">
-        Crear Sección
-      </button>
+<!-- VISTA: GESTIÓN DE CONTENIDO DEL CURSO -->
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <div>
+      <button (click)="switchToListView()" class="text-sm text-lime-400 hover:underline mb-2">← Volver a Cursos</button>
+      <h2 class="text-2xl font-bold text-white">Gestionar Contenido: <span class="font-normal">{{
+          selectedCourse()?.title }}</span></h2>
     </div>
-
-    <!-- Tabla de Secciones -->
-    <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-white/10">
-      <table class="w-full text-sm text-left text-gray-400">
-        <thead class="text-xs uppercase bg-slate-900 text-gray-400">
-          <tr>
-            <th scope="col" class="px-6 py-3">Título de la Sección</th>
-            <th scope="col" class="px-6 py-3">Clases</th>
-            <th scope="col" class="px-6 py-3 text-right">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          @if (coursesService.isLoadingSections()) {
-            <tr class="border-b bg-slate-800/50 border-gray-700">
-              <td colspan="3" class="px-6 py-8 text-center text-gray-500">Cargando secciones...</td>
-            </tr>
-          } @else if (coursesService.sections().length === 0) {
-            <tr class="border-b bg-slate-800/50 border-gray-700">
-              <td colspan="3" class="px-6 py-8 text-center text-gray-500">No hay secciones en este curso. ¡Crea la primera!</td>
-            </tr>
-          } @else {
-            @for (section of coursesService.sections(); track section._id) {
-              <tr class="border-b bg-slate-800/50 border-gray-700 hover:bg-slate-700/50">
-                <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white align-middle">{{ section.title }}</th>
-                <td class="px-6 py-4 align-middle">{{ section.num_clases }}</td>
-                <td class="px-6 py-4 text-right space-x-2 align-middle">
-                  <button (click)="switchToClassesView(section)" class="font-medium text-cyan-400 hover:underline">Gestionar Clases</button>
-                  <button (click)="openEditSectionModal(section)" class="font-medium text-lime-400 hover:underline">Editar</button>
-                  <button (click)="deleteSection(section._id)" class="font-medium text-red-400 hover:underline">Eliminar</button>
-                </td>
-              </tr>
-            }
-          }
-        </tbody>
-      </table>
-    </div>
+    <button (click)="openCreateSectionModal()"
+      class="h-10 px-5 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition">
+      Crear Sección
+    </button>
   </div>
 
-  <!-- Modal para Crear/Editar Sección -->
-  <div (click)="closeSectionModal()" [class.hidden]="!isSectionModalOpen()" class="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm"></div>
-  <div id="section-modal" tabindex="-1" aria-hidden="true" [class.hidden]="!isSectionModalOpen()" class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-modal md:h-full flex">
-    <div class="relative p-4 w-full max-w-md h-full md:h-auto">
-      <div class="relative rounded-lg shadow-xl bg-slate-800 border border-white/10">
-        <!-- Header -->
-        <div class="flex justify-between items-center py-6 px-6 lg:px-8 border-b border-slate-700">
-          <h3 class="text-xl font-medium text-white">{{ isEditingSection() ? 'Editar Sección' : 'Nueva Sección' }}</h3>
-          <button (click)="closeSectionModal()" type="button" class="text-gray-400 bg-transparent hover:bg-slate-700 hover:text-white rounded-lg text-sm p-1.5 -mr-2 inline-flex items-center transition-colors">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-            <span class="sr-only">Cerrar modal</span>
-          </button>
-        </div>
-        <!-- Body -->
-        <div class="py-6 px-6 lg:px-8">
-          <form class="space-y-6" [formGroup]="sectionForm" (ngSubmit)="onSectionSubmit()">
-            <div>
-              <label for="section-title" class="block mb-2 text-sm font-medium text-gray-300">Título de la sección</label>
-              <input type="text" id="section-title" formControlName="title" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500" required>
-            </div>
-            <button type="submit" [disabled]="sectionForm.invalid" class="w-full text-slate-900 bg-lime-400 hover:bg-lime-500 focus:ring-4 focus:outline-none focus:ring-lime-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:bg-slate-600 disabled:cursor-not-allowed">
-              {{ isEditingSection() ? 'Guardar Cambios' : 'Crear Sección' }}
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-} @else if (viewMode() === 'classes' && selectedSection()) {
-  <!-- NUEVA VISTA: GESTIÓN DE CLASES DE LA SECCIÓN -->
-  <div class="space-y-6">
-    <div class="flex justify-between items-center">
-      <div>
-        <button (click)="selectedCourse() && switchToContentView(selectedCourse()!)" class="text-sm text-lime-400 hover:underline mb-2">← Volver a Secciones</button>
-        <h2 class="text-2xl font-bold text-white">Gestionar Clases: <span class="font-normal">{{ selectedSection()?.title }}</span></h2>
-      </div>
-      <button (click)="openCreateClassModal()" class="h-10 px-5 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition">
-        Crear Clase
-      </button>
-    </div>
-
-    <!-- Aquí irá la tabla o lista de clases para la sección seleccionada -->
-    <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-white/10">
-      <table class="w-full text-sm text-left text-gray-400">
-        <thead class="text-xs uppercase bg-slate-900 text-gray-400">
-          <tr>
-            <th scope="col" class="px-4 py-3"></th> <!-- Columna para el drag handle -->
-            <th scope="col" class="px-6 py-3">Título de la Clase</th>
-            <th scope="col" class="px-6 py-3">Descripción</th>
-            <th scope="col" class="px-6 py-3">Video</th>
-            <th scope="col" class="px-6 py-3">Duración</th>
-            <th scope="col" class="px-6 py-3 text-right">Acciones</th>
-          </tr>
-        </thead>
-        <tbody cdkDropList [cdkDropListData]="coursesService.classes()" (cdkDropListDropped)="dropClass($event)">
-          @if (coursesService.isLoadingClasses()) {
-            <tr class="border-b bg-slate-800/50 border-gray-700">
-              <td colspan="6" class="px-6 py-8 text-center text-gray-500">Cargando clases...</td>
-            </tr>
-          } @else if (coursesService.classes().length === 0) {
-            <tr class="border-b bg-slate-800/50 border-gray-700">
-              <td colspan="6" class="px-6 py-8 text-center text-gray-500">No hay clases en esta sección. ¡Crea la primera!</td>
-            </tr>
-          } @else {
-            @for (clase of coursesService.classes(); track clase._id; let i = $index) {
-              <tr cdkDrag [cdkDragData]="clase" class="border-b bg-slate-800/50 border-gray-700 hover:bg-slate-700/50">
-                <td cdkDragHandle class="px-4 py-4 cursor-move text-gray-500 hover:text-white w-12 align-middle">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>
-                </td>
-                <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white align-middle">{{ clase.title }}</th>
-                <td class="px-6 py-4 text-gray-400 line-clamp-1 align-middle">{{ clase.description || 'Sin descripción' }}</td>
-                <td class="px-6 py-4 align-middle">
-                  @if (clase.video_platform && clase.video_id) {
-                    @if (clase.video_platform === 'youtube') {
-                      <a [href]="'https://www.youtube.com/watch?v=' + clase.video_id" target="_blank" class="text-red-400 hover:underline text-xs flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                        </svg>
-                        YouTube
-                      </a>
-                    } @else {
-                      <a [href]="'https://player.vimeo.com/video/' + clase.video_id" target="_blank" class="text-cyan-400 hover:underline text-xs flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M23.977 6.416c-.105 2.338-1.739 5.543-4.894 9.609-3.268 4.247-6.026 6.37-8.29 6.37-1.409 0-2.578-1.294-3.553-3.881L5.322 11.4C4.603 8.816 3.834 7.522 3.01 7.522c-.179 0-.806.378-1.881 1.132L0 7.197c1.185-1.044 2.351-2.084 3.501-3.128C5.08 2.701 6.266 1.984 7.055 1.91c1.867-.18 3.016 1.1 3.447 3.838.465 2.953.789 4.789.971 5.507.539 2.45 1.131 3.674 1.776 3.674.502 0 1.256-.796 2.265-2.385 1.004-1.589 1.54-2.797 1.612-3.628.144-1.371-.395-2.061-1.614-2.061-.574 0-1.167.121-1.777.391 1.186-3.868 3.434-5.757 6.762-5.637 2.473.06 3.628 1.664 3.493 4.797l-.013.01z"/>
-                        </svg>
-                        Vimeo
-                      </a>
-                    }
-                  } @else if (clase.vimeo_id) {
-                    <!-- Soporte legacy para vimeo_id -->
-                    <a [href]="'https://player.vimeo.com/video/' + clase.vimeo_id" target="_blank" class="text-cyan-400 hover:underline text-xs flex items-center gap-1">
-                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M23.977 6.416c-.105 2.338-1.739 5.543-4.894 9.609-3.268 4.247-6.026 6.37-8.29 6.37-1.409 0-2.578-1.294-3.553-3.881L5.322 11.4C4.603 8.816 3.834 7.522 3.01 7.522c-.179 0-.806.378-1.881 1.132L0 7.197c1.185-1.044 2.351-2.084 3.501-3.128C5.08 2.701 6.266 1.984 7.055 1.91c1.867-.18 3.016 1.1 3.447 3.838.465 2.953.789 4.789.971 5.507.539 2.45 1.131 3.674 1.776 3.674.502 0 1.256-.796 2.265-2.385 1.004-1.589 1.54-2.797 1.612-3.628.144-1.371-.395-2.061-1.614-2.061-.574 0-1.167.121-1.777.391 1.186-3.868 3.434-5.757 6.762-5.637 2.473.06 3.628 1.664 3.493 4.797l-.013.01z"/>
-                      </svg>
-                      Vimeo
-                    </a>
-                  } @else {
-                    <span class="text-gray-500 text-xs">Sin video</span>
-                  }
-                </td>
-                <td class="px-6 py-4 text-gray-400 align-middle">
-                  {{ formatDuration(clase.time) }}
-                </td>
-                <td class="px-6 py-4 text-right space-x-2 align-middle">
-                  <button (click)="openEditClassModal(clase)" class="font-medium text-lime-400 hover:underline">Editar</button>
-                  <button (click)="deleteClass(clase._id)" class="font-medium text-red-400 hover:underline">Eliminar</button>
-                </td>
-              </tr>
-            }
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Modal para Crear/Editar Clase -->
-  @if (isClassModalOpen()) {
-    <!-- Backdrop -->
-    <div (click)="closeClassModal()" class="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm"></div>
-
-    <!-- Modal Container -->
-    <div class="fixed inset-0 z-[101] flex items-center justify-center p-4 overflow-y-auto">
-      <div (click)="$event.stopPropagation()" class="relative w-full max-w-2xl my-8 bg-slate-800 rounded-xl shadow-2xl border border-white/20">
-        
-        <!-- Header -->
-        <div class="flex justify-between items-center py-5 px-6 border-b border-slate-700 bg-slate-800 rounded-t-xl">
-          <h3 class="text-xl font-bold text-white">{{ isEditingClass() ? 'Editar Clase' : 'Nueva Clase' }}</h3>
-          <button (click)="closeClassModal()" type="button" class="text-gray-400 bg-transparent hover:bg-slate-700 hover:text-white rounded-lg text-sm p-1.5 inline-flex items-center transition-colors">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+  <!-- Tabla de Secciones -->
+  <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-white/10">
+    <table class="w-full text-sm text-left text-gray-400">
+      <thead class="text-xs uppercase bg-slate-900 text-gray-400">
+        <tr>
+          <th scope="col" class="px-4 py-3"></th> <!-- Columna para el drag handle -->
+          <th scope="col" class="px-6 py-3">Título de la Sección</th>
+          <th scope="col" class="px-6 py-3">Clases</th>
+          <th scope="col" class="px-6 py-3 text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody cdkDropList [cdkDropListData]="coursesService.sections()" (cdkDropListDropped)="dropSection($event)">
+        @if (coursesService.isLoadingSections()) {
+        <tr class="border-b bg-slate-800/50 border-gray-700">
+          <td colspan="4" class="px-6 py-8 text-center text-gray-500">Cargando secciones...</td>
+        </tr>
+        } @else if (coursesService.sections().length === 0) {
+        <tr class="border-b bg-slate-800/50 border-gray-700">
+          <td colspan="4" class="px-6 py-8 text-center text-gray-500">No hay secciones en este curso. ¡Crea la primera!
+          </td>
+        </tr>
+        } @else {
+        @for (section of coursesService.sections(); track section._id) {
+        <tr cdkDrag [cdkDragData]="section" class="border-b bg-slate-800/50 border-gray-700 hover:bg-slate-700/50">
+          <td cdkDragHandle class="px-4 py-4 cursor-move text-gray-500 hover:text-white w-12 align-middle">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
             </svg>
-            <span class="sr-only">Cerrar modal</span>
+          </td>
+          <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white align-middle">{{ section.title }}
+          </th>
+          <td class="px-6 py-4 align-middle">{{ section.num_clases }}</td>
+          <td class="px-6 py-4 text-right space-x-2 align-middle">
+            <button (click)="switchToClassesView(section)" class="font-medium text-cyan-400 hover:underline">Gestionar
+              Clases</button>
+            <button (click)="openEditSectionModal(section)"
+              class="font-medium text-lime-400 hover:underline">Editar</button>
+            <button (click)="deleteSection(section._id)"
+              class="font-medium text-red-400 hover:underline">Eliminar</button>
+          </td>
+        </tr>
+        }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal para Crear/Editar Sección -->
+<div (click)="closeSectionModal()" [class.hidden]="!isSectionModalOpen()"
+  class="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm"></div>
+<div id="section-modal" tabindex="-1" aria-hidden="true" [class.hidden]="!isSectionModalOpen()"
+  class="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-modal md:h-full flex">
+  <div class="relative p-4 w-full max-w-md h-full md:h-auto">
+    <div class="relative rounded-lg shadow-xl bg-slate-800 border border-white/10">
+      <!-- Header -->
+      <div class="flex justify-between items-center py-6 px-6 lg:px-8 border-b border-slate-700">
+        <h3 class="text-xl font-medium text-white">{{ isEditingSection() ? 'Editar Sección' : 'Nueva Sección' }}</h3>
+        <button (click)="closeSectionModal()" type="button"
+          class="text-gray-400 bg-transparent hover:bg-slate-700 hover:text-white rounded-lg text-sm p-1.5 -mr-2 inline-flex items-center transition-colors">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clip-rule="evenodd"></path>
+          </svg>
+          <span class="sr-only">Cerrar modal</span>
+        </button>
+      </div>
+      <!-- Body -->
+      <div class="py-6 px-6 lg:px-8">
+        <form class="space-y-6" [formGroup]="sectionForm" (ngSubmit)="onSectionSubmit()">
+          <div>
+            <label for="section-title" class="block mb-2 text-sm font-medium text-gray-300">Título de la sección</label>
+            <input type="text" id="section-title" formControlName="title"
+              class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500"
+              required>
+          </div>
+          <button type="submit" [disabled]="sectionForm.invalid"
+            class="w-full text-slate-900 bg-lime-400 hover:bg-lime-500 focus:ring-4 focus:outline-none focus:ring-lime-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:bg-slate-600 disabled:cursor-not-allowed">
+            {{ isEditingSection() ? 'Guardar Cambios' : 'Crear Sección' }}
           </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+} @else if (viewMode() === 'classes' && selectedSection()) {
+<!-- NUEVA VISTA: GESTIÓN DE CLASES DE LA SECCIÓN -->
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <div>
+      <button (click)="selectedCourse() && switchToContentView(selectedCourse()!)"
+        class="text-sm text-lime-400 hover:underline mb-2">← Volver a Secciones</button>
+      <h2 class="text-2xl font-bold text-white">Gestionar Clases: <span class="font-normal">{{ selectedSection()?.title
+          }}</span></h2>
+    </div>
+    <button (click)="openCreateClassModal()"
+      class="h-10 px-5 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition">
+      Crear Clase
+    </button>
+  </div>
+
+  <!-- Aquí irá la tabla o lista de clases para la sección seleccionada -->
+  <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-white/10">
+    <table class="w-full text-sm text-left text-gray-400">
+      <thead class="text-xs uppercase bg-slate-900 text-gray-400">
+        <tr>
+          <th scope="col" class="px-4 py-3"></th> <!-- Columna para el drag handle -->
+          <th scope="col" class="px-6 py-3">Título de la Clase</th>
+          <th scope="col" class="px-6 py-3">Descripción</th>
+          <th scope="col" class="px-6 py-3">Video</th>
+          <th scope="col" class="px-6 py-3">Duración</th>
+          <th scope="col" class="px-6 py-3 text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody cdkDropList [cdkDropListData]="coursesService.classes()" (cdkDropListDropped)="dropClass($event)">
+        @if (coursesService.isLoadingClasses()) {
+        <tr class="border-b bg-slate-800/50 border-gray-700">
+          <td colspan="6" class="px-6 py-8 text-center text-gray-500">Cargando clases...</td>
+        </tr>
+        } @else if (coursesService.classes().length === 0) {
+        <tr class="border-b bg-slate-800/50 border-gray-700">
+          <td colspan="6" class="px-6 py-8 text-center text-gray-500">No hay clases en esta sección. ¡Crea la primera!
+          </td>
+        </tr>
+        } @else {
+        @for (clase of coursesService.classes(); track clase._id; let i = $index) {
+        <tr cdkDrag [cdkDragData]="clase" class="border-b bg-slate-800/50 border-gray-700 hover:bg-slate-700/50">
+          <td cdkDragHandle class="px-4 py-4 cursor-move text-gray-500 hover:text-white w-12 align-middle">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+          </td>
+          <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-white align-middle">{{ clase.title }}</th>
+          <td class="px-6 py-4 text-gray-400 line-clamp-1 align-middle">{{ clase.description || 'Sin descripción' }}
+          </td>
+          <td class="px-6 py-4 align-middle">
+            @if (clase.video_platform && clase.video_id) {
+            @if (clase.video_platform === 'youtube') {
+            <a [href]="'https://www.youtube.com/watch?v=' + clase.video_id" target="_blank"
+              class="text-red-400 hover:underline text-xs flex items-center gap-1">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+              </svg>
+              YouTube
+            </a>
+            } @else {
+            <a [href]="'https://player.vimeo.com/video/' + clase.video_id" target="_blank"
+              class="text-cyan-400 hover:underline text-xs flex items-center gap-1">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M23.977 6.416c-.105 2.338-1.739 5.543-4.894 9.609-3.268 4.247-6.026 6.37-8.29 6.37-1.409 0-2.578-1.294-3.553-3.881L5.322 11.4C4.603 8.816 3.834 7.522 3.01 7.522c-.179 0-.806.378-1.881 1.132L0 7.197c1.185-1.044 2.351-2.084 3.501-3.128C5.08 2.701 6.266 1.984 7.055 1.91c1.867-.18 3.016 1.1 3.447 3.838.465 2.953.789 4.789.971 5.507.539 2.45 1.131 3.674 1.776 3.674.502 0 1.256-.796 2.265-2.385 1.004-1.589 1.54-2.797 1.612-3.628.144-1.371-.395-2.061-1.614-2.061-.574 0-1.167.121-1.777.391 1.186-3.868 3.434-5.757 6.762-5.637 2.473.06 3.628 1.664 3.493 4.797l-.013.01z" />
+              </svg>
+              Vimeo
+            </a>
+            }
+            } @else if (clase.vimeo_id) {
+            <!-- Soporte legacy para vimeo_id -->
+            <a [href]="'https://player.vimeo.com/video/' + clase.vimeo_id" target="_blank"
+              class="text-cyan-400 hover:underline text-xs flex items-center gap-1">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M23.977 6.416c-.105 2.338-1.739 5.543-4.894 9.609-3.268 4.247-6.026 6.37-8.29 6.37-1.409 0-2.578-1.294-3.553-3.881L5.322 11.4C4.603 8.816 3.834 7.522 3.01 7.522c-.179 0-.806.378-1.881 1.132L0 7.197c1.185-1.044 2.351-2.084 3.501-3.128C5.08 2.701 6.266 1.984 7.055 1.91c1.867-.18 3.016 1.1 3.447 3.838.465 2.953.789 4.789.971 5.507.539 2.45 1.131 3.674 1.776 3.674.502 0 1.256-.796 2.265-2.385 1.004-1.589 1.54-2.797 1.612-3.628.144-1.371-.395-2.061-1.614-2.061-.574 0-1.167.121-1.777.391 1.186-3.868 3.434-5.757 6.762-5.637 2.473.06 3.628 1.664 3.493 4.797l-.013.01z" />
+              </svg>
+              Vimeo
+            </a>
+            } @else {
+            <span class="text-gray-500 text-xs">Sin video</span>
+            }
+          </td>
+          <td class="px-6 py-4 text-gray-400 align-middle">
+            {{ formatDuration(clase.time) }}
+          </td>
+          <td class="px-6 py-4 text-right space-x-2 align-middle">
+            <button (click)="openEditClassModal(clase)"
+              class="font-medium text-lime-400 hover:underline">Editar</button>
+            <button (click)="deleteClass(clase._id)" class="font-medium text-red-400 hover:underline">Eliminar</button>
+          </td>
+        </tr>
+        }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal para Crear/Editar Clase -->
+@if (isClassModalOpen()) {
+<!-- Backdrop -->
+<div (click)="closeClassModal()" class="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm"></div>
+
+<!-- Modal Container -->
+<div class="fixed inset-0 z-[101] flex items-center justify-center p-4 overflow-y-auto">
+  <div (click)="$event.stopPropagation()"
+    class="relative w-full max-w-2xl my-8 bg-slate-800 rounded-xl shadow-2xl border border-white/20">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center py-5 px-6 border-b border-slate-700 bg-slate-800 rounded-t-xl">
+      <h3 class="text-xl font-bold text-white">{{ isEditingClass() ? 'Editar Clase' : 'Nueva Clase' }}</h3>
+      <button (click)="closeClassModal()" type="button"
+        class="text-gray-400 bg-transparent hover:bg-slate-700 hover:text-white rounded-lg text-sm p-1.5 inline-flex items-center transition-colors">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd"
+            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+            clip-rule="evenodd"></path>
+        </svg>
+        <span class="sr-only">Cerrar modal</span>
+      </button>
+    </div>
+
+    <!-- Body con scroll -->
+    <div class="max-h-[60vh] overflow-y-auto p-6">
+      <form id="class-form" class="space-y-6" [formGroup]="classForm" (ngSubmit)="onClassSubmit()">
+        <div>
+          <label for="class-title" class="block mb-2 text-sm font-medium text-gray-300">Título de la clase</label>
+          <input type="text" id="class-title" formControlName="title"
+            class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500"
+            required>
         </div>
 
-        <!-- Body con scroll -->
-        <div class="max-h-[60vh] overflow-y-auto p-6">
-          <form id="class-form" class="space-y-6" [formGroup]="classForm" (ngSubmit)="onClassSubmit()">
-            <div>
-              <label for="class-title" class="block mb-2 text-sm font-medium text-gray-300">Título de la clase</label>
-              <input type="text" id="class-title" formControlName="title" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500" required>
-            </div>
-            
-            <div>
-              <label for="class-description" class="block mb-2 text-sm font-medium text-gray-300">Descripción (opcional)</label>
-              <textarea id="class-description" formControlName="description" rows="4" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500"></textarea>
-            </div>
-            
-            <div>
-              <label for="video-platform" class="block mb-2 text-sm font-medium text-gray-300">🎬 Plataforma de Video</label>
-              <select id="video-platform" formControlName="video_platform" class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500">
-                <option value="vimeo">Vimeo</option>
-                <option value="youtube">YouTube</option>
-              </select>
-            </div>
-            
-            <div>
-              <label for="video-link" class="block mb-2 text-sm font-medium text-gray-300">
-                🔗 Enlace del video ({{ classForm.get('video_platform')?.value === 'youtube' ? 'YouTube' : 'Vimeo' }})
-              </label>
-              <input
-                type="url"
-                id="video-link"
-                formControlName="video_link"
-                [placeholder]="classForm.get('video_platform')?.value === 'youtube'
+        <div>
+          <label for="class-description" class="block mb-2 text-sm font-medium text-gray-300">Descripción
+            (opcional)</label>
+          <textarea id="class-description" formControlName="description" rows="4"
+            class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500"></textarea>
+        </div>
+
+        <div>
+          <label for="video-platform" class="block mb-2 text-sm font-medium text-gray-300">🎬 Plataforma de
+            Video</label>
+          <select id="video-platform" formControlName="video_platform"
+            class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 text-white focus:ring-lime-500 focus:border-lime-500">
+            <option value="vimeo">Vimeo</option>
+            <option value="youtube">YouTube</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="video-link" class="block mb-2 text-sm font-medium text-gray-300">
+            🔗 Enlace del video ({{ classForm.get('video_platform')?.value === 'youtube' ? 'YouTube' : 'Vimeo' }})
+          </label>
+          <input type="url" id="video-link" formControlName="video_link" [placeholder]="classForm.get('video_platform')?.value === 'youtube'
                   ? 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
                   : 'https://vimeo.com/123456789'"
-                class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500">
-              <p class="text-xs text-gray-500 mt-1">
-                @if (classForm.get('video_platform')?.value === 'youtube') {
-                  Acepta formatos: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/...
-                } @else {
-                  Acepta formatos: vimeo.com/123456789, player.vimeo.com/video/...
-                }
-              </p>
-            </div>
-            
-            <div>
-              <label for="class-time" class="block mb-2 text-sm font-medium text-gray-300">⏱️ Duración (minutos)</label>
-              <div class="relative">
-                <input
-                  type="number"
-                  id="class-time"
-                  [value]="(classForm.get('time')?.value || 0) / 60 | number:'1.0-2'"
-                  class="border text-sm rounded-lg block w-full p-2.5 bg-slate-900 border-slate-700 placeholder-gray-400 text-gray-400 cursor-not-allowed"
-                  readonly>
-                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">min</span>
-              </div>
-              <p class="text-xs text-lime-400 mt-1">
-                ✨ La duración se obtiene automáticamente al pegar el enlace del video
-              </p>
-            </div>
-          </form>
+            class="border text-sm rounded-lg block w-full p-2.5 bg-slate-700 border-slate-600 placeholder-gray-400 text-white focus:ring-lime-500 focus:border-lime-500">
+          <p class="text-xs text-gray-500 mt-1">
+            @if (classForm.get('video_platform')?.value === 'youtube') {
+            Acepta formatos: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/...
+            } @else {
+            Acepta formatos: vimeo.com/123456789, player.vimeo.com/video/...
+            }
+          </p>
         </div>
 
-        <!-- Footer -->
-        <div class="p-4 border-t border-slate-700 bg-slate-800 rounded-b-xl flex gap-3">
-          <button type="button" (click)="closeClassModal()" class="flex-1 px-5 py-3 rounded-lg border-2 border-slate-600 text-white font-medium hover:bg-slate-700 transition-all">
-            Cancelar
-          </button>
-          <button type="submit" form="class-form" [disabled]="classForm.invalid" class="flex-1 px-5 py-3 rounded-lg bg-lime-400 hover:bg-lime-500 text-slate-900 font-bold transition-all disabled:bg-slate-600 disabled:text-slate-400 disabled:cursor-not-allowed disabled:opacity-50">
-            {{ isEditingClass() ? 'Guardar Cambios' : 'Crear Clase' }}
-          </button>
+        <div>
+          <label for="class-time" class="block mb-2 text-sm font-medium text-gray-300">⏱️ Duración (minutos)</label>
+          <div class="relative">
+            <input type="number" id="class-time" [value]="(classForm.get('time')?.value || 0) / 60 | number:'1.0-2'"
+              class="border text-sm rounded-lg block w-full p-2.5 bg-slate-900 border-slate-700 placeholder-gray-400 text-gray-400 cursor-not-allowed"
+              readonly>
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">min</span>
+          </div>
+          <p class="text-xs text-lime-400 mt-1">
+            ✨ La duración se obtiene automáticamente al pegar el enlace del video
+          </p>
         </div>
-      </div>
+      </form>
     </div>
-  }
+
+    <!-- Footer -->
+    <div class="p-4 border-t border-slate-700 bg-slate-800 rounded-b-xl flex gap-3">
+      <button type="button" (click)="closeClassModal()"
+        class="flex-1 px-5 py-3 rounded-lg border-2 border-slate-600 text-white font-medium hover:bg-slate-700 transition-all">
+        Cancelar
+      </button>
+      <button type="submit" form="class-form" [disabled]="classForm.invalid"
+        class="flex-1 px-5 py-3 rounded-lg bg-lime-400 hover:bg-lime-500 text-slate-900 font-bold transition-all disabled:bg-slate-600 disabled:text-slate-400 disabled:cursor-not-allowed disabled:opacity-50">
+        {{ isEditingClass() ? 'Guardar Cambios' : 'Crear Clase' }}
+      </button>
+    </div>
+  </div>
+</div>
+}
 }
 
 <!-- ✅ INICIO: Modal Informativo para Cursos Gratuitos -->
 @if (isInfoModalOpen()) {
-  <!-- Backdrop -->
-  <div (click)="closeInfoModal()" class="fixed inset-0 z-[102] bg-black/70 backdrop-blur-sm"></div>
+<!-- Backdrop -->
+<div (click)="closeInfoModal()" class="fixed inset-0 z-[102] bg-black/70 backdrop-blur-sm"></div>
 
-  <!-- Modal -->
-  <div class="fixed inset-0 z-[103] flex items-center justify-center p-4">
-    <div (click)="$event.stopPropagation()" class="relative w-full max-w-lg bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl border-2 border-lime-400/30">
-      <!-- Contenido del Modal -->
-      <div class="p-8 text-center">
-        <!-- Icono -->
-        <div class="w-16 h-16 mx-auto mb-5 rounded-full bg-lime-400/10 border-2 border-lime-400/30 flex items-center justify-center">
-          <svg class="w-8 h-8 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-        </div>
-
-        <!-- Título -->
-        <h3 class="text-2xl font-bold text-white mb-3">Aviso Importante</h3>
-
-        <!-- Mensaje -->
-        <p class="text-slate-300 leading-relaxed">
-          Por ahora, todos los cursos que utilizan videos de <strong>YouTube</strong> y <strong>Vimeo</strong> se registrarán como <strong>gratuitos</strong>.
-          <br><br>
-          ¡Tenga paciencia mientras trabajamos en la implementación de los cursos de paga!
-        </p>
-
-        <!-- Botón de Cerrar -->
-        <button (click)="closeInfoModal()" type="button" class="mt-8 w-full sm:w-auto px-8 py-3 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition">
-          Entendido
-        </button>
+<!-- Modal -->
+<div class="fixed inset-0 z-[103] flex items-center justify-center p-4">
+  <div (click)="$event.stopPropagation()"
+    class="relative w-full max-w-lg bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl border-2 border-lime-400/30">
+    <!-- Contenido del Modal -->
+    <div class="p-8 text-center">
+      <!-- Icono -->
+      <div
+        class="w-16 h-16 mx-auto mb-5 rounded-full bg-lime-400/10 border-2 border-lime-400/30 flex items-center justify-center">
+        <svg class="w-8 h-8 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
       </div>
+
+      <!-- Título -->
+      <h3 class="text-2xl font-bold text-white mb-3">Aviso Importante</h3>
+
+      <!-- Mensaje -->
+      <p class="text-slate-300 leading-relaxed">
+        Por ahora, todos los cursos que utilizan videos de <strong>YouTube</strong> y <strong>Vimeo</strong> se
+        registrarán como <strong>gratuitos</strong>.
+        <br><br>
+        ¡Tenga paciencia mientras trabajamos en la implementación de los cursos de paga!
+      </p>
+
+      <!-- Botón de Cerrar -->
+      <button (click)="closeInfoModal()" type="button"
+        class="mt-8 w-full sm:w-auto px-8 py-3 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition">
+        Entendido
+      </button>
     </div>
   </div>
+</div>
 }

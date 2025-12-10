@@ -55,8 +55,8 @@ export interface CourseAdmin {
   title: string;
   subtitle: string;
   description?: string;
-  price_usd: number;
-  price_mxn: number;
+  price_mxn: number; // 🔥 Primary currency
+  // price_usd: number; // REMOVED
   isFree?: boolean; // Indica si el curso es gratuito
   categorie: Category; // Objeto Category poblado
   user: User; // Objeto User poblado
@@ -118,10 +118,10 @@ export interface CoursePublic {
   subtitle: string;
   slug: string;
   imagen?: string;
-  price_usd: number; // Precio original USD
+  // price_usd: number; // REMOVED
   price_mxn: number; // Precio original MXN
   isFree?: boolean; // Indica si el curso es gratuito
-  final_price_usd?: number; // Precio con descuento aplicado USD
+  // final_price_usd?: number; // REMOVED
   final_price_mxn?: number; // Precio con descuento aplicado MXN
   level: string;
   idioma: string;
@@ -232,12 +232,12 @@ export interface Project {
   description?: string; // ✅ Opcional (puede no venir del backend en algunas vistas)
   imagen: string;
   url_video?: string;
-  categorie: Category;
-  price_mxn?: number; // ✅ Opcional (campo legacy, ya no requerido)
-  price_usd: number;
+  categorie?: Category | any; // ✅ Flexibilizado para evitar crashes si no viene poblado
+  price_mxn: number; // 🔥 Primary currency
+  // price_usd: number; // REMOVED
   isFree?: boolean; // Indica si el proyecto es gratuito
   final_price_mxn?: number; // Precio con descuento aplicado
-  final_price_usd?: number; // Precio con descuento aplicado
+  // final_price_usd?: number; // REMOVED
   state?: number; // 1: borrador, 2: publico, 3: anulado
   user?: User | string; // ✅ Puede ser objeto User o string (ID)
   files?: ProjectFile[]; // Archivos ZIP adjuntos al proyecto

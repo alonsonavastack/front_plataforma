@@ -14,12 +14,15 @@ import { HttpClient } from '@angular/common/http';
 import { CourseReviewsComponent } from '../../shared/course-reviews/course-reviews.component';
 import { Review } from '../../core/services/review.service';
 
+
 type TabType = 'overview' | 'curriculum' | 'instructor' | 'reviews';
+
+import { MxnCurrencyPipe } from '../../shared/pipes/mxn-currency.pipe';
 
 @Component({
   standalone: true,
   selector: 'app-course-detail',
-  imports: [CommonModule, RouterLink, HeaderComponent, CourseReviewsComponent],
+  imports: [CommonModule, RouterLink, HeaderComponent, CourseReviewsComponent, MxnCurrencyPipe],
   templateUrl: './course-detail.html',
 })
 export class CourseDetailComponent {
@@ -30,6 +33,7 @@ export class CourseDetailComponent {
   private router = inject(Router);
   private sanitizer = inject(DomSanitizer);
   private toast = inject(ToastService);
+
 
   // ✅ Router signals
   private params = toSignal(this.route.paramMap, { initialValue: null });
@@ -74,28 +78,28 @@ export class CourseDetailComponent {
   // ✅ Computed desde resource con tipado correcto
   hasError = this.detailRes.hasError;
   error = this.detailRes.error;
-  
+
   // ✅ Computed con acceso seguro a propiedades
   course = computed<any>(() => {
     const detail = this.detailRes.value();
     return detail ? detail.course : undefined;
   });
-  
+
   reviews = computed<any[]>(() => {
     const detail = this.detailRes.value();
     return detail?.reviews ?? [];
   });
-  
+
   moreFromInstructor = computed<any[]>(() => {
     const detail = this.detailRes.value();
     return detail?.course_instructor ?? [];
   });
-  
+
   relatedCourses = computed<any[]>(() => {
     const detail = this.detailRes.value();
     return detail?.course_relateds ?? [];
   });
-  
+
   studentHasCourse = computed<boolean>(() => {
     const detail = this.detailRes.value();
     return !!detail?.student_have_course;
@@ -143,17 +147,17 @@ export class CourseDetailComponent {
   // precios
   hasDiscount(): boolean {
     const c = this.course();
-    return !!(c?.['discount_active'] && c['final_price_usd'] !== undefined && c['final_price_usd'] < c['price_usd']);
+    return !!(c?.['discount_active'] && c['final_price_mxn'] !== undefined && c['final_price_mxn'] < c['price_mxn']);
   }
 
   priceCurrent(): number {
     const c = this.course();
-    return Number(c?.['final_price_usd'] ?? c?.['price_usd'] ?? 0);
+    return Number(c?.['final_price_mxn'] ?? c?.['price_mxn'] ?? 0);
   }
 
   priceOriginal(): number {
     const c = this.course();
-    return Number(c?.['price_usd'] ?? 0);
+    return Number(c?.['price_mxn'] ?? 0);
   }
 
   discountPercent(): number | null {
@@ -274,6 +278,8 @@ export class CourseDetailComponent {
       }
     });
   }
+
+
 
   reload() {
     this.detailRes.reload();

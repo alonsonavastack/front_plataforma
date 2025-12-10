@@ -1,0 +1,151 @@
+<div class="p-6">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Configuración de Pasarelas de Pago</h1>
+        <p class="text-gray-600 dark:text-gray-400">Gestiona las credenciales y estado de PayPal y Mercado Pago</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
+        <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
+            <li class="mr-2">
+                <button (click)="setTab('paypal')" [class.border-blue-600]="activeTab() === 'paypal'"
+                    [class.text-blue-600]="activeTab() === 'paypal'"
+                    [class.border-transparent]="activeTab() !== 'paypal'"
+                    class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">
+                    PayPal
+                </button>
+            </li>
+            <li class="mr-2">
+                <button (click)="setTab('mercadopago')" [class.border-blue-600]="activeTab() === 'mercadopago'"
+                    [class.text-blue-600]="activeTab() === 'mercadopago'"
+                    [class.border-transparent]="activeTab() !== 'mercadopago'"
+                    class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">
+                    Mercado Pago
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <div *ngIf="isLoading()" class="flex justify-center py-10">
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+    </div>
+
+    <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" *ngIf="!isLoading()">
+
+        <!-- PayPal Settings -->
+        <div *ngIf="activeTab() === 'paypal'" formGroupName="paypal" class="space-y-6">
+            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Activar PayPal</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Habilita o deshabilita PayPal en el checkout</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" formControlName="active" class="sr-only peer">
+                    <div
+                        class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
+                    </div>
+                </label>
+            </div>
+
+            <!-- 🆕 Switch para Instructores -->
+            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Pagos a Instructores</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Permitir que los instructores registren cuentas
+                        de PayPal</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" formControlName="instructorPayoutsActive" class="sr-only peer">
+                    <div
+                        class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
+                    </div>
+                </label>
+            </div>
+
+            <div class="grid gap-6 mb-6 md:grid-cols-2">
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Client ID</label>
+                    <input type="text" formControlName="clientId"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Client Secret</label>
+                    <input type="password" formControlName="clientSecret"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Modo</label>
+                    <select formControlName="mode"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <option value="sandbox">Sandbox (Pruebas)</option>
+                        <option value="live">Live (Producción)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mercado Pago Settings -->
+        <div *ngIf="activeTab() === 'mercadopago'" formGroupName="mercadopago" class="space-y-6">
+            <!-- Activar Mercado Pago -->
+            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Activar Mercado Pago</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Habilita o deshabilita Mercado Pago en el
+                        checkout</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" formControlName="active" class="sr-only peer">
+                    <div
+                        class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
+                    </div>
+                </label>
+            </div>
+
+            <!-- 🆕 Switch para Instructores -->
+            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Pagos a Instructores</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Permitir que los instructores registren cuentas
+                        de Mercado Pago</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" formControlName="instructorPayoutsActive" class="sr-only peer">
+                    <div
+                        class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
+                    </div>
+                </label>
+            </div>
+
+            <div class="grid gap-6 mb-6 md:grid-cols-2">
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Public Key</label>
+                    <input type="text" formControlName="publicKey"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Access Token</label>
+                    <input type="password" formControlName="accessToken"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div *ngIf="successMessage()"
+            class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400"
+            role="alert">
+            <span class="font-medium">¡Éxito!</span> {{ successMessage() }}
+        </div>
+        <div *ngIf="errorMessage()"
+            class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+            <span class="font-medium">Error!</span> {{ errorMessage() }}
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" [disabled]="isSaving()"
+            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50">
+            <span *ngIf="isSaving()">Guardando...</span>
+            <span *ngIf="!isSaving()">Guardar Configuración</span>
+        </button>
+    </form>
+</div>

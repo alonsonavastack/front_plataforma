@@ -414,7 +414,7 @@ export class SalesReportComponent implements OnInit, AfterViewInit {
       data: {
         labels,
         datasets: [{
-          label: 'Ingresos (USD)',
+          label: 'Ingresos (MXN)',
           data,
           borderColor: 'rgb(132, 204, 22)',
           backgroundColor: 'rgba(132, 204, 22, 0.1)',
@@ -429,7 +429,7 @@ export class SalesReportComponent implements OnInit, AfterViewInit {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: (context) => `USD ${context.parsed.y?.toFixed(2) || '0.00'}`
+              label: (context) => `MXN ${context.parsed.y?.toFixed(2) || '0.00'}`
             }
           }
         },
@@ -456,7 +456,7 @@ export class SalesReportComponent implements OnInit, AfterViewInit {
       'Cliente': `${sale.user.name} ${sale.user.surname}`,
       'Email': sale.user.email,
       'Método': sale.paymentMethod || 'N/A',
-      'Monto (USD)': sale.salePrice
+      'Monto (MXN)': sale.salePrice
     }));
 
     const ws = XLSX.utils.json_to_sheet(data);
@@ -491,7 +491,7 @@ export class SalesReportComponent implements OnInit, AfterViewInit {
   }
 
   formatCurrency(amount: number): string {
-    return `USD ${amount.toFixed(2)}`;
+    return `MXN ${amount.toFixed(2)}`;
   }
 
   formatDate(date: Date | string): string {

@@ -15,12 +15,15 @@ export class InstructorPaymentHistoryComponent implements OnInit {
   private instructorPaymentService = inject(InstructorPaymentService);
 
   // Signals
-  payments = signal<Payment[]>([]);
-  isLoading = signal(false);
-  error = signal<string | null>(null);
-  currentPage = signal(1);
-  totalPages = signal(1);
-  totalItems = signal(0);
+  payments = this.instructorPaymentService.paymentHistory;
+  isLoading = this.instructorPaymentService.isLoadingPaymentHistory;
+  error = this.instructorPaymentService.paymentHistoryError;
+
+  pagination = this.instructorPaymentService.paymentHistoryPagination;
+  currentPage = computed(() => this.pagination()?.page || 1);
+  totalPages = computed(() => this.pagination()?.pages || 1);
+  totalItems = computed(() => this.pagination()?.total || 0);
+
   limit = 10;
   expandedPayment = signal<string | null>(null);
 
@@ -32,24 +35,10 @@ export class InstructorPaymentHistoryComponent implements OnInit {
   }
 
   loadPayments(page: number = 1) {
-    this.isLoading.set(true);
-    this.error.set(null);
-    this.currentPage.set(page);
-
-    this.instructorPaymentService.getPaymentHistory(page, this.limit).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.payments.set(response.data);
-          this.totalPages.set(response.pagination.pages);
-          this.totalItems.set(response.pagination.total);
-        }
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        this.error.set(err.error?.message || 'Error al cargar el historial de pagos');
-        this.isLoading.set(false);
-      },
-    });
+    this.instructorPaymentService.setPaymentHistoryPage(page);
+    this.instructorPaymentService.setPaymentHistoryLimit(this.limit);
+    // Explicit reload if necessary, but changing signals usually triggers it.
+    // However, setPaymentHistoryPage updates a signal, which triggers the resource.
   }
 
   toggleExpand(paymentId: string) {
@@ -120,7 +109,7 @@ export class InstructorPaymentHistoryComponent implements OnInit {
     });
   }
 
-  formatCurrency(amount: number, currency: string = 'USD'): string {
+  formatCurrency(amount: number, currency: string = 'MXN'): string {
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
       currency: currency,

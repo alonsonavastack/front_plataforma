@@ -280,8 +280,7 @@
 
               <div>
                 <h3 class="text-base font-semibold text-gray-300 mb-1">Saldo Disponible en Billetera</h3>
-                <p class="text-3xl font-black text-lime-400">\${{ walletBalance() | number:'1.2-2' }} <span
-                    class="text-sm text-gray-400 font-normal">USD</span></p>
+                <p class="text-3xl font-black text-lime-400">{{ walletBalance() | mxnCurrency }} MXN</p>
 
                 <!-- Badge de estado -->
                 @if (walletBalance() >= subtotal()) {
@@ -334,7 +333,9 @@
                 </svg>
                 Total a pagar:
               </span>
-              <span class="text-white font-bold">\${{ subtotal() | number:'1.2-2' }}</span>
+              <div class="flex flex-col items-end">
+                <span class="text-white font-bold">{{ subtotal() | mxnCurrency }} MXN</span>
+              </div>
             </div>
 
             <!-- Monto de Billetera -->
@@ -347,7 +348,9 @@
                 </svg>
                 Saldo de billetera:
               </span>
-              <span class="text-lime-400 font-bold">-\${{ walletAmount() | number:'1.2-2' }}</span>
+              <div class="flex flex-col items-end">
+                <span class="text-lime-400 font-bold">-{{ walletAmount() | mxnCurrency }} MXN</span>
+              </div>
             </div>
 
             <!-- Divisor -->
@@ -356,7 +359,9 @@
             <!-- Restante a Pagar -->
             <div class="flex justify-between items-center">
               <span class="text-white font-bold text-base">Restante a pagar:</span>
-              <span class="text-3xl font-black text-lime-400">\${{ remainingAmount() | number:'1.2-2' }}</span>
+              <div class="flex flex-col items-end">
+                <span class="text-3xl font-black text-lime-400">{{ remainingAmount() | mxnCurrency }} MXN</span>
+              </div>
             </div>
 
             <!-- Badges de Estado del Pago -->
@@ -403,9 +408,9 @@
                 <div class="flex-1">
                   <p class="text-base font-bold text-blue-300">💳 Pago Mixto</p>
                   <p class="text-sm text-blue-200 mt-1">
-                    Billetera: <span class="font-bold">\${{ walletAmount() | number:'1.2-2' }}</span>
+                    Billetera: <span class="font-bold">{{ walletAmount() | mxnCurrency }}</span>
                     <span class="text-blue-300 mx-2">|</span>
-                    Otro método: <span class="font-bold">\${{ remainingAmount() | number:'1.2-2' }}</span>
+                    Otro método: <span class="font-bold">{{ remainingAmount() | mxnCurrency }}</span>
                   </p>
                 </div>
               </div>
@@ -446,7 +451,7 @@
                   </div>
                 </div>
                 <span [class]="'text-sm font-bold flex-shrink-0 ' + getTransactionColor(transaction.type)">
-                  {{ transaction.type === 'credit' ? '+' : '-' }}\${{ transaction.amount | number:'1.2-2' }}
+                  {{ transaction.type === 'credit' ? '+' : '-' }}{{ transaction.amount | mxnCurrency }}
                 </span>
               </div>
               }
@@ -458,9 +463,35 @@
 
         <!-- Métodos de Pago -->
         <div class="bg-slate-800/50 rounded-lg border border-white/10 p-6">
+          <!-- 🎁 NUEVO: Mensaje para productos gratuitos -->
+          @if (isFreeProduct()) {
+          <div
+            class="mb-6 p-5 bg-gradient-to-r from-green-500/10 to-lime-500/10 border-2 border-lime-400/50 rounded-xl">
+            <div class="flex items-center gap-4">
+              <div class="flex-shrink-0">
+                <svg class="w-12 h-12 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                  </path>
+                </svg>
+              </div>
+              <div class="flex-1">
+                <h3 class="text-2xl font-bold text-lime-300 mb-2">🎉 ¡Producto GRATIS!</h3>
+                <p class="text-base text-gray-300">
+                  Este producto no tiene costo. Solo necesitas usar tu <strong class="text-lime-400">billetera
+                    digital</strong> para obtenerlo.
+                  <br>
+                  <span class="text-sm text-gray-400 mt-1 block">💡 Tip: Si no tienes saldo, contáctanos para
+                    agregarlo.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+          }
+
           <h2 class="text-xl font-semibold text-white mb-4">
             @if (useWalletBalance() && remainingAmount() > 0) {
-            Método de Pago Adicional (para \${{ remainingAmount() | number:'1.2-2' }})
+            Método de Pago Adicional (para {{ remainingAmount() | mxnCurrency }})
             } @else if (useWalletBalance() && remainingAmount() === 0) {
             ✅ Pago Completo con Billetera
             } @else {
@@ -471,7 +502,7 @@
           <!-- 🔥 Solo mostrar métodos de pago si hay un saldo restante -->
           @if (remainingAmount() > 0 || !useWalletBalance()) {
           <div class="space-y-3">
-            @for (method of paymentMethods; track method.id) {
+            @for (method of allowedPaymentMethods(); track method.id) {
             <!-- 🔒 VALIDACIÓN CRÍTICA: Deshabilitar wallet si no hay saldo suficiente -->
             @if (method.id === 'wallet') {
             <!-- Botón de billetera - validar saldo -->
@@ -485,7 +516,7 @@
                 <span class="text-2xl">{{ method.icon }}</span>
                 <div class="text-left">
                   <p class="font-medium text-white">{{ method.name }}</p>
-                  <p class="text-xs text-lime-400">Saldo: ${{ walletBalance() | number:'1.2-2' }} USD</p>
+                  <p class="text-xs text-lime-400">Saldo: {{ walletBalance() | mxnCurrency }}</p>
                 </div>
               </div>
               @if (selectedPaymentMethod() === method.id) {
@@ -504,8 +535,8 @@
                 <span class="text-2xl opacity-50">{{ method.icon }}</span>
                 <div class="text-left">
                   <p class="font-medium text-gray-500">{{ method.name }}</p>
-                  <p class="text-xs text-red-400">❌ Saldo insuficiente: ${{ walletBalance() | number:'1.2-2' }} USD
-                    (necesitas ${{ subtotal() | number:'1.2-2' }} USD)</p>
+                  <p class="text-xs text-red-400">❌ Saldo insuficiente: {{ walletBalance() | mxnCurrency }}
+                    (necesitas {{ subtotal() | mxnCurrency }})</p>
                 </div>
               </div>
               <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -646,11 +677,78 @@
           }
         </div>
 
+        <!-- 🔵 MERCADO PAGO INFO -->
+        @if (selectedPaymentMethod() === 'mercadopago') {
+        <div class="mt-4 space-y-4">
+          <div class="p-6 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-2 border-blue-400/50 rounded-xl">
+            <div class="flex items-center gap-3 mb-4">
+              <!-- Logo oficial de Mercado Pago (SVG Inline) -->
+              <svg class="h-8 w-auto bg-white/10 rounded px-1" viewBox="0 0 512 512" fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M98.9 411.7c-17.3 0-28.7-11.4-28.7-28.7V129c0-17.3 11.4-28.7 28.7-28.7h314.2c17.3 0 28.7 11.4 28.7 28.7v254c0 17.3-11.4 28.7-28.7 28.7H98.9z"
+                  fill="#009EE3" />
+                <path
+                  d="M158.5 256c0-15.8 12.8-28.6 28.6-28.6h63.4c15.8 0 28.6 12.8 28.6 28.6v63.4c0 15.8-12.8 28.6-28.6 28.6h-63.4c-15.8 0-28.6-12.8-28.6-28.6V256z"
+                  fill="#FFFFFF" />
+                <path
+                  d="M285.5 192.6h63.4c15.8 0 28.6 12.8 28.6 28.6v63.4c0 15.8-12.8 28.6-28.6 28.6h-63.4c-15.8 0-28.6-12.8-28.6-28.6v-63.4c0-15.8 12.8-28.6 28.6-28.6z"
+                  fill="#FFFFFF" />
+                <path d="M187.1 192.6h161.8c15.8 0 28.6 12.8 28.6 28.6v28.6H158.5v-28.6c0-15.8 12.8-28.6 28.6-28.6z"
+                  fill="#FFFFFF" />
+              </svg>
+              <h3 class="text-lg font-bold text-white">Mercado Pago</h3>
+            </div>
+
+            <div class="space-y-3">
+              <p class="text-sm text-gray-300">
+                Serás redirigido a la plataforma segura de Mercado Pago para completar tu compra.
+                <br><span class="text-xs text-gray-400">(No necesitas tener cuenta para pagar)</span>
+              </p>
+
+              <div class="bg-slate-800/50 rounded-lg p-4">
+                <p class="text-xs text-gray-400 mb-2">Métodos aceptados:</p>
+                <div class="flex flex-wrap gap-2">
+                  <span class="px-2 py-1 bg-slate-700 rounded text-xs text-gray-300">💳 Tarjetas de
+                    Crédito/Débito</span>
+                  <span class="px-2 py-1 bg-slate-700 rounded text-xs text-gray-300">💵 Efectivo (OXXO, 7Eleven)</span>
+                  <span class="px-2 py-1 bg-slate-700 rounded text-xs text-gray-300">🏦 Transferencia SPEI</span>
+                  <span class="px-2 py-1 bg-slate-700 rounded text-xs text-gray-300">💰 Saldo Mercado Pago</span>
+                </div>
+              </div>
+
+              <div
+                class="flex items-center gap-2 text-xs text-blue-300 bg-blue-500/10 p-3 rounded-lg border border-blue-500/20">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                  </path>
+                </svg>
+                <p>Tu pago se procesará de forma 100% segura y encriptada.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        }
+
         <!-- Formulario de información de facturación -->
         <div class="bg-slate-800/50 rounded-lg border border-white/10 p-6">
           <h2 class="text-xl font-semibold text-white mb-4">Información de Facturación</h2>
 
           <form [formGroup]="checkoutForm" class="space-y-4">
+            <!-- 🆕 Selector de País -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">País *</label>
+              <select [value]="selectedCountry()" (change)="selectedCountry.set($any($event.target).value)"
+                class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent">
+                @for (country of countries(); track country.code) {
+                <option [value]="country.code">
+                  {{ country.name }} ({{ country.currency }})
+                </option>
+                }
+              </select>
+            </div>
+
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-2">Nombre Completo *</label>
               <input type="text" formControlName="billingName"
@@ -698,35 +796,86 @@
         <div class="bg-slate-800/50 rounded-lg border border-white/10 p-6 sticky top-4">
           <h2 class="text-xl font-semibold text-white mb-4">Resumen del Pedido</h2>
 
-          <!-- Producto Único -->
-          <div class="space-y-3 mb-6">
-            @if (product(); as prod) {
-            <div class="flex items-start space-x-3 p-3 bg-slate-700/50 rounded-lg">
-              <img [src]="buildImageUrl(prod.imagen)" [alt]="prod.title" class="w-16 h-16 object-cover rounded" />
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-white truncate">{{ prod.title }}</p>
-                <p class="text-xs text-gray-400">{{ prod.subtitle }}</p>
-                <p class="text-xs text-gray-400 capitalize mt-1">{{ prod.type === 'course' ? 'Curso' : 'Proyecto' }}</p>
+          <!-- Card de Producto(s) -->
+          <div class="rounded-2xl border border-white/10 bg-slate-900/50 overflow-hidden">
+            <div class="p-4 border-b border-white/10 bg-white/5">
+              <h2 class="font-semibold text-white">Resumen del pedido</h2>
+            </div>
 
-                <!-- 🔥 PRECIO CON DESCUENTO -->
-                @if (bestDiscount(); as discount) {
-                <div class="flex flex-col mt-1">
-                  <span class="text-xs text-gray-400 line-through">${{ formatPrice(prod.price_usd) }}</span>
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm font-bold text-lime-400">${{ formatPrice(discount.finalPrice) }}</span>
-                    <span class="text-[10px] font-bold bg-lime-400/20 text-lime-400 px-1.5 py-0.5 rounded">
-                      -{{ discount.type_discount === 1 ? discount.discount + '%' : '$' + discount.discount }}
-                    </span>
+            <div class="divide-y divide-white/10">
+              @if (isDirectBuy()) {
+              <!-- ITEM ÚNICO (COMPRA DIRECTA) -->
+              <div class="p-4 flex gap-4">
+                <img [src]="buildImageUrl(product()?.imagen)" class="w-20 h-20 rounded-lg object-cover bg-slate-800"
+                  alt="Imagen del producto">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-4">
+                    <div>
+                      <div class="text-xs text-lime-400 font-medium mb-1">
+                        {{ getProductTypeName(product()?.type || 'course') }}
+                      </div>
+                      <h3 class="text-white font-medium line-clamp-2">{{ product()?.title }}</h3>
+                      <p class="text-sm text-white/50 mt-1 line-clamp-1">{{ product()?.subtitle }}</p>
+                    </div>
+                    <div class="text-right">
+                      @if (hasDiscount()) {
+                      <div class="text-lg font-bold text-white">${{ subtotal() | number:'1.2-2' }}</div>
+                      <div class="text-xs text-white/40 line-through">${{ originalPrice() | number:'1.2-2' }}</div>
+                      <div class="text-xs text-lime-400 mt-1">
+                        -{{ bestDiscount()?.discount }}{{ bestDiscount()?.type_discount === 1 ? '%' : '' }}
+                      </div>
+                      } @else {
+                      <div class="text-lg font-bold text-white">${{ subtotal() | number:'1.2-2' }}</div>
+                      }
+                    </div>
                   </div>
                 </div>
-                } @else {
-                <p class="text-sm font-bold text-lime-400 mt-1">${{ formatPrice(prod.price_usd) }}</p>
-                }
               </div>
-            </div>
-            }
-          </div>
+              } @else {
+              <!-- LISTA DE ITEMS (CARRITO) -->
+              @for (item of cartItems(); track item._id) {
+              <div class="p-4 flex gap-4 group relative">
+                <img [src]="buildImageUrl(item.imagen)" class="w-20 h-20 rounded-lg object-cover bg-slate-800"
+                  alt="Imagen del producto">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-4">
+                    <div>
+                      <div class="text-xs text-lime-400 font-medium mb-1">
+                        {{ getProductTypeName(item.type) }}
+                      </div>
+                      <h3 class="text-white font-medium line-clamp-2">{{ item.title }}</h3>
+                      <p class="text-sm text-white/50 mt-1 line-clamp-1">{{ item.subtitle }}</p>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-lg font-bold text-white">{{ item.price_mxn | mxnCurrency }}</div>
+                    </div>
+                  </div>
+                </div>
 
+                <!-- Botón eliminar -->
+                <button (click)="removeFromCart(item._id, item.type)"
+                  class="absolute top-2 right-2 p-1 text-white/20 hover:text-red-400 transition opacity-0 group-hover:opacity-100"
+                  title="Eliminar del carrito">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              }
+              }
+            </div>
+
+            <!-- Total -->
+            <div class="p-4 bg-white/5 flex flex-col items-end justify-center">
+              <div class="flex items-center justify-between w-full">
+                <span class="text-white/60">Total a pagar</span>
+                <span class="text-2xl font-bold text-white">{{ subtotal() | mxnCurrency }} MXN</span>
+              </div>
+              <span class="text-sm text-lime-400 font-mono mt-1">
+                {{ subtotal() | mxnCurrency }}
+              </span>
+            </div>
+          </div>
           <!-- Totales -->
           <div class="border-t border-slate-700 pt-4 space-y-2 mb-6">
             <div class="flex justify-between text-gray-400">
@@ -749,8 +898,10 @@
 
             <div class="flex justify-between text-xl font-bold text-white pt-2 border-t border-slate-700">
               <span>Total</span>
-              <span class="text-lime-400">${{ formatPrice(subtotal()) }}</span>
+              <span class="text-lime-400">${{ formatPrice(subtotal()) }} MXN</span>
             </div>
+
+
           </div>
 
           <!-- Botón de Pago -->

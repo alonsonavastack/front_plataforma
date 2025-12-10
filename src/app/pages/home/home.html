@@ -174,13 +174,15 @@
                             }
                             <div class="flex items-center gap-2 mt-2 flex-wrap">
                               <!-- Precio -->
-                              @if (item['isFree'] || item.price_usd === 0) {
+                              @if (item['isFree'] || item.price_mxn === 0) {
                               <span
                                 class="inline-flex items-center px-3 py-1 rounded-lg bg-green-500/20 text-green-400 text-xs font-bold border border-green-500/30">
                                 🎁 GRATIS
                               </span>
-                              } @else if (item.price_usd) {
-                              <span class="text-sm font-bold text-lime-300">${{ item.price_usd }}</span>
+                              } @else if (item.price_mxn) {
+                              <span class="text-sm font-bold text-lime-300">
+                                {{ item.price_mxn | mxnCurrency:currencyService.selectedCurrencyCode() }} MXN
+                              </span>
                               }
                             </div>
                           </div>
@@ -339,7 +341,7 @@
       style="scroll-snap-type: x mandatory;">
       @for (project of featuredProjects(); track project._id) {
       <div class="flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px]" style="scroll-snap-align: start;">
-        <app-projects-card [project]="project" (click)="openVideoModal(project.url_video)"
+        <app-projects-card [project]="project" (openVideo)="openVideoModal($event)"
           (buyNowClick)="buyProjectDirect($event)"></app-projects-card>
       </div>
       }
@@ -685,30 +687,31 @@
               <!-- Precio y botones -->
               <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-auto">
                 <div class="flex items-baseline gap-2">
-                  @if (item['isFree'] || item.price_usd === 0) {
-                  <!-- Badge de GRATUITO si el curso/proyecto es gratis O tiene precio $0 -->
+                  @if (item['isFree'] || item.price_mxn === 0) {
+                  <!-- Badge de GRATUITO -->
                   <span
                     class="inline-flex items-center px-4 py-2 text-lg font-bold text-green-400 bg-green-500/10 border border-green-500/30 rounded-lg">
                     🎁 GRATUITO
                   </span>
-                  } @else if (item.discount_active && item.final_price_usd !== undefined) {
+                  } @else if (item.discount_active) {
                   <!-- Precio con descuento -->
                   <div class="text-xl sm:text-2xl font-bold text-lime-300">
-                    ${{ item.final_price_usd | number:'1.0-2' }}
+                    {{ item.final_price_mxn | mxnCurrency:currencyService.selectedCurrencyCode() }}
                   </div>
                   <!-- Precio original tachado -->
                   <div class="text-sm text-white/50 line-through">
-                    ${{ item.price_usd | number:'1.0-2' }}
+                    {{ item.price_mxn | mxnCurrency:currencyService.selectedCurrencyCode() }}
                   </div>
                   <!-- Badge de descuento -->
                   <span
                     class="px-2 py-0.5 rounded bg-lime-500/20 text-lime-300 text-xs font-bold border border-lime-500/30">
-                    -{{ item.discount_active.discount }}{{ item.discount_active.type_discount === 1 ? '%' : ' USD' }}
+                    -{{ item.discount_active.discount }}{{ item.discount_active.type_discount === 1 ? '%' : '' }}
                   </span>
                   } @else {
                   <!-- Precio normal sin descuento -->
-                  <div class="text-xl sm:text-2xl font-bold text-lime-300">${{ item.price_usd | number:'1.0-2' }}</div>
-                  <span class="text-white/60 text-sm">USD</span>
+                  <div class="text-xl sm:text-2xl font-bold text-lime-300">
+                    {{ item.price_mxn | mxnCurrency:currencyService.selectedCurrencyCode() }}
+                  </div>
                   }
                 </div>
 
@@ -729,7 +732,8 @@
                         d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
                       </path>
                     </svg>
-                    Comprar - ${{ item.discount_active ? item.final_price_usd : item.price_usd }}
+                    Comprar - {{ (item.discount_active ? item.final_price_mxn : item.price_mxn) |
+                    mxnCurrency:currencyService.selectedCurrencyCode() }}
                   </button>
                   }
                   <button (click)="navigateToCourse(item, $event)"
@@ -751,7 +755,8 @@
                         d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
                       </path>
                     </svg>
-                    Comprar - ${{ item.discount_active ? item.final_price_usd : item.price_usd }}
+                    Comprar - {{ (item.discount_active ? item.final_price_mxn : item.price_mxn) |
+                    mxnCurrency:currencyService.selectedCurrencyCode() }}
                   </button>
                   }
                   <!-- Botón de ver video si el proyecto tiene url_video -->

@@ -9,6 +9,7 @@ import { WalletService } from '../../core/services/wallet.service'; // 🔥 Para
 import { initFlowbite } from 'flowbite';
 import { environment } from '../../../environments/environment.development';
 
+
 @Component({
   selector: 'app-header',
   standalone: true,
@@ -33,14 +34,13 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   });
 
   constructor() {
-    // 🔥 NUEVO: Cargar configuración al iniciar
-    this.systemConfigService.getConfig();
-
-    // 💰 Cargar saldo de billetera si el usuario está logueado
     if (this.authService.isLoggedIn()) {
       this.walletService.loadWallet();
     }
   }
+
+  // Fix: Bind the function once to ensure add/remove works correctly
+  private boundHandleDocumentClick = this.handleDocumentClick.bind(this);
 
   ngAfterViewInit(): void {
     if (this.headerEl) {
@@ -58,6 +58,9 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
       drawer.classList.remove('transform-none');
       drawer.classList.add('-translate-x-full');
     }
+
+    // 🔥 NUEVO: Listener corregido
+    document.addEventListener('click', this.boundHandleDocumentClick);
   }
 
   /**
@@ -103,10 +106,37 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
       drawer.classList.remove('transform-none');
       drawer.classList.add('-translate-x-full');
     }
+
+    // 🔥 NUEVO: Remover listener correctamente
+    document.removeEventListener('click', this.boundHandleDocumentClick);
   }
 
   isProfileMenuOpen = signal(false);
-  toggleProfileMenu() { this.isProfileMenuOpen.update(v => !v); }
+
+  handleDocumentClick(event: MouseEvent): void {
+    // Si el menú no está abierto, no hacer nada
+    if (!this.isProfileMenuOpen()) return;
+
+    const target = event.target as HTMLElement;
+
+    // Verificar si el clic fue dentro del menú o en el botón de toggle
+    const isToggleBtn = target.closest('[data-menu-open]') !== null;
+    const isDropdown = target.closest('[data-menu-dropdown]') !== null;
+
+    // Si el clic NO fue en el toggle NI en el dropdown, cerrar el menú
+    if (!isToggleBtn && !isDropdown) {
+      this.isProfileMenuOpen.set(false);
+    }
+  }
+
+  toggleProfileMenu(event?: Event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+
+    this.isProfileMenuOpen.update((v) => !v);
+  }
   logout() { this.authService.logout(); this.isProfileMenuOpen.set(false); }
 
   isOnAuthPage = computed(() => {

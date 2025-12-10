@@ -40,7 +40,7 @@ export interface Project {
   url_video?: string;
   categorie: any;
   price_mxn: number;
-  price_usd: number;
+
   state: number;
   user: any;
   files?: ProjectFile[];

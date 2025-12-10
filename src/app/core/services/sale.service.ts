@@ -1,8 +1,10 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, signal, computed, inject, resource } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { tap } from 'rxjs';
+// rxResource removed
 import { environment } from '../../../environments/environment.development';
-import { Observable, tap } from 'rxjs';
-import { Sale } from '../models/sale.model';
+import { Sale, SaleDetailItem } from '../models/sale.model';
 
 interface SaleListResponse {
   sales: Sale[];
@@ -15,10 +17,10 @@ interface SalesStats {
     pagado: number;
     pendiente: number;
     anulado: number;
-    reembolsado: number; // ✅ NUEVO
+    reembolsado: number;
   };
-  totalReembolsado: number; // ✅ NUEVO
-  ingresosNetos: number; // ✅ NUEVO (ingresos - reembolsos)
+  totalReembolsado: number;
+  ingresosNetos: number;
   porInstructor?: {
     instructorId: string;
     instructorName: string;
@@ -27,11 +29,13 @@ interface SalesStats {
   }[];
 }
 
-type SaleState = {
-  sales: Sale[];
-  isLoading: boolean;
-  error: any;
-};
+interface SaleFilters {
+  search?: string;
+  status?: string;
+  month?: string;
+  year?: string;
+  excludeRefunded?: boolean;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -40,57 +44,82 @@ export class SaleService {
   private http = inject(HttpClient);
   private readonly API_URL = environment.url;
 
-  private state = signal<SaleState>({
-    sales: [],
-    isLoading: false,
-    error: null,
+  // 🔥 Signals para filtros (inputs modernos)
+  private searchInput = signal('');
+  private statusInput = signal('');
+  private monthInput = signal('');
+  private yearInput = signal('');
+  private excludeRefundedInput = signal(false);
+
+  // 🔥 rxResource reemplazado por resource standard
+  // 🔥 rxResource reemplazado por resource standard
+  private salesResource = resource({
+    loader: () => {
+      const params = new HttpParams()
+        .set('search', this.searchInput())
+        .set('status', this.statusInput())
+        .set('month', this.monthInput())
+        .set('year', this.yearInput())
+        .set('exclude_refunded', this.excludeRefundedInput() ? 'true' : '');
+
+      // Clean empty params if needed, but HttpParams handles it mostly. 
+      // Actually strictly following logic:
+      let p = new HttpParams();
+      const search = this.searchInput();
+      if (search) p = p.set('search', search);
+      const status = this.statusInput();
+      if (status) p = p.set('status', status);
+      const month = this.monthInput();
+      if (month) p = p.set('month', month);
+      const year = this.yearInput();
+      if (year) p = p.set('year', year);
+      if (this.excludeRefundedInput()) p = p.set('exclude_refunded', 'true');
+
+      return firstValueFrom(this.http.get<SaleListResponse>(`${this.API_URL}checkout/list`, { params: p }));
+    }
   });
 
-  // Señales públicas para los componentes
-  public sales = computed(() => this.state().sales);
-  public isLoading = computed(() => this.state().isLoading);
-  public error = computed(() => this.state().error);
+  // 🔥 Señales públicas derivadas del resource
+  public sales = computed(() => this.salesResource.value()?.sales ?? []);
+  public isLoading = computed(() => this.salesResource.isLoading());
+  public error = computed(() => this.salesResource.error());
+  public hasError = computed(() => this.salesResource.hasValue() === false && !this.salesResource.isLoading());
 
-  // Computed para estadísticas
+  // 🔥 Computed para estadísticas
   public stats = computed<SalesStats>(() => {
     const salesData = this.sales();
 
-    // ✅ NUEVO: Separar ventas reembolsadas
-    const activeSales = salesData.filter(s => !s.refund || s.refund.status !== 'completed');
-    const refundedSales = salesData.filter(s => s.refund?.status === 'completed');
+    const activeSales = salesData.filter((s: Sale) => !s.refund || s.refund.status !== 'completed');
+    const refundedSales = salesData.filter((s: Sale) => s.refund?.status === 'completed');
 
-    // ✅ MODIFICAR: Calcular solo ventas activas (sin reembolsos completados)
     const totalIngresos = activeSales
-      .filter(s => s.status === 'Pagado')
-      .reduce((sum, sale) => sum + sale.total, 0);
+      .filter((s: Sale) => s.status === 'Pagado')
+      .reduce((sum: number, sale: Sale) => sum + sale.total, 0);
 
-    // ✅ NUEVO: Calcular total reembolsado
-    const totalReembolsado = refundedSales.reduce((sum, sale) => {
+    const totalReembolsado = refundedSales.reduce((sum: number, sale: Sale) => {
       return sum + (sale.refund?.calculations?.refundAmount || sale.total || 0);
     }, 0);
 
-    // ✅ NUEVO: Ingresos netos (ingresos - reembolsos)
     const ingresosNetos = totalIngresos;
-
     const totalVentas = activeSales.length;
 
     const porEstado = {
-      pagado: activeSales.filter(s => s.status === 'Pagado').length,
-      pendiente: activeSales.filter(s => s.status === 'Pendiente').length,
-      anulado: activeSales.filter(s => s.status === 'Anulado').length,
-      reembolsado: refundedSales.length, // ✅ NUEVO
+      pagado: activeSales.filter((s: Sale) => s.status === 'Pagado').length,
+      pendiente: activeSales.filter((s: Sale) => s.status === 'Pendiente').length,
+      anulado: activeSales.filter((s: Sale) => s.status === 'Anulado').length,
+      reembolsado: refundedSales.length,
     };
 
     return {
       totalIngresos,
       totalVentas,
       porEstado,
-      totalReembolsado, // ✅ NUEVO
-      ingresosNetos, // ✅ NUEVO
+      totalReembolsado,
+      ingresosNetos,
     };
   });
 
-  // Computed para desglose por instructor
+  // 🔥 Computed para desglose por instructor
   public statsByInstructor = computed(() => {
     const salesData = this.sales();
     const instructorMap = new Map<string, {
@@ -103,28 +132,24 @@ export class SaleService {
     salesData.forEach(sale => {
       if (sale.status !== 'Pagado') return;
 
-      sale.detail?.forEach(item => {
-        // Filtrar solo cursos que tienen información del instructor
+      sale.detail?.forEach((item: SaleDetailItem) => {
         if (item.product_type === 'course' && item.product?.user) {
-          // Verificar si user es un objeto o un string
           const productUser = item.product.user;
 
           let instructorId: string;
           let instructorName: string;
 
           if (typeof productUser === 'string') {
-            // Es solo el ID
             instructorId = productUser;
             instructorName = 'Instructor';
           } else {
-            // Es un objeto poblado
             instructorId = productUser._id || '';
             instructorName = productUser.name
               ? `${productUser.name} ${productUser.surname || ''}`.trim()
               : 'Instructor';
           }
 
-          if (!instructorId) return; // Si no hay ID válido, saltar
+          if (!instructorId) return;
 
           if (!instructorMap.has(instructorId)) {
             instructorMap.set(instructorId, {
@@ -144,52 +169,43 @@ export class SaleService {
 
     return Array.from(instructorMap.values()).sort((a, b) => b.totalIngresos - a.totalIngresos);
   });
-constructor() {
-    // Carga inicial de ventas
-    this.listSales().subscribe();
+
+  // 🔥 Métodos para actualizar filtros (disparan recarga automática)
+  setFilters(filters: SaleFilters): void {
+    if (filters.search !== undefined) this.searchInput.set(filters.search);
+    if (filters.status !== undefined) this.statusInput.set(filters.status);
+    if (filters.month !== undefined) this.monthInput.set(filters.month);
+    if (filters.year !== undefined) this.yearInput.set(filters.year);
+    if (filters.excludeRefunded !== undefined) this.excludeRefundedInput.set(filters.excludeRefunded);
   }
 
-  listSales(search?: string, status?: string, month?: string, year?: string, excludeRefunded?: boolean): Observable<SaleListResponse> {
-    this.state.update(s => ({ ...s, isLoading: true }));
-
-    let params = new HttpParams();
-    if (search) params = params.set('search', search);
-    if (status) params = params.set('status', status);
-    if (month) params = params.set('month', month);
-    if (year) params = params.set('year', year);
-    if (excludeRefunded) params = params.set('exclude_refunded', 'true'); // ✅ NUEVO
-
-    return this.http.get<SaleListResponse>(`${this.API_URL}checkout/list`, { params }).pipe(
-      tap({
-        next: response => this.state.set({ sales: response.sales, isLoading: false, error: null }),
-        error: err => this.state.set({ sales: [], isLoading: false, error: err }),
-      })
-    );
+  clearFilters(): void {
+    this.searchInput.set('');
+    this.statusInput.set('');
+    this.monthInput.set('');
+    this.yearInput.set('');
+    this.excludeRefundedInput.set(false);
   }
 
-  updateSaleStatus(saleId: string, status: string): Observable<any> {
+  // 🔥 Método para recargar manualmente
+  reload(): void {
+    this.salesResource.reload();
+  }
+
+  // 🔥 Actualizar estado de venta (con recarga automática)
+  updateSaleStatus(saleId: string, status: string) {
     return this.http.put(`${this.API_URL}checkout/update-status/${saleId}`, { status }).pipe(
-      tap(() => {
-        // Recargamos la lista para reflejar el cambio de estado
-        this.listSales().subscribe();
-      })
+      tap(() => this.reload())
     );
   }
 
-  /**
-   * Obtiene todas las transacciones del usuario actual
-   */
-  getMyTransactions(): Observable<{ transactions: Sale[] }> {
+  // 🔥 Obtener transacciones del usuario
+  getMyTransactions() {
     return this.http.get<{ transactions: Sale[] }>(`${this.API_URL}checkout/my-transactions`);
   }
 
-  /**
-   * Busca una transacción específica por número de transacción
-   */
-  getTransactionByNumber(nTransaccion: string): Observable<{ transaction: Sale }> {
+  // 🔥 Buscar transacción por número
+  getTransactionByNumber(nTransaccion: string) {
     return this.http.get<{ transaction: Sale }>(`${this.API_URL}checkout/transaction/${nTransaccion}`);
   }
 }
-
-
-

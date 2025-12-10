@@ -169,6 +169,10 @@ export const routes: Routes = [
     canActivate: [roleGuard(["admin", "instructor"])],
   },
   {
+    path: 'payment-settings',
+    loadComponent: () => import('./pages/admin-payment-settings/admin-payment-settings.component').then(m => m.AdminPaymentSettingsComponent)
+  },
+  {
     path: "users",
     loadComponent: () =>
       import("./pages/users/users.component").then(
@@ -231,6 +235,20 @@ export const routes: Routes = [
     loadComponent: () =>
       import("./pages/terms-conditions/terms-conditions.component").then(
         (m) => m.TermsConditionsComponent
+      ),
+  },
+  {
+    path: "payment-success",
+    loadComponent: () =>
+      import("./pages/payment-success/payment-success.component").then(
+        (m) => m.PaymentSuccessComponent
+      ),
+  },
+  {
+    path: "payment-failure",
+    loadComponent: () =>
+      import("./pages/payment-failure/payment-failure.component").then(
+        (m) => m.PaymentFailureComponent
       ),
   },
   {

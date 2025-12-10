@@ -129,7 +129,7 @@ export class ProductsReportComponent implements OnInit {
       'Categoría': p.category,
       'Instructor': p.instructor,
       'Ventas': p.totalSales,
-      'Ingresos (USD)': p.totalRevenue,
+      'Ingresos (MXN)': p.totalRevenue,
       'Rating': p.averageRating || 'N/A',
       'Reseñas': p.totalReviews || 0
     }));
@@ -175,6 +175,6 @@ export class ProductsReportComponent implements OnInit {
   }
 
   formatCurrency(amount: number): string {
-    return `USD ${amount.toFixed(2)}`;
+    return `MXN ${amount.toFixed(2)}`;
   }
 }

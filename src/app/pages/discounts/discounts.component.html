@@ -8,8 +8,7 @@
           <h1 class="text-3xl font-bold text-white mb-2">Gestión de Descuentos</h1>
           <p class="text-slate-400">Administra descuentos para cursos, proyectos y categorías</p>
         </div>
-        <button
-          (click)="openCreateModal()"
+        <button (click)="openCreateModal()"
           class="flex items-center gap-2 px-4 py-2 bg-lime-400 text-slate-900 font-semibold rounded-lg hover:bg-lime-300 transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -25,7 +24,9 @@
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
             <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z">
+              </path>
             </svg>
           </div>
           <div>
@@ -39,7 +40,8 @@
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
             <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
           </div>
           <div>
@@ -53,7 +55,8 @@
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
             <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
           </div>
           <div>
@@ -86,24 +89,19 @@
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
               </svg>
             </div>
-            <input
-              type="text"
-              (input)="onSearch($event)"
-              placeholder="Valor del descuento..."
-              class="w-full pl-10 bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5"
-            />
+            <input type="text" (input)="onSearch($event)" placeholder="Valor del descuento..."
+              class="w-full pl-10 bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5" />
           </div>
         </div>
 
         <div>
           <label class="block text-sm font-medium text-slate-300 mb-2">Tipo de Campaña</label>
-          <select
-            (change)="onCampaignFilter($event)"
-            class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5"
-          >
+          <select (change)="onCampaignFilter($event)"
+            class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5">
             <option value="">Todas las campañas</option>
             <option value="1">Normal</option>
             <option value="2">Flash</option>
@@ -113,10 +111,8 @@
 
         <div>
           <label class="block text-sm font-medium text-slate-300 mb-2">Estado</label>
-          <select
-            (change)="onStatusFilter($event)"
-            class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5"
-          >
+          <select (change)="onStatusFilter($event)"
+            class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5">
             <option value="">Todos los estados</option>
             <option value="active">Activos</option>
             <option value="upcoming">Próximos</option>
@@ -128,118 +124,123 @@
     </div>
 
     @if (isLoading()) {
-      <div class="bg-slate-800/50 backdrop-blur-lg border border-white/10 rounded-xl p-12 text-center">
-        <div class="flex flex-col items-center gap-4">
-          <svg class="animate-spin h-12 w-12 text-lime-400" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <p class="text-slate-400">Cargando descuentos...</p>
-        </div>
+    <div class="bg-slate-800/50 backdrop-blur-lg border border-white/10 rounded-xl p-12 text-center">
+      <div class="flex flex-col items-center gap-4">
+        <svg class="animate-spin h-12 w-12 text-lime-400" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+          </path>
+        </svg>
+        <p class="text-slate-400">Cargando descuentos...</p>
       </div>
+    </div>
     }
 
     @if (!isLoading()) {
-      <div class="bg-slate-800/50 backdrop-blur-lg border border-white/10 rounded-xl overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-slate-900/70 border-b border-white/10">
-              <tr>
-                <th class="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Descuento</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Campaña</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Segmento</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Vigencia</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Estado</th>
-                <th class="px-6 py-4 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">Acciones</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-white/10">
-              @for (discount of filteredDiscounts(); track discount._id) {
-                <tr class="hover:bg-slate-700/30 transition">
-                  <td class="px-6 py-4">
-                    <div class="flex items-center gap-2">
-                      <div class="w-10 h-10 rounded-lg bg-lime-500/20 flex items-center justify-center">
-                        <svg class="w-5 h-5 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                      </div>
-                      <div>
-                        <p class="text-white font-bold text-lg">
-                          {{ discount.discount }}{{ discount.type_discount === 1 ? '%' : ' USD' }}
-                        </p>
-                        <p class="text-slate-400 text-xs">{{ getDiscountTypeLabel(discount.type_discount) }}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4">
-                    <span [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getCampaignBadge(discount.type_campaign)">
-                      {{ getCampaignLabel(discount.type_campaign) }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4">
-                    <p class="text-white text-sm">{{ getSegmentLabel(discount.type_segment) }}</p>
-                    <p class="text-slate-400 text-xs">
-                      @if (discount.type_segment === 1) {
-                        {{ discount.courses?.length || 0 }} cursos
-                      } @else if (discount.type_segment === 2) {
-                        {{ discount.categories?.length || 0 }} categorías
-                      } @else {
-                        {{ discount.projects?.length || 0 }} proyectos
-                      }
+    <div class="bg-slate-800/50 backdrop-blur-lg border border-white/10 rounded-xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-slate-900/70 border-b border-white/10">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Descuento</th>
+              <th class="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Campaña</th>
+              <th class="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Segmento</th>
+              <th class="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Vigencia</th>
+              <th class="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Estado</th>
+              <th class="px-6 py-4 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/10">
+            @for (discount of filteredDiscounts(); track discount._id) {
+            <tr class="hover:bg-slate-700/30 transition">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-2">
+                  <div class="w-10 h-10 rounded-lg bg-lime-500/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                      </path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-white font-bold text-lg">
+                      {{ discount.discount }}{{ discount.type_discount === 1 ? '%' : ' MXN' }}
                     </p>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="text-sm">
-                      <p class="text-white">{{ discount.start_date | date:'dd/MM/yyyy' }}</p>
-                      <p class="text-slate-400">{{ discount.end_date | date:'dd/MM/yyyy' }}</p>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4">
-                    <span [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getStatusBadge(discount)">
-                      {{ getStatusText(discount) }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="flex items-center justify-end gap-2">
-                      <button
-                        (click)="openEditModal(discount)"
-                        class="p-2 text-lime-400 hover:bg-lime-500/20 rounded-lg transition"
-                        title="Editar descuento"
-                      >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                        </svg>
-                      </button>
+                    <p class="text-slate-400 text-xs">{{ getDiscountTypeLabel(discount.type_discount) }}</p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <span
+                  [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getCampaignBadge(discount.type_campaign)">
+                  {{ getCampaignLabel(discount.type_campaign) }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <p class="text-white text-sm">{{ getSegmentLabel(discount.type_segment) }}</p>
+                <p class="text-slate-400 text-xs">
+                  @if (discount.type_segment === 1) {
+                  {{ discount.courses?.length || 0 }} cursos
+                  } @else if (discount.type_segment === 2) {
+                  {{ discount.categories?.length || 0 }} categorías
+                  } @else {
+                  {{ discount.projects?.length || 0 }} proyectos
+                  }
+                </p>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm">
+                  <p class="text-white">{{ discount.start_date | date:'dd/MM/yyyy' }}</p>
+                  <p class="text-slate-400">{{ discount.end_date | date:'dd/MM/yyyy' }}</p>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <span [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getStatusBadge(discount)">
+                  {{ getStatusText(discount) }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center justify-end gap-2">
+                  <button (click)="openEditModal(discount)"
+                    class="p-2 text-lime-400 hover:bg-lime-500/20 rounded-lg transition" title="Editar descuento">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                      </path>
+                    </svg>
+                  </button>
 
-                      <button
-                        (click)="confirmDelete(discount)"
-                        class="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition"
-                        title="Eliminar descuento"
-                      >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="6" class="px-6 py-12 text-center">
-                    <div class="flex flex-col items-center gap-3">
-                      <svg class="w-16 h-16 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                      </svg>
-                      <p class="text-slate-400 text-lg">No se encontraron descuentos</p>
-                      <p class="text-slate-500 text-sm">Crea un nuevo descuento para empezar</p>
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+                  <button (click)="confirmDelete(discount)"
+                    class="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition" title="Eliminar descuento">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                      </path>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            } @empty {
+            <tr>
+              <td colspan="6" class="px-6 py-12 text-center">
+                <div class="flex flex-col items-center gap-3">
+                  <svg class="w-16 h-16 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z">
+                    </path>
+                  </svg>
+                  <p class="text-slate-400 text-lg">No se encontraron descuentos</p>
+                  <p class="text-slate-500 text-sm">Crea un nuevo descuento para empezar</p>
+                </div>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
       </div>
+    </div>
     }
 
   </div>
@@ -247,332 +248,278 @@
 
 <!-- Modal de Creación/Edición -->
 @if (isCreateModalOpen() || isEditModalOpen()) {
-  <div class="fixed inset-0 z-50 overflow-y-auto" (click)="isCreateModalOpen() ? closeCreateModal() : closeEditModal()">
-    <div class="flex items-center justify-center min-h-screen px-4 py-8">
-      <div class="fixed inset-0 bg-black/70 backdrop-blur-sm"></div>
+<div class="fixed inset-0 z-50 overflow-y-auto" (click)="isCreateModalOpen() ? closeCreateModal() : closeEditModal()">
+  <div class="flex items-center justify-center min-h-screen px-4 py-8">
+    <div class="fixed inset-0 bg-black/70 backdrop-blur-sm"></div>
 
-      <div class="relative bg-slate-800 rounded-2xl p-6 w-full max-w-4xl border border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
-        <div class="mb-6">
-          <h3 class="text-2xl font-bold text-white">
-            {{ isCreateModalOpen() ? 'Crear Nuevo Descuento' : 'Editar Descuento' }}
-          </h3>
-          <p class="text-slate-400 mt-2">Complete la información del descuento</p>
+    <div
+      class="relative bg-slate-800 rounded-2xl p-6 w-full max-w-4xl border border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto"
+      (click)="$event.stopPropagation()">
+      <div class="mb-6">
+        <h3 class="text-2xl font-bold text-white">
+          {{ isCreateModalOpen() ? 'Crear Nuevo Descuento' : 'Editar Descuento' }}
+        </h3>
+        <p class="text-slate-400 mt-2">Complete la información del descuento</p>
+      </div>
+
+      <form [formGroup]="discountForm" (ngSubmit)="isCreateModalOpen() ? saveCreate() : saveEdit()">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <!-- Tipo de Campaña -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Tipo de Campaña</label>
+            <select formControlName="type_campaign"
+              class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5">
+              <option value="1">Normal</option>
+              <option value="2">Flash</option>
+              <option value="3">Banner</option>
+            </select>
+          </div>
+
+          <!-- Tipo de Descuento -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Tipo de Descuento</label>
+            <select formControlName="type_discount"
+              class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5">
+              <option value="1">Porcentaje (%)</option>
+              <option value="2">Monto Fijo (MXN)</option>
+            </select>
+          </div>
+
+          <!-- Valor del Descuento -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">
+              Valor del Descuento <span class="text-red-400">*</span>
+            </label>
+            <input type="number" formControlName="discount" min="0"
+              class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5"
+              placeholder="20" />
+          </div>
+
+          <!-- Segmento -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Aplicar a</label>
+            <select formControlName="type_segment" (change)="onSegmentChange()"
+              class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5">
+              <option value="1">Cursos</option>
+              <option value="2">Categorías</option>
+              <option value="3">Proyectos</option>
+            </select>
+          </div>
+
+          <!-- Fecha de Inicio -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">
+              Fecha de Inicio <span class="text-red-400">*</span>
+            </label>
+            <input type="datetime-local" formControlName="start_date"
+              class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5" />
+          </div>
+
+          <!-- Fecha de Fin -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">
+              Fecha de Fin <span class="text-red-400">*</span>
+            </label>
+            <input type="datetime-local" formControlName="end_date"
+              class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5" />
+          </div>
         </div>
 
-        <form [formGroup]="discountForm" (ngSubmit)="isCreateModalOpen() ? saveCreate() : saveEdit()">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <!-- Tipo de Campaña -->
-            <div>
-              <label class="block text-sm font-medium text-slate-300 mb-2">Tipo de Campaña</label>
-              <select
-                formControlName="type_campaign"
-                class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5"
-              >
-                <option value="1">Normal</option>
-                <option value="2">Flash</option>
-                <option value="3">Banner</option>
-              </select>
-            </div>
+        <!-- Estado -->
+        <div class="mb-6">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" formControlName="state"
+              class="w-4 h-4 text-lime-400 bg-slate-900 border-slate-700 rounded focus:ring-lime-500" />
+            <span class="text-slate-300 text-sm">Descuento activo</span>
+          </label>
+        </div>
 
-            <!-- Tipo de Descuento -->
-            <div>
-              <label class="block text-sm font-medium text-slate-300 mb-2">Tipo de Descuento</label>
-              <select
-                formControlName="type_discount"
-                class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5"
-              >
-                <option value="1">Porcentaje (%)</option>
-                <option value="2">Monto Fijo (USD)</option>
-              </select>
-            </div>
+        <!-- Selección de Items -->
+        <div class="mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-lg font-semibold text-white">
+              Seleccionar
+              {{ discountForm.value.type_segment == 1 ? 'Cursos' : discountForm.value.type_segment == 2 ? 'Categorías' :
+              'Proyectos' }}
+            </h4>
 
-            <!-- Valor del Descuento -->
-            <div>
-              <label class="block text-sm font-medium text-slate-300 mb-2">
-                Valor del Descuento <span class="text-red-400">*</span>
-              </label>
-              <input
-                type="number"
-                formControlName="discount"
-                min="0"
-                class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5"
-                placeholder="20"
-              />
-            </div>
-
-            <!-- Segmento -->
-            <div>
-              <label class="block text-sm font-medium text-slate-300 mb-2">Aplicar a</label>
-              <select
-                formControlName="type_segment"
-                (change)="onSegmentChange()"
-                class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5"
-              >
-                <option value="1">Cursos</option>
-                <option value="2">Categorías</option>
-                <option value="3">Proyectos</option>
-              </select>
-            </div>
-
-            <!-- Fecha de Inicio -->
-            <div>
-              <label class="block text-sm font-medium text-slate-300 mb-2">
-                Fecha de Inicio <span class="text-red-400">*</span>
-              </label>
-              <input
-                type="datetime-local"
-                formControlName="start_date"
-                class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5"
-              />
-            </div>
-
-            <!-- Fecha de Fin -->
-            <div>
-              <label class="block text-sm font-medium text-slate-300 mb-2">
-                Fecha de Fin <span class="text-red-400">*</span>
-              </label>
-              <input
-                type="datetime-local"
-                formControlName="end_date"
-                class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5"
-              />
+            <!-- Contador y botones de selección masiva -->
+            <div class="flex items-center gap-3">
+              <span class="text-slate-400 text-sm">
+                @if (discountForm.value.type_segment == 1) {
+                {{ selectedCourses().length }} / {{ config()?.courses?.length || 0 }} seleccionados
+                } @else if (discountForm.value.type_segment == 2) {
+                {{ selectedCategories().length }} / {{ config()?.categories?.length || 0 }} seleccionados
+                } @else {
+                {{ selectedProjects().length }} / {{ config()?.projects?.length || 0 }} seleccionados
+                }
+              </span>
+              <button type="button" (click)="selectAllItems()"
+                class="px-3 py-1 text-xs bg-lime-500/20 text-lime-400 border border-lime-500/30 rounded-lg hover:bg-lime-500/30 transition">
+                Seleccionar todo
+              </button>
+              <button type="button" (click)="clearAllItems()"
+                class="px-3 py-1 text-xs bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition">
+                Limpiar
+              </button>
             </div>
           </div>
 
-          <!-- Estado -->
-          <div class="mb-6">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                formControlName="state"
-                class="w-4 h-4 text-lime-400 bg-slate-900 border-slate-700 rounded focus:ring-lime-500"
-              />
-              <span class="text-slate-300 text-sm">Descuento activo</span>
-            </label>
-          </div>
-
-          <!-- Selección de Items -->
-          <div class="mb-6">
-            <div class="flex items-center justify-between mb-4">
-              <h4 class="text-lg font-semibold text-white">
-                Seleccionar
-                {{ discountForm.value.type_segment == 1 ? 'Cursos' : discountForm.value.type_segment == 2 ? 'Categorías' : 'Proyectos' }}
-              </h4>
-
-              <!-- Contador y botones de selección masiva -->
-              <div class="flex items-center gap-3">
-                <span class="text-slate-400 text-sm">
-                  @if (discountForm.value.type_segment == 1) {
-                    {{ selectedCourses().length }} / {{ config()?.courses?.length || 0 }} seleccionados
-                  } @else if (discountForm.value.type_segment == 2) {
-                    {{ selectedCategories().length }} / {{ config()?.categories?.length || 0 }} seleccionados
-                  } @else {
-                    {{ selectedProjects().length }} / {{ config()?.projects?.length || 0 }} seleccionados
-                  }
-                </span>
-                <button
-                  type="button"
-                  (click)="selectAllItems()"
-                  class="px-3 py-1 text-xs bg-lime-500/20 text-lime-400 border border-lime-500/30 rounded-lg hover:bg-lime-500/30 transition"
-                >
-                  Seleccionar todo
-                </button>
-                <button
-                  type="button"
-                  (click)="clearAllItems()"
-                  class="px-3 py-1 text-xs bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition"
-                >
-                  Limpiar
-                </button>
+          <!-- Buscador interno -->
+          <div class="mb-4">
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
               </div>
-            </div>
-
-            <!-- Buscador interno -->
-            <div class="mb-4">
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  [ngModel]="itemSearchTerm()"
-                  (ngModelChange)="itemSearchTerm.set($event)"
-                  [ngModelOptions]="{standalone: true}"
-                  placeholder="Buscar por título..."
-                  class="w-full pl-10 bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5"
-                />
-              </div>
-            </div>
-
-            <div class="max-h-[400px] overflow-y-auto p-4 bg-slate-900/30 rounded-lg border border-slate-700">
-              <!-- Cursos -->
-              @if (discountForm.value.type_segment == 1 && config()) {
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  @for (course of filteredCourses(); track course._id) {
-                    <label
-                      class="group relative flex flex-col bg-slate-800 rounded-lg border-2 cursor-pointer hover:border-lime-500/50 transition overflow-hidden has-[:checked]:border-lime-500 has-[:checked]:bg-lime-500/5"
-                      [class.border-lime-500]="selectedCourses().includes(course._id)"
-                      [class.border-slate-700]="!selectedCourses().includes(course._id)"
-                    >
-                      <!-- Imagen -->
-                      <div class="relative w-full h-32 bg-slate-900 overflow-hidden">
-                        <img
-                          [src]="getImageUrl(course.imagen, 'course')"
-                          [alt]="course.title"
-                          class="w-full h-full object-cover"
-                          (error)="$any($event.target).src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMjMzYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5NGEzYjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5TaW4gSW1hZ2VuPC90ZXh0Pjwvc3ZnPg=='"
-                        />
-                        <div class="absolute top-2 right-2">
-                          <input
-                            type="checkbox"
-                            [checked]="selectedCourses().includes(course._id)"
-                            (change)="toggleCourse(course._id)"
-                            class="w-5 h-5 text-lime-400 bg-slate-900 border-2 border-slate-600 rounded focus:ring-lime-500 cursor-pointer"
-                          />
-                        </div>
-                        <!-- Badge de categoría -->
-                        <div class="absolute bottom-2 left-2">
-                          <span class="px-2 py-1 text-xs bg-slate-900/80 text-slate-300 rounded backdrop-blur-sm">
-                            {{ course.categorie.title }}
-                          </span>
-                        </div>
-                      </div>
-
-                      <!-- Info -->
-                      <div class="p-3">
-                        <p class="text-white text-sm font-medium line-clamp-2 mb-2">{{ course.title }}</p>
-                        <div class="flex items-center justify-between">
-                          <span class="text-lime-400 font-bold">${{ course.price_usd }}</span>
-                          <span class="text-xs text-slate-400">Curso</span>
-                        </div>
-                      </div>
-                    </label>
-                  }
-                </div>
-
-                @if (filteredCourses().length === 0) {
-                  <div class="text-center py-8">
-                    <p class="text-slate-400">No se encontraron cursos</p>
-                  </div>
-                }
-              }
-
-              <!-- Categorías -->
-              @if (discountForm.value.type_segment == 2 && config()) {
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                  @for (category of filteredCategories(); track category._id) {
-                    <label
-                      class="group relative flex flex-col bg-slate-800 rounded-lg border-2 cursor-pointer hover:border-lime-500/50 transition overflow-hidden has-[:checked]:border-lime-500 has-[:checked]:bg-lime-500/5"
-                      [class.border-lime-500]="selectedCategories().includes(category._id)"
-                      [class.border-slate-700]="!selectedCategories().includes(category._id)"
-                    >
-                      <!-- Imagen -->
-                      <div class="relative w-full h-32 bg-slate-900 overflow-hidden">
-                        <img
-                          [src]="getImageUrl(category.imagen, 'category')"
-                          [alt]="category.title"
-                          class="w-full h-full object-cover"
-                          (error)="$any($event.target).src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMjMzYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5NGEzYjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5TaW4gSW1hZ2VuPC90ZXh0Pjwvc3ZnPg=='"
-                        />
-                        <div class="absolute top-2 right-2">
-                          <input
-                            type="checkbox"
-                            [checked]="selectedCategories().includes(category._id)"
-                            (change)="toggleCategory(category._id)"
-                            class="w-5 h-5 text-lime-400 bg-slate-900 border-2 border-slate-600 rounded focus:ring-lime-500 cursor-pointer"
-                          />
-                        </div>
-                      </div>
-
-                      <!-- Info -->
-                      <div class="p-3">
-                        <p class="text-white text-sm font-medium line-clamp-2 text-center">{{ category.title }}</p>
-                      </div>
-                    </label>
-                  }
-                </div>
-
-                @if (filteredCategories().length === 0) {
-                  <div class="text-center py-8">
-                    <p class="text-slate-400">No se encontraron categorías</p>
-                  </div>
-                }
-              }
-
-              <!-- Proyectos -->
-              @if (discountForm.value.type_segment == 3 && config()) {
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  @for (project of filteredProjects(); track project._id) {
-                    <label
-                      class="group relative flex flex-col bg-slate-800 rounded-lg border-2 cursor-pointer hover:border-lime-500/50 transition overflow-hidden has-[:checked]:border-lime-500 has-[:checked]:bg-lime-500/5"
-                      [class.border-lime-500]="selectedProjects().includes(project._id)"
-                      [class.border-slate-700]="!selectedProjects().includes(project._id)"
-                    >
-                      <!-- Imagen -->
-                      <div class="relative w-full h-32 bg-slate-900 overflow-hidden">
-                        <img
-                          [src]="getImageUrl(project.imagen, 'project')"
-                          [alt]="project.title"
-                          class="w-full h-full object-cover"
-                          (error)="$any($event.target).src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMjMzYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5NGEzYjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5TaW4gSW1hZ2VuPC90ZXh0Pjwvc3ZnPg=='"
-                        />
-                        <div class="absolute top-2 right-2">
-                          <input
-                            type="checkbox"
-                            [checked]="selectedProjects().includes(project._id)"
-                            (change)="toggleProject(project._id)"
-                            class="w-5 h-5 text-lime-400 bg-slate-900 border-2 border-slate-600 rounded focus:ring-lime-500 cursor-pointer"
-                          />
-                        </div>
-                        <!-- Badge de categoría -->
-                        <div class="absolute bottom-2 left-2">
-                          <span class="px-2 py-1 text-xs bg-slate-900/80 text-slate-300 rounded backdrop-blur-sm">
-                            {{ project.categorie.title }}
-                          </span>
-                        </div>
-                      </div>
-
-                      <!-- Info -->
-                      <div class="p-3">
-                        <p class="text-white text-sm font-medium line-clamp-2 mb-2">{{ project.title }}</p>
-                        <div class="flex items-center justify-between">
-                          <span class="text-lime-400 font-bold">${{ project.price_usd }}</span>
-                          <span class="text-xs text-slate-400">Proyecto</span>
-                        </div>
-                      </div>
-                    </label>
-                  }
-                </div>
-
-                @if (filteredProjects().length === 0) {
-                  <div class="text-center py-8">
-                    <p class="text-slate-400">No se encontraron proyectos</p>
-                  </div>
-                }
-              }
+              <input type="text" [ngModel]="itemSearchTerm()" (ngModelChange)="itemSearchTerm.set($event)"
+                [ngModelOptions]="{standalone: true}" placeholder="Buscar por título..."
+                class="w-full pl-10 bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 p-2.5" />
             </div>
           </div>
 
-          <div class="flex gap-3">
-            <button
-              type="button"
-              (click)="isCreateModalOpen() ? closeCreateModal() : closeEditModal()"
-              class="flex-1 px-4 py-2 bg-slate-700 text-white font-medium rounded-lg hover:bg-slate-600 transition"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              [disabled]="discountForm.invalid"
-              class="flex-1 px-4 py-2 bg-lime-400 text-slate-900 font-semibold rounded-lg hover:bg-lime-300 transition disabled:bg-slate-600 disabled:cursor-not-allowed"
-            >
-              {{ isCreateModalOpen() ? 'Crear Descuento' : 'Guardar Cambios' }}
-            </button>
+          <div class="max-h-[400px] overflow-y-auto p-4 bg-slate-900/30 rounded-lg border border-slate-700">
+            <!-- Cursos -->
+            @if (discountForm.value.type_segment == 1 && config()) {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              @for (course of filteredCourses(); track course._id) {
+              <label
+                class="group relative flex flex-col bg-slate-800 rounded-lg border-2 cursor-pointer hover:border-lime-500/50 transition overflow-hidden has-[:checked]:border-lime-500 has-[:checked]:bg-lime-500/5"
+                [class.border-lime-500]="selectedCourses().includes(course._id)"
+                [class.border-slate-700]="!selectedCourses().includes(course._id)">
+                <!-- Imagen -->
+                <div class="relative w-full h-32 bg-slate-900 overflow-hidden">
+                  <img [src]="getImageUrl(course.imagen, 'course')" [alt]="course.title"
+                    class="w-full h-full object-cover"
+                    (error)="$any($event.target).src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMjMzYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5NGEzYjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5TaW4gSW1hZ2VuPC90ZXh0Pjwvc3ZnPg=='" />
+                  <div class="absolute top-2 right-2">
+                    <input type="checkbox" [checked]="selectedCourses().includes(course._id)"
+                      (change)="toggleCourse(course._id)"
+                      class="w-5 h-5 text-lime-400 bg-slate-900 border-2 border-slate-600 rounded focus:ring-lime-500 cursor-pointer" />
+                  </div>
+                  <!-- Badge de categoría -->
+                  <div class="absolute bottom-2 left-2">
+                    <span class="px-2 py-1 text-xs bg-slate-900/80 text-slate-300 rounded backdrop-blur-sm">
+                      {{ course.categorie.title }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Info -->
+                <div class="p-3">
+                  <p class="text-white text-sm font-medium line-clamp-2 mb-2">{{ course.title }}</p>
+                  <div class="flex items-center justify-between">
+                    <span class="text-lime-400 font-bold">${{ course.price_mxn }} (MXN)</span>
+                    <span class="text-xs text-slate-400">Curso</span>
+                  </div>
+                </div>
+              </label>
+              }
+            </div>
+
+            @if (filteredCourses().length === 0) {
+            <div class="text-center py-8">
+              <p class="text-slate-400">No se encontraron cursos</p>
+            </div>
+            }
+            }
+
+            <!-- Categorías -->
+            @if (discountForm.value.type_segment == 2 && config()) {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              @for (category of filteredCategories(); track category._id) {
+              <label
+                class="group relative flex flex-col bg-slate-800 rounded-lg border-2 cursor-pointer hover:border-lime-500/50 transition overflow-hidden has-[:checked]:border-lime-500 has-[:checked]:bg-lime-500/5"
+                [class.border-lime-500]="selectedCategories().includes(category._id)"
+                [class.border-slate-700]="!selectedCategories().includes(category._id)">
+                <!-- Imagen -->
+                <div class="relative w-full h-32 bg-slate-900 overflow-hidden">
+                  <img [src]="getImageUrl(category.imagen, 'category')" [alt]="category.title"
+                    class="w-full h-full object-cover"
+                    (error)="$any($event.target).src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMjMzYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5NGEzYjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5TaW4gSW1hZ2VuPC90ZXh0Pjwvc3ZnPg=='" />
+                  <div class="absolute top-2 right-2">
+                    <input type="checkbox" [checked]="selectedCategories().includes(category._id)"
+                      (change)="toggleCategory(category._id)"
+                      class="w-5 h-5 text-lime-400 bg-slate-900 border-2 border-slate-600 rounded focus:ring-lime-500 cursor-pointer" />
+                  </div>
+                </div>
+
+                <!-- Info -->
+                <div class="p-3">
+                  <p class="text-white text-sm font-medium line-clamp-2 text-center">{{ category.title }}</p>
+                </div>
+              </label>
+              }
+            </div>
+
+            @if (filteredCategories().length === 0) {
+            <div class="text-center py-8">
+              <p class="text-slate-400">No se encontraron categorías</p>
+            </div>
+            }
+            }
+
+            <!-- Proyectos -->
+            @if (discountForm.value.type_segment == 3 && config()) {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              @for (project of filteredProjects(); track project._id) {
+              <label
+                class="group relative flex flex-col bg-slate-800 rounded-lg border-2 cursor-pointer hover:border-lime-500/50 transition overflow-hidden has-[:checked]:border-lime-500 has-[:checked]:bg-lime-500/5"
+                [class.border-lime-500]="selectedProjects().includes(project._id)"
+                [class.border-slate-700]="!selectedProjects().includes(project._id)">
+                <!-- Imagen -->
+                <div class="relative w-full h-32 bg-slate-900 overflow-hidden">
+                  <img [src]="getImageUrl(project.imagen, 'project')" [alt]="project.title"
+                    class="w-full h-full object-cover"
+                    (error)="$any($event.target).src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzFhMjMzYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5NGEzYjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5TaW4gSW1hZ2VuPC90ZXh0Pjwvc3ZnPg=='" />
+                  <div class="absolute top-2 right-2">
+                    <input type="checkbox" [checked]="selectedProjects().includes(project._id)"
+                      (change)="toggleProject(project._id)"
+                      class="w-5 h-5 text-lime-400 bg-slate-900 border-2 border-slate-600 rounded focus:ring-lime-500 cursor-pointer" />
+                  </div>
+                  <!-- Badge de categoría -->
+                  <div class="absolute bottom-2 left-2">
+                    <span class="px-2 py-1 text-xs bg-slate-900/80 text-slate-300 rounded backdrop-blur-sm">
+                      {{ project.categorie.title }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Info -->
+                <div class="p-3">
+                  <p class="text-white text-sm font-medium line-clamp-2 mb-2">{{ project.title }}</p>
+                  <div class="flex items-center justify-between">
+                    <span class="text-lime-400 font-bold">${{ project.price_mxn }} (MXN)</span>
+                    <span class="text-xs text-slate-400">Proyecto</span>
+                  </div>
+                </div>
+              </label>
+              }
+            </div>
+
+            @if (filteredProjects().length === 0) {
+            <div class="text-center py-8">
+              <p class="text-slate-400">No se encontraron proyectos</p>
+            </div>
+            }
+            }
           </div>
-        </form>
-      </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button type="button" (click)="isCreateModalOpen() ? closeCreateModal() : closeEditModal()"
+            class="flex-1 px-4 py-2 bg-slate-700 text-white font-medium rounded-lg hover:bg-slate-600 transition">
+            Cancelar
+          </button>
+          <button type="submit" [disabled]="discountForm.invalid"
+            class="flex-1 px-4 py-2 bg-lime-400 text-slate-900 font-semibold rounded-lg hover:bg-lime-300 transition disabled:bg-slate-600 disabled:cursor-not-allowed">
+            {{ isCreateModalOpen() ? 'Crear Descuento' : 'Guardar Cambios' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
+</div>
 }

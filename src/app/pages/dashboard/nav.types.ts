@@ -20,7 +20,8 @@ export type NavId =
   | 'instructor-payment-history'
   | 'instructor-payment-config'
   | 'refunds'
-  | 'wallets';
+  | 'wallets'
+  | 'review-notifications'; // 🔥 NUEVO
 
 export interface NavItem {
   id: NavId;

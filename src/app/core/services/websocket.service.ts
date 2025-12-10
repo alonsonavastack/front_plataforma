@@ -8,7 +8,7 @@ export interface SaleNotification {
   n_transaccion: string;
   total: number;
   currency_total: string;
-  status: 'Pendiente' | 'Pagado' | 'Anulado';
+  status: 'Pendiente' | 'Pagado' | 'Anulado' | 'En Revisión';
   createdAt: string;
   user: {
     _id: string;

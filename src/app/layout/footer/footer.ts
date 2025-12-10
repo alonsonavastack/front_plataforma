@@ -59,7 +59,7 @@ export class FooterComponent implements OnInit {
 
   ngOnInit(): void {
     // Cargar configuración al iniciar
-    this.systemConfigService.getConfig();
+
   }
 
   // 🆕 Método para abrir modal desde footer

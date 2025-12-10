@@ -6,6 +6,7 @@ import {
   Earning,
   EarningsStats,
 } from '../../core/services/instructor-payment.service';
+import { CurrencyService } from '../../services/currency.service';
 
 @Component({
   selector: 'app-instructor-earnings',
@@ -17,14 +18,20 @@ export class InstructorEarningsComponent implements OnInit {
   private instructorPaymentService = inject(InstructorPaymentService);
 
   // Signals
-  earnings = signal<Earning[]>([]);
-  stats = signal<EarningsStats | null>(null);
-  isLoading = signal(false);
-  isLoadingStats = signal(false);
-  error = signal<string | null>(null);
-  currentPage = signal(1);
-  totalPages = signal(1);
-  totalItems = signal(0);
+  earnings = this.instructorPaymentService.earnings;
+  stats = this.instructorPaymentService.earningsStats;
+
+  isLoading = this.instructorPaymentService.isLoadingEarnings;
+  isLoadingStats = this.instructorPaymentService.isLoadingStats;
+
+  error = this.instructorPaymentService.earningsError;
+
+  // Paginación desde el servicio
+  pagination = this.instructorPaymentService.earningsPagination;
+  currentPage = computed(() => this.pagination()?.page || 1);
+  totalPages = computed(() => this.pagination()?.pages || 1);
+  totalItems = computed(() => this.pagination()?.total || 0);
+
   limit = 20;
 
   // Computed
@@ -59,26 +66,10 @@ export class InstructorEarningsComponent implements OnInit {
   }
 
   loadStats() {
-    this.isLoadingStats.set(true);
-
-    this.instructorPaymentService.getEarningsStats().subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.stats.set(response.data);
-        }
-        this.isLoadingStats.set(false);
-      },
-      error: (err) => {
-        this.isLoadingStats.set(false);
-      },
-    });
+    this.instructorPaymentService.reloadStats();
   }
 
   loadEarnings(page: number = 1) {
-    this.isLoading.set(true);
-    this.error.set(null);
-    this.currentPage.set(page);
-
     const filters: any = {
       page,
       limit: this.limit,
@@ -94,20 +85,7 @@ export class InstructorEarningsComponent implements OnInit {
       filters.endDate = this.endDate;
     }
 
-    this.instructorPaymentService.getEarnings(filters).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.earnings.set(response.data);
-          this.totalPages.set(response.pagination.pages);
-          this.totalItems.set(response.pagination.total);
-        }
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        this.error.set(err.error?.message || 'Error al cargar ganancias');
-        this.isLoading.set(false);
-      },
-    });
+    this.instructorPaymentService.setEarningsFilters(filters);
   }
 
   onFilterChange() {
@@ -156,11 +134,10 @@ export class InstructorEarningsComponent implements OnInit {
     });
   }
 
-  formatCurrency(amount: number, currency: string = 'USD'): string {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
+  private currencyService = inject(CurrencyService);
+
+  formatCurrency(amount: number): string {
+    return this.currencyService.format(amount);
   }
 
   getPageNumbers(): number[] {

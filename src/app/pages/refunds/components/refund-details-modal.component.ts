@@ -418,9 +418,9 @@ export class RefundDetailsModalComponent {
   }
 
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('es-MX', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'MXN'
     }).format(amount);
   }
 

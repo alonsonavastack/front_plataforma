@@ -43,7 +43,7 @@ export interface Sale {
   method_payment: string;
   n_transaccion: string;
   total: number;
-  status: 'Pendiente' | 'Pagado' | 'Anulado';
+  status: 'Pendiente' | 'Pagado' | 'Anulado' | 'En Revisión';
   createdAt: string;
   currency_total?: string;
   detail: SaleDetailItem[];
@@ -54,4 +54,8 @@ export interface Sale {
 
   // ✅ NUEVO: Comprobante de pago
   voucher_image?: string;
+
+  // ✅ NUEVO: Información de pago mixto
+  wallet_amount?: number;
+  remaining_amount?: number;
 }

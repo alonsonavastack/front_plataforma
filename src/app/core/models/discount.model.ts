@@ -19,7 +19,7 @@ export interface Discount {
 export interface CourseItem {
   _id: string;
   title: string;
-  price_usd: number;
+  price_mxn: number;
   imagen: string;
   categorie: {
     _id: string;
@@ -30,7 +30,7 @@ export interface CourseItem {
 export interface ProjectItem {
   _id: string;
   title: string;
-  price_usd: number;
+  price_mxn: number;
   imagen: string;
   categorie: {
     _id: string;

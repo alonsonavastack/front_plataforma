@@ -12,6 +12,7 @@ import { CourseCardComponent } from "../../shared/course-card/course-card";
 import { environment } from "../../../environments/environment";
 import { HeaderComponent } from "../../layout/header/header";
 import { FooterComponent } from "../../layout/footer/footer"; // 🔥 NUEVO
+import { CurrencyService } from '../../services/currency.service'; // 🔥 NUEVO
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
 import {
   Component,
@@ -26,7 +27,7 @@ import {
 import { Router, RouterLink } from "@angular/router";
 import { ProfileService } from "../../core/services/profile.service";
 import { CategoriesService } from "../../core/services/categories";
-import { ProjectsCard } from "../../shared/projects-card/projects-card";
+import { ProjectsCardComponent } from "../../shared/projects-card/projects-card";
 import { DiscountService } from "../../core/services/discount.service";
 import { SearchService } from "../../core/services/search";
 import { CarouselComponent } from "../carousel/carousel.component";
@@ -39,6 +40,7 @@ import { Subscription } from 'rxjs';
 import { LegalModalComponent, LegalModalType } from '../../shared/legal-modal/legal-modal.component';
 import { RefundsService } from '../../core/services/refunds.service'; // 🔥 NUEVO
 import { WalletService } from '../../core/services/wallet.service'; // 💰 Para billetera
+import { MxnCurrencyPipe } from '../../shared/pipes/mxn-currency.pipe';
 
 @Component({
   standalone: true,
@@ -48,10 +50,11 @@ import { WalletService } from '../../core/services/wallet.service'; // 💰 Para
     CourseCardComponent,
     HeaderComponent,
     FooterComponent, // 🔥 NUEVO
-    ProjectsCard,
+    ProjectsCardComponent,
     CarouselComponent,
     InstructorCardComponent,
     LegalModalComponent,
+    MxnCurrencyPipe,
   ],
   templateUrl: "./home.html",
 })
@@ -71,6 +74,7 @@ export class HomeComponent implements OnInit {
   private toast = inject(ToastService);
   refundsService = inject(RefundsService); // 🔥 NUEVO
   walletService = inject(WalletService); // 💰 Para billetera
+  currencyService = inject(CurrencyService); // 💱 Conversor de moneda
 
   // 🚨 Control de errores
   private errorToastShown = false;
@@ -216,7 +220,7 @@ export class HomeComponent implements OnInit {
         .split("-")
         .map((v) => (v ? parseFloat(v) : null));
       items = items.filter((item) => {
-        const price = item.price_usd || 0;
+        const price = item.price_mxn || 0;
         if (min !== null && max !== null) {
           return price >= min && price <= max;
         } else if (min !== null) {
@@ -239,9 +243,9 @@ export class HomeComponent implements OnInit {
     // Ordenar
     const sortBy = this.catalogSortBy();
     if (sortBy === "price-low") {
-      items.sort((a, b) => (a.price_usd || 0) - (b.price_usd || 0));
+      items.sort((a, b) => (a.price_mxn || 0) - (b.price_mxn || 0));
     } else if (sortBy === "price-high") {
-      items.sort((a, b) => (b.price_usd || 0) - (a.price_usd || 0));
+      items.sort((a, b) => (b.price_mxn || 0) - (a.price_mxn || 0));
     } else if (sortBy === "popular") {
       items.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
     }
@@ -441,7 +445,7 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     // 🔥 Cargar configuración del sistema PRIMERO
-    this.systemConfigService.getConfig();
+
 
     // ✅ httpResource carga automáticamente, pero forzamos reload con timestamp
     this.api.reloadHome();
@@ -578,8 +582,11 @@ export class HomeComponent implements OnInit {
   navigateToCourse(course: any, event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
+    console.log('Navigate to course:', course);
     if (course.slug) {
       this.router.navigate(["/course-detail", course.slug]);
+    } else {
+      console.error('Course slug is missing:', course);
     }
   }
 

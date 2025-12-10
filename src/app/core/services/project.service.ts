@@ -26,6 +26,16 @@ export class ProjectService {
     return this.http.get<ProjectListResponse>(`${this.url}/list`, { params });
   }
 
+  // 🔥 NUEVO: Método para listar proyectos por estado (admin review)
+  getProjectsAdmin(state: string | number): Observable<ProjectListResponse> {
+    let val = state;
+    if (state === 'Borrador') val = 1;
+    if (state === 'Publico') val = 2;
+
+    // Asumiendo que el endpoint list soporta ?state=...
+    return this.http.get<ProjectListResponse>(`${this.url}/list?state=${val}`);
+  }
+
   getById(id: string): Observable<ProjectSingleResponse> {
     // El backend no requiere token para la vista pública de un proyecto
     return this.http.get<ProjectSingleResponse>(`${this.url}/show/${id}`);

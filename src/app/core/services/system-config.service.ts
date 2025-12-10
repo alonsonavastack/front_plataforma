@@ -6,6 +6,7 @@ import { Observable, tap, catchError, of } from 'rxjs';
 
 interface SystemConfigState {
   config: SystemConfig | null;
+  exchange_rate: number | null; // 🔥 Tasa de cambio
   isLoading: boolean;
   error: string | null;
 }
@@ -20,18 +21,17 @@ export class SystemConfigService {
   // Estado con signal
   private state = signal<SystemConfigState>({
     config: null,
+    exchange_rate: null,
     isLoading: false,
     error: null
   });
 
   // Computed signals para acceso fácil
   config = computed(() => this.state().config);
+  exchangeRate = computed(() => this.state().exchange_rate); // 🔥 Computado para usar en pipes
   isLoading = computed(() => this.state().isLoading);
   error = computed(() => this.state().error);
 
-  /**
-   * Obtener configuración del sistema (pública)
-   */
   /**
    * Obtener configuración del sistema (pública)
    */
@@ -42,10 +42,11 @@ export class SystemConfigService {
       error: null
     });
 
-    this.http.get<{ config: SystemConfig }>(`${this.API_URL}/get-public`).pipe(
+    this.http.get<{ config: SystemConfig, exchange_rate: number }>(`${this.API_URL}/get-public`).pipe(
       tap(response => {
         this.state.set({
           config: response.config,
+          exchange_rate: response.exchange_rate,
           isLoading: false,
           error: null
         });
@@ -69,6 +70,7 @@ export class SystemConfigService {
       tap((response) => {
         // Actualizar estado local
         this.state.set({
+          ...this.state(), // Mantiene el exchange_rate actual
           config: response.config,
           isLoading: false,
           error: null
@@ -108,6 +110,7 @@ export class SystemConfigService {
   resetState(): void {
     this.state.set({
       config: null,
+      exchange_rate: null, // Resetear tasa
       isLoading: false,
       error: null
     });

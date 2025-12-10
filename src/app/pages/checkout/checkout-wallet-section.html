@@ -1,194 +1,215 @@
 <!-- 💰 SECCIÓN MEJORADA DE BILLETERA CON UX ENHANCEMENTS -->
 @if (walletBalance() > 0 || isLoadingWallet()) {
-  <div class="bg-gradient-to-r from-lime-500/10 via-green-500/10 to-emerald-500/10 rounded-xl p-6 border border-lime-500/30 shadow-lg">
-    
-    <!-- Loading State -->
-    @if (isLoadingWallet()) {
-      <div class="flex items-center justify-center py-8">
-        <div class="text-center">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400 mx-auto mb-3"></div>
-          <p class="text-sm text-gray-400">Cargando tu billetera...</p>
-        </div>
-      </div>
-    } @else {
-      
-      <!-- Header con Saldo y Toggle -->
-      <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center gap-4">
-          <div class="relative">
-            <svg class="w-10 h-10 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+<div
+  class="bg-gradient-to-r from-lime-500/10 via-green-500/10 to-emerald-500/10 rounded-xl p-6 border border-lime-500/30 shadow-lg">
+
+  <!-- Loading State -->
+  @if (isLoadingWallet()) {
+  <div class="flex items-center justify-center py-8">
+    <div class="text-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400 mx-auto mb-3"></div>
+      <p class="text-sm text-gray-400">Cargando tu billetera...</p>
+    </div>
+  </div>
+  } @else {
+
+  <!-- Header con Saldo y Toggle -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-4">
+      <div class="relative">
+        <svg class="w-10 h-10 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+          </path>
+        </svg>
+        <!-- Indicador de saldo disponible -->
+        @if (walletBalance() >= subtotal()) {
+        <span class="absolute -top-1 -right-1 flex h-4 w-4">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-4 w-4 bg-green-500 items-center justify-center">
+            <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clip-rule="evenodd"></path>
             </svg>
-            <!-- Indicador de saldo disponible -->
-            @if (walletBalance() >= subtotal()) {
-              <span class="absolute -top-1 -right-1 flex h-4 w-4">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-4 w-4 bg-green-500 items-center justify-center">
-                  <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                  </svg>
-                </span>
-              </span>
-            }
-          </div>
-          
-          <div>
-            <h3 class="text-base font-semibold text-gray-300 mb-1">Saldo Disponible en Billetera</h3>
-            <p class="text-3xl font-black text-lime-400">${{ walletBalance() | number:'1.2-2' }} <span class="text-sm text-gray-400 font-normal">USD</span></p>
-            
-            <!-- Badge de estado -->
-            @if (walletBalance() >= subtotal()) {
-              <div class="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-green-500/20 border border-green-400/40 rounded-full">
-                <svg class="w-3.5 h-3.5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                </svg>
-                <span class="text-xs font-bold text-green-300">Suficiente para esta compra</span>
-              </div>
-            } @else if (walletBalance() > 0) {
-              <div class="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-blue-500/20 border border-blue-400/40 rounded-full">
-                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span class="text-xs font-bold text-blue-300">Úsalo para pago parcial</span>
-              </div>
-            }
-          </div>
-        </div>
-
-        <!-- Toggle Switch Mejorado -->
-        <label class="relative inline-flex items-center cursor-pointer group">
-          <input
-            type="checkbox"
-            [checked]="useWalletBalance()"
-            (change)="toggleWalletPayment()"
-            class="sr-only peer"
-          >
-          <div class="w-16 h-8 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-lime-300/50 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-lime-500 shadow-lg"></div>
-          <span class="ms-3 text-sm font-semibold text-white group-hover:text-lime-300 transition-colors">
-            Usar saldo
           </span>
-        </label>
+        </span>
+        }
       </div>
 
-      <!-- Desglose de Pago cuando está activado -->
-      @if (useWalletBalance()) {
-        <div class="bg-slate-900/50 backdrop-blur-sm rounded-xl p-5 space-y-3 border border-white/5">
-          
-          <!-- Subtotal -->
-          <div class="flex justify-between items-center text-sm">
-            <span class="text-slate-300 flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-              </svg>
-              Total a pagar:
-            </span>
-            <span class="text-white font-bold">${{ subtotal() | number:'1.2-2' }}</span>
-          </div>
-          
-          <!-- Monto de Billetera -->
-          <div class="flex justify-between items-center text-sm">
-            <span class="text-lime-300 flex items-center gap-2 font-semibold">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              Saldo de billetera:
-            </span>
-            <span class="text-lime-400 font-bold">-${{ walletAmount() | number:'1.2-2' }}</span>
-          </div>
-          
-          <!-- Divisor -->
-          <div class="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent my-3"></div>
-          
-          <!-- Restante a Pagar -->
-          <div class="flex justify-between items-center">
-            <span class="text-white font-bold text-base">Restante a pagar:</span>
-            <span class="text-3xl font-black text-lime-400">${{ remainingAmount() | number:'1.2-2' }}</span>
-          </div>
+      <div>
+        <h3 class="text-base font-semibold text-gray-300 mb-1">Saldo Disponible en Billetera</h3>
+        <p class="text-3xl font-black text-lime-400">${{ walletBalance() | number:'1.2-2' }} <span
+            class="text-sm text-gray-400 font-normal">MXN</span></p>
 
-          <!-- Badges de Estado del Pago -->
-          @if (isFullWalletPayment()) {
-            <!-- 100% con Billetera -->
-            <div class="mt-4 p-4 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50 rounded-lg animate-pulse-slow">
-              <div class="flex items-center gap-3">
-                <div class="flex-shrink-0">
-                  <svg class="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                </div>
-                <div class="flex-1">
-                  <p class="text-lg font-bold text-green-300 flex items-center gap-2">
-                    ✨ Acceso Instantáneo
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-green-500 text-white animate-bounce">
-                      NUEVO
-                    </span>
-                  </p>
-                  <p class="text-sm text-green-200 mt-1">Tu saldo cubre el 100% de la compra. ¡Acceso inmediato a tus cursos!</p>
-                </div>
-                <div class="flex-shrink-0">
-                  <svg class="w-6 h-6 text-green-400 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"></path>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          } @else if (isMixedPayment()) {
-            <!-- Pago Mixto -->
-            <div class="mt-4 p-4 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-500/50 rounded-lg">
-              <div class="flex items-center gap-3">
-                <svg class="w-8 h-8 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                </svg>
-                <div class="flex-1">
-                  <p class="text-base font-bold text-blue-300">💳 Pago Mixto</p>
-                  <p class="text-sm text-blue-200 mt-1">
-                    Billetera: <span class="font-bold">${{ walletAmount() | number:'1.2-2' }}</span>
-                    <span class="text-blue-300 mx-2">|</span>
-                    Otro método: <span class="font-bold">${{ remainingAmount() | number:'1.2-2' }}</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-          }
+        <!-- Badge de estado -->
+        @if (walletBalance() >= subtotal()) {
+        <div
+          class="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-green-500/20 border border-green-400/40 rounded-full">
+          <svg class="w-3.5 h-3.5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clip-rule="evenodd"></path>
+          </svg>
+          <span class="text-xs font-bold text-green-300">Suficiente para esta compra</span>
         </div>
-      }
-
-      <!-- Últimas 3 Transacciones -->
-      @if (recentTransactions().length > 0 && useWalletBalance()) {
-        <div class="mt-5 pt-5 border-t border-white/10">
-          <div class="flex items-center justify-between mb-3">
-            <h4 class="text-sm font-semibold text-gray-300 flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              Actividad Reciente
-            </h4>
-            <a routerLink="/wallet" class="text-xs text-lime-400 hover:text-lime-300 font-semibold flex items-center gap-1">
-              Ver todo
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-              </svg>
-            </a>
-          </div>
-          
-          <div class="space-y-2">
-            @for (transaction of recentTransactions(); track transaction._id) {
-              <div class="flex items-center justify-between p-2.5 bg-slate-800/50 rounded-lg hover:bg-slate-800/70 transition-colors">
-                <div class="flex items-center gap-2.5 flex-1 min-w-0">
-                  <span class="text-xl flex-shrink-0">{{ getTransactionIcon(transaction.type) }}</span>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-xs font-medium text-white truncate">{{ transaction.description }}</p>
-                    <p class="text-xs text-gray-400">{{ formatDate(transaction.createdAt) }}</p>
-                  </div>
-                </div>
-                <span [class]="'text-sm font-bold flex-shrink-0 ' + getTransactionColor(transaction.type)">
-                  {{ transaction.type === 'credit' ? '+' : '-' }}${{ transaction.amount | number:'1.2-2' }}
-                </span>
-              </div>
-            }
-          </div>
+        } @else if (walletBalance() > 0) {
+        <div
+          class="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-blue-500/20 border border-blue-400/40 rounded-full">
+          <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span class="text-xs font-bold text-blue-300">Úsalo para pago parcial</span>
         </div>
-      }
+        }
+      </div>
+    </div>
 
+    <!-- Toggle Switch Mejorado -->
+    <label class="relative inline-flex items-center cursor-pointer group">
+      <input type="checkbox" [checked]="useWalletBalance()" (change)="toggleWalletPayment()" class="sr-only peer">
+      <div
+        class="w-16 h-8 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-lime-300/50 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-lime-500 shadow-lg">
+      </div>
+      <span class="ms-3 text-sm font-semibold text-white group-hover:text-lime-300 transition-colors">
+        Usar saldo
+      </span>
+    </label>
+  </div>
+
+  <!-- Desglose de Pago cuando está activado -->
+  @if (useWalletBalance()) {
+  <div class="bg-slate-900/50 backdrop-blur-sm rounded-xl p-5 space-y-3 border border-white/5">
+
+    <!-- Subtotal -->
+    <div class="flex justify-between items-center text-sm">
+      <span class="text-slate-300 flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+          </path>
+        </svg>
+        Total a pagar:
+      </span>
+      <span class="text-white font-bold">${{ subtotal() | number:'1.2-2' }}</span>
+    </div>
+
+    <!-- Monto de Billetera -->
+    <div class="flex justify-between items-center text-sm">
+      <span class="text-lime-300 flex items-center gap-2 font-semibold">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+          </path>
+        </svg>
+        Saldo de billetera:
+      </span>
+      <span class="text-lime-400 font-bold">-${{ walletAmount() | number:'1.2-2' }}</span>
+    </div>
+
+    <!-- Divisor -->
+    <div class="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent my-3"></div>
+
+    <!-- Restante a Pagar -->
+    <div class="flex justify-between items-center">
+      <span class="text-white font-bold text-base">Restante a pagar:</span>
+      <span class="text-3xl font-black text-lime-400">${{ remainingAmount() | number:'1.2-2' }}</span>
+    </div>
+
+    <!-- Badges de Estado del Pago -->
+    @if (isFullWalletPayment()) {
+    <!-- 100% con Billetera -->
+    <div
+      class="mt-4 p-4 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50 rounded-lg animate-pulse-slow">
+      <div class="flex items-center gap-3">
+        <div class="flex-shrink-0">
+          <svg class="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <div class="flex-1">
+          <p class="text-lg font-bold text-green-300 flex items-center gap-2">
+            ✨ Acceso Instantáneo
+            <span
+              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-green-500 text-white animate-bounce">
+              NUEVO
+            </span>
+          </p>
+          <p class="text-sm text-green-200 mt-1">Tu saldo cubre el 100% de la compra. ¡Acceso inmediato a tus cursos!
+          </p>
+        </div>
+        <div class="flex-shrink-0">
+          <svg class="w-6 h-6 text-green-400 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z">
+            </path>
+          </svg>
+        </div>
+      </div>
+    </div>
+    } @else if (isMixedPayment()) {
+    <!-- Pago Mixto -->
+    <div class="mt-4 p-4 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-500/50 rounded-lg">
+      <div class="flex items-center gap-3">
+        <svg class="w-8 h-8 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6">
+          </path>
+        </svg>
+        <div class="flex-1">
+          <p class="text-base font-bold text-blue-300">💳 Pago Mixto</p>
+          <p class="text-sm text-blue-200 mt-1">
+            Billetera: <span class="font-bold">${{ walletAmount() | number:'1.2-2' }}</span>
+            <span class="text-blue-300 mx-2">|</span>
+            Otro método: <span class="font-bold">${{ remainingAmount() | number:'1.2-2' }}</span>
+          </p>
+        </div>
+      </div>
+    </div>
     }
   </div>
+  }
+
+  <!-- Últimas 3 Transacciones -->
+  @if (recentTransactions().length > 0 && useWalletBalance()) {
+  <div class="mt-5 pt-5 border-t border-white/10">
+    <div class="flex items-center justify-between mb-3">
+      <h4 class="text-sm font-semibold text-gray-300 flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        Actividad Reciente
+      </h4>
+      <a routerLink="/wallet" class="text-xs text-lime-400 hover:text-lime-300 font-semibold flex items-center gap-1">
+        Ver todo
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </a>
+    </div>
+
+    <div class="space-y-2">
+      @for (transaction of recentTransactions(); track transaction._id) {
+      <div
+        class="flex items-center justify-between p-2.5 bg-slate-800/50 rounded-lg hover:bg-slate-800/70 transition-colors">
+        <div class="flex items-center gap-2.5 flex-1 min-w-0">
+          <span class="text-xl flex-shrink-0">{{ getTransactionIcon(transaction.type) }}</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-medium text-white truncate">{{ transaction.description }}</p>
+            <p class="text-xs text-gray-400">{{ formatDate(transaction.createdAt) }}</p>
+          </div>
+        </div>
+        <span [class]="'text-sm font-bold flex-shrink-0 ' + getTransactionColor(transaction.type)">
+          {{ transaction.type === 'credit' ? '+' : '-' }}${{ transaction.amount | number:'1.2-2' }}
+        </span>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  }
+</div>
 }

@@ -1,14 +1,5 @@
 import { Directive, ElementRef, EventEmitter, HostListener, Output } from '@angular/core';
 
-/**
- * Directiva que detecta clics fuera del elemento host
- * y emite un evento para cerrar menús, dropdowns, etc.
- * 
- * Uso:
- * <div (clickOutside)="closeMenu()">
- *   <!-- Contenido del menú -->
- * </div>
- */
 @Directive({
   selector: '[clickOutside]',
   standalone: true
@@ -20,9 +11,11 @@ export class ClickOutsideDirective {
 
   @HostListener('document:click', ['$event'])
   onClick(event: MouseEvent): void {
-    const clickedInside = this.elementRef.nativeElement.contains(event.target);
+    const clickedElement = event.target as HTMLElement;
+    const clickedInside = this.elementRef.nativeElement.contains(clickedElement);
+    const isExternalInteractive = clickedElement.closest('app-conversion-bar') !== null;
     
-    if (!clickedInside) {
+    if (!clickedInside && !isExternalInteractive) {
       this.clickOutside.emit();
     }
   }

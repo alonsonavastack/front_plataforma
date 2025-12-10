@@ -1,5 +1,4 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
-
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminPaymentService, InstructorWithEarnings, CommissionSettings } from '../../core/services/admin-payment.service';
@@ -16,22 +15,55 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   private router = inject(Router);
   private modalService = inject(ModalService);
 
-  instructors = signal<InstructorWithEarnings[]>([]);
-  summary = signal<any>({});
-  isLoading = signal(true);
-  error = signal<string | null>(null);
+  instructors = this.adminPaymentService.instructors;
+  summary = this.adminPaymentService.summary;
+  isLoading = this.adminPaymentService.isLoadingInstructors;
+  error = this.adminPaymentService.instructorsError;
 
-  // 🔥 NUEVO: Configuración de comisiones (incluye umbral y días)
-  settings = signal<CommissionSettings | null>(null);
-  isLoadingSettings = signal(true);
+  // Configuración de comisiones
+  settings = this.adminPaymentService.commissionSettings;
+  isLoadingSettings = this.adminPaymentService.isLoadingCommission;
 
   filterForm = new FormGroup({
-    status: new FormControl('all'), // 🔥 Por defecto mostrar TODAS las ganancias
+    status: new FormControl('all'),
     minAmount: new FormControl<number | null>(0),
+    country: new FormControl('all'), // 🔥 NUEVO: Filtro por país
+    paymentMethod: new FormControl('all'), // 🔥 NUEVO: Filtro por método de pago
   });
 
   hasInstructors = computed(() => this.instructors().length > 0);
   totalEarnings = computed(() => Number(this.summary()?.totalEarnings) || 0);
+
+  // 🔥 NUEVO: Filtros de país y método de pago
+  availableCountries = computed(() => {
+    const instructors = this.instructors();
+    const countries = new Set<string>();
+    instructors.forEach((i: InstructorWithEarnings) => {
+      const country = i.instructor.country || i.paymentConfig.country || 'INTL';
+      countries.add(country);
+    });
+    return Array.from(countries).sort();
+  });
+
+  // Instructores filtrados
+  filteredInstructors = computed(() => {
+    let instructors = this.instructors();
+    const country = this.filterForm.get('country')?.value;
+    const paymentMethod = this.filterForm.get('paymentMethod')?.value;
+
+    if (country && country !== 'all') {
+      instructors = instructors.filter((i: InstructorWithEarnings) => {
+        const instructorCountry = i.instructor.country || i.paymentConfig.country || 'INTL';
+        return instructorCountry === country;
+      });
+    }
+
+    if (paymentMethod && paymentMethod !== 'all') {
+      instructors = instructors.filter((i: InstructorWithEarnings) => i.paymentConfig.preferredMethod === paymentMethod);
+    }
+
+    return instructors;
+  });
 
   // Paginación
   currentPage = signal(1);
@@ -39,7 +71,7 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   Math = Math;
 
   paginatedInstructors = computed(() => {
-    const instructors = this.instructors();
+    const instructors = this.filteredInstructors();
     const page = this.currentPage();
     const perPage = this.itemsPerPage();
     const start = (page - 1) * perPage;
@@ -48,7 +80,7 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   });
 
   totalPages = computed(() => {
-    const total = this.instructors().length;
+    const total = this.filteredInstructors().length;
     return Math.ceil(total / this.itemsPerPage());
   });
 
@@ -72,31 +104,17 @@ export class AdminInstructorPaymentsComponent implements OnInit {
 
   ngOnInit() {
     this.loadInstructors();
-    this.loadSettings(); // 🔥 NUEVO: Cargar configuración
+    this.loadSettings();
   }
 
-  // 🔥 NUEVO: Cargar configuración de comisiones
   loadSettings() {
-    this.isLoadingSettings.set(true);
-    this.adminPaymentService.getCommissionSettings().subscribe({
-      next: (response) => {
-        this.settings.set(response.settings);
-        this.isLoadingSettings.set(false);
-      },
-      error: (err) => {
-        this.isLoadingSettings.set(false);
-      }
-    });
+    this.adminPaymentService.reloadCommissionSettings();
   }
 
   loadInstructors() {
-    this.isLoading.set(true);
-    this.error.set(null);
-
     const formValue = this.filterForm.value;
     const filters: { status?: string; minAmount?: number } = {};
 
-    // 🔥 IMPORTANTE: Usar 'all' como valor por defecto, no 'available'
     if (formValue.status && formValue.status !== 'all') {
       filters.status = formValue.status;
     }
@@ -104,35 +122,30 @@ export class AdminInstructorPaymentsComponent implements OnInit {
       filters.minAmount = formValue.minAmount;
     }
 
-    // 🔥 Si no hay filtro de status, usar 'all' para ver TODAS las ganancias
     const status = filters.status || 'all';
     const minAmount = filters.minAmount || 0;
 
-
-    this.adminPaymentService.getInstructorsWithEarnings(status, minAmount).subscribe({
-      next: (response) => {
-
-        this.instructors.set(response.instructors || []);
-        this.summary.set(response.summary || {});
-        this.isLoading.set(false);
-
-      },
-      error: (err) => {
-        this.error.set(err.error?.message || 'An error occurred while loading data.');
-        this.isLoading.set(false);
-      }
-    });
+    this.adminPaymentService.setInstructorFilters({ status, minAmount });
   }
 
   onFilterChange() {
-    this.currentPage.set(1); // Reset a primera página
-    this.loadInstructors();
+    this.currentPage.set(1);
+    // Solo recargar si cambia el filtro de status o minAmount
+    const country = this.filterForm.get('country')?.value;
+    const paymentMethod = this.filterForm.get('paymentMethod')?.value;
+
+    // Si solo cambió país o método, no recargar (se filtra en el computed)
+    if (country === 'all' && paymentMethod === 'all') {
+      this.loadInstructors();
+    }
   }
 
   clearFilters() {
     this.filterForm.reset({
-      status: 'all', // 🔥 Resetear a 'all' para mostrar todos
-      minAmount: 0
+      status: 'all',
+      minAmount: 0,
+      country: 'all',
+      paymentMethod: 'all'
     });
     this.currentPage.set(1);
     this.loadInstructors();
@@ -160,7 +173,7 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'MXN'
     }).format(amount);
   }
 
@@ -181,6 +194,9 @@ export class AdminInstructorPaymentsComponent implements OnInit {
     if (config.preferredMethod === 'bank_transfer') {
       return `Cuenta Bancaria: ${config.bankVerified ? 'Verificada' : 'No Verificada'}`;
     }
+    if (config.preferredMethod === 'mercadopago') {
+      return `Mercado Pago: ${config.country || 'Sin país'}`;
+    }
     return 'Método de pago no especificado';
   }
 
@@ -188,18 +204,69 @@ export class AdminInstructorPaymentsComponent implements OnInit {
     const colors = {
       paypal: 'text-blue-600 bg-blue-100',
       bank_transfer: 'text-green-600 bg-green-100',
+      mercadopago: 'text-indigo-600 bg-indigo-100',
+      wallet: 'text-purple-600 bg-purple-100',
+      transfer: 'text-green-600 bg-green-100',
       none: 'text-gray-600 bg-gray-100'
     };
-    return colors[method as keyof typeof colors] || colors.none;
+    return colors[method as keyof typeof colors] || 'text-orange-600 bg-orange-100';
   }
 
   getMethodText(method: string): string {
     const texts = {
       paypal: 'PayPal',
       bank_transfer: 'Transferencia',
+      mercadopago: 'Mercado Pago',
+      wallet: 'Billetera',
+      transfer: 'Transferencia',
       none: 'No configurado'
     };
-    return texts[method as keyof typeof texts] || 'Otro';
+    return texts[method as keyof typeof texts] || method.charAt(0).toUpperCase() + method.slice(1);
+  }
+
+  // 🔥 NUEVO: Obtener bandera de país
+  getCountryFlag(country: string): string {
+    const flags: Record<string, string> = {
+      'MX': '🇲🇽',
+      'AR': '🇦🇷',
+      'CO': '🇨🇴',
+      'CL': '🇨🇱',
+      'PE': '🇵🇪',
+      'BR': '🇧🇷',
+      'INTL': '🌎'
+    };
+    return flags[country] || '🌍';
+  }
+
+  // 🔥 NUEVO: Obtener nombre del país
+  getCountryName(country: string): string {
+    const names: Record<string, string> = {
+      'MX': 'México',
+      'AR': 'Argentina',
+      'CO': 'Colombia',
+      'CL': 'Chile',
+      'PE': 'Perú',
+      'BR': 'Brasil',
+      'INTL': 'Internacional'
+    };
+    return names[country] || country;
+  }
+
+  // 🔥 NUEVO: Determinar si se puede pagar con Mercado Pago
+  canPayWithMercadoPago(instructor: InstructorWithEarnings): boolean {
+    const country = instructor.instructor.country || instructor.paymentConfig.country;
+    const supportedCountries = ['MX', 'AR', 'CO', 'CL', 'PE', 'BR'];
+
+    return instructor.paymentConfig.preferredMethod === 'mercadopago' &&
+      supportedCountries.includes(country || '');
+  }
+
+  // 🔥 NUEVO: Determinar si se puede pagar con transferencia bancaria (solo México)
+  canPayWithBankTransfer(instructor: InstructorWithEarnings): boolean {
+    const country = instructor.instructor.country || instructor.paymentConfig.country;
+    return instructor.paymentConfig.preferredMethod === 'bank_transfer' &&
+      country === 'MX' &&
+      instructor.paymentConfig.bankVerified;
   }
 
   viewInstructorDetails(instructorId: string) {
@@ -208,9 +275,6 @@ export class AdminInstructorPaymentsComponent implements OnInit {
     }
   }
 
-  /**
-   * Obtener URL del avatar del instructor
-   */
   getInstructorAvatarUrl(instructor: any): string {
     if (!instructor || !instructor.avatar) {
       return `https://ui-avatars.com/api/?name=${encodeURIComponent(instructor?.name || 'User')}&background=667eea&color=fff`;
@@ -218,30 +282,25 @@ export class AdminInstructorPaymentsComponent implements OnInit {
     return `http://localhost:3000/api/users/imagen-usuario/${instructor.avatar}`;
   }
 
-  // 🔥 NUEVO: Verificar si el instructor ha alcanzado el umbral mínimo
   hasReachedThreshold(earningsTotal: number): boolean {
-    const threshold = this.settings()?.minimum_payment_threshold || 0; // ⚠️ Usar 0 como fallback
+    const threshold = this.settings()?.minimum_payment_threshold || 0;
     return earningsTotal >= threshold;
   }
 
-  // 🔥 NUEVO: Calcular cuánto falta para alcanzar el umbral
   amountToReachThreshold(earningsTotal: number): number {
-    const threshold = this.settings()?.minimum_payment_threshold || 0; // ⚠️ Usar 0 como fallback
+    const threshold = this.settings()?.minimum_payment_threshold || 0;
     const remaining = threshold - earningsTotal;
     return remaining > 0 ? remaining : 0;
   }
 
-  // 🔥 NUEVO: Obtener el umbral mínimo configurado
   getMinimumThreshold(): number {
     return this.settings()?.minimum_payment_threshold || 0;
   }
 
-  // 🔥 NUEVO: Obtener los días hasta que las ganancias estén disponibles
   getDaysUntilAvailable(): number {
-    return this.settings()?.days_until_available ?? 0; // ⚠️ Usar ?? en lugar de || para manejar el 0 correctamente
+    return this.settings()?.days_until_available ?? 0;
   }
 
-  // 🔧 NUEVO: Procesar ventas existentes para crear ganancias
   isProcessingSales = signal(false);
 
   async processExistingSales() {
@@ -260,7 +319,7 @@ export class AdminInstructorPaymentsComponent implements OnInit {
     this.isProcessingSales.set(true);
 
     this.adminPaymentService.processExistingSales().subscribe({
-      next: (result) => {
+      next: (result: any) => {
         this.isProcessingSales.set(false);
 
         let message = `✅ Proceso completado:\n\n` +
@@ -270,10 +329,8 @@ export class AdminInstructorPaymentsComponent implements OnInit {
           `📊 Total de productos: ${result.total}\n` +
           `💳 Ventas revisadas: ${result.sales_reviewed}\n\n`;
 
-        // Incluir detalles si el backend los devolvió (diagnóstico)
         if (result.skipped_details && Array.isArray(result.skipped_details) && result.skipped_details.length > 0) {
           message += 'Detalles de productos omitidos:\n';
-          // Mostrar hasta 10 items para no abrumar al alert
           const maxShow = 10;
           result.skipped_details.slice(0, maxShow).forEach((d: any, i: number) => {
             message += `${i + 1}. Sale ${d.sale} - ${d.title || d.product} - Motivo: ${d.reason}` + (d.error ? ` (error: ${d.error})` : '') + '\n';
@@ -304,7 +361,6 @@ export class AdminInstructorPaymentsComponent implements OnInit {
           confirmText: 'Entendido'
         });
 
-        // Recargar la lista de instructores
         this.loadInstructors();
       },
       error: (err) => {

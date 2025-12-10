@@ -1,6 +1,7 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal, computed, resource } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
+// rxResource removed
 import { environment } from '../../../environments/environment';
 
 export interface PaymentMethod {
@@ -34,11 +35,13 @@ export interface CheckoutData {
   use_wallet?: boolean;
   wallet_amount?: number;
   remaining_amount?: number;
+  country?: string;
 }
 
 export interface CheckoutResponse {
   message: string;
   sale?: any;
+  init_point?: string;
 }
 
 @Injectable({
@@ -46,72 +49,103 @@ export interface CheckoutResponse {
 })
 export class CheckoutService {
   private readonly http = inject(HttpClient);
-  private readonly API_URL = `${environment.url}checkout`; // Aseguramos que la ruta base es /checkout
+  private readonly API_URL = `${environment.url}checkout`;
 
-  // Métodos de pago disponibles
-  readonly paymentMethods: PaymentMethod[] = [
-    {
-      id: 'wallet',
-      name: 'Billetera Digital',
-      icon: '💰',
-      description: 'Usa tu saldo disponible de forma instantánea'
-    },
-    {
-      id: 'paypal',
-      name: 'PayPal',
-      icon: '💳',
-      description: 'Paga de forma segura con tu cuenta PayPal'
-    },
-    {
-      id: 'stripe',
-      name: 'Tarjeta de Crédito/Débito',
-      icon: '💳',
-      description: 'Visa, Mastercard, American Express'
-    },
-    {
-      id: 'mercadopago',
-      name: 'Mercado Pago',
-      icon: '💰',
-      description: 'Paga con Mercado Pago'
-    },
-    {
-      id: 'transfer',
-      name: 'Transferencia Bancaria',
-      icon: '🏦',
-      description: 'Transferencia directa a cuenta bancaria'
+  // 🔥 Signal para controlar la recarga de configuración
+  private configReloadTrigger = signal(0);
+
+  // 🔥 rxResource para configuración de pagos (países soportados + métodos)
+  // 🔥 rxResource reemplazado por resource standard
+  private paymentConfigResource = resource({
+    loader: () => {
+      this.configReloadTrigger();
+      return firstValueFrom(this.http.get<any>(`${environment.url}payment-settings/public`));
     }
-  ];
+  });
 
-  // 🔥 Datos bancarios centralizados para transferencia (solo frontend)
+  // 🔥 rxResource reemplazado por resource standard
+  private countriesResource = resource({
+    loader: () => {
+      this.configReloadTrigger();
+      return firstValueFrom(this.http.get<any>(`${environment.url}system-config/supported-countries`));
+    }
+  });
+
+  // 🔥 Señales públicas derivadas
+  public paymentConfig = computed(() => this.paymentConfigResource.value()?.settings ?? null);
+  public supportedCountries = computed(() => this.countriesResource.value()?.countries ?? []);
+  public isLoadingConfig = computed(() =>
+    this.paymentConfigResource.isLoading() || this.countriesResource.isLoading()
+  );
+
+  // 🔥 Métodos de pago filtrados dinámicamente según configuración
+  public availablePaymentMethods = computed<PaymentMethod[]>(() => {
+    const config = this.paymentConfig();
+    if (!config) return [];
+
+    const allMethods: PaymentMethod[] = [
+      {
+        id: 'wallet',
+        name: 'Billetera Digital',
+        icon: '💰',
+        description: 'Usa tu saldo disponible de forma instantánea'
+      },
+      {
+        id: 'mercadopago',
+        name: 'Mercado Pago',
+        icon: '💰',
+        description: 'Paga con Mercado Pago (Tarjeta, Efectivo, Transferencia)'
+      },
+      {
+        id: 'paypal',
+        name: 'PayPal',
+        icon: '🅿️',
+        description: 'Paga de forma segura con PayPal'
+      },
+      {
+        id: 'transfer',
+        name: 'Transferencia Bancaria',
+        icon: '🏦',
+        description: 'Transferencia directa a cuenta bancaria'
+      }
+    ];
+
+    // Filtrar métodos según configuración activa
+    return allMethods.filter(method => {
+      if (method.id === 'wallet') return true; // Siempre disponible
+      if (method.id === 'mercadopago') return config.mercadopago?.active === true;
+      if (method.id === 'paypal') return config.paypal?.active === true;
+      if (method.id === 'transfer') return true; // Por ahora siempre disponible
+      return false;
+    });
+  });
+
+  // 🔥 Datos bancarios centralizados (solo frontend)
   readonly bankDetails: BankDetails = {
     bankName: 'BBVA Bancomer',
     accountNumber: '1167021895',
     clabe: '01242611670218951'
   };
 
-  /**
-   * Procesa el pago y crea la orden de venta
-   */
-  processSale(data: CheckoutData): Observable<CheckoutResponse> {
+  // 🔥 Procesar venta
+  processSale(data: CheckoutData) {
     return this.http.post<CheckoutResponse>(`${this.API_URL}/register`, data);
   }
 
-
-
-  /**
-   * Genera un número de transacción único
-   */
+  // 🔥 Generar número de transacción único
   generateTransactionNumber(): string {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 10).toUpperCase();
     return `TXN-${timestamp}-${random}`;
   }
 
-  /**
-   * Obtiene la tasa de cambio actual (esto podría venir de una API externa)
-   */
+  // 🔥 Obtener tasa de cambio (hardcoded por ahora)
   getExchangeRate(): number {
-    // Por ahora retornamos una tasa fija, pero podrías integrar una API de tasas de cambio
-    return 3.66; // 1 USD = 3.66 (tu moneda local)
+    return 3.66;
+  }
+
+  // 🔥 Recargar configuración manualmente
+  reloadConfig(): void {
+    this.configReloadTrigger.update(v => v + 1);
   }
 }

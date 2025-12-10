@@ -28,10 +28,12 @@ import { lastValueFrom } from 'rxjs';
 import { ToastService } from '../../core/services/toast.service';
 import { ModalService } from '../../core/services/modal.service';
 
+import { MxnCurrencyPipe } from '../../shared/pipes/mxn-currency.pipe';
+
 @Component({
   standalone: true,
   selector: 'app-profile-student',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, HeaderComponent, CountryCodeSelectorComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, HeaderComponent, CountryCodeSelectorComponent, MxnCurrencyPipe],
   templateUrl: './profile-student.html',
 })
 export class ProfileStudentComponent implements OnInit, OnDestroy {
@@ -267,6 +269,11 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
       return false;
     }
 
+    // 🔥 NUEVO: No permitir reembolsos en compras gratuitas
+    if (sale.total === 0) {
+      return false;
+    }
+
     // 🔥 NUEVO: Verificar si la venta está anulada (dinero ya fue devuelto)
     // El check anterior (sale.status !== 'Pagado') ya cubre 'Anulado' y 'Pendiente'
     // por lo que este bloque era código muerto que causaba error de TS.
@@ -347,7 +354,7 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
 
     const confirmed = await this.modalService.confirm({
       title: 'Confirmar Reembolso',
-      message: `¿Confirmas solicitar el reembolso de ${selectedIds.size} producto(s) por un total de ${this.selectedRefundTotal().toFixed(2)} USD?`,
+      message: `¿Confirmas solicitar el reembolso de ${selectedIds.size} producto(s) por un total de ${this.selectedRefundTotal().toFixed(2)} MXN?`,
       icon: 'warning',
       confirmText: 'Sí, solicitar reembolso',
       cancelText: 'Cancelar'
@@ -400,7 +407,7 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
         // 🎨 Toast de éxito
         this.toast.success(
           '¡Solicitud Enviada!',
-          `Reembolso de ${selectedIds.size} producto(s) solicitado correctamente (${this.selectedRefundTotal().toFixed(2)} USD)`,
+          `Reembolso de ${selectedIds.size} producto(s) solicitado correctamente (${this.selectedRefundTotal().toFixed(2)} MXN)`,
           7000
         );
 

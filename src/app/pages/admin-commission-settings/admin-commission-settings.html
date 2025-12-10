@@ -2,78 +2,82 @@
   <!-- Header -->
   <div class="mb-6">
     <h1 class="text-3xl font-bold text-slate-100">Configuración de Comisiones</h1>
-    <p class="mt-2 text-sm text-slate-400">Ajusta las comisiones globales de la plataforma y gestiona las tasas personalizadas para instructores.</p>
+    <p class="mt-2 text-sm text-slate-400">Ajusta las comisiones globales de la plataforma y gestiona las tasas
+      personalizadas para instructores.</p>
   </div>
 
   <!-- Loading State -->
   @if (isLoading()) {
-    <div class="flex justify-center items-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
-    </div>
+  <div class="flex justify-center items-center py-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
+  </div>
   }
 
   <!-- Main Content -->
   @if (!isLoading() && settings()) {
-    <div class="max-w-4xl mx-auto">
-      <!-- Global Settings Form -->
-      <div>
-        <form [formGroup]="settingsForm" (ngSubmit)="onSubmit()" class="bg-slate-800/50 rounded-lg shadow-md p-6 space-y-6">
-          <h2 class="text-xl font-semibold text-slate-200 border-b border-slate-700 pb-3">Ajustes Globales</h2>
+  <div class="max-w-4xl mx-auto">
+    <!-- Global Settings Form -->
+    <div>
+      <form [formGroup]="settingsForm" (ngSubmit)="onSubmit()"
+        class="bg-slate-800/50 rounded-lg shadow-md p-6 space-y-6">
+        <h2 class="text-xl font-semibold text-slate-200 border-b border-slate-700 pb-3">Ajustes Globales</h2>
 
-          <!-- Success Message -->
-          @if (successMessage()) {
-            <div class="bg-lime-500/10 border border-lime-500/20 text-lime-200 px-4 py-3 rounded-lg text-sm">
-              {{ successMessage() }}
-            </div>
-          }
+        <!-- Success Message -->
+        @if (successMessage()) {
+        <div class="bg-lime-500/10 border border-lime-500/20 text-lime-200 px-4 py-3 rounded-lg text-sm">
+          {{ successMessage() }}
+        </div>
+        }
 
-          <!-- Error Message -->
-          @if (error()) {
-            <div class="bg-red-500/10 border border-red-500/20 text-red-300 px-4 py-3 rounded-lg text-sm">
-              {{ error() }}
-            </div>
-          }
+        <!-- Error Message -->
+        @if (error()) {
+        <div class="bg-red-500/10 border border-red-500/20 text-red-300 px-4 py-3 rounded-lg text-sm">
+          {{ error() }}
+        </div>
+        }
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label for="default_commission_rate" class="block text-sm font-medium text-slate-300 mb-2">Comisión por Defecto (%)</label>
-              <input id="default_commission_rate" type="number" formControlName="default_commission_rate" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400">
-            </div>
-            <div>
-              <label for="days_until_available" class="block text-sm font-medium text-slate-300 mb-2">Días para Disponibilidad</label>
-              <input id="days_until_available" type="number" formControlName="days_until_available" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400">
-            </div>
-            <div>
-              <label for="minimum_payment_threshold" class="block text-sm font-medium text-slate-300 mb-2">Umbral Mínimo de Pago (USD)</label>
-              <input id="minimum_payment_threshold" type="number" formControlName="minimum_payment_threshold" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400">
-            </div>
-            <div>
-              <label for="exchange_rate_usd_to_mxn" class="block text-sm font-medium text-slate-300 mb-2">Tasa de Cambio (USD a MXN)</label>
-              <input id="exchange_rate_usd_to_mxn" type="number" formControlName="exchange_rate_usd_to_mxn" class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400">
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="default_commission_rate" class="block text-sm font-medium text-slate-300 mb-2">Comisión por
+              Defecto (%)</label>
+            <input id="default_commission_rate" type="number" formControlName="default_commission_rate"
+              class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400">
+          </div>
+          <div>
+            <label for="days_until_available" class="block text-sm font-medium text-slate-300 mb-2">Días para
+              Disponibilidad</label>
+            <input id="days_until_available" type="number" formControlName="days_until_available"
+              class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400">
+          </div>
+          <div>
+            <label for="minimum_payment_threshold" class="block text-sm font-medium text-slate-300 mb-2">Umbral Mínimo
+              de Pago (MXN)</label>
+            <input id="minimum_payment_threshold" type="number" formControlName="minimum_payment_threshold"
+              class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400">
           </div>
 
-          <div class="flex justify-end">
-            <button
-              type="submit"
-              [disabled]="settingsForm.invalid || isSaving()"
-              class="px-6 py-2 bg-lime-500 text-slate-900 rounded-lg hover:bg-lime-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              @if (isSaving()) {
-                <span class="flex items-center">
-                  <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-slate-800" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Guardando...
-                </span>
-              } @else {
-                Guardar Cambios
-              }
-            </button>
-          </div>
-        </form>
-      </div>
+        </div>
+
+        <div class="flex justify-end">
+          <button type="submit" [disabled]="settingsForm.invalid || isSaving()"
+            class="px-6 py-2 bg-lime-500 text-slate-900 rounded-lg hover:bg-lime-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+            @if (isSaving()) {
+            <span class="flex items-center">
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-slate-800" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
+              </svg>
+              Guardando...
+            </span>
+            } @else {
+            Guardar Cambios
+            }
+          </button>
+        </div>
+      </form>
     </div>
+  </div>
   }
 </div>

@@ -4,11 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../../layout/header/header';
 import { WalletService, WalletTransaction } from '../../core/services/wallet.service';
 import { AuthService } from '../../core/services/auth';
-
+import { MxnCurrencyPipe } from '../../shared/pipes/mxn-currency.pipe';
 @Component({
   selector: 'app-wallet',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeaderComponent],
+  imports: [CommonModule, FormsModule, HeaderComponent, MxnCurrencyPipe],
   templateUrl: './wallet.component.html'
 })
 export class WalletComponent implements OnInit {
@@ -36,7 +36,7 @@ export class WalletComponent implements OnInit {
   filteredTransactions = computed(() => {
     const txs = this.transactions();
     if (this.typeFilter === 'all') return txs;
-    return txs.filter(t => t.type === this.typeFilter);
+    return txs.filter((t: WalletTransaction) => t.type === this.typeFilter);
   });
 
   // Filtros de fecha para estadísticas detalladas
@@ -50,20 +50,20 @@ export class WalletComponent implements OnInit {
     // 💰 TOTAL RECIBIDO (Ingreso Real):
     // Solo sumar créditos que NO sean reembolsos (ej. depósitos manuales, regalos)
     const totalCredits = txs
-      .filter(t => t.type === 'credit' && t.metadata?.reason !== 'refund')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter((t: WalletTransaction) => t.type === 'credit' && t.metadata?.reason !== 'refund')
+      .reduce((sum: number, t: WalletTransaction) => sum + t.amount, 0);
 
     // 🔄 TOTAL REEMBOLSADO:
     // Sumar créditos que SÍ sean reembolsos
     const totalRefunded = txs
-      .filter(t => t.type === 'credit' && t.metadata?.reason === 'refund')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter((t: WalletTransaction) => t.type === 'credit' && t.metadata?.reason === 'refund')
+      .reduce((sum: number, t: WalletTransaction) => sum + t.amount, 0);
 
     // 💳 TOTAL DEBITADO (Gasto Bruto):
     // Suma de todas las compras
     const grossDebits = txs
-      .filter(t => t.type === 'debit')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter((t: WalletTransaction) => t.type === 'debit')
+      .reduce((sum: number, t: WalletTransaction) => sum + t.amount, 0);
 
     // 📉 TOTAL GASTADO (Gasto Neto):
     // Gasto Bruto - Total Reembolsado
@@ -95,7 +95,7 @@ export class WalletComponent implements OnInit {
       // Ajustar fin del día para incluir transacciones de ese día
       endDate.setHours(23, 59, 59, 999);
 
-      txs = txs.filter(t => {
+      txs = txs.filter((t: WalletTransaction) => {
         const date = new Date(t.createdAt);
         return date >= startDate && date <= endDate;
       });
@@ -103,16 +103,16 @@ export class WalletComponent implements OnInit {
 
     // Cálculos Brutos (Total Absoluto)
     const grossIncome = txs
-      .filter(t => t.type === 'credit')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter((t: WalletTransaction) => t.type === 'credit')
+      .reduce((sum: number, t: WalletTransaction) => sum + t.amount, 0);
 
     const grossExpenses = txs
-      .filter(t => t.type === 'debit')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter((t: WalletTransaction) => t.type === 'debit')
+      .reduce((sum: number, t: WalletTransaction) => sum + t.amount, 0);
 
     const refunds = txs
-      .filter(t => t.type === 'credit' && t.metadata?.reason === 'refund')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter((t: WalletTransaction) => t.type === 'credit' && t.metadata?.reason === 'refund')
+      .reduce((sum: number, t: WalletTransaction) => sum + t.amount, 0);
 
     const netPeriodBalance = grossIncome - grossExpenses;
 
@@ -170,17 +170,12 @@ export class WalletComponent implements OnInit {
     return pages;
   });
 
-  async ngOnInit() {
-    await this.loadWallet();
+  ngOnInit() {
+    this.loadWallet();
   }
 
-  async loadWallet() {
-    try {
-      await this.walletService.loadWallet();
-    } catch (error) {
-
-      alert('❌ Error al cargar la billetera. Por favor, intenta de nuevo.');
-    }
+  loadWallet() {
+    this.walletService.loadWallet();
   }
 
   applyFilters() {

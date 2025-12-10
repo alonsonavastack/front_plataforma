@@ -285,7 +285,7 @@ export class RefundModalComponent {
     return {
       transactionNumber: saleData.n_transaccion || 'N/A',
       total: saleData.total || 0,
-      currency: saleData.currency_total || 'USD',
+      currency: saleData.currency_total || 'MXN',
       date: saleData.createdAt ? new Date(saleData.createdAt).toLocaleDateString('es-MX') : 'N/A',
       items: saleData.detail?.length || 0
     };

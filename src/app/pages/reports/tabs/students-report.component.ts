@@ -340,7 +340,7 @@ export class StudentsReportComponent implements OnInit {
       'Compras': s.totalPurchases,
       'Cursos': s.coursesEnrolled || 0,
       'Proyectos': s.projectsEnrolled || 0,
-      'Total Gastado (USD)': s.totalSpent
+      'Total Gastado (MXN)': s.totalSpent
     }));
 
     const ws = XLSX.utils.json_to_sheet(data);
@@ -385,7 +385,7 @@ export class StudentsReportComponent implements OnInit {
   }
 
   formatCurrency(amount: number): string {
-    return `USD ${amount.toFixed(2)}`;
+    return `MXN ${amount.toFixed(2)}`;
   }
 
   formatDate(date: Date | string): string {

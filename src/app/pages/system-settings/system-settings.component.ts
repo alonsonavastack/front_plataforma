@@ -9,6 +9,7 @@ import { BasicInfoComponent } from './components/basic-info/basic-info.component
 import { ContactInfoComponent } from './components/contact-info/contact-info.component';
 import { SocialMediaComponent } from './components/social-media/social-media.component';
 import { AuthService } from '../../core/services/auth';
+import { AdminPaymentSettingsComponent } from '../admin-payment-settings/admin-payment-settings.component'; // 🆕
 
 @Component({
   selector: 'app-system-settings',
@@ -17,7 +18,8 @@ import { AuthService } from '../../core/services/auth';
     ReactiveFormsModule,
     BasicInfoComponent,
     ContactInfoComponent,
-    SocialMediaComponent
+    SocialMediaComponent,
+    AdminPaymentSettingsComponent // 🆕
   ],
   templateUrl: './system-settings.component.html'
 })
@@ -35,7 +37,7 @@ export class SystemSettingsComponent implements OnInit {
 
   // Signals para UI
   isSaving = signal(false);
-  activeTab = signal<'basic' | 'contact' | 'social'>('basic');
+  activeTab = signal<'basic' | 'contact' | 'social' | 'payment'>('basic');
   showSuccess = signal(false);
   formIsValid = signal(false); // 🔥 Signal reactivo para estado del formulario
 
@@ -48,7 +50,7 @@ export class SystemSettingsComponent implements OnInit {
   ngOnInit(): void {
 
     // Verificar que sea admin
-    const user = this.authService.user();
+    const user: any = this.authService.user();
     if (!user || user.rol !== 'admin') {
       this.router.navigate(['/dashboard']);
       return;
@@ -156,7 +158,7 @@ export class SystemSettingsComponent implements OnInit {
   /**
    * Cambiar tab activo
    */
-  setActiveTab(tab: 'basic' | 'contact' | 'social'): void {
+  setActiveTab(tab: 'basic' | 'contact' | 'social' | 'payment'): void {
     this.activeTab.set(tab);
   }
 

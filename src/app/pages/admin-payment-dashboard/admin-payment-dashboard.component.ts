@@ -286,7 +286,7 @@ export class AdminPaymentDashboardComponent implements OnInit {
     return baseUrl + imagePath;
   }
 
-  formatCurrency(amount: number, currency: string = 'USD'): string {
+  formatCurrency(amount: number, currency: string = 'MXN'): string {
     return this.dashboardService.formatCurrency(amount, currency);
   }
 

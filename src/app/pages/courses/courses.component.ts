@@ -8,11 +8,12 @@ import { AuthService } from "../../core/services/auth";
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from "rxjs/operators";
 import { Subscription } from "rxjs";
+import { MxnCurrencyPipe } from "../../shared/pipes/mxn-currency.pipe";
 
 @Component({
   selector: 'app-courses',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DragDropModule],
+  imports: [CommonModule, ReactiveFormsModule, DragDropModule, MxnCurrencyPipe],
   templateUrl: './courses.component.html',
 })
 export class CoursesComponent implements OnInit, OnDestroy {
@@ -48,7 +49,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
     title: new FormControl('', [Validators.required]),
     subtitle: new FormControl('', [Validators.required]),
     description: new FormControl(''),
-    price_usd: new FormControl({ value: 0, disabled: true }, [Validators.required, Validators.min(0)]),
+    price_mxn: new FormControl({ value: 0, disabled: true }, [Validators.required, Validators.min(0)]),
     isFree: new FormControl({ value: true, disabled: true }), // Indica si el curso es gratuito
     categorie: new FormControl('', [Validators.required]),
     user: new FormControl('', [Validators.required]),
@@ -269,7 +270,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
     this.courseForm.reset({
       level: 'Basico',
       idioma: 'Español',
-      price_usd: 0,
+      price_mxn: 0,
       isFree: true, // ✅ AGREGAR: Checkbox de gratuito por defecto false
       state: 1, // Borrador por defecto
     });
@@ -624,6 +625,19 @@ export class CoursesComponent implements OnInit, OnDestroy {
         }
       });
     }
+  }
+
+  // 🔄 NUEVO: Handler para soltar sección (drop)
+  dropSection(event: CdkDragDrop<CourseSection[]>) {
+    if (!this.selectedCourse()) return;
+
+    // Actualiza el estado local en el servicio
+    this.coursesService.updateLocalSectionOrder(event.previousIndex, event.currentIndex);
+
+    const orderedIds = this.coursesService.sections().map(section => section._id);
+
+    // Persistir el nuevo orden en backend
+    this.coursesService.reorderSections(orderedIds).subscribe();
   }
 
   // --- Class Management ---

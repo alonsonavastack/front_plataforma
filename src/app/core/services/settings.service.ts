@@ -52,9 +52,7 @@ export interface SettingsCourse {
   isFree?: boolean;  // ✅ Agregado
   categorie?: any;
   user?: any;
-  precio_usd?: number;
   precio_mxn?: number;
-  price_usd?: number;  // ✅ Agregado (alias)
   price_mxn?: number;  // ✅ Agregado (alias)
 }
 
@@ -67,9 +65,7 @@ export interface SettingsProject {
   featured: boolean;
   isFree?: boolean;  // ✅ Agregado
   user?: any;
-  precio_usd?: number;
   precio_mxn?: number;
-  price_usd?: number;  // ✅ Agregado (alias)
   price_mxn?: number;  // ✅ Agregado (alias)
 }
 

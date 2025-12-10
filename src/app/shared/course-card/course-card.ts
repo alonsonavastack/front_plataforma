@@ -1,20 +1,24 @@
 // src/app/shared/course-card/course-card.ts
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment.development';
 import { PurchasesService } from '../../core/services/purchases.service';
 import { AuthService } from '../../core/services/auth';
 import { ToastService } from '../../core/services/toast.service';
+import { CurrencyService } from '../../services/currency.service';
 import { CoursePublic } from '../../core/models/home.models';
 
 type AnyObj = Record<string, any>;
 
+import { MxnCurrencyPipe } from '../pipes/mxn-currency.pipe';
+
 @Component({
   standalone: true,
   selector: 'course-card',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, MxnCurrencyPipe],
   templateUrl: './course-card.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CourseCardComponent {
   // 🔥 Output para compra directa
@@ -24,9 +28,11 @@ export class CourseCardComponent {
   Math = Math;
   course = input.required<CoursePublic>();
 
+
   private purchasesService = inject(PurchasesService);
   private authService = inject(AuthService);
   private toast = inject(ToastService);
+  public currencyService = inject(CurrencyService); // Public for template
   galeria = environment.images.course;
 
   private buildImage(part: string | null | undefined): string {
@@ -40,7 +46,7 @@ export class CourseCardComponent {
   }
 
   title = computed(() => this.course()?.['title'] ?? '');
-  slug  = computed(() => this.course()?.['slug'] ?? '');
+  slug = computed(() => this.course()?.['slug'] ?? '');
   courseId = computed(() => this.course()?.['_id'] ?? '');
 
   isLink = computed(() => !!this.slug());
@@ -64,21 +70,21 @@ export class CourseCardComponent {
     return name || undefined;
   });
 
-  priceOriginal = computed<number>(() => Number(this.course().price_usd ?? 0));
-  priceCurrent  = computed<number>(() =>
-    Number(this.course().final_price_usd ?? this.priceOriginal())
+  priceOriginal = computed<number>(() => Number(this.course().price_mxn ?? 0));
+  priceCurrent = computed<number>(() =>
+    Number(this.course().final_price_mxn ?? this.priceOriginal())
   );
-  hasDiscount   = computed<boolean>(() =>
+  hasDiscount = computed<boolean>(() =>
     !!this.course().discount_active && this.priceCurrent() < this.priceOriginal()
   );
-  discountPct   = computed<number | null>(() => {
+  discountPct = computed<number | null>(() => {
     const p0 = this.priceOriginal();
     const p1 = this.priceCurrent();
     if (!p0 || !(p1 < p0)) return null;
     return Math.round((1 - p1 / p0) * 100);
   });
 
-  rating  = computed<string>(() =>
+  rating = computed<string>(() =>
     String(this.course().AVG_RATING ?? '')
   );
   reviews = computed<number>(() =>

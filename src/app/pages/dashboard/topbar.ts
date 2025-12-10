@@ -121,7 +121,7 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   goToRefunds(refundId?: string) {
     console.log('📍 [Topbar] Navegando a reembolsos:', refundId);
-    
+
     // Cerrar el menú
     this.isRefundNotificationsMenuOpen.set(false);
 
@@ -190,7 +190,7 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit(): void {
     // 🔥 Cargar configuración del sistema
-    this.systemConfigService.getConfig();
+
 
     const user = this.authService.user();
 
@@ -244,5 +244,5 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
     return '/profile-student';
   }
 
-  ngAfterViewInit(): void {}
+  ngAfterViewInit(): void { }
 }

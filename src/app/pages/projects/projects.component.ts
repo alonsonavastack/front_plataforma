@@ -7,6 +7,8 @@ import { CoursesService } from "../../core/services/courses";
 import { environment } from "../../../environments/environment";
 import { AuthService } from "../../core/services/auth";
 
+import { ToastService } from "../../core/services/toast.service"; // 🆕
+
 interface ProjectFile {
   _id: string;
   name: string;
@@ -15,16 +17,20 @@ interface ProjectFile {
   uploadDate: string;
 }
 
+import { MxnCurrencyPipe } from '../../shared/pipes/mxn-currency.pipe';
+
 @Component({
   selector: 'app-projects',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, MxnCurrencyPipe],
   templateUrl: './projects.component.html',
 })
 export class ProjectsComponent implements OnInit {
   projectService = inject(ProjectService);
   coursesService = inject(CoursesService);
   public authService = inject(AuthService);
+
+  private toast = inject(ToastService); // 🆕
 
   // --- State Management with Signals ---
   private projectsState = signal<{
@@ -73,7 +79,7 @@ export class ProjectsComponent implements OnInit {
     title: new FormControl('', [Validators.required]),
     subtitle: new FormControl('', [Validators.required]),
     description: new FormControl('', [Validators.required]),
-    price_usd: new FormControl(0, [Validators.required, Validators.min(0)]),
+    price_mxn: new FormControl(0, [Validators.required, Validators.min(0)]),
     isFree: new FormControl(false), // Indica si el proyecto es gratuito
     categorie: new FormControl('', [Validators.required]),
     state: new FormControl(1, [Validators.required]),
@@ -83,33 +89,33 @@ export class ProjectsComponent implements OnInit {
 
   // 🔥 Signal para mensaje de error de precio
   priceErrorMessage = computed(() => {
-    const priceControl = this.projectForm.get('price_usd');
+    const priceControl = this.projectForm.get('price_mxn');
     const isFreeControl = this.projectForm.get('isFree');
-    
+
     if (!priceControl || !isFreeControl) return null;
-    
+
     const price = priceControl.value || 0;
     const isFree = isFreeControl.value;
-    
+
     // Si es gratuito, no mostrar error
     if (isFree) return null;
-    
-    // Si el precio está entre 0.01 y 5.99, mostrar error
-    if (price > 0 && price < 6) {
-      return 'El precio mínimo debe ser $6.00 USD';
+
+    // Si el precio está entre 0.01 y 9.99, mostrar error
+    if (price > 0 && price < 10) {
+      return 'El precio mínimo debe ser $10.00 MXN';
     }
-    
+
     return null;
   });
 
   ngOnInit(): void {
     this.loadProjects();
     this.coursesService.reloadConfig();
-    
+
     // 🔥 Listener para el checkbox de "Gratuito"
     this.projectForm.get('isFree')?.valueChanges.subscribe(isFree => {
-      const priceControl = this.projectForm.get('price_usd');
-      
+      const priceControl = this.projectForm.get('price_mxn');
+
       if (isFree) {
         // Si es gratuito, poner precio en 0 (NO deshabilitar el control)
         priceControl?.setValue(0);
@@ -227,7 +233,7 @@ export class ProjectsComponent implements OnInit {
       title: '',
       subtitle: '',
       description: '',
-      price_usd: 0,
+      price_mxn: 0,
       isFree: false, // ✅ AGREGAR: Checkbox de gratuito por defecto false
       categorie: '',
       state: 1,
@@ -249,7 +255,7 @@ export class ProjectsComponent implements OnInit {
       title: project.title,
       subtitle: project.subtitle,
       description: project.description,
-      price_usd: project.price_usd,
+      price_mxn: project.price_mxn,
       isFree: project.isFree || false, // Agregar campo isFree
       categorie: categoryId,
       state: project.state || 1,
@@ -292,11 +298,11 @@ export class ProjectsComponent implements OnInit {
 
     // 🔥 VALIDACIÓN DE PRECIO
     const isFree = this.projectForm.get('isFree')?.value;
-    const price = this.projectForm.get('price_usd')?.value || 0;
-    
-    // Si NO es gratuito y el precio es menor a $6, mostrar error
-    if (!isFree && price > 0 && price < 6) {
-      alert('⚠️ El precio mínimo debe ser $6.00 USD o puedes marcarlo como gratuito');
+    const price = this.projectForm.get('price_mxn')?.value || 0;
+
+    // Si NO es gratuito y el precio es menor a $10, mostrar error
+    if (!isFree && price > 0 && price < 10) {
+      alert('⚠️ El precio mínimo debe ser $10.00 MXN o puedes marcarlo como gratuito');
       return;
     }
 
@@ -306,23 +312,23 @@ export class ProjectsComponent implements OnInit {
     formData.append('title', formValue.title || '');
     formData.append('subtitle', formValue.subtitle || '');
     formData.append('description', formValue.description || '');
-    
+
     // 🔥 Si es gratuito, enviar 0; si no, enviar el precio (habilitando el control temporalmente)
     if (isFree) {
-      formData.append('price_usd', '0');
+      formData.append('price_mxn', '0');
       formData.append('isFree', 'true');
     } else {
       // Habilitar temporalmente el control para obtener su valor
-      const priceControl = this.projectForm.get('price_usd');
+      const priceControl = this.projectForm.get('price_mxn');
       const wasdisabled = priceControl?.disabled;
       if (wasdisabled) priceControl?.enable();
-      
-      formData.append('price_usd', priceControl?.value?.toString() || '0');
+
+      formData.append('price_mxn', priceControl?.value?.toString() || '0');
       formData.append('isFree', 'false');
-      
+
       if (wasdisabled) priceControl?.disable();
     }
-    
+
     formData.append('categorie', formValue.categorie || '');
     formData.append('state', formValue.state?.toString() || '1');
     formData.append('url_video', formValue.url_video || '');
@@ -485,7 +491,7 @@ export class ProjectsComponent implements OnInit {
   }
 
   getStateBadgeClass(state: number | undefined): string {
-    switch(state) {
+    switch (state) {
       case 1: return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30';
       case 2: return 'bg-lime-500/20 text-lime-400 border border-lime-500/30';
       case 3: return 'bg-red-500/20 text-red-400 border border-red-500/30';
@@ -494,7 +500,7 @@ export class ProjectsComponent implements OnInit {
   }
 
   getStateText(state: number | undefined): string {
-    switch(state) {
+    switch (state) {
       case 1: return 'Borrador';
       case 2: return 'Público';
       case 3: return 'Anulado';
@@ -658,4 +664,6 @@ export class ProjectsComponent implements OnInit {
       minute: '2-digit'
     });
   }
+
+
 }

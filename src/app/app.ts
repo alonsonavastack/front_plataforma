@@ -5,6 +5,8 @@ import { initFlowbite } from 'flowbite';
 import { ToastContainerComponent } from './shared/toast-container/toast-container.component';
 import { ModalComponent } from './shared/components/modal/modal.component';
 
+import { SystemConfigService } from './core/services/system-config.service';
+
 
 @Component({
   selector: 'app-root',
@@ -13,10 +15,12 @@ import { ModalComponent } from './shared/components/modal/modal.component';
   styleUrl: './app.css'
 })
 export class App {
-  animate = inject(AnimateService);
-  year = signal(new Date().getFullYear());
+  systemConfigService = inject(SystemConfigService);
 
   ngOnInit(): void {
     initFlowbite();
+
+    // 🔥 Cargar configuración una sola vez al inicio de la app
+    this.systemConfigService.getConfig();
   }
 }

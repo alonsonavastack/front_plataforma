@@ -2,104 +2,101 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
     <!-- Back Button -->
-    <button
-      (click)="goBack()"
-      class="mb-6 inline-flex items-center px-4 py-2.5 border border-white/10 rounded-lg text-sm font-medium text-slate-300 bg-slate-800/50 hover:bg-slate-800 transition-all"
-    >
+    <button (click)="goBack()"
+      class="mb-6 inline-flex items-center px-4 py-2.5 border border-white/10 rounded-lg text-sm font-medium text-slate-300 bg-slate-800/50 hover:bg-slate-800 transition-all">
       <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+        <path fill-rule="evenodd"
+          d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+          clip-rule="evenodd" />
       </svg>
       Volver a Lista de Instructores
     </button>
 
     <!-- Header with Instructor Info -->
     @if (instructor()) {
-      <div class="bg-slate-800/50 rounded-lg border border-white/10 p-8 mb-8">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-6">
-            <img
-              [src]="getInstructorAvatarUrl(instructor())"
-              [alt]="instructor().name"
-              class="w-20 h-20 rounded-full object-cover border-2 border-lime-400/30"
-            />
-            <div>
-              <h1 class="text-3xl font-bold text-white">{{instructor().name}} {{instructor().surname}}</h1>
-              <p class="text-sm text-slate-400 mt-1">{{instructor().email}}</p>
-            </div>
+    <div class="bg-slate-800/50 rounded-lg border border-white/10 p-8 mb-8">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-6">
+          <img [src]="getInstructorAvatarUrl(instructor())" [alt]="instructor().name"
+            class="w-20 h-20 rounded-full object-cover border-2 border-lime-400/30" />
+          <div>
+            <h1 class="text-3xl font-bold text-white">{{instructor().name}} {{instructor().surname}}</h1>
+            <p class="text-sm text-slate-400 mt-1">{{instructor().email}}</p>
           </div>
-
-          @if (paymentConfig()?.preferred_payment_method) {
-            <div class="text-right">
-              <p class="text-xs text-slate-400 uppercase tracking-wider mb-1">Método Preferido</p>
-              <p class="text-lg font-semibold text-lime-400">
-                {{paymentConfig().preferred_payment_method === 'paypal' ? 'PayPal' : 'Transferencia Bancaria'}}
-              </p>
-            </div>
-          }
         </div>
+
+        @if (paymentConfig()?.preferred_payment_method) {
+        <div class="text-right">
+          <p class="text-xs text-slate-400 uppercase tracking-wider mb-1">Método Preferido</p>
+          <p class="text-lg font-semibold text-lime-400">
+            {{paymentConfig().preferred_payment_method === 'paypal' ? 'PayPal' : 'Transferencia Bancaria'}}
+          </p>
+        </div>
+        }
       </div>
+    </div>
     }
 
     <!-- Success Message -->
     @if (successMessage()) {
-      <div class="mb-6 bg-lime-500/10 border-l-4 border-lime-400 p-4 rounded-r-lg">
-        <div class="flex">
-          <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-lime-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-            </svg>
-          </div>
-          <div class="ml-3">
-            <p class="text-sm text-lime-200">{{successMessage()}}</p>
-          </div>
+    <div class="mb-6 bg-lime-500/10 border-l-4 border-lime-400 p-4 rounded-r-lg">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-lime-300" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-lime-200">{{successMessage()}}</p>
         </div>
       </div>
+    </div>
     }
 
     <!-- Error Message -->
     @if (error()) {
-      <div class="mb-6 bg-red-500/10 border-l-4 border-red-500 p-4 rounded-r-lg">
-        <div class="flex">
-          <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-            </svg>
-          </div>
-          <div class="ml-3">
-            <p class="text-sm text-red-300">{{error()}}</p>
-          </div>
+    <div class="mb-6 bg-red-500/10 border-l-4 border-red-500 p-4 rounded-r-lg">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-red-300">{{error()}}</p>
         </div>
       </div>
+    </div>
     }
 
     <!-- Selection Summary and Actions -->
     @if (selectedCount() > 0) {
-      <div class="bg-lime-500/10 border border-lime-500/30 p-6 mb-6 rounded-lg">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-lime-300 font-medium">
-              {{selectedCount()}} ganancia(s) seleccionada(s)
-            </p>
-            <p class="text-3xl font-bold text-white mt-1">
-              Total: {{formatCurrency(selectedTotal())}}
-            </p>
-          </div>
-          <div class="flex space-x-3">
-            <button
-              (click)="deselectAll()"
-              class="px-4 py-2.5 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 border border-white/10 transition-all"
-            >
-              Deseleccionar Todo
-            </button>
-            <button
-              (click)="openPaymentModal()"
-              class="px-6 py-2.5 bg-lime-500 text-slate-900 rounded-lg hover:bg-lime-400 font-semibold transition-all"
-            >
-              Crear Pago
-            </button>
-          </div>
+    <div class="bg-lime-500/10 border border-lime-500/30 p-6 mb-6 rounded-lg">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-lime-300 font-medium">
+            {{selectedCount()}} ganancia(s) seleccionada(s)
+          </p>
+          <p class="text-3xl font-bold text-white mt-1">
+            Total: {{formatCurrency(selectedTotal())}}
+          </p>
+        </div>
+        <div class="flex space-x-3">
+          <button (click)="deselectAll()"
+            class="px-4 py-2.5 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 border border-white/10 transition-all">
+            Deseleccionar Todo
+          </button>
+          <button (click)="openPaymentModal()"
+            class="px-6 py-2.5 bg-lime-500 text-slate-900 rounded-lg hover:bg-lime-400 font-semibold transition-all">
+            Crear Pago
+          </button>
         </div>
       </div>
+    </div>
     }
 
     <!-- Filters -->
@@ -107,10 +104,8 @@
       <div class="flex items-center justify-between mb-6">
         <h2 class="text-xl font-bold text-white">Ganancias del Instructor</h2>
         <div class="flex space-x-2">
-          <button
-            (click)="selectAll()"
-            class="px-4 py-2 text-sm bg-lime-500/10 text-lime-400 rounded-lg hover:bg-lime-500/20 border border-lime-500/30 transition-all"
-          >
+          <button (click)="selectAll()"
+            class="px-4 py-2 text-sm bg-lime-500/10 text-lime-400 rounded-lg hover:bg-lime-500/20 border border-lime-500/30 transition-all">
             Seleccionar Disponibles
           </button>
         </div>
@@ -119,11 +114,8 @@
       <form [formGroup]="filterForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
           <label class="block text-sm font-medium text-slate-300 mb-2">Estado</label>
-          <select
-            formControlName="status"
-            (change)="onFilterChange()"
-            class="w-full px-4 py-2.5 border border-white/10 bg-slate-800 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:border-lime-400"
-          >
+          <select formControlName="status" (change)="onFilterChange()"
+            class="w-full px-4 py-2.5 border border-white/10 bg-slate-800 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:border-lime-400">
             <option value="all" selected>Todos</option>
             <option value="pending">Pendiente</option>
             <option value="available">Disponible</option>
@@ -133,30 +125,19 @@
 
         <div>
           <label class="block text-sm font-medium text-slate-300 mb-2">Desde</label>
-          <input
-            type="date"
-            formControlName="startDate"
-            (change)="onFilterChange()"
-            class="w-full px-4 py-2.5 border border-white/10 bg-slate-800 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:border-lime-400"
-          />
+          <input type="date" formControlName="startDate" (change)="onFilterChange()"
+            class="w-full px-4 py-2.5 border border-white/10 bg-slate-800 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:border-lime-400" />
         </div>
 
         <div>
           <label class="block text-sm font-medium text-slate-300 mb-2">Hasta</label>
-          <input
-            type="date"
-            formControlName="endDate"
-            (change)="onFilterChange()"
-            class="w-full px-4 py-2.5 border border-white/10 bg-slate-800 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:border-lime-400"
-          />
+          <input type="date" formControlName="endDate" (change)="onFilterChange()"
+            class="w-full px-4 py-2.5 border border-white/10 bg-slate-800 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:border-lime-400" />
         </div>
 
         <div class="flex items-end">
-          <button
-            type="button"
-            (click)="clearFilters()"
-            class="w-full px-4 py-2.5 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 border border-white/10 transition-all"
-          >
+          <button type="button" (click)="clearFilters()"
+            class="w-full px-4 py-2.5 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 border border-white/10 transition-all">
             Limpiar Filtros
           </button>
         </div>
@@ -165,176 +146,190 @@
 
     <!-- Loading State -->
     @if (isLoading()) {
-      <div class="flex justify-center items-center py-12">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
-      </div>
+    <div class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
+    </div>
     }
 
     <!-- Earnings Table -->
     @if (!isLoading() && validEarnings().length > 0) {
-      <div class="bg-slate-800/50 rounded-lg border border-white/10 overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-white/10">
-            <thead class="bg-slate-800">
-              <tr>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                  <input
-                    type="checkbox"
-                    class="rounded bg-slate-700 border-slate-500 text-lime-500 focus:ring-lime-500"
-                    (change)="$event.target.checked ? selectAll() : deselectAll()"
-                  />
-                </th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Producto</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Fecha</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Precio</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Comisión</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Ganancia</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Estado</th>
-              </tr>
-            </thead>
-            <tbody class="bg-slate-800/30 divide-y divide-white/5">
-              @for (earning of paginatedEarnings(); track earning._id) {
-                <tr
-                  [class.bg-lime-900/20]="isSelected()(earning._id)"
-                  class="hover:bg-slate-700/30 transition-colors"
-                >
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <input
-                      type="checkbox"
-                      [checked]="isSelected()(earning._id)"
-                      [disabled]="earning.status !== 'available'"
-                      (change)="toggleSelection(earning._id)"
-                      class="rounded bg-slate-700 border-slate-500 text-lime-500 focus:ring-lime-500"
-                    />
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="flex items-center">
-                      @if (earning.product) {
-                        <img
-                          [src]="getProductImageUrl(earning.product, earning.product_type)"
-                          (error)="handleImageError($event, earning.product)"
-                          class="h-12 w-12 rounded-lg object-cover border-2 border-white/10"
-                          [alt]="earning.product.title"
-                        />
-                        <div class="ml-4">
-                          <div class="text-sm font-medium text-white">{{earning.product.title}}</div>
-                          <div class="text-xs text-slate-400 mt-1">
-                            @if (earning.product_type === 'project') {
-                              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-300">
-                                📦 Proyecto
-                              </span>
-                            } @else {
-                              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-lime-500/20 text-lime-300">
-                                🎓 Curso
-                              </span>
-                            }
-                          </div>
-                        </div>
+    <div class="bg-slate-800/50 rounded-lg border border-white/10 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-white/10">
+          <thead class="bg-slate-800">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                <input type="checkbox" class="rounded bg-slate-700 border-slate-500 text-lime-500 focus:ring-lime-500"
+                  (change)="$event.target.checked ? selectAll() : deselectAll()" />
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Producto
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Fecha</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">💰 Precio
+                Original</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">🎁 Descuento
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Precio Final
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Comisión
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Ganancia
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Estado</th>
+            </tr>
+          </thead>
+          <tbody class="bg-slate-800/30 divide-y divide-white/5">
+            @for (earning of paginatedEarnings(); track earning._id) {
+            <tr [class.bg-lime-900/20]="isSelected()(earning._id)" class="hover:bg-slate-700/30 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <input type="checkbox" [checked]="isSelected()(earning._id)" [disabled]="earning.status !== 'available'"
+                  (change)="toggleSelection(earning._id)"
+                  class="rounded bg-slate-700 border-slate-500 text-lime-500 focus:ring-lime-500" />
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  @if (earning.product) {
+                  <img [src]="getProductImageUrl(earning.product, earning.product_type)"
+                    (error)="handleImageError($event, earning.product)"
+                    class="h-12 w-12 rounded-lg object-cover border-2 border-white/10" [alt]="earning.product.title" />
+                  <div class="ml-4">
+                    <div class="text-sm font-medium text-white">{{earning.product.title}}</div>
+                    <div class="text-xs text-slate-400 mt-1">
+                      @if (earning.product_type === 'project') {
+                      <span
+                        class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-300">
+                        📦 Proyecto
+                      </span>
                       } @else {
-                        <div class="text-sm text-slate-400">Producto no disponible</div>
+                      <span
+                        class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-lime-500/20 text-lime-300">
+                        🎓 Curso
+                      </span>
                       }
                     </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
-                    {{formatDate(earning.earned_at)}}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-white">
-                    {{formatCurrency(earning.sale_price, earning.currency)}}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-400">
-                    -{{earning.platform_commission_rate}}%
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-lime-400">
-                    {{formatCurrency(earning.instructor_earning, earning.currency)}}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span [class]="'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ' + getStatusBadgeClass(earning.status)">
-                      {{getStatusText(earning.status)}}
-                    </span>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Paginación -->
-        @if (totalPages() > 1) {
-          <div class="px-6 py-4 border-t border-white/10 bg-slate-800/50">
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <!-- Items por página -->
-              <div class="flex items-center gap-2">
-                <span class="text-sm text-slate-400">Mostrar:</span>
-                <select
-                  [value]="itemsPerPage()"
-                  (change)="changePerPage(+$any($event.target).value)"
-                  class="px-3 py-1.5 bg-slate-700 border border-white/10 text-white rounded-lg text-sm focus:ring-2 focus:ring-lime-400"
-                >
-                  <option [value]="10">10</option>
-                  <option [value]="15">15</option>
-                  <option [value]="20">20</option>
-                  <option [value]="50">50</option>
-                </select>
-                <span class="text-sm text-slate-400">
-                  ganancias por página
-                </span>
-              </div>
-
-              <!-- Controles de paginación -->
-              <div class="flex items-center gap-2">
-                <button
-                  (click)="previousPage()"
-                  [disabled]="currentPage() === 1"
-                  class="px-3 py-1.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed border border-white/10 transition-all"
-                >
-                  Anterior
-                </button>
-
-                @for (page of pageNumbers(); track page) {
-                  @if (page === '...') {
-                    <span class="px-2 text-slate-500">...</span>
+                  </div>
                   } @else {
-                    <button
-                      (click)="changePage(+page)"
-                      [class]="currentPage() === page 
-                        ? 'px-3 py-1.5 bg-lime-500 text-slate-900 rounded-lg font-semibold border-2 border-lime-400'
-                        : 'px-3 py-1.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 border border-white/10 transition-all'"
-                    >
-                      {{ page }}
-                    </button>
+                  <div class="text-sm text-slate-400">Producto no disponible</div>
                   }
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
+                {{formatDate(earning.earned_at)}}
+              </td>
+              <!-- 🔥 NUEVO: Precio Original -->
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
+                @if (earning.discount_info && earning.discount_info.original_price) {
+                @if (earning.discount_info.original_price > earning.sale_price) {
+                <span class="line-through text-slate-500">{{formatCurrency(earning.discount_info.original_price,
+                  earning.currency)}}</span>
+                } @else {
+                <span class="text-slate-300">{{formatCurrency(earning.discount_info.original_price,
+                  earning.currency)}}</span>
                 }
-
-                <button
-                  (click)="nextPage()"
-                  [disabled]="currentPage() === totalPages()"
-                  class="px-3 py-1.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed border border-white/10 transition-all"
-                >
-                  Siguiente
-                </button>
-              </div>
-
-              <!-- Contador -->
-              <div class="text-sm text-slate-400">
-                Mostrando {{ (currentPage() - 1) * itemsPerPage() + 1 }} - 
-                {{ Math.min(currentPage() * itemsPerPage(), validEarnings().length) }} 
-                de {{ validEarnings().length }}
-              </div>
-            </div>
-          </div>
-        }
+                } @else {
+                <span class="text-slate-500">-</span>
+                }
+              </td>
+              <!-- 🔥 NUEVO: Descuento -->
+              <td class="px-6 py-4 whitespace-nowrap">
+                @if (earning.discount_info && earning.discount_info.discount_percentage > 0) {
+                <span
+                  class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-lime-500/20 text-lime-400 border border-lime-500/30">
+                  🎁 -{{earning.discount_info.discount_percentage.toFixed(1)}}%
+                </span>
+                } @else {
+                <span class="text-xs text-slate-500">Sin descuento</span>
+                }
+              </td>
+              <!-- Precio Final (con descuento) -->
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-white">
+                {{formatCurrency(earning.sale_price, earning.currency)}}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-400">
+                -{{(earning.platform_commission_rate * 100).toFixed(0)}}%
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-lime-400">
+                {{formatCurrency(earning.instructor_earning, earning.currency)}}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span
+                  [class]="'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ' + getStatusBadgeClass(earning.status)">
+                  {{getStatusText(earning.status)}}
+                </span>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
       </div>
+
+      <!-- Paginación -->
+      @if (totalPages() > 1) {
+      <div class="px-6 py-4 border-t border-white/10 bg-slate-800/50">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <!-- Items por página -->
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-slate-400">Mostrar:</span>
+            <select [value]="itemsPerPage()" (change)="changePerPage(+$any($event.target).value)"
+              class="px-3 py-1.5 bg-slate-700 border border-white/10 text-white rounded-lg text-sm focus:ring-2 focus:ring-lime-400">
+              <option [value]="10">10</option>
+              <option [value]="15">15</option>
+              <option [value]="20">20</option>
+              <option [value]="50">50</option>
+            </select>
+            <span class="text-sm text-slate-400">
+              ganancias por página
+            </span>
+          </div>
+
+          <!-- Controles de paginación -->
+          <div class="flex items-center gap-2">
+            <button (click)="previousPage()" [disabled]="currentPage() === 1"
+              class="px-3 py-1.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed border border-white/10 transition-all">
+              Anterior
+            </button>
+
+            @for (page of pageNumbers(); track page) {
+            @if (page === '...') {
+            <span class="px-2 text-slate-500">...</span>
+            } @else {
+            <button (click)="changePage(+page)"
+              [class]="currentPage() === page 
+                        ? 'px-3 py-1.5 bg-lime-500 text-slate-900 rounded-lg font-semibold border-2 border-lime-400'
+                        : 'px-3 py-1.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 border border-white/10 transition-all'">
+              {{ page }}
+            </button>
+            }
+            }
+
+            <button (click)="nextPage()" [disabled]="currentPage() === totalPages()"
+              class="px-3 py-1.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed border border-white/10 transition-all">
+              Siguiente
+            </button>
+          </div>
+
+          <!-- Contador -->
+          <div class="text-sm text-slate-400">
+            Mostrando {{ (currentPage() - 1) * itemsPerPage() + 1 }} -
+            {{ Math.min(currentPage() * itemsPerPage(), validEarnings().length) }}
+            de {{ validEarnings().length }}
+          </div>
+        </div>
+      </div>
+      }
+    </div>
     }
 
     <!-- Empty State -->
     @if (!isLoading() && validEarnings().length === 0) {
-      <div class="bg-slate-800/50 rounded-lg border border-white/10 p-12 text-center">
-        <svg class="mx-auto h-16 w-16 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-        </svg>
-        <h3 class="mt-4 text-lg font-semibold text-white">No hay ganancias</h3>
-        <p class="mt-2 text-sm text-slate-400">No se encontraron ganancias con los filtros aplicados.</p>
-      </div>
+    <div class="bg-slate-800/50 rounded-lg border border-white/10 p-12 text-center">
+      <svg class="mx-auto h-16 w-16 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+      </svg>
+      <h3 class="mt-4 text-lg font-semibold text-white">No hay ganancias</h3>
+      <p class="mt-2 text-sm text-slate-400">No se encontraron ganancias con los filtros aplicados.</p>
+    </div>
     }
 
   </div>
@@ -342,108 +337,95 @@
 
 <!-- Payment Modal -->
 @if (showPaymentModal()) {
-  <div class="fixed inset-0 z-50 overflow-y-auto">
-    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-      <!-- Backdrop -->
-      <div
-        class="fixed inset-0 transition-opacity bg-black/60 backdrop-blur-sm"
-        (click)="closePaymentModal()"
-      ></div>
+<div class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 transition-opacity bg-black/60 backdrop-blur-sm" (click)="closePaymentModal()"></div>
 
-      <!-- Modal -->
-      <div class="relative z-10 inline-block align-bottom bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-white/10">
-        <form [formGroup]="paymentForm" (ngSubmit)="createPayment()">
-          <div class="bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-            <div class="sm:flex sm:items-start">
-              <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-lime-500/10 sm:mx-0 sm:h-10 sm:w-10">
-                <svg class="h-6 w-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-              </div>
-              <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
-                <h3 class="text-lg leading-6 font-bold text-white mb-4">
-                  Crear Pago
-                </h3>
+    <!-- Modal -->
+    <div
+      class="relative z-10 inline-block align-bottom bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-white/10">
+      <form [formGroup]="paymentForm" (ngSubmit)="createPayment()">
+        <div class="bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div
+              class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-lime-500/10 sm:mx-0 sm:h-10 sm:w-10">
+              <svg class="h-6 w-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
+              <h3 class="text-lg leading-6 font-bold text-white mb-4">
+                Crear Pago
+              </h3>
 
-                <div class="space-y-4">
-                  <!-- Summary -->
-                  <div class="bg-slate-700/50 rounded-lg p-4 border border-white/10">
-                    <div class="flex justify-between mb-2">
-                      <span class="text-sm text-slate-400">Ganancias Seleccionadas:</span>
-                      <span class="text-sm font-semibold text-white">{{formatCurrency(selectedTotal())}}</span>
-                    </div>
-                    <div class="flex justify-between mb-2">
-                      <span class="text-sm text-slate-400">Ventas Incluidas:</span>
-                      <span class="text-sm font-semibold text-white">{{selectedCount()}}</span>
-                    </div>
+              <div class="space-y-4">
+                <!-- Summary -->
+                <div class="bg-slate-700/50 rounded-lg p-4 border border-white/10">
+                  <div class="flex justify-between mb-2">
+                    <span class="text-sm text-slate-400">Ganancias Seleccionadas:</span>
+                    <span class="text-sm font-semibold text-white">{{formatCurrency(selectedTotal())}}</span>
                   </div>
-
-                  <!-- Deductions -->
-                  <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">
-                      Deducciones (opcional)
-                    </label>
-                    <input
-                      type="number"
-                      formControlName="deductions"
-                      min="0"
-                      [max]="selectedTotal()"
-                      class="w-full px-4 py-2.5 border border-white/10 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400"
-                      placeholder="0.00"
-                    />
+                  <div class="flex justify-between mb-2">
+                    <span class="text-sm text-slate-400">Ventas Incluidas:</span>
+                    <span class="text-sm font-semibold text-white">{{selectedCount()}}</span>
                   </div>
+                </div>
 
-                  <!-- Final Amount -->
-                  <div class="bg-lime-500/10 rounded-lg p-4 border border-lime-500/30">
-                    <div class="flex justify-between">
-                      <span class="text-sm font-medium text-lime-300">Monto Final a Pagar:</span>
-                      <span class="text-xl font-bold text-lime-400">{{formatCurrency(finalAmount())}}</span>
-                    </div>
-                  </div>
+                <!-- Deductions -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-2">
+                    Deducciones (opcional)
+                  </label>
+                  <input type="number" formControlName="deductions" min="0" [max]="selectedTotal()"
+                    class="w-full px-4 py-2.5 border border-white/10 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400"
+                    placeholder="0.00" />
+                </div>
 
-                  <!-- Notes -->
-                  <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">
-                      Notas (opcional)
-                    </label>
-                    <textarea
-                      formControlName="notes"
-                      rows="3"
-                      class="w-full px-4 py-2.5 border border-white/10 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400"
-                      placeholder="Agrega notas sobre este pago..."
-                    ></textarea>
+                <!-- Final Amount -->
+                <div class="bg-lime-500/10 rounded-lg p-4 border border-lime-500/30">
+                  <div class="flex justify-between">
+                    <span class="text-sm font-medium text-lime-300">Monto Final a Pagar:</span>
+                    <span class="text-xl font-bold text-lime-400">{{formatCurrency(finalAmount())}}</span>
                   </div>
+                </div>
+
+                <!-- Notes -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-2">
+                    Notas (opcional)
+                  </label>
+                  <textarea formControlName="notes" rows="3"
+                    class="w-full px-4 py-2.5 border border-white/10 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400"
+                    placeholder="Agrega notas sobre este pago..."></textarea>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <div class="bg-slate-800/80 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-white/10">
-            <button
-              type="submit"
-              [disabled]="paymentForm.invalid || isCreatingPayment()"
-              class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-lime-500 text-base font-semibold text-slate-900 hover:bg-lime-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 transition-all"
-            >
-              @if (isCreatingPayment()) {
-                <svg class="animate-spin h-5 w-5 text-slate-800" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              } @else {
-                Crear Pago
-              }
-            </button>
-            <button
-              type="button"
-              (click)="closePaymentModal()"
-              [disabled]="isCreatingPayment()"
-              class="mt-3 w-full inline-flex justify-center rounded-lg border border-white/10 shadow-sm px-4 py-2 bg-slate-700 text-base font-medium text-slate-200 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-all"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </div>
+        <div class="bg-slate-800/80 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-white/10">
+          <button type="submit" [disabled]="paymentForm.invalid || isCreatingPayment()"
+            class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-lime-500 text-base font-semibold text-slate-900 hover:bg-lime-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 transition-all">
+            @if (isCreatingPayment()) {
+            <svg class="animate-spin h-5 w-5 text-slate-800" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+              </path>
+            </svg>
+            } @else {
+            Crear Pago
+            }
+          </button>
+          <button type="button" (click)="closePaymentModal()" [disabled]="isCreatingPayment()"
+            class="mt-3 w-full inline-flex justify-center rounded-lg border border-white/10 shadow-sm px-4 py-2 bg-slate-700 text-base font-medium text-slate-200 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-all">
+            Cancelar
+          </button>
+        </div>
+      </form>
     </div>
   </div>
+</div>
 }

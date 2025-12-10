@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, effect } from '@angular/core'; // Recompile trigger
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -7,11 +7,12 @@ import { Sale, SaleDetailItem } from '../../core/models/sale.model';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/services/auth';
 import { ModalService } from '../../core/services/modal.service';
+import { MxnCurrencyPipe } from '../../shared/pipes/mxn-currency.pipe';
 
 @Component({
   selector: 'app-sales',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MxnCurrencyPipe],
   templateUrl: './sales.component.html',
   styleUrls: ['./sales.component.css']
 })
@@ -166,38 +167,32 @@ export class SalesComponent implements OnInit {
     this.statusFilter.set(status);
 
     // Cargar las ventas con el filtro
-    this.saleService.listSales(
-      undefined,
-      status,
-      undefined,
-      undefined
-    ).subscribe(() => {
-      this.currentPage.set(1);
+    this.saleService.setFilters({ status });
+    this.currentPage.set(1);
 
-      // Si hay un saleId específico, expandir sus detalles automáticamente
-      if (saleId) {
-        setTimeout(() => {
-          this.expandedSales.add(saleId);
-          // Scroll hacia la venta específica
-          const element = document.getElementById(`sale-${saleId}`);
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Highlight temporal
-            element.classList.add('ring-2', 'ring-lime-400', 'ring-offset-2', 'ring-offset-slate-900');
-            setTimeout(() => {
-              element.classList.remove('ring-2', 'ring-lime-400', 'ring-offset-2', 'ring-offset-slate-900');
-            }, 2000);
-          }
-        }, 300);
-      }
+    // Si hay un saleId específico, expandir sus detalles automáticamente
+    if (saleId) {
+      setTimeout(() => {
+        this.expandedSales.add(saleId);
+        // Scroll hacia la venta específica
+        const element = document.getElementById(`sale-${saleId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Highlight temporal
+          element.classList.add('ring-2', 'ring-lime-400', 'ring-offset-2', 'ring-offset-slate-900');
+          setTimeout(() => {
+            element.classList.remove('ring-2', 'ring-lime-400', 'ring-offset-2', 'ring-offset-slate-900');
+          }, 2000);
+        }
+      }, 300);
+    }
 
-      // Limpiar los query params de notificación pero mantener la sección
-      this.router.navigate([], {
-        relativeTo: this.route,
-        queryParams: { status: null, saleId: null },
-        queryParamsHandling: 'merge',
-        replaceUrl: true
-      });
+    // Limpiar los query params de notificación pero mantener la sección
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { status: null, saleId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
     });
   }
 
@@ -205,12 +200,13 @@ export class SalesComponent implements OnInit {
    * Aplica los filtros seleccionados
    */
   applyFilters(): void {
-    this.saleService.listSales(
-      this.searchTerm() || undefined,
-      this.statusFilter() || undefined,
-      this.selectedMonth() || undefined,
-      this.selectedYear() || undefined
-    ).subscribe(() => this.currentPage.set(1)); // Resetear a la página 1 al filtrar
+    this.saleService.setFilters({
+      search: this.searchTerm() || undefined,
+      status: this.statusFilter() || undefined,
+      month: this.selectedMonth() || undefined,
+      year: this.selectedYear() || undefined
+    });
+    this.currentPage.set(1); // Resetear a la página 1 al filtrar
   }
 
   /**
@@ -221,7 +217,9 @@ export class SalesComponent implements OnInit {
     this.statusFilter.set('');
     this.selectedMonth.set('');
     this.selectedYear.set(new Date().getFullYear().toString());
-    this.applyFilters();
+
+    this.saleService.clearFilters();
+    this.currentPage.set(1);
   }
 
   /**

@@ -278,6 +278,6 @@ export class CommissionsReportComponent implements OnInit {
   }
 
   formatCurrency(amount: number): string {
-    return `USD ${amount.toFixed(2)}`;
+    return `MXN ${amount.toFixed(2)}`;
   }
 }

@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { CourseCardComponent } from '../../shared/course-card/course-card';
-import { ProjectsCard } from '../../shared/projects-card/projects-card';
+import { ProjectsCardComponent } from '../../shared/projects-card/projects-card';
 import { Project as CoreProject, CoursePublic } from '../../core/models/home.models';
 
 interface InstructorProfile {
@@ -37,8 +37,10 @@ interface InstructorProject {
   title: string;
   subtitle: string; // ✅ REQUERIDO desde backend
   imagen: string; // ✅ REQUERIDO
-  price_usd: number;
-  price_mxn?: number; // ✅ Opcional (legacy)
+  price_usd?: number;
+  price_mxn: number;
+  final_price_usd?: number;
+  final_price_mxn?: number;
   description?: string; // ✅ Opcional
   url_video?: string;
   categorie: { _id: string; title: string }; // ✅ REQUERIDO
@@ -50,7 +52,7 @@ interface InstructorProject {
 @Component({
   selector: 'app-instructor-profile',
   standalone: true,
-  imports: [CourseCardComponent, ProjectsCard, NgOptimizedImage, FormsModule],
+  imports: [CourseCardComponent, ProjectsCardComponent, NgOptimizedImage, FormsModule],
   templateUrl: './instructor-profile.component.html'
 })
 export class InstructorProfileComponent implements OnInit {

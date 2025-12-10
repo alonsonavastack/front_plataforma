@@ -17,22 +17,30 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
   private adminPaymentService = inject(AdminPaymentService);
 
   instructorId!: string;
-  instructor = signal<any>(null);
-  paymentConfig = signal<any>(null);
-  earnings = signal<Earning[]>([]);
-  
+
+  // 🔥 Usar signals del servicio directamente
+  instructor = this.adminPaymentService.instructor;
+  paymentConfig = this.adminPaymentService.paymentConfig;
+  earnings = this.adminPaymentService.earnings;
+  totals = this.adminPaymentService.earningsTotals;
+
   // ⚠️ FILTRO: Earnings válidos (sin reembolsos completados)
   // TODO: El backend debería filtrar esto, no el frontend
   validEarnings = computed(() => {
-    return this.earnings().filter(earning => {
+    return this.earnings().filter((earning: Earning) => {
       // ⚠️ TEMPORAL: Por ahora mostramos todos porque el backend no envía info de refunds
       // TODO: Filtrar earnings donde sale.has_refund === true o sale.refund_status === 'completed'
       return true;
     });
   });
-  totals = signal<any>({});
-  isLoading = signal(true);
-  error = signal<string | null>(null);
+
+  isLoading = this.adminPaymentService.isLoadingEarnings;
+  loadError = this.adminPaymentService.earningsError;
+  actionError = signal<string | null>(null);
+
+  // 🔥 Combine loading error and action error for the template
+  error = computed(() => this.loadError() || this.actionError());
+
   successMessage = signal<string | null>(null);
   isCreatingPayment = signal(false);
 
@@ -57,9 +65,9 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
 
   selectedTotal = computed(() => {
     const selectedIds = this.selectedIdsSet();
-    return this.validEarnings() // ✅ Usar validEarnings
-      .filter(e => selectedIds.has(e._id))
-      .reduce((sum, e) => sum + e.instructor_earning, 0);
+    return this.validEarnings()
+      .filter((e: Earning) => selectedIds.has(e._id))
+      .reduce((sum: number, e: Earning) => sum + e.instructor_earning, 0);
   });
 
   finalAmount = computed(() => {
@@ -78,7 +86,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
   itemsPerPage = signal(10);
 
   paginatedEarnings = computed(() => {
-    const earnings = this.validEarnings(); // ✅ Usar validEarnings en lugar de earnings()
+    const earnings = this.validEarnings();
     const page = this.currentPage();
     const perPage = this.itemsPerPage();
     const start = (page - 1) * perPage;
@@ -87,7 +95,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
   });
 
   totalPages = computed(() => {
-    const total = this.validEarnings().length; // ✅ Usar validEarnings
+    const total = this.validEarnings().length;
     return Math.ceil(total / this.itemsPerPage());
   });
 
@@ -117,9 +125,6 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
   }
 
   loadEarnings() {
-    this.isLoading.set(true);
-    this.error.set(null);
-
     const formValue = this.filterForm.value;
     const filters: { status?: string; startDate?: string; endDate?: string } = {};
 
@@ -133,19 +138,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
       filters.endDate = formValue.endDate;
     }
 
-    this.adminPaymentService.getInstructorEarnings(this.instructorId, filters).subscribe({
-      next: (response) => {
-        this.instructor.set(response.instructor);
-        this.earnings.set(response.earnings);
-        this.paymentConfig.set(response.paymentConfig);
-        this.totals.set(response.totals);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        this.error.set(err.error?.message || 'An error occurred while loading earnings.');
-        this.isLoading.set(false);
-      }
-    });
+    this.adminPaymentService.loadInstructorEarnings(this.instructorId, filters);
   }
 
   onFilterChange() {
@@ -204,9 +197,9 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
 
   selectAll() {
     // Solo seleccionar ganancias con estado 'available'
-    const availableEarningIds = this.validEarnings() // ✅ Usar validEarnings
-      .filter(e => e.status === 'available')
-      .map(e => e._id);
+    const availableEarningIds = this.validEarnings()
+      .filter((e: Earning) => e.status === 'available')
+      .map((e: Earning) => e._id);
     this.selectedEarnings.set(availableEarningIds);
   }
 
@@ -226,6 +219,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
   closePaymentModal() {
     this.showPaymentModal.set(false);
     this.paymentForm.reset({ deductions: 0, notes: '' });
+    this.actionError.set(null); // Clear action error
   }
 
   createPayment() {
@@ -233,7 +227,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
       return;
     }
     this.isCreatingPayment.set(true);
-    this.error.set(null);
+    this.actionError.set(null);
 
     const paymentData = {
       earnings_ids: this.selectedEarnings(),
@@ -253,7 +247,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
         this.isCreatingPayment.set(false);
       },
       error: (err) => {
-        this.error.set(err.error?.message || 'Ocurrió un error inesperado.');
+        this.actionError.set(err.error?.message || 'Ocurrió un error inesperado.');
         this.isCreatingPayment.set(false);
       }
     });
@@ -287,7 +281,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
     this.location.back();
   }
 
-  formatCurrency(amount: number, currency: string = 'USD'): string {
+  formatCurrency(amount: number, currency: string = 'MXN'): string {
     return new Intl.NumberFormat('es-MX', { style: 'currency', currency }).format(amount);
   }
 

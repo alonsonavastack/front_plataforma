@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 
 import { ReactiveFormsModule, FormGroup, FormControl, FormsModule } from '@angular/forms';
 import { AdminPaymentService } from '../../core/services/admin-payment.service';
@@ -13,12 +13,21 @@ import { environment } from '../../../environments/environment';
 export class AdminPaymentHistoryComponent implements OnInit {
   private adminPaymentService = inject(AdminPaymentService);
 
-  payments = signal<any[]>([]);
-  isLoading = signal(false);
-  error = signal<string | null>(null);
+  payments = this.adminPaymentService.paymentsHistory;
+  isLoading = this.adminPaymentService.isLoadingPaymentsHistory;
+
+  loadError = this.adminPaymentService.paymentsHistoryError;
+  actionError = signal<string | null>(null);
+
+  // 🔥 Combine errors
+  error = computed(() => this.loadError() || this.actionError());
+
   success = signal<string | null>(null);
-  currentPage = signal(1);
-  totalPages = signal(1);
+
+  // Paginación desde el servicio
+  pagination = this.adminPaymentService.paymentsPagination;
+  currentPage = computed(() => this.pagination()?.page || 1);
+  totalPages = computed(() => this.pagination()?.pages || 1);
 
   // Modales
   showProcessModal = signal(false);
@@ -42,7 +51,6 @@ export class AdminPaymentHistoryComponent implements OnInit {
   }
 
   loadPayments(page: number = 1) {
-    this.isLoading.set(true);
     const formValue = this.filterForm.value;
     const filters: { status?: string; page: number; limit: number } = { page, limit: 20 };
 
@@ -51,20 +59,7 @@ export class AdminPaymentHistoryComponent implements OnInit {
       filters.status = formValue.status;
     }
 
-    this.adminPaymentService.getPaymentHistory(filters).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.payments.set(response.payments);
-          this.totalPages.set(response.pagination.pages);
-          this.currentPage.set(page);
-        }
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        this.error.set(err.error?.message || 'Error al cargar pagos');
-        this.isLoading.set(false);
-      }
-    });
+    this.adminPaymentService.setPaymentHistoryFilters(filters);
   }
 
   onFilterChange() {
@@ -94,7 +89,7 @@ export class AdminPaymentHistoryComponent implements OnInit {
   loadInstructorPaymentMethodFull(instructorId: string) {
     this.isLoadingPaymentMethod.set(true);
     this.selectedPaymentMethod.set(null);
-    this.error.set(null);
+    this.actionError.set(null);
 
     this.adminPaymentService.getInstructorPaymentMethodFull(instructorId).subscribe({
       next: (response) => {
@@ -104,7 +99,7 @@ export class AdminPaymentHistoryComponent implements OnInit {
         this.isLoadingPaymentMethod.set(false);
       },
       error: (err) => {
-        this.error.set(err.error?.message || 'Error al cargar método de pago');
+        this.actionError.set(err.error?.message || 'Error al cargar método de pago');
         this.isLoadingPaymentMethod.set(false);
       }
     });
@@ -137,6 +132,7 @@ export class AdminPaymentHistoryComponent implements OnInit {
     this.selectedPaymentId.set(null);
     this.selectedPayment.set(null);
     this.selectedPaymentMethod.set(null); // 🔥 Limpiar datos bancarios
+    this.actionError.set(null);
   }
 
   processPayment(transactionId?: string, receiptUrl?: string) {
@@ -144,7 +140,7 @@ export class AdminPaymentHistoryComponent implements OnInit {
     if (!paymentId) return;
 
     this.isProcessing.set(true);
-    this.error.set(null);
+    this.actionError.set(null);
 
     this.adminPaymentService.processPayment(paymentId, {
       transaction_id: transactionId,
@@ -160,7 +156,7 @@ export class AdminPaymentHistoryComponent implements OnInit {
         this.isProcessing.set(false);
       },
       error: (err) => {
-        this.error.set(err.error?.message || 'Error al procesar el pago');
+        this.actionError.set(err.error?.message || 'Error al procesar el pago');
         this.isProcessing.set(false);
       }
     });
@@ -171,7 +167,7 @@ export class AdminPaymentHistoryComponent implements OnInit {
     if (!paymentId) return;
 
     this.isProcessing.set(true);
-    this.error.set(null);
+    this.actionError.set(null);
 
     this.adminPaymentService.completePayment(paymentId).subscribe({
       next: (response) => {
@@ -184,7 +180,7 @@ export class AdminPaymentHistoryComponent implements OnInit {
         this.isProcessing.set(false);
       },
       error: (err) => {
-        this.error.set(err.error?.message || 'Error al completar el pago');
+        this.actionError.set(err.error?.message || 'Error al completar el pago');
         this.isProcessing.set(false);
       }
     });
@@ -193,7 +189,7 @@ export class AdminPaymentHistoryComponent implements OnInit {
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'MXN'
     }).format(amount);
   }
 

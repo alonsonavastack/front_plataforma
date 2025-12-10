@@ -90,12 +90,10 @@ export class NotificationsService {
     const updatedSales = [sale, ...currentSales];
     this.recentSales.set(updatedSales);
 
-    // Incrementar contador si es pendiente
-    if (sale.status === 'Pendiente') {
+    // Incrementar contador si es pendiente o en revisión
+    if (sale.status === 'Pendiente' || sale.status === 'En Revisión') {
       this.unreadCount.update(count => count + 1);
     }
-
-
   }
 
   /**
@@ -112,9 +110,17 @@ export class NotificationsService {
       updatedSales[index] = { ...updatedSales[index], ...updatedSale };
       this.recentSales.set(updatedSales);
 
-      // Actualizar contador si cambió de Pendiente a Pagado
-      if (oldStatus === 'Pendiente' && updatedSale.status === 'Pagado') {
+      // Lógica de conteo:
+      // 1. Si estaba Pendiente/En Revisión y pasa a Pagado/Anulado -> Decrementar
+      // 2. Si estaba Pagado/Anulado y pasa a Pendiente/En Revisión -> Incrementar (raro pero posible)
+
+      const wasUnread = oldStatus === 'Pendiente' || oldStatus === 'En Revisión';
+      const isUnread = updatedSale.status === 'Pendiente' || updatedSale.status === 'En Revisión';
+
+      if (wasUnread && !isUnread) {
         this.unreadCount.update(count => Math.max(0, count - 1));
+      } else if (!wasUnread && isUnread) {
+        this.unreadCount.update(count => count + 1);
       }
 
 

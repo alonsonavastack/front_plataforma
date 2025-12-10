@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, effect } from '@angular/core';
 
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { AdminPaymentService, CommissionSettings } from '../../core/services/admin-payment.service';
@@ -13,7 +13,7 @@ export class AdminCommissionSettingsComponent implements OnInit {
   private adminPaymentService = inject(AdminPaymentService);
 
   settings = signal<CommissionSettings | null>(null);
-  isLoading = signal(true);
+  isLoading = this.adminPaymentService.isLoadingCommission;
   isSaving = signal(false);
   error = signal<string | null>(null);
   successMessage = signal<string | null>(null);
@@ -25,30 +25,28 @@ export class AdminCommissionSettingsComponent implements OnInit {
     exchange_rate_usd_to_mxn: new FormControl<number | null>(null, [Validators.min(0)]),
   });
 
+  constructor() {
+    effect(() => {
+      const settings = this.adminPaymentService.commissionSettings();
+      if (settings) {
+        this.settings.set(settings);
+        this.settingsForm.patchValue({
+          default_commission_rate: settings.default_commission_rate,
+          days_until_available: settings.days_until_available,
+          minimum_payment_threshold: settings.minimum_payment_threshold,
+          exchange_rate_usd_to_mxn: settings.exchange_rate_usd_to_mxn,
+        });
+      }
+    });
+  }
+
   ngOnInit() {
     this.loadSettings();
   }
 
   loadSettings() {
-    this.isLoading.set(true);
     this.error.set(null);
-
-    this.adminPaymentService.getCommissionSettings().subscribe({
-      next: (response) => {
-        this.settings.set(response.settings);
-        this.settingsForm.patchValue({
-          default_commission_rate: response.settings.default_commission_rate,
-          days_until_available: response.settings.days_until_available,
-          minimum_payment_threshold: response.settings.minimum_payment_threshold,
-          exchange_rate_usd_to_mxn: response.settings.exchange_rate_usd_to_mxn,
-        });
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        this.error.set(err.error?.message || 'An error occurred while loading settings.');
-        this.isLoading.set(false);
-      }
-    });
+    this.adminPaymentService.reloadCommissionSettings();
   }
 
   onSubmit() {
@@ -72,13 +70,14 @@ export class AdminCommissionSettingsComponent implements OnInit {
     });
 
     this.adminPaymentService.updateCommissionSettings(cleanedData).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         this.settings.set(response.settings);
         this.successMessage.set(response.message || 'Settings updated successfully!');
         this.isSaving.set(false);
+        this.adminPaymentService.reloadCommissionSettings(); // Update signal
         setTimeout(() => this.successMessage.set(null), 3000);
       },
-      error: (err) => {
+      error: (err: any) => {
         this.error.set(err.error?.message || 'An error occurred while updating settings.');
         this.isSaving.set(false);
       }

@@ -10,6 +10,7 @@ interface Instructor {
   name: string;
   surname: string;
   email: string;
+  country?: string; // 🔥 NUEVO
 }
 
 interface BankAccount {
@@ -24,11 +25,20 @@ interface BankAccount {
   verified: boolean;
 }
 
+interface MercadoPagoDetails {
+  account_type: string;
+  account_value: string;
+  country: string;
+  verified: boolean;
+}
+
 interface PaymentConfig {
   instructor: Instructor;
   paymentMethod: string;
-  paymentDetails: BankAccount;
-  bankDetails?: BankAccount; // 🔥 Nuevo campo del backend
+  paymentDetails: BankAccount | MercadoPagoDetails; // 🔥 Actualizado para incluir MP
+  bankDetails?: BankAccount;
+  mercadopagoDetails?: MercadoPagoDetails; // 🔥 Nuevo campo del backend
+  country?: string;
 }
 
 @Component({
@@ -47,6 +57,30 @@ export class AdminBankVerificationComponent implements OnInit {
   error = signal<string | null>(null);
   success = signal<string | null>(null);
   verifyingInstructorId = signal<string | null>(null);
+
+  // 🔥 NUEVO: Filtros
+  countryFilter = signal<string>('all'); // 'all' | 'MX' | 'AR' | 'CO' | etc.
+
+  // 🔥 NUEVO: Instructores filtrados
+  get filteredInstructors(): PaymentConfig[] {
+    const filter = this.countryFilter();
+    if (filter === 'all') return this.instructors();
+
+    return this.instructors().filter(config => {
+      const country = config.country || config.instructor.country || 'INTL';
+      return country === filter;
+    });
+  }
+
+  // 🔥 NUEVO: Obtener lista de países disponibles
+  get availableCountries(): string[] {
+    const countries = new Set<string>();
+    this.instructors().forEach(config => {
+      const country = config.country || config.instructor.country || 'INTL';
+      countries.add(country);
+    });
+    return Array.from(countries).sort();
+  }
 
   ngOnInit() {
     this.loadInstructorsWithBankAccounts();
@@ -98,10 +132,27 @@ export class AdminBankVerificationComponent implements OnInit {
             // El error se registra en consola para debugging
           },
           complete: () => {
-            // 🔥 FILTRO RELAJADO: Incluir si tiene bankDetails (aunque su método preferido sea otro)
+            // 🔥 FILTRO RELAJADO: Incluir si tiene bankDetails O mercadopagoDetails
             const bankAccounts = instructorsData.filter(config =>
-              config.bankDetails || (config.paymentMethod === 'bank_transfer' && config.paymentDetails)
+              config.bankDetails ||
+              config.mercadopagoDetails ||
+              (config.paymentMethod === 'bank_transfer' && config.paymentDetails) ||
+              (config.paymentMethod === 'mercadopago' && config.paymentDetails)
             );
+
+            // 🔥 NUEVO: Ordenar por país (México primero)
+            bankAccounts.sort((a, b) => {
+              const countryA = a.country || a.instructor.country || 'INTL';
+              const countryB = b.country || b.instructor.country || 'INTL';
+
+              // México primero
+              if (countryA === 'MX' && countryB !== 'MX') return -1;
+              if (countryA !== 'MX' && countryB === 'MX') return 1;
+
+              // Luego por nombre de instructor
+              return a.instructor.name.localeCompare(b.instructor.name);
+            });
+
             this.instructors.set(bankAccounts);
             this.logger.operation('LoadBankAccounts', 'success', { count: bankAccounts.length });
           }
@@ -157,6 +208,54 @@ export class AdminBankVerificationComponent implements OnInit {
       });
   }
 
+  verifyMercadoPago(instructorId: string) {
+    this.logger.operation('VerifyMercadoPago', 'start', { instructorId });
+    this.verifyingInstructorId.set(instructorId);
+    this.error.set(null);
+
+    this.http.put(`${environment.url}admin/instructors/${instructorId}/verify-mercadopago`, {})
+      .subscribe({
+        next: () => {
+          this.logger.operation('VerifyMercadoPago', 'success', { instructorId });
+
+          this.toast.success(
+            '¡Mercado Pago Verificado!',
+            'La cuenta de Mercado Pago ha sido verificada exitosamente'
+          );
+
+          // Actualizar el estado local
+          this.instructors.update(items =>
+            items.map(item => {
+              if (item.instructor._id === instructorId) {
+                const updated = { ...item };
+                // Actualizar paymentDetails si es MP
+                if (updated.paymentDetails && 'account_value' in updated.paymentDetails) {
+                  updated.paymentDetails = { ...updated.paymentDetails, verified: true };
+                }
+                // Actualizar mercadopagoDetails
+                if (updated.mercadopagoDetails) {
+                  updated.mercadopagoDetails = { ...updated.mercadopagoDetails, verified: true };
+                }
+                return updated;
+              }
+              return item;
+            })
+          );
+          this.verifyingInstructorId.set(null);
+        },
+        error: (err) => {
+          this.logger.httpError('AdminBankVerification', 'verifyMercadoPago', err);
+          this.logger.operation('VerifyMercadoPago', 'error', { instructorId, error: err.message });
+
+          const errorMessage = err.error?.message || 'No se pudo verificar la cuenta de Mercado Pago';
+          this.toast.error('Error al verificar', errorMessage);
+
+          this.error.set(errorMessage);
+          this.verifyingInstructorId.set(null);
+        }
+      });
+  }
+
   getAccountTypeLabel(type: string): string {
     const labels: { [key: string]: string } = {
       'debito': 'Tarjeta de Débito',
@@ -165,5 +264,25 @@ export class AdminBankVerificationComponent implements OnInit {
       'corriente': 'Cuenta Corriente'
     };
     return labels[type] || type || 'No especificado';
+  }
+
+  // 🔥 NUEVO: Obtener etiqueta del país
+  getCountryLabel(code: string): string {
+    const countries: { [key: string]: string } = {
+      'MX': '🇲🇽 México',
+      'AR': '🇦🇷 Argentina',
+      'CO': '🇨🇴 Colombia',
+      'CL': '🇨🇱 Chile',
+      'PE': '🇵🇪 Perú',
+      'BR': '🇧🇷 Brasil',
+      'INTL': '🌎 Internacional'
+    };
+    return countries[code] || `🌎 ${code}`;
+  }
+
+  // 🔥 NUEVO: Cambiar filtro de país
+  setCountryFilter(country: string) {
+    this.countryFilter.set(country);
+    this.logger.info('Filtro de país aplicado', { country, count: this.filteredInstructors.length });
   }
 }
