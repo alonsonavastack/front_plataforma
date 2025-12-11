@@ -57,7 +57,7 @@ export class InstructorPaymentConfigComponent implements OnInit {
         paypal_connected: config?.paypal_connected,
         timestamp: new Date().toISOString()
       });
-      
+
       if (config && (config.paypal_email || config.paypal_connected)) {
         // Tiene configuración de PayPal
         this.populateForms(config);
@@ -73,6 +73,21 @@ export class InstructorPaymentConfigComponent implements OnInit {
 
   ngOnInit() {
     console.log('🚀 [ngOnInit] Cargando configuración inicial...');
+    // Si accedemos directamente a /instructor-payment-config (fuera del dashboard),
+    // redirigir a /dashboard?section=instructor-payment-config para mantener
+    // la barra superior / sidebar dentro del layout del dashboard.
+    // Conservamos los query params (por ejemplo `code` y `state` del callback de PayPal).
+    const currentUrl = this.router.url || '';
+    const isDirectRoute = currentUrl.includes('/instructor-payment-config') && !currentUrl.includes('/dashboard');
+    if (isDirectRoute) {
+      const qp = { ...this.route.snapshot.queryParams } as any;
+      qp.section = 'instructor-payment-config';
+      // Reemplazamos la entrada en el historial para no crear bucles
+      this.router.navigate(['/dashboard'], { queryParams: qp, replaceUrl: true });
+      // No continuar la inicialización en esta instancia, la carga y el manejo
+      // del callback (si aplica) ocurrirán en la instancia embebida dentro del dashboard.
+      return;
+    }
     this.instructorPaymentService.reloadPaymentConfig();
 
     // 🆕 Verificar si venimos de PayPal con un código
@@ -257,22 +272,22 @@ export class InstructorPaymentConfigComponent implements OnInit {
     this.instructorPaymentService.deletePaypalConfig().subscribe({
       next: (response) => {
         console.log('✅ [deletePaypal] Respuesta del backend:', response);
-        
+
         if (response.success) {
           // 🔥 LIMPIAR FORMULARIO LOCAL INMEDIATAMENTE
           this.paypalForm.reset();
-          
+
           // 🔥 RESETEAR ESTADO DE EDICIÓN
           this.editingPaypal.set(false);
-          
+
           // 🔥 FORZAR RECARGA (esto debería actualizar la UI)
           this.instructorPaymentService.reloadPaymentConfig();
-          
+
           // 🔥 ESPERAR UN TICK Y VERIFICAR
           setTimeout(() => {
             console.log('✅ [deletePaypal] Config después de reload:', this.config());
           }, 100);
-          
+
           this.success.set({
             section: 'paypal',
             message: 'Cuenta de PayPal eliminada correctamente.'
