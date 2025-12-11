@@ -9,25 +9,7 @@ export interface PaymentConfig {
   paypal_merchant_id?: string;
   paypal_connected?: boolean;
   paypal_verified?: boolean;
-  bank_account?: {
-    account_holder_name?: string;
-    bank_name?: string;
-    account_number?: string;
-    account_number_masked?: string;
-    clabe?: string;
-    clabe_masked?: string;
-    swift_code?: string;
-    account_type?: 'ahorros' | 'corriente' | 'debito' | 'credito';
-    card_brand?: string;
-    verified?: boolean;
-  };
-  mercadopago?: {
-    account_type: 'email' | 'phone' | 'cvu';
-    account_value: string;
-    country: string;
-    verified: boolean;
-  };
-  preferred_payment_method?: 'paypal' | 'bank_transfer' | 'mercadopago';
+  preferred_payment_method?: 'paypal';
 }
 
 export interface Earning {
@@ -104,23 +86,15 @@ export class InstructorPaymentService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.url}instructor`;
 
-  // 🔥 Signal para recargar configuración de pago
-  private paymentConfigReloadTrigger = signal(0);
+  // 🔥 SOLUCIÓN HÍBRIDA: Estado manual + resource como respaldo
+  private _paymentConfig = signal<PaymentConfig | null>(null);
+  private _isLoadingPaymentConfig = signal(false);
+  private _paymentConfigError = signal<any>(null);
 
-  // 🔥 rxResource reemplazado por resource standard
-  private paymentConfigResource = resource({
-    loader: () => {
-      this.paymentConfigReloadTrigger();
-      return firstValueFrom(this.http.get<{ success: boolean; config: PaymentConfig }>(
-        `${this.apiUrl}/payment-config`
-      ));
-    }
-  });
-
-  // 🔥 Señales públicas para configuración de pago
-  public paymentConfig = computed(() => this.paymentConfigResource.value()?.config ?? null);
-  public isLoadingPaymentConfig = computed(() => this.paymentConfigResource.isLoading());
-  public paymentConfigError = computed(() => this.paymentConfigResource.error());
+  // 🔥 Señales públicas (ahora exponen los signals manuales)
+  public paymentConfig = computed(() => this._paymentConfig());
+  public isLoadingPaymentConfig = computed(() => this._isLoadingPaymentConfig());
+  public paymentConfigError = computed(() => this._paymentConfigError());
 
   // 🔥 Signals para filtros de ganancias
   private earningsStatusInput = signal<string | undefined>(undefined);
@@ -162,7 +136,9 @@ export class InstructorPaymentService {
   // 🔥 rxResource reemplazado por resource standard
   private statsResource = resource({
     loader: () => {
+      // El trigger se evalúa aquí para forzar recarga
       this.statsReloadTrigger();
+      
       return firstValueFrom(this.http.get<{ success: boolean; stats: any }>(
         `${this.apiUrl}/earnings/stats`
       ));
@@ -241,9 +217,26 @@ export class InstructorPaymentService {
     this.paymentHistoryLimitInput.set(limit);
   }
 
-  // 🔥 Recargar datos manualmente
+  // 🔥 Recargar datos manualmente (IMPERATIVO)
   reloadPaymentConfig(): void {
-    this.paymentConfigReloadTrigger.update(v => v + 1);
+    console.log('🔄 [Service] reloadPaymentConfig llamado');
+    this._isLoadingPaymentConfig.set(true);
+    this._paymentConfigError.set(null);
+
+    this.http.get<{ success: boolean; config: PaymentConfig }>(
+      `${this.apiUrl}/payment-config`
+    ).subscribe({
+      next: (response) => {
+        console.log('✅ [Service] Config recibida:', response.config);
+        this._paymentConfig.set(response.config);
+        this._isLoadingPaymentConfig.set(false);
+      },
+      error: (error) => {
+        console.error('❌ [Service] Error al cargar config:', error);
+        this._paymentConfigError.set(error);
+        this._isLoadingPaymentConfig.set(false);
+      }
+    });
   }
 
   reloadEarnings(): void {
@@ -258,6 +251,14 @@ export class InstructorPaymentService {
     this.paymentHistoryResource.reload();
   }
 
+  // 🆕 Conectar PayPal (OAuth)
+  connectPaypal(code: string) {
+    return this.http.post<{ success: boolean; message: string; config: PaymentConfig }>(
+      `${this.apiUrl}/payment-config/paypal/connect`,
+      { code }
+    );
+  }
+
   // 🔥 Métodos imperativos para actualizar configuración
   updatePaypalConfig(data: { paypal_email: string; paypal_merchant_id?: string }) {
     return this.http.post<{ success: boolean; message: string; config: PaymentConfig }>(
@@ -266,39 +267,7 @@ export class InstructorPaymentService {
     );
   }
 
-  updateBankConfig(data: {
-    account_holder_name: string;
-    bank_name: string;
-    account_number: string;
-    clabe?: string;
-    swift_code?: string;
-    account_type: 'ahorros' | 'corriente' | 'debito' | 'credito';
-    card_brand?: string;
-  }) {
-    return this.http.post<{ success: boolean; message: string; config: PaymentConfig }>(
-      `${this.apiUrl}/payment-config/bank`,
-      data
-    );
-  }
-
-  updateMercadoPagoConfig(data: {
-    account_type: string;
-    account_value: string;
-    country: string;
-  }) {
-    return this.http.post<{ success: boolean; message: string; config: PaymentConfig }>(
-      `${this.apiUrl}/payment-config/mercadopago`,
-      data
-    );
-  }
-
-  deleteMercadoPagoConfig() {
-    return this.http.delete<{ success: boolean; message: string }>(
-      `${this.apiUrl}/payment-config/mercadopago`
-    );
-  }
-
-  updatePreferredMethod(method: 'paypal' | 'bank_transfer' | 'mercadopago') {
+  updatePreferredMethod(method: 'paypal') {
     return this.http.put<{ success: boolean; message: string; config: PaymentConfig }>(
       `${this.apiUrl}/payment-config`,
       { preferred_payment_method: method }
@@ -308,12 +277,6 @@ export class InstructorPaymentService {
   deletePaypalConfig() {
     return this.http.delete<{ success: boolean; message: string }>(
       `${this.apiUrl}/payment-config/paypal`
-    );
-  }
-
-  deleteBankConfig() {
-    return this.http.delete<{ success: boolean; message: string }>(
-      `${this.apiUrl}/payment-config/bank`
     );
   }
 }

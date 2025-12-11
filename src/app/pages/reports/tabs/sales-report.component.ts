@@ -134,9 +134,8 @@ interface SaleRecord {
               class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-lime-500 focus:border-transparent"
             >
               <option value="">Todos</option>
-              <option value="stripe">Stripe</option>
               <option value="paypal">PayPal</option>
-              <option value="mercadopago">MercadoPago</option>
+              <option value="wallet">Billetera</option>
             </select>
           </div>
         </div>

@@ -21,10 +21,8 @@ export interface InstructorWithEarnings {
     newestDate: string;
   };
   paymentConfig: {
-    hasConfig: boolean;
     preferredMethod: string;
     paypalConnected: boolean;
-    bankVerified: boolean;
     country?: string;
   };
 }
@@ -73,7 +71,6 @@ export interface CommissionSettings {
   exchange_rate_usd_to_mxn: number;
   enabled_payment_methods: {
     paypal: boolean;
-    bank_transfer: boolean;
     other: boolean;
   };
   instructor_custom_rates?: Array<{
@@ -345,7 +342,7 @@ export class AdminPaymentService {
       success: boolean;
       data: {
         instructor: { _id: string; name: string; email: string; surname?: string };
-        paymentMethod: 'bank_transfer' | 'paypal' | null;
+        paymentMethod: 'paypal' | null;
         paymentDetails: any;
       };
     }>(`${this.apiUrl}/instructors/${instructorId}/payment-method-full`);

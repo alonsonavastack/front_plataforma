@@ -89,8 +89,6 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 font-mono">
               @if (payment.payment_method === 'paypal' && payment.payment_details?.paypal_transaction_id) {
               {{payment.payment_details.paypal_transaction_id}}
-              } @else if (payment.payment_method === 'bank_transfer' && payment.payment_details?.transfer_reference) {
-              {{payment.payment_details.transfer_reference}}
               } @else {
               N/A
               }
@@ -300,115 +298,7 @@
             </div>
             }
 
-            <!-- TRANSFERENCIA BANCARIA -->
-            @if (selectedPaymentMethod()?.paymentMethod === 'bank_transfer' && selectedPaymentMethod()?.paymentDetails)
-            {
-            <div class="bg-emerald-900/20 border-2 border-emerald-500/40 rounded-xl p-4 space-y-3">
-              <div class="flex items-center gap-2 text-emerald-300 text-sm font-medium mb-3">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                Datos bancarios completos disponibles
-              </div>
 
-              <!-- Titular -->
-              @if (selectedPaymentMethod()?.paymentDetails?.account_holder_name) {
-              <div class="bg-slate-800/70 rounded-lg p-4 border border-emerald-500/20">
-                <div class="text-xs text-slate-400 mb-2">👤 Titular de la Cuenta</div>
-                <div class="text-base font-semibold text-emerald-200">
-                  {{selectedPaymentMethod()?.paymentDetails?.account_holder_name}}
-                </div>
-              </div>
-              }
-
-              <!-- Banco -->
-              @if (selectedPaymentMethod()?.paymentDetails?.bank_name) {
-              <div class="bg-slate-800/70 rounded-lg p-4 border border-emerald-500/20">
-                <div class="text-xs text-slate-400 mb-2">🏦 Nombre del Banco</div>
-                <div class="text-base font-semibold text-emerald-200">
-                  {{selectedPaymentMethod()?.paymentDetails?.bank_name}}
-                </div>
-              </div>
-              }
-
-              <!-- Número de Cuenta DESENCRIPTADO -->
-              @if (selectedPaymentMethod()?.paymentDetails?.account_number) {
-              <div class="bg-slate-800/70 rounded-lg p-4 border border-emerald-500/20">
-                <div class="text-xs text-slate-400 mb-2 flex items-center gap-1">
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                  </svg>
-                  💳 Número de Cuenta Completo
-                </div>
-                <div
-                  class="text-lg font-mono font-bold text-emerald-100 bg-emerald-950/50 px-3 py-2 rounded-lg break-all">
-                  {{selectedPaymentMethod()?.paymentDetails?.account_number}}
-                </div>
-                <button (click)="copyToClipboard(selectedPaymentMethod()?.paymentDetails?.account_number)"
-                  class="mt-3 w-full px-3 py-2 bg-emerald-600/80 hover:bg-emerald-600 text-white text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
-                    </path>
-                  </svg>
-                  Copiar Número de Cuenta
-                </button>
-              </div>
-              }
-
-              <!-- CLABE DESENCRIPTADA -->
-              @if (selectedPaymentMethod()?.paymentDetails?.clabe) {
-              <div class="bg-slate-800/70 rounded-lg p-4 border border-emerald-500/20">
-                <div class="text-xs text-slate-400 mb-2">🔢 CLABE Interbancaria</div>
-                <div
-                  class="text-base font-mono font-bold text-emerald-100 bg-emerald-950/50 px-3 py-2 rounded-lg break-all">
-                  {{selectedPaymentMethod()?.paymentDetails?.clabe}}
-                </div>
-                <button (click)="copyToClipboard(selectedPaymentMethod()?.paymentDetails?.clabe)"
-                  class="mt-3 w-full px-3 py-2 bg-emerald-600/80 hover:bg-emerald-600 text-white text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
-                    </path>
-                  </svg>
-                  Copiar CLABE
-                </button>
-              </div>
-              }
-
-              <!-- Tipo de Cuenta -->
-              @if (selectedPaymentMethod()?.paymentDetails?.account_type) {
-              <div class="bg-slate-800/70 rounded-lg p-4 border border-emerald-500/20">
-                <div class="text-xs text-slate-400 mb-2">📂 Tipo de Cuenta</div>
-                <div class="text-sm font-medium text-emerald-200 capitalize">
-                  {{selectedPaymentMethod()?.paymentDetails?.account_type}}
-                </div>
-              </div>
-              }
-
-              <!-- Marca de Tarjeta -->
-              @if (selectedPaymentMethod()?.paymentDetails?.card_brand) {
-              <div class="bg-slate-800/70 rounded-lg p-4 border border-emerald-500/20">
-                <div class="text-xs text-slate-400 mb-2">💎 Marca de Tarjeta</div>
-                <div class="text-sm font-medium text-emerald-200">
-                  {{selectedPaymentMethod()?.paymentDetails?.card_brand}}
-                </div>
-              </div>
-              }
-
-              <!-- Código SWIFT -->
-              @if (selectedPaymentMethod()?.paymentDetails?.swift_code) {
-              <div class="bg-slate-800/70 rounded-lg p-4 border border-emerald-500/20">
-                <div class="text-xs text-slate-400 mb-2">🌍 Código SWIFT/BIC</div>
-                <div class="text-sm font-mono text-emerald-200 bg-emerald-950/50 px-3 py-2 rounded-lg">
-                  {{selectedPaymentMethod()?.paymentDetails?.swift_code}}
-                </div>
-              </div>
-              }
-            </div>
-            }
 
             <!-- Advertencia de Seguridad -->
             <div class="bg-orange-900/20 border border-orange-500/30 rounded-lg p-3 flex items-start gap-2">
@@ -446,8 +336,7 @@
         }
 
         <!-- ID de Transacción y Comprobante -->
-        @if (selectedPayment()?.payment_details?.paypal_transaction_id ||
-        selectedPayment()?.payment_details?.transfer_reference || selectedPayment()?.payment_details?.transfer_receipt)
+        @if (selectedPayment()?.payment_details?.paypal_transaction_id)
         {
         <div class="bg-slate-900/50 rounded-lg p-4">
           <h4 class="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
@@ -479,38 +368,7 @@
             }
 
             <!-- Referencia Bancaria -->
-            @if (selectedPayment()?.payment_details?.transfer_reference) {
-            <div class="bg-slate-800/70 rounded-lg p-3 border border-emerald-500/20">
-              <div class="text-xs text-slate-400 mb-1">🎫 Referencia de Transferencia</div>
-              <div class="text-sm font-mono text-emerald-200 bg-emerald-950/30 px-3 py-2 rounded break-all">
-                {{selectedPayment()?.payment_details?.transfer_reference}}
-              </div>
-              <button (click)="copyToClipboard(selectedPayment()?.payment_details?.transfer_reference)"
-                class="mt-2 text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
-                  </path>
-                </svg>
-                Copiar Referencia
-              </button>
-            </div>
-            }
 
-            <!-- Comprobante -->
-            @if (selectedPayment()?.payment_details?.transfer_receipt) {
-            <div class="bg-slate-800/70 rounded-lg p-3 border border-purple-500/20">
-              <div class="text-xs text-slate-400 mb-2">📎 Comprobante de Pago</div>
-              <a [href]="selectedPayment()?.payment_details?.transfer_receipt" target="_blank"
-                class="inline-flex items-center gap-2 px-3 py-2 bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium rounded-lg transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                </svg>
-                Ver Comprobante
-              </a>
-            </div>
-            }
           </div>
         </div>
         }

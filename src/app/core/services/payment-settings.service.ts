@@ -12,12 +12,7 @@ export interface PaymentSettings {
     active: boolean;
     instructorPayoutsActive: boolean;
   };
-  mercadopago: {
-    publicKey: string;
-    accessToken: string;
-    active: boolean;
-    instructorPayoutsActive: boolean;
-  };
+
 }
 
 @Injectable({

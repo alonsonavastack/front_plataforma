@@ -20,7 +20,7 @@ export class AdminPaymentSettingsComponent implements OnInit {
     successMessage = signal('');
     errorMessage = signal('');
 
-    activeTab = signal<'paypal' | 'mercadopago'>('paypal');
+
 
     constructor() {
         this.settingsForm = this.fb.group({
@@ -31,12 +31,6 @@ export class AdminPaymentSettingsComponent implements OnInit {
                 active: [false],
                 instructorPayoutsActive: [false] // 🆕
             }),
-            mercadopago: this.fb.group({
-                publicKey: [''],
-                accessToken: [''],
-                active: [false],
-                instructorPayoutsActive: [false] // 🆕
-            })
         });
     }
 
@@ -82,7 +76,5 @@ export class AdminPaymentSettingsComponent implements OnInit {
             });
     }
 
-    setTab(tab: 'paypal' | 'mercadopago') {
-        this.activeTab.set(tab);
-    }
+
 }

@@ -25,647 +25,129 @@
   @if (!isLoading() && config()) {
 
   <!-- Selector de País -->
-  <div class="bg-slate-800/50 rounded-lg p-6 border border-slate-700">
-    <label for="country_selector" class="block text-sm font-medium text-slate-300 mb-2">
-      País de Residencia
-    </label>
-    <select id="country_selector" [value]="instructorCountry()" (change)="onCountryChange($event)"
-      class="w-full md:w-1/2 px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:outline-none">
-      <option value="MX">🇲🇽 México</option>
-      <option value="AR">🇦🇷 Argentina</option>
-      <option value="BR">🇧🇷 Brasil</option>
-      <option value="CL">🇨🇱 Chile</option>
-      <option value="CO">🇨🇴 Colombia</option>
-      <option value="UY">🇺🇾 Uruguay</option>
-      <option value="OTHER">🌎 Otro</option>
-    </select>
-    <p class="mt-2 text-xs text-slate-400">
-      Selecciona tu país para ver los métodos de pago disponibles.
-    </p>
-  </div>
+
 
   <!-- Alerta si hay múltiples métodos sin preferido -->
-  @if ((hasBankAccount || hasMercadoPago) && !config()?.preferred_payment_method) {
-  <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 flex items-start">
-    <svg class="w-5 h-5 text-yellow-400 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-      <path fill-rule="evenodd"
-        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-        clip-rule="evenodd"></path>
-    </svg>
-    <div class="flex-1">
-      <h3 class="text-sm font-medium text-yellow-300 mb-1">
-        Selecciona un método de pago preferido
-      </h3>
-      <p class="text-sm text-yellow-200/70">
-        Tienes múltiples métodos configurados. Por favor, marca uno como preferido para recibir tus pagos más rápido.
-      </p>
-    </div>
-  </div>
-  }
+
 
   <!-- Tabla de Métodos de Pago Guardados -->
-  @if (hasBankAccount || hasMercadoPago) {
-  <div class="bg-slate-800/50 rounded-lg shadow-md overflow-hidden">
-    <div class="px-6 py-4 border-b border-slate-700">
-      <h2 class="text-xl font-semibold text-slate-200">Métodos de Pago Configurados</h2>
-      <p class="text-sm text-slate-400 mt-1">Tus métodos de pago activos y su estado</p>
+
+
+
+  <!-- Formularios de Configuración -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+    <!-- PayPal Form -->
+    <div
+      class="bg-slate-800/50 rounded-lg p-6 border border-slate-700 h-full relative overflow-hidden group hover:border-blue-500/30 transition-all">
+      <!-- Decoración de fondo -->
+      <div
+        class="absolute -right-6 -top-6 w-24 h-24 bg-blue-600/10 rounded-full group-hover:bg-blue-600/20 transition-all">
+      </div>
+
+      <div class="flex items-center justify-between mb-6 relative z-10">
+        <div class="flex items-center space-x-4">
+          <div class="bg-blue-600/20 p-3 rounded-xl border border-blue-500/20">
+            <svg class="h-8 w-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.946 5.05-4.336 6.794-9.067 6.794h-2.13l-2.765 17.556a.641.641 0 0 1-.633.74l-.004-.007-.406-10.28z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-slate-100 flex items-center gap-2">
+              PayPal
+              @if (hasPaypal() && !editingPaypal()) {
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-green-500/10 text-green-400 border border-green-500/20">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-400 mr-1.5 animate-pulse"></span>
+                Conectado
+              </span>
+              }
+            </h3>
+            <p class="text-sm text-slate-400">Pagos internacionales rápidos y seguros</p>
+          </div>
+        </div>
+      </div>
+
+      @if (!hasPaypal() || editingPaypal()) {
+      <div class="relative z-10 space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1.5 flex items-center gap-2">
+            <svg class="w-5 h-5 text-[#0070BA]" fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.875.812 5.498-.773 4.125-2.854 6.42-6.526 6.42H10.51a.641.641 0 0 0-.633.527l-2.074 11.23a.64.64 0 0 1-.727.52z" />
+            </svg>
+            Conectar con PayPal
+          </label>
+          <p class="text-sm text-slate-400 mb-4 bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
+            Para recibir tus pagos de forma segura, conecta tu cuenta verificada. Serás redirigido a PayPal para
+            autorizar la conexión.
+          </p>
+
+          <button type="button" (click)="initiatePaypalConnect()" [disabled]="isSaving() === 'paypal'"
+            class="w-full bg-[#0070BA] hover:bg-[#005EA6] text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            @if (isSaving() === 'paypal') {
+            <span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+            <span>Conectando...</span>
+            } @else {
+            <span>Conectar mi cuenta PayPal</span>
+            }
+          </button>
+        </div>
+
+        @if (hasPaypal()) {
+        <button type="button" (click)="cancelEditPaypal()"
+          class="w-full px-4 py-2.5 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 font-medium transition-colors">
+          Cancelar
+        </button>
+        }
+      </div>
+      } @else {
+      <div class="relative z-10">
+        <div class="bg-slate-900/50 rounded-xl p-5 mb-5 border border-slate-700/50">
+          <div class="flex justify-between items-start mb-2">
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cuenta Conectada</p>
+            <span
+              class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              VERIFICADA
+            </span>
+          </div>
+          <p class="text-lg font-medium text-white truncate">{{ config()?.paypal_email }}</p>
+          <p class="text-xs text-slate-500 mt-1">Lista para recibir pagos automáticos</p>
+        </div>
+
+        <div class="flex gap-3">
+          <button (click)="editPaypal()"
+            class="flex-1 py-2.5 px-4 bg-slate-700/50 hover:bg-slate-700 text-slate-200 rounded-lg transition-all flex justify-center items-center gap-2 border border-slate-600/50 hover:border-slate-500">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+              </path>
+            </svg>
+            Modificar
+          </button>
+          <button (click)="confirmDeletePaypal()"
+            class="px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-all border border-red-500/10 hover:border-red-500/30"
+            title="Desconectar cuenta">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+              </path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      }
     </div>
 
-    <div class="overflow-x-auto">
-      <table class="w-full">
-        <thead class="bg-slate-900/50">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-              Método
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-              Información
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-              Estado
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-              Preferido
-            </th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
-              Acciones
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-700">
+  </div>
 
-          <!-- Bank Account Row (Solo México) -->
-          @if (hasBankAccount && isMexico) {
-          <tr class="hover:bg-slate-700/30 transition-colors">
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center">
-                <div class="flex-shrink-0 h-10 w-10 bg-emerald-600 rounded-lg flex items-center justify-center">
-                  <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                  </svg>
-                </div>
-                <div class="ml-4">
-                  <div class="text-sm font-medium text-slate-200">Cuenta Bancaria</div>
-                  <div class="text-xs text-slate-400">{{ getAccountTypeLabel() }}</div>
-                </div>
-              </div>
-            </td>
-            <td class="px-6 py-4">
-              <div class="text-sm text-slate-200">{{ config()?.bank_account?.bank_name }}</div>
-              <div class="text-xs text-slate-500 mt-1">{{ config()?.bank_account?.account_holder_name }}</div>
-              @if (config()?.bank_account?.account_number_masked) {
-              <div class="text-xs text-slate-400 mt-1">
-                <span class="text-slate-500"># </span>
-                <span class="font-mono">{{ config()?.bank_account?.account_number_masked }}</span>
-              </div>
-              }
-              @if (config()?.bank_account?.clabe_masked) {
-              <div class="text-xs text-slate-400 mt-1">
-                <span class="text-slate-500">CLABE: </span>
-                <span class="font-mono">{{ config()?.bank_account?.clabe_masked }}</span>
-              </div>
-              }
-              @if (config()?.bank_account?.card_brand) {
-              <div class="text-xs text-slate-400 mt-1">
-                <span class="inline-flex items-center px-2 py-0.5 rounded border border-slate-600">
-                  <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path>
-                    <path fill-rule="evenodd"
-                      d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
-                      clip-rule="evenodd"></path>
-                  </svg>
-                  {{ config()?.bank_account?.card_brand }}
-                </span>
-              </div>
-              }
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              @if (isBankVerified) {
-              <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-300">
-                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clip-rule="evenodd"></path>
-                </svg>
-                Verificada
-              </span>
-              } @else {
-              <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-300">
-                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd"
-                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                    clip-rule="evenodd"></path>
-                </svg>
-                Pendiente
-              </span>
-              }
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              @if (config()?.preferred_payment_method === 'bank_transfer') {
-              <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-lime-500/20 text-lime-300">
-                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
-                  </path>
-                </svg>
-                Preferido
-              </span>
-              } @else {
-              <button (click)="setPreferredMethod('bank_transfer')" [disabled]="isSaving() === 'preferred'"
-                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border border-slate-600 text-slate-400 hover:text-lime-400 hover:border-lime-500/50 transition-all disabled:opacity-50">
-                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                    opacity="0.5"></path>
-                </svg>
-                Marcar como preferido
-              </button>
-              }
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <button (click)="editBank()" class="text-sky-400 hover:text-sky-300 mr-3 transition-colors"
-                title="Editar">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                  </path>
-                </svg>
-              </button>
-              <button (click)="confirmDeleteBank()" class="text-red-400 hover:text-red-300 transition-colors"
-                title="Eliminar">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                  </path>
-                </svg>
-              </button>
-            </td>
-          </tr>
-          }
 
-          <!-- PayPal Row -->
-          @if (hasPaypal) {
-          <tr class="hover:bg-slate-700/30 transition-colors">
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center">
-                <div class="flex-shrink-0 h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <svg class="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path
-                      d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.946 5.05-4.336 6.794-9.067 6.794h-2.13l-2.765 17.556a.641.641 0 0 1-.633.74l-.004-.007-.406-10.28z" />
-                  </svg>
-                </div>
-                <div class="ml-4">
-                  <div class="text-sm font-medium text-slate-200">PayPal</div>
-                  <div class="text-xs text-slate-400">Email</div>
-                </div>
-              </div>
-            </td>
-            <td class="px-6 py-4">
-              <div class="text-sm text-slate-200">{{ config()?.paypal_email }}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-300">
-                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clip-rule="evenodd"></path>
-                </svg>
-                Verificada
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              @if (config()?.preferred_payment_method === 'paypal') {
-              <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-lime-500/20 text-lime-300">
-                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
-                  </path>
-                </svg>
-                Preferido
-              </span>
-              } @else {
-              <button (click)="setPreferredMethod('paypal')" [disabled]="isSaving() === 'preferred'"
-                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border border-slate-600 text-slate-400 hover:text-lime-400 hover:border-lime-500/50 transition-all disabled:opacity-50">
-                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                    opacity="0.5"></path>
-                </svg>
-                Marcar como preferido
-              </button>
-              }
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <button (click)="editPaypal()" class="text-sky-400 hover:text-sky-300 mr-3 transition-colors"
-                title="Editar">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                  </path>
-                </svg>
-              </button>
-              <button (click)="confirmDeletePaypal()" class="text-red-400 hover:text-red-300 transition-colors"
-                title="Eliminar">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                  </path>
-                </svg>
-              </button>
-            </td>
-          </tr>
-          }
-
-          <!-- Mercado Pago Row -->
-          @if (hasMercadoPago) {
-          <tr class="hover:bg-slate-700/30 transition-colors">
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center">
-                <div class="flex-shrink-0 h-10 w-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                  <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                </div>
-                <div class="ml-4">
-                  <div class="text-sm font-medium text-slate-200">Mercado Pago</div>
-                  <div class="text-xs text-slate-400">
-                    {{ config()?.mercadopago?.account_type === 'email' ? 'Email' :
-                    config()?.mercadopago?.account_type === 'phone' ? 'Teléfono' : 'CVU/Alias' }}
-                  </div>
-                </div>
-              </div>
-            </td>
-            <td class="px-6 py-4">
-              <div class="text-sm text-slate-200">{{ config()?.mercadopago?.account_value }}</div>
-              <div class="text-xs text-slate-400 mt-1">{{ config()?.mercadopago?.country }}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              @if (isMercadoPagoVerified) {
-              <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-300">
-                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clip-rule="evenodd"></path>
-                </svg>
-                Verificada
-              </span>
-              } @else {
-              <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-300">
-                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd"
-                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                    clip-rule="evenodd"></path>
-                </svg>
-                Pendiente
-              </span>
-              }
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              @if (config()?.preferred_payment_method === 'mercadopago') {
-              <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-lime-500/20 text-lime-300">
-                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
-                  </path>
-                </svg>
-                Preferido
-              </span>
-              } @else {
-              <button (click)="setPreferredMethod('mercadopago')" [disabled]="isSaving() === 'preferred'"
-                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border border-slate-600 text-slate-400 hover:text-lime-400 hover:border-lime-500/50 transition-all disabled:opacity-50">
-                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                    opacity="0.5"></path>
-                </svg>
-                Marcar como preferido
-              </button>
-              }
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <button (click)="editMercadoPago()" class="text-sky-400 hover:text-sky-300 mr-3 transition-colors"
-                title="Editar">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                  </path>
-                </svg>
-              </button>
-              <button (click)="confirmDeleteMercadoPago()" class="text-red-400 hover:text-red-300 transition-colors"
-                title="Eliminar">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                  </path>
-                </svg>
-              </button>
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+  } @else if (!isLoading() && !config()) {
+  <div class="text-center py-12">
+    <p class="text-slate-400">No se pudo cargar la configuración.</p>
   </div>
   }
-
-  <!-- Formularios de Configuración (Colapsables cuando se hace clic en Editar) -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-    <!-- Bank Account Configuration (Solo México) -->
-    @if (isMexico) {
-    <div class="bg-slate-800/50 rounded-lg shadow-md p-6">
-      <div class="flex items-center justify-between border-b border-slate-700 pb-4 mb-6">
-        <h2 class="text-xl font-semibold text-slate-200">
-          @if (editingBank()) {
-          Editar Cuenta Bancaria
-          } @else if (hasBankAccount) {
-          Cuenta Bancaria
-          } @else {
-          Agregar Cuenta Bancaria
-          }
-        </h2>
-        @if (hasBankAccount && !editingBank()) {
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium" [ngClass]="{
-            'bg-green-500/10 text-green-300': isBankVerified,
-            'bg-yellow-500/10 text-yellow-300': !isBankVerified
-          }">
-          @if (isBankVerified) {
-          <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-              clip-rule="evenodd"></path>
-          </svg>
-          Verificada
-          } @else {
-          Pendiente
-          }
-        </span>
-        }
-      </div>
-
-      @if (!hasBankAccount || editingBank()) {
-      <form [formGroup]="bankForm" (ngSubmit)="saveBank()">
-        <div class="space-y-4">
-          <div>
-            <label for="account_holder_name" class="block text-sm font-medium text-slate-300 mb-2">
-              Nombre del Titular <span class="text-red-400">*</span>
-            </label>
-            <input id="account_holder_name" type="text" formControlName="account_holder_name"
-              class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:outline-none"
-              placeholder="Juan Pérez" />
-          </div>
-
-          <div>
-            <label for="bank_name" class="block text-sm font-medium text-slate-300 mb-2">
-              Nombre del Banco <span class="text-red-400">*</span>
-            </label>
-            <input id="bank_name" type="text" formControlName="bank_name"
-              class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:outline-none"
-              placeholder="Banco Nacional" />
-          </div>
-
-          <div>
-            <label for="account_number" class="block text-sm font-medium text-slate-300 mb-2">
-              Número de Cuenta <span class="text-red-400">*</span>
-            </label>
-            <input id="account_number" type="text" formControlName="account_number"
-              class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:outline-none"
-              placeholder="1234567890" />
-          </div>
-
-          <div>
-            <label for="clabe" class="block text-sm font-medium text-slate-300 mb-2">
-              CLABE (18 dígitos)
-            </label>
-            <input id="clabe" type="text" formControlName="clabe" maxlength="18"
-              class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:outline-none"
-              placeholder="XXXXXXXXXXXXXXXXXX" />
-            @if (bankForm.get('clabe')?.invalid && bankForm.get('clabe')?.touched) {
-            <p class="text-sm text-red-400 mt-1">La CLABE debe tener exactamente 18 dígitos</p>
-            }
-          </div>
-
-          <div>
-            <label for="swift_code" class="block text-sm font-medium text-slate-300 mb-2">
-              Código SWIFT/BIC (opcional)
-            </label>
-            <input id="swift_code" type="text" formControlName="swift_code"
-              class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:outline-none"
-              placeholder="BNMXMXMM" />
-          </div>
-
-          <div>
-            <label for="account_type" class="block text-sm font-medium text-slate-300 mb-2">
-              Tipo de Cuenta <span class="text-red-400">*</span>
-            </label>
-            <select id="account_type" formControlName="account_type"
-              class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:outline-none">
-              <option value="">Seleccionar tipo</option>
-              <option value="ahorros">Ahorros</option>
-              <option value="corriente">Corriente / Cheques</option>
-              <option value="debito">Tarjeta de Débito</option>
-              <option value="credito">Tarjeta de Crédito</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="card_brand" class="block text-sm font-medium text-slate-300 mb-2">
-              Marca de Tarjeta (opcional)
-            </label>
-            <select id="card_brand" formControlName="card_brand"
-              class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:outline-none">
-              <option value="">Sin especificar</option>
-              <option value="Visa">Visa</option>
-              <option value="Mastercard">Mastercard</option>
-              <option value="American Express">American Express</option>
-              <option value="Discover">Discover</option>
-              <option value="Otro">Otro</option>
-            </select>
-          </div>
-        </div>
-
-        @if (success()?.section === 'bank') {
-        <div class="mt-4 bg-green-500/10 border border-green-500/50 text-green-400 px-4 py-3 rounded-lg text-sm">
-          {{ success()?.message }}
-        </div>
-        }
-        @if (error()?.section === 'bank') {
-        <div class="mt-4 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
-          {{ error()?.message }}
-        </div>
-        }
-
-        <div class="flex gap-3 mt-6">
-          <button type="submit" [disabled]="bankForm.invalid || isSaving() === 'bank'"
-            class="flex-1 px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-            @if (isSaving() === 'bank') {
-            <span>Guardando...</span>
-            } @else {
-            <span>{{ hasBankAccount ? "Actualizar" : "Guardar" }}</span>
-            }
-          </button>
-          @if (editingBank()) {
-          <button type="button" (click)="cancelEditBank()"
-            class="px-6 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 font-medium transition-colors">
-            Cancelar
-          </button>
-          }
-        </div>
-      </form>
-      } @else {
-      <div class="text-center py-8">
-        <p class="text-slate-400 mb-4">Tu cuenta bancaria está configurada correctamente</p>
-        <button (click)="editBank()"
-          class="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-medium transition-colors">
-          Editar Configuración
-        </button>
-      </div>
-      }
-    </div>
-    }
-
-    <!-- Mercado Pago Configuration -->
-    @if (isMercadoPagoEnabled()) {
-    <div class="bg-slate-800/50 rounded-lg shadow-md p-6">
-      <div class="flex items-center justify-between border-b border-slate-700 pb-4 mb-6">
-        <h2 class="text-xl font-semibold text-slate-200">
-          @if (editingMercadoPago()) {
-          Editar Mercado Pago
-          } @else if (hasMercadoPago) {
-          Mercado Pago
-          } @else {
-          Agregar Mercado Pago
-          }
-        </h2>
-        @if (hasMercadoPago && !editingMercadoPago()) {
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium" [ngClass]="{
-            'bg-green-500/10 text-green-300': isMercadoPagoVerified,
-            'bg-yellow-500/10 text-yellow-300': !isMercadoPagoVerified
-          }">
-          @if (isMercadoPagoVerified) {
-          <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-              clip-rule="evenodd"></path>
-          </svg>
-          Verificada
-          } @else {
-          Pendiente
-          }
-        </span>
-        }
-      </div>
-
-      @if (!hasMercadoPago || editingMercadoPago()) {
-      <form [formGroup]="mercadoPagoForm" (ngSubmit)="saveMercadoPago()">
-        <div class="space-y-4">
-          <div>
-            <label for="mp_account_type" class="block text-sm font-medium text-slate-300 mb-2">
-              Tipo de Cuenta <span class="text-red-400">*</span>
-            </label>
-            <select id="mp_account_type" formControlName="account_type"
-              class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:outline-none">
-              <option value="email">Email de Mercado Pago</option>
-              <option value="phone">Teléfono (Transferencia)</option>
-              <option value="cvu">CVU/Alias (Argentina)</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="mp_account_value" class="block text-sm font-medium text-slate-300 mb-2">
-              @if (mercadoPagoForm.value.account_type === 'email') {
-              Email de Mercado Pago
-              } @else if (mercadoPagoForm.value.account_type === 'phone') {
-              Teléfono
-              } @else {
-              CVU o Alias
-              }
-              <span class="text-red-400">*</span>
-            </label>
-            <input id="mp_account_value" type="text" formControlName="account_value" [placeholder]="mercadoPagoForm.value.account_type === 'email' ? 'tu@email.com' :
-                              mercadoPagoForm.value.account_type === 'phone' ? '+52 55 1234 5678' :
-                              '0000003100010000000001'"
-              class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:outline-none" />
-          </div>
-
-          <div>
-            <label for="mp_country" class="block text-sm font-medium text-slate-300 mb-2">
-              País <span class="text-red-400">*</span>
-            </label>
-            <select id="mp_country" formControlName="country"
-              class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400 focus:outline-none">
-              <option value="MX">🇲🇽 México</option>
-              <option value="AR">🇦🇷 Argentina</option>
-              <option value="BR">🇧🇷 Brasil</option>
-              <option value="CL">🇨🇱 Chile</option>
-              <option value="CO">🇨🇴 Colombia</option>
-              <option value="UY">🇺🇾 Uruguay</option>
-            </select>
-          </div>
-        </div>
-
-        @if (success()?.section === 'mercadopago') {
-        <div class="mt-4 bg-green-500/10 border border-green-500/50 text-green-400 px-4 py-3 rounded-lg text-sm">
-          {{ success()?.message }}
-        </div>
-        }
-        @if (error()?.section === 'mercadopago') {
-        <div class="mt-4 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
-          {{ error()?.message }}
-        </div>
-        }
-
-        <div class="flex gap-3 mt-6">
-          <button type="submit" [disabled]="mercadoPagoForm.invalid || isSaving() === 'mercadopago'"
-            class="flex-1 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-            @if (isSaving() === 'mercadopago') {
-            <span>Guardando...</span>
-            } @else {
-            <span>{{ hasMercadoPago ? "Actualizar" : "Guardar" }}</span>
-            }
-          </button>
-          @if (editingMercadoPago()) {
-          <button type="button" (click)="cancelEditMercadoPago()"
-            class="px-6 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 font-medium transition-colors">
-            Cancelar
-          </button>
-          }
-        </div>
-      </form>
-      } @else {
-      <div class="text-center py-8">
-        <p class="text-slate-400 mb-4">Tu cuenta de Mercado Pago está configurada correctamente</p>
-        <button (click)="editMercadoPago()"
-          class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors">
-          Editar Configuración
-        </button>
-      </div>
-      }
-
-      <div class="mt-4 bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
-        <div class="flex items-start space-x-2">
-          <svg class="w-5 h-5 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd"
-              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" />
-          </svg>
-          <p class="text-sm text-blue-300">
-            Tu cuenta de Mercado Pago será verificada por un administrador antes de poder recibir pagos.
-          </p>
-        </div>
-      </div>
-    </div>
-    }
-  </div>
 
   <!-- Modal de Confirmación de Eliminación -->
   @if (showDeleteModal()) {
@@ -685,9 +167,7 @@
             Confirmar Eliminación
           </h3>
           <div class="mt-2 text-sm text-slate-400">
-            <p>¿Estás seguro de que deseas eliminar esta configuración de
-              {{ deleteTarget() === 'mercadopago' ? 'Mercado Pago' : deleteTarget() === 'paypal' ? 'PayPal' : 'cuenta
-              bancaria' }}?</p>
+            <p>¿Estás seguro de que deseas eliminar esta configuración de PayPal?</p>
             <p class="mt-2 font-medium text-slate-300">Esta acción no se puede deshacer.</p>
           </div>
         </div>
@@ -730,5 +210,4 @@
       </div>
     </div>
   </div>
-  }
 </div>

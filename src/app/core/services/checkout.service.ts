@@ -11,11 +11,7 @@ export interface PaymentMethod {
   description: string;
 }
 
-export interface BankDetails {
-  bankName: string;
-  accountNumber: string;
-  clabe: string;
-}
+
 
 export interface CheckoutData {
   method_payment: string;
@@ -91,41 +87,20 @@ export class CheckoutService {
         description: 'Usa tu saldo disponible de forma instantánea'
       },
       {
-        id: 'mercadopago',
-        name: 'Mercado Pago',
-        icon: '💰',
-        description: 'Paga con Mercado Pago (Tarjeta, Efectivo, Transferencia)'
-      },
-      {
         id: 'paypal',
         name: 'PayPal',
         icon: '🅿️',
         description: 'Paga de forma segura con PayPal'
-      },
-      {
-        id: 'transfer',
-        name: 'Transferencia Bancaria',
-        icon: '🏦',
-        description: 'Transferencia directa a cuenta bancaria'
       }
     ];
 
     // Filtrar métodos según configuración activa
     return allMethods.filter(method => {
       if (method.id === 'wallet') return true; // Siempre disponible
-      if (method.id === 'mercadopago') return config.mercadopago?.active === true;
       if (method.id === 'paypal') return config.paypal?.active === true;
-      if (method.id === 'transfer') return true; // Por ahora siempre disponible
       return false;
     });
   });
-
-  // 🔥 Datos bancarios centralizados (solo frontend)
-  readonly bankDetails: BankDetails = {
-    bankName: 'BBVA Bancomer',
-    accountNumber: '1167021895',
-    clabe: '01242611670218951'
-  };
 
   // 🔥 Procesar venta
   processSale(data: CheckoutData) {

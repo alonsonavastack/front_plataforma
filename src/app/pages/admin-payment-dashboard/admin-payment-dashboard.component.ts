@@ -6,7 +6,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PaymentDashboardService, SaleItem, SalesFilter } from '../../core/services/payment-dashboard.service';
-import { TransferVerificationService } from '../../core/services/transfer-verification.service';
+
 
 @Component({
   selector: 'app-admin-payment-dashboard',
@@ -17,7 +17,7 @@ import { TransferVerificationService } from '../../core/services/transfer-verifi
 export class AdminPaymentDashboardComponent implements OnInit {
   // 💉 SERVICES
   dashboardService = inject(PaymentDashboardService);
-  transferService = inject(TransferVerificationService);
+
 
   // 🎯 STATE
   activeTab = signal<'overview' | 'sales' | 'wallets' | 'refunds'>('overview');
@@ -37,10 +37,7 @@ export class AdminPaymentDashboardComponent implements OnInit {
   selectedSale = signal<SaleItem | null>(null);
   showDetailModal = signal(false);
 
-  // Modal de verificación rápida
-  showVerifyModal = signal(false);
-  verificationNotes = signal('');
-  isVerifying = signal(false);
+
 
   // 📊 COMPUTED SIGNALS
   stats = computed(() => this.dashboardService.stats());
@@ -58,17 +55,14 @@ export class AdminPaymentDashboardComponent implements OnInit {
   paymentMethods = [
     { value: '', label: 'Todos los métodos' },
     { value: 'wallet', label: '💰 Billetera Digital' },
-    { value: 'transfer', label: '🏦 Transferencia' },
-    { value: 'paypal', label: '💳 PayPal' },
-    { value: 'stripe', label: '💳 Stripe' },
-    { value: 'mercadopago', label: '💳 MercadoPago' }
+
   ];
 
   // Estados disponibles
   statusOptions = [
     { value: '', label: 'Todos los estados' },
     { value: 'Pendiente', label: '⏳ Pendiente' },
-    { value: 'Pagado', label: '✅ Pagado' },
+    { value: 'paypal', label: '💳 PayPal' },
     { value: 'Cancelado', label: '❌ Cancelado' }
   ];
 
@@ -151,49 +145,7 @@ export class AdminPaymentDashboardComponent implements OnInit {
     this.showDetailModal.set(true);
   }
 
-  /**
-   * ✅ ABRIR MODAL DE VERIFICACIÓN RÁPIDA
-   */
-  openQuickVerify(sale: SaleItem): void {
-    if (sale.method_payment !== 'transfer' || sale.status !== 'Pendiente') {
-      alert('Solo se pueden verificar transferencias pendientes');
-      return;
-    }
 
-    this.selectedSale.set(sale);
-    this.verificationNotes.set('Verificado desde el Dashboard de Pagos');
-    this.showVerifyModal.set(true);
-  }
-
-  /**
-   * ✅ VERIFICAR TRANSFERENCIA RÁPIDA
-   */
-  quickVerify(): void {
-    const sale = this.selectedSale();
-    if (!sale) return;
-
-    if (!confirm('¿Verificar esta transferencia? Se inscribirá automáticamente al estudiante.')) {
-      return;
-    }
-
-    this.isVerifying.set(true);
-
-    this.transferService.verifyTransfer(sale._id, {
-      verification_notes: this.verificationNotes()
-    }).subscribe({
-      next: (response) => {
-        alert('✅ Transferencia verificada exitosamente');
-        this.closeVerifyModal();
-        this.loadDashboard();
-      },
-      error: (error) => {
-        alert('Error: ' + (error.error?.message || error.message));
-      },
-      complete: () => {
-        this.isVerifying.set(false);
-      }
-    });
-  }
 
   /**
    * ❌ CERRAR MODALES
@@ -203,18 +155,7 @@ export class AdminPaymentDashboardComponent implements OnInit {
     this.selectedSale.set(null);
   }
 
-  closeVerifyModal(): void {
-    this.showVerifyModal.set(false);
-    this.selectedSale.set(null);
-    this.verificationNotes.set('');
-  }
 
-  /**
-   * ✅ VERIFICAR TRANSFERENCIA RÁPIDA (desde modal)
-   */
-  verifyFromModal(): void {
-    this.quickVerify();
-  }
 
   /**
    * 📤 EXPORTAR A CSV

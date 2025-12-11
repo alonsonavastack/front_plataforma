@@ -57,6 +57,11 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "allowedHosts": [
+              "unforestallable-splendidly-ariane.ngrok-free.dev"
+            ]
+          },
           "configurations": {
             "production": {
               "buildTarget": "cursos:build:production"

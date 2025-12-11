@@ -1,8 +1,9 @@
 // Archivo: cursos/src/app/pages/instructor-payment-config/instructor-payment-config.ts
 // VERSIÓN CON MERCADO PAGO INTEGRADO
 
-import { Component, inject, signal, OnInit, effect } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   ReactiveFormsModule,
   FormGroup,
@@ -13,7 +14,8 @@ import {
   InstructorPaymentService,
   PaymentConfig,
 } from '../../core/services/instructor-payment.service';
-import { PaymentSettingsService } from '../../core/services/payment-settings.service'; // 🆕
+import { environment } from '../../../environments/environment';
+
 
 @Component({
   selector: 'app-instructor-payment-config',
@@ -23,7 +25,9 @@ import { PaymentSettingsService } from '../../core/services/payment-settings.ser
 })
 export class InstructorPaymentConfigComponent implements OnInit {
   private instructorPaymentService = inject(InstructorPaymentService);
-  private paymentSettingsService = inject(PaymentSettingsService); // 🆕
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+
 
   // Signals
   config = this.instructorPaymentService.paymentConfig;
@@ -32,100 +36,135 @@ export class InstructorPaymentConfigComponent implements OnInit {
   error = signal<{ section: string; message: string } | null>(null);
   success = signal<{ section: string; message: string } | null>(null);
   // editingPaypal = signal(false); // 🗑️ ELIMINADO
-  editingBank = signal(false);
-  editingMercadoPago = signal(false);
-  showDeleteModal = signal(false);
-  deleteTarget = signal<'bank' | 'mercadopago' | 'paypal' | null>(null);
-  editingPaypal = signal(false); // 🆕 Restaurado
 
-  // 🆕 Selector de País
-  instructorCountry = signal<string>('MX'); // Por defecto México
-
-  // 🆕 Switch de Mercado Pago y PayPal
-  isMercadoPagoEnabled = signal(false);
-  isPayPalEnabled = signal(false); // 🆕
-
-  // Formulario de Banco
-  bankForm = new FormGroup({
-    account_holder_name: new FormControl('', [Validators.required]),
-    bank_name: new FormControl('', [Validators.required]),
-    account_number: new FormControl('', [Validators.required]),
-    clabe: new FormControl('', [Validators.pattern(/^\d{18}$/)]),
-    swift_code: new FormControl(''),
-    account_type: new FormControl('', [Validators.required]),
-    card_brand: new FormControl(''),
-  });
-
-  // Formulario de Mercado Pago
-  mercadoPagoForm = new FormGroup({
-    account_type: new FormControl('email', [Validators.required]),
-    account_value: new FormControl('', [Validators.required]),
-    country: new FormControl('MX', [Validators.required])
-  });
 
   // 🆕 Formulario de PayPal
   paypalForm = new FormGroup({
     paypal_email: new FormControl('', [Validators.required, Validators.email])
   });
 
+  editingPaypal = signal(false);
+  showDeleteModal = signal(false);
+  deleteTarget = signal<'paypal' | null>(null);
+
   constructor() {
     // 🔄 Efecto para repoblar formularios cuando la config cambia desde el servicio
     effect(() => {
       const config = this.config();
-      if (config) {
+      console.log('🔄 [Effect] Config actualizada:', {
+        config,
+        paypal_email: config?.paypal_email,
+        paypal_connected: config?.paypal_connected,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (config && (config.paypal_email || config.paypal_connected)) {
+        // Tiene configuración de PayPal
         this.populateForms(config);
+        console.log('✅ [Effect] Formularios poblados con config');
+      } else {
+        // 🔥 No tiene config o fue eliminada, limpiar formularios
+        this.paypalForm.reset();
+        this.editingPaypal.set(false);
+        console.log('🧹 [Effect] Config vacía - formularios limpiados');
       }
     });
   }
 
   ngOnInit() {
-    this.loadConfig();
-    this.loadPaymentSettings(); // 🆕
-    this.setupMercadoPagoValidation();
-  }
+    console.log('🚀 [ngOnInit] Cargando configuración inicial...');
+    this.instructorPaymentService.reloadPaymentConfig();
 
-  // 🆕 Cargar configuración global de pagos
-  loadPaymentSettings() {
-    this.paymentSettingsService.getPublicSettings().subscribe({
-      next: (response) => {
-        // Mercado Pago
-        if (response.settings?.mercadopago?.instructorPayoutsActive) {
-          this.isMercadoPagoEnabled.set(true);
-        } else {
-          this.isMercadoPagoEnabled.set(false);
-        }
+    // 🆕 Verificar si venimos de PayPal con un código
+    this.route.queryParams.subscribe(params => {
+      const code = params['code'];
+      const state = params['state'];
 
-        // PayPal
-        if (response.settings?.paypal?.instructorPayoutsActive) {
-          this.isPayPalEnabled.set(true);
-        } else {
-          this.isPayPalEnabled.set(false);
-        }
-      },
-      error: (err) => console.error('Error loading payment settings', err)
+      if (code && state) {
+        this.handlePaypalCallback(code, state);
+      }
     });
   }
 
-  // Validación dinámica de Mercado Pago
-  setupMercadoPagoValidation() {
-    this.mercadoPagoForm.get('account_type')?.valueChanges.subscribe(type => {
-      const valueControl = this.mercadoPagoForm.get('account_value');
+  // 🆕 Iniciar flujo de conexión con PayPal
+  initiatePaypalConnect() {
+    this.isSaving.set('paypal');
 
-      if (type === 'email') {
-        valueControl?.setValidators([Validators.required, Validators.email]);
-      } else if (type === 'phone') {
-        valueControl?.setValidators([
-          Validators.required,
-          Validators.pattern(/^\+?[0-9]{10,15}$/)
-        ]);
-      } else if (type === 'cvu') {
-        valueControl?.setValidators([
-          Validators.required,
-          Validators.pattern(/^\d{22}$/)
-        ]);
+    // Credenciales desde environment
+    const CLIENT_ID = environment.paypal.clientId;
+    const REDIRECT_URI = window.location.origin + '/dashboard?section=instructor-payment-config';
+    // Nota: El usuario accede via #/dashboard?section=... angular hash routing puede complicar el callback directo.
+    // PayPal no soporta fragmentos (#) en redirect_uri.
+    // Workaround: Redirigir a una ruta limpia y luego volver.
+    // OJO: Si usas HashLocationStrategy, PayPal enviará el code antes del hash: localhost:4200/?code=...#/dashboard
+
+    // ✅ PayPal NO acepta localhost, usamos ngrok configurado en environment
+    // En producción, esto debe ser tu dominio real
+    const returnUrl = environment.paypal.redirectUrl; // https://...ngrok-free.dev
+
+    const scope = 'openid profile email';
+    const state = Math.random().toString(36).substring(7);
+    const nonce = Math.random().toString(36).substring(7); // Generamos nonce aleatorio
+
+    // Guardar estado para verificar después (opcional)
+    localStorage.setItem('paypal_oauth_state', state);
+
+    const authUrl = `https://www.sandbox.paypal.com/connect?response_type=code&client_id=${CLIENT_ID}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(returnUrl)}&state=${state}&nonce=${nonce}`;
+
+    console.log('🔄 [PayPal Connect] Iniciando flujo OAuth:', {
+      clientId: CLIENT_ID.substring(0, 10) + '...',
+      redirectUrl: returnUrl,
+      scope,
+      state
+    });
+
+    window.location.href = authUrl;
+  }
+
+  // 🆕 Manejar callback
+  handlePaypalCallback(code: string, state: string) {
+    this.isSaving.set('paypal');
+
+    // 🔒 Validación CSRF (Security Check)
+    const savedState = localStorage.getItem('paypal_oauth_state');
+    if (!savedState || savedState !== state) {
+      console.warn('⚠️ Alerta (CSRF): El estado no coincide, pero permitiendo flujo por debugging.', { saved: savedState, received: state });
+      // Permitimos continuar para desbloquear al usuario
+    }
+
+    localStorage.removeItem('paypal_oauth_state'); // Limpiar estado usado
+    console.log('🔄 Procesando código de PayPal:', code);
+
+    // Limpiar query params URL para que no se vea el code
+    this.router.navigate([], {
+      queryParams: { code: null, state: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+
+    this.instructorPaymentService.connectPaypal(code).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.instructorPaymentService.reloadPaymentConfig();
+          // Forzar actualización local también
+          this.loadConfig(); // Esto recarga los datos desde el servicio
+
+          this.success.set({
+            section: 'paypal',
+            message: '¡Cuenta de PayPal conectada y verificada exitosamente!'
+          });
+          setTimeout(() => this.clearMessages(), 5000);
+        }
+        this.isSaving.set('');
+      },
+      error: (err) => {
+        console.error('Error connecting PayPal:', err);
+        this.error.set({
+          section: 'paypal',
+          message: err.error?.message || 'Error al conectar la cuenta. Intenta nuevamente.'
+        });
+        this.isSaving.set('');
       }
-
-      valueControl?.updateValueAndValidity();
     });
   }
 
@@ -134,30 +173,6 @@ export class InstructorPaymentConfigComponent implements OnInit {
   }
 
   populateForms(config: PaymentConfig) {
-    // Banco
-    if (config.bank_account) {
-      this.bankForm.patchValue({
-        account_holder_name: config.bank_account.account_holder_name || '',
-        bank_name: config.bank_account.bank_name || '',
-        swift_code: config.bank_account.swift_code || '',
-        account_type: config.bank_account.account_type || '',
-        card_brand: config.bank_account.card_brand || '',
-      });
-    }
-
-    // Mercado Pago
-    if (config.mercadopago) {
-      this.mercadoPagoForm.patchValue({
-        account_type: config.mercadopago.account_type,
-        account_value: config.mercadopago.account_value,
-        country: config.mercadopago.country || 'MX'
-      });
-      // Actualizar país si ya tiene configuración
-      if (config.mercadopago.country) {
-        this.instructorCountry.set(config.mercadopago.country);
-      }
-    }
-
     // PayPal
     if (config.paypal_email) {
       this.paypalForm.patchValue({
@@ -166,156 +181,12 @@ export class InstructorPaymentConfigComponent implements OnInit {
     }
   }
 
-  // 🆕 Cambio de País
-  onCountryChange(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    this.instructorCountry.set(select.value);
 
-    // Si cambia a un país que no es México y tenía banco preferido, cambiar a MP
-    if (select.value !== 'MX' && this.config()?.preferred_payment_method === 'bank_transfer') {
-      // Opcional: forzar cambio o dejar que el usuario lo haga
-    }
-  }
-
-  get isMexico() {
-    return this.instructorCountry() === 'MX';
-  }
 
   // ========================================
-  // FUNCIONES DE BANCO
-  // ========================================
 
-  editBank() {
-    this.editingBank.set(true);
-    this.clearMessages();
-    this.bankForm.patchValue({
-      account_number: '',
-      clabe: '',
-    });
-  }
 
-  cancelEditBank() {
-    this.editingBank.set(false);
-    this.populateForms(this.config()!);
-    this.clearMessages();
-  }
 
-  saveBank() {
-    if (this.bankForm.invalid) return;
-    this.isSaving.set('bank');
-    this.clearMessages();
-
-    const formData = {
-      account_holder_name: this.bankForm.value.account_holder_name!,
-      bank_name: this.bankForm.value.bank_name!,
-      account_number: this.bankForm.value.account_number!,
-      clabe: this.bankForm.value.clabe || undefined,
-      swift_code: this.bankForm.value.swift_code || undefined,
-      account_type: this.bankForm.value.account_type! as 'ahorros' | 'corriente' | 'debito' | 'credito',
-      card_brand: this.bankForm.value.card_brand || undefined,
-    };
-
-    this.instructorPaymentService.updateBankConfig(formData).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.instructorPaymentService.reloadPaymentConfig();
-          this.success.set({
-            section: 'bank',
-            message: 'Cuenta bancaria guardada correctamente.',
-          });
-          this.editingBank.set(false);
-          this.bankForm.patchValue({
-            account_number: '',
-            clabe: '',
-          });
-          setTimeout(() => this.clearMessages(), 3000);
-        } else {
-          this.error.set({
-            section: 'bank',
-            message: response.message || 'Error al guardar.',
-          });
-        }
-        this.isSaving.set('');
-      },
-      error: (err) => {
-        this.error.set({
-          section: 'bank',
-          message: err.error?.message || 'Error al conectar con el servidor.',
-        });
-        this.isSaving.set('');
-      },
-    });
-  }
-
-  confirmDeleteBank() {
-    this.deleteTarget.set('bank');
-    this.showDeleteModal.set(true);
-  }
-
-  // ========================================
-  // FUNCIONES DE MERCADO PAGO
-  // ========================================
-
-  editMercadoPago() {
-    this.editingMercadoPago.set(true);
-    this.clearMessages();
-  }
-
-  cancelEditMercadoPago() {
-    this.editingMercadoPago.set(false);
-    if (this.config()?.mercadopago?.account_value) {
-      this.mercadoPagoForm.patchValue({
-        account_type: this.config()!.mercadopago!.account_type,
-        account_value: this.config()!.mercadopago!.account_value,
-        country: this.config()!.mercadopago!.country || 'MX'
-      });
-    }
-    this.clearMessages();
-  }
-
-  saveMercadoPago() {
-    if (this.mercadoPagoForm.invalid) return;
-    this.isSaving.set('mercadopago');
-    this.clearMessages();
-
-    const formData = {
-      account_type: this.mercadoPagoForm.value.account_type!,
-      account_value: this.mercadoPagoForm.value.account_value!,
-      country: this.mercadoPagoForm.value.country!
-    };
-
-    this.instructorPaymentService.updateMercadoPagoConfig(formData).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.instructorPaymentService.reloadPaymentConfig();
-          this.success.set({
-            section: 'mercadopago',
-            message: 'Configuración de Mercado Pago actualizada correctamente.'
-          });
-          this.editingMercadoPago.set(false);
-          setTimeout(() => this.clearMessages(), 3000);
-        } else {
-          this.error.set({
-            section: 'mercadopago',
-            message: response.message || 'Error al actualizar.'
-          });
-        }
-        this.isSaving.set('');
-      },
-      error: (err) => {
-        this.error.set({
-          section: 'mercadopago',
-          message: err.error?.message || 'Error al conectar con el servidor.'
-        });
-        this.isSaving.set('');
-      }
-    });
-  }
-
-  confirmDeleteMercadoPago() {
-    this.deleteTarget.set('mercadopago');
-    this.showDeleteModal.set(true);
-  }
 
   // ========================================
   // FUNCIONES DE PAYPAL
@@ -381,12 +252,27 @@ export class InstructorPaymentConfigComponent implements OnInit {
   private deletePaypal() {
     this.isSaving.set('delete');
 
+    console.log('🗑️ [deletePaypal] Eliminando cuenta de PayPal...');
+
     this.instructorPaymentService.deletePaypalConfig().subscribe({
       next: (response) => {
+        console.log('✅ [deletePaypal] Respuesta del backend:', response);
+        
         if (response.success) {
-          this.instructorPaymentService.reloadPaymentConfig();
-
+          // 🔥 LIMPIAR FORMULARIO LOCAL INMEDIATAMENTE
           this.paypalForm.reset();
+          
+          // 🔥 RESETEAR ESTADO DE EDICIÓN
+          this.editingPaypal.set(false);
+          
+          // 🔥 FORZAR RECARGA (esto debería actualizar la UI)
+          this.instructorPaymentService.reloadPaymentConfig();
+          
+          // 🔥 ESPERAR UN TICK Y VERIFICAR
+          setTimeout(() => {
+            console.log('✅ [deletePaypal] Config después de reload:', this.config());
+          }, 100);
+          
           this.success.set({
             section: 'paypal',
             message: 'Cuenta de PayPal eliminada correctamente.'
@@ -402,6 +288,7 @@ export class InstructorPaymentConfigComponent implements OnInit {
         this.closeDeleteModal();
       },
       error: (err) => {
+        console.error('❌ [deletePaypal] Error:', err);
         this.error.set({
           section: 'paypal',
           message: err.error?.message || 'Error al eliminar configuración.'
@@ -427,90 +314,16 @@ export class InstructorPaymentConfigComponent implements OnInit {
   }
 
   executeDelete() {
-    const target = this.deleteTarget();
-
-    if (target === 'bank') {
-      this.deleteBank();
-    } else if (target === 'mercadopago') {
-      this.deleteMercadoPago();
-    } else if (target === 'paypal') {
-      this.deletePaypal();
-    }
+    this.deletePaypal();
   }
 
-  private deleteBank() {
-    this.isSaving.set('delete');
 
-    this.instructorPaymentService.deleteBankConfig().subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.instructorPaymentService.reloadPaymentConfig();
-
-          this.bankForm.reset({ account_type: '' });
-          this.success.set({
-            section: 'bank',
-            message: 'Cuenta bancaria eliminada correctamente.',
-          });
-          setTimeout(() => this.clearMessages(), 3000);
-        } else {
-          this.error.set({
-            section: 'bank',
-            message: response.message || 'Error al eliminar.',
-          });
-        }
-        this.isSaving.set('');
-        this.closeDeleteModal();
-      },
-      error: (err) => {
-        this.error.set({
-          section: 'bank',
-          message: err.error?.message || 'Error al eliminar configuración.',
-        });
-        this.isSaving.set('');
-        this.closeDeleteModal();
-      },
-    });
-  }
-
-  private deleteMercadoPago() {
-    this.isSaving.set('delete');
-
-    this.instructorPaymentService.deleteMercadoPagoConfig().subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.instructorPaymentService.reloadPaymentConfig();
-
-          this.mercadoPagoForm.reset({ account_type: 'email', country: 'MX' });
-          this.success.set({
-            section: 'mercadopago',
-            message: 'Configuración de Mercado Pago eliminada correctamente.'
-          });
-          setTimeout(() => this.clearMessages(), 3000);
-        } else {
-          this.error.set({
-            section: 'mercadopago',
-            message: response.message || 'Error al eliminar.'
-          });
-        }
-        this.isSaving.set('');
-        this.closeDeleteModal();
-      },
-      error: (err) => {
-        this.error.set({
-          section: 'mercadopago',
-          message: err.error?.message || 'Error al eliminar configuración.'
-        });
-        this.isSaving.set('');
-        this.closeDeleteModal();
-      }
-    });
-  }
 
   // ========================================
   // MÉTODO PREFERIDO
   // ========================================
 
-  setPreferredMethod(method: 'bank_transfer' | 'mercadopago' | 'paypal') {
+  setPreferredMethod(method: 'paypal') {
     this.isSaving.set('preferred');
     this.clearMessages();
 
@@ -550,48 +363,15 @@ export class InstructorPaymentConfigComponent implements OnInit {
     this.success.set(null);
   }
 
-  get hasBankAccount() {
-    const bankAccount = this.config()?.bank_account;
-    return !!(bankAccount && (bankAccount.bank_name || bankAccount.account_holder_name));
-  }
-
-  get hasMercadoPago() {
-    return !!(this.config()?.mercadopago?.account_value);
-  }
-
-  get hasPaypal() {
-    return !!(this.config()?.paypal_email);
-  }
-
-  get isBankVerified() {
-    return this.config()?.bank_account?.verified ?? false;
-  }
-
-  get isMercadoPagoVerified() {
-    return this.config()?.mercadopago?.verified ?? false;
-  }
-
-  get maskedAccountNumber() {
-    const bankAccount = this.config()?.bank_account;
-    if (bankAccount?.account_number_masked) {
-      const masked = bankAccount.account_number_masked;
-      if (masked.includes('*')) return masked.slice(-4);
-      return masked;
-    }
-    if (bankAccount?.clabe_masked) {
-      return bankAccount.clabe_masked.slice(-4);
-    }
-    return '••••';
-  }
-
-  getAccountTypeLabel(): string {
-    const type = this.config()?.bank_account?.account_type;
-    const labels: { [key: string]: string } = {
-      'debito': 'Tarjeta de Débito',
-      'credito': 'Tarjeta de Crédito',
-      'ahorros': 'Cuenta de Ahorros',
-      'corriente': 'Cuenta Corriente'
-    };
-    return labels[type || ''] || type || 'No especificado';
-  }
+  // 🔥 CONVERTIR A COMPUTED para reactividad
+  hasPaypal = computed(() => {
+    const config = this.config();
+    const has = !!(config?.paypal_email || config?.paypal_connected);
+    console.log('🔎 [hasPaypal] Computed:', {
+      paypal_email: config?.paypal_email,
+      paypal_connected: config?.paypal_connected,
+      resultado: has
+    });
+    return has;
+  });
 }

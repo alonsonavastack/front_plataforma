@@ -235,7 +235,6 @@ export class AdminPaymentHistoryComponent implements OnInit {
   getPaymentMethodLabel(method: string): string {
     const labels: { [key: string]: string } = {
       paypal: 'PayPal',
-      bank_transfer: 'Transferencia Bancaria',
       other: 'Otro'
     };
     return labels[method] || method;

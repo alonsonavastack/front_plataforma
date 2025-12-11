@@ -56,12 +56,7 @@ export class StudentsComponent implements OnInit {
     }, 1000);
   }
 
-  // 🔍 Método temporal de debug
-  debugStudent(student: Student): void {
-    if (student.sales && student.sales.length > 0) {
-    }
-    alert(`Cursos: ${student.purchased_courses_count || 0}, Proyectos: ${student.purchased_projects_count || 0}`);
-  }
+
 
   onSearch(event: Event): void {
     const value = (event.target as HTMLInputElement).value;

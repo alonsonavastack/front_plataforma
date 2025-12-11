@@ -187,15 +187,12 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   }
 
   getPaymentMethodTooltip(config: InstructorWithEarnings['paymentConfig']): string {
-    if (!config.hasConfig) return 'Sin método de pago configurado';
+    if (!config || !config.preferredMethod) return 'Sin método de pago configurado';
     if (config.preferredMethod === 'paypal') {
       return `PayPal: ${config.paypalConnected ? 'Conectado' : 'No Conectado'}`;
     }
-    if (config.preferredMethod === 'bank_transfer') {
-      return `Cuenta Bancaria: ${config.bankVerified ? 'Verificada' : 'No Verificada'}`;
-    }
-    if (config.preferredMethod === 'mercadopago') {
-      return `Mercado Pago: ${config.country || 'Sin país'}`;
+    if (config.preferredMethod === 'paypal') {
+      return `PayPal: ${config.paypalConnected ? 'Conectado' : 'No Conectado'}`;
     }
     return 'Método de pago no especificado';
   }
@@ -203,10 +200,7 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   getMethodBadgeClass(method: string): string {
     const colors = {
       paypal: 'text-blue-600 bg-blue-100',
-      bank_transfer: 'text-green-600 bg-green-100',
-      mercadopago: 'text-indigo-600 bg-indigo-100',
       wallet: 'text-purple-600 bg-purple-100',
-      transfer: 'text-green-600 bg-green-100',
       none: 'text-gray-600 bg-gray-100'
     };
     return colors[method as keyof typeof colors] || 'text-orange-600 bg-orange-100';
@@ -215,10 +209,7 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   getMethodText(method: string): string {
     const texts = {
       paypal: 'PayPal',
-      bank_transfer: 'Transferencia',
-      mercadopago: 'Mercado Pago',
       wallet: 'Billetera',
-      transfer: 'Transferencia',
       none: 'No configurado'
     };
     return texts[method as keyof typeof texts] || method.charAt(0).toUpperCase() + method.slice(1);
@@ -253,21 +244,7 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   }
 
   // 🔥 NUEVO: Determinar si se puede pagar con Mercado Pago
-  canPayWithMercadoPago(instructor: InstructorWithEarnings): boolean {
-    const country = instructor.instructor.country || instructor.paymentConfig.country;
-    const supportedCountries = ['MX', 'AR', 'CO', 'CL', 'PE', 'BR'];
 
-    return instructor.paymentConfig.preferredMethod === 'mercadopago' &&
-      supportedCountries.includes(country || '');
-  }
-
-  // 🔥 NUEVO: Determinar si se puede pagar con transferencia bancaria (solo México)
-  canPayWithBankTransfer(instructor: InstructorWithEarnings): boolean {
-    const country = instructor.instructor.country || instructor.paymentConfig.country;
-    return instructor.paymentConfig.preferredMethod === 'bank_transfer' &&
-      country === 'MX' &&
-      instructor.paymentConfig.bankVerified;
-  }
 
   viewInstructorDetails(instructorId: string) {
     if (instructorId) {

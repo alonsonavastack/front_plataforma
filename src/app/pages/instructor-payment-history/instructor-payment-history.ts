@@ -83,7 +83,6 @@ export class InstructorPaymentHistoryComponent implements OnInit {
   getPaymentMethodIcon(method: string): string {
     const icons: { [key: string]: string } = {
       paypal: '💳',
-      bank_transfer: '🏦',
       other: '💰',
     };
     return icons[method] || '💰';
@@ -92,7 +91,6 @@ export class InstructorPaymentHistoryComponent implements OnInit {
   getPaymentMethodText(method: string): string {
     const texts: { [key: string]: string } = {
       paypal: 'PayPal',
-      bank_transfer: 'Transferencia Bancaria',
       other: 'Otro',
     };
     return texts[method] || method;

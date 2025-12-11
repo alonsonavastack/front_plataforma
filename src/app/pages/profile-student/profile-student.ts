@@ -60,7 +60,7 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
   Math = Math;
 
   // Exponer datos bancarios para la plantilla
-  bankDetails = this.checkoutService.bankDetails;
+
 
   // 🆕 Signal privado para controlar cambios manuales
   private _manualSection = signal<ProfileSection | null>(null);

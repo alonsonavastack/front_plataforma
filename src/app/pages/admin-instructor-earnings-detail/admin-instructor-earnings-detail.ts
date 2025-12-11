@@ -152,8 +152,19 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
       startDate: '',
       endDate: ''
     });
-    this.currentPage.set(1);
-    this.loadEarnings();
+    this.onFilterChange();
+  }
+
+  copyTotal() {
+    const amount = this.selectedTotal().toFixed(2);
+    navigator.clipboard.writeText(amount).then(() => {
+      this.successMessage.set(`Monto copiado: ${amount}`);
+      setTimeout(() => this.successMessage.set(null), 3000);
+    }).catch(err => {
+      console.error('Error al copiar:', err);
+      this.actionError.set('Error al copiar al portapapeles');
+      setTimeout(() => this.actionError.set(null), 3000);
+    });
   }
 
   changePage(page: number): void {

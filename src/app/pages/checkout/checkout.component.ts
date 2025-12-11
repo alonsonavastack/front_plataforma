@@ -232,8 +232,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   // Payment methods - FROM SERVICE
   paymentMethods = this.checkoutService.availablePaymentMethods;
 
-  // 🔥 Datos bancarios desde el servicio
-  bankDetails = this.checkoutService.bankDetails;
+
 
   // Formulario para información adicional
   checkoutForm = new FormGroup({
@@ -466,7 +465,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     }
     // CASO 2: Pago mixto (billetera + otro método)
     else if (walletIsActive && walletAmountUsed > 0 && remaining > 0) {
-      finalPaymentMethod = this.selectedPaymentMethod() || 'transfer';
+      finalPaymentMethod = this.selectedPaymentMethod();
       finalWalletAmount = walletAmountUsed;
       finalRemainingAmount = remaining;
 
@@ -542,39 +541,15 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     // Procesar la venta
     this.checkoutService.processSale(checkoutData).subscribe({
       next: (response: any) => {
-
-
-        // 🔥 MERCADO PAGO REDIRECTION
-        if (response.init_point) {
-
-
-          // ✅ CRÍTICO: Recargar billetera ANTES de redirigir
-          // Así el saldo se actualiza en segundo plano mientras carga MP
-          if (walletIsActive && finalWalletAmount > 0) {
-            this.walletService.loadWallet();
-          }
-
-          // Pequeño delay para asegurar que la petición se envió
-          setTimeout(() => {
-            window.location.href = response.init_point;
-          }, 100);
-
-          return;
+        if (response.sale) {
+          this.transactionNumber.set(response.sale.n_transaccion);
         }
 
-        // 🚨 ERROR: Si es Mercado Pago pero no hay link, mostrar error
-        if (finalPaymentMethod === 'mercadopago' && !response.init_point) {
-          console.error('❌ [processPayment] Error: Mercado Pago seleccionado pero no hay init_point');
-          this.errorMessage.set('Error: No se pudo generar el enlace de pago de Mercado Pago. Por favor contacta soporte.');
-          this.isProcessing.set(false);
-          return;
-        }
-
+        // ✅ ÉXITO (Wallet/PayPal)
         this.isProcessing.set(false);
         this.showSuccess.set(true);
 
         // 🔄 Recargar servicios después de una venta exitosa
-
         // 1. Recargar billetera inmediatamente si se usó
         if (walletIsActive && finalWalletAmount > 0) {
           this.walletService.loadWallet();
@@ -582,15 +557,13 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
         // 2. Recargar perfil con un pequeño delay para asegurar que el backend terminó
         setTimeout(() => {
-
           // 🔥 CRÍTICO: Llamar a reloadProfile() para actualizar el estado global
           this.profileStudentService.reloadProfile();
 
           // También recargar otros servicios
           this.purchasesService.loadPurchasedProducts();
           this.profileService.reloadProfile();
-
-        }, 2000); // Aumentado a 2 segundos para dar más tiempo al backend
+        }, 2000);
 
         // 3. Limpiar carrito si fue compra de carrito
         if (!this.isDirectBuy()) {
@@ -609,27 +582,10 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
   closeSuccessModalAndRedirect(): void {
     this.showSuccess.set(false);
-
-    // 🔥 FIX: Si pagó 100% con billetera, NO mostrar modal de advertencia
-    if (this.isFullWalletPayment()) {
-      // Redirigir directo sin mostrar el modal de transferencia
-      // 🔥 FIX: Redirigir siempre a 'purchases' para que el usuario vea su historial y estado
-      this.router.navigate(['/profile-student'], { fragment: 'purchases' });
-      return;
-    }
-
-    // 🔥 Solo mostrar el modal de advertencia para pagos mixtos o transferencias
-    this.showWarningModal.set(true);
-  }
-
-  // 🔥 Cerrar el modal de advertencia y redirigir
-  closeWarningAndRedirect(): void {
-    this.showWarningModal.set(false);
-
-    // 🔥 SOLUCIÓN OPTIMIZADA: Navegación con Angular Router
-    // Redirigir siempre a 'purchases' para que el usuario vea su historial y pueda subir comprobantes si es necesario
     this.router.navigate(['/profile-student'], { fragment: 'purchases' });
   }
+
+
 
   buildImageUrl(imagen?: string): string {
     if (!imagen) {
