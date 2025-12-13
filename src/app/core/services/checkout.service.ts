@@ -77,7 +77,16 @@ export class CheckoutService {
   // 🔥 Métodos de pago filtrados dinámicamente según configuración
   public availablePaymentMethods = computed<PaymentMethod[]>(() => {
     const config = this.paymentConfig();
-    if (!config) return [];
+    // Si no hay config yet, retornar métodos por defecto (wallet y PayPal si clientId está presente)
+    if (!config) {
+      const fallback: PaymentMethod[] = [
+        { id: 'wallet', name: 'Billetera Digital', icon: '💰', description: 'Usa tu saldo disponible de forma instantánea' }
+      ];
+      if ((environment.paypal && environment.paypal.clientId)) {
+        fallback.push({ id: 'paypal', name: 'PayPal', icon: '🅿️', description: 'Paga de forma segura con PayPal' });
+      }
+      return fallback;
+    }
 
     const allMethods: PaymentMethod[] = [
       {
@@ -97,7 +106,7 @@ export class CheckoutService {
     // Filtrar métodos según configuración activa
     return allMethods.filter(method => {
       if (method.id === 'wallet') return true; // Siempre disponible
-      if (method.id === 'paypal') return config.paypal?.active === true;
+      if (method.id === 'paypal') return (config.paypal?.active === true) || (!!(environment.paypal && environment.paypal.clientId));
       return false;
     });
   });
@@ -122,5 +131,16 @@ export class CheckoutService {
   // 🔥 Recargar configuración manualmente
   reloadConfig(): void {
     this.configReloadTrigger.update(v => v + 1);
+  }
+
+  // 🔥 PayPal helpers: create order and capture order (server-side)
+  async createPaypalOrder(n_transaccion: string): Promise<{ orderId: string, links?: any }> {
+    const res = await firstValueFrom(this.http.post<any>(`${this.API_URL}/paypal/create`, { n_transaccion }));
+    return { orderId: res.orderId, links: res.links };
+  }
+
+  async capturePaypalOrder(n_transaccion: string, orderId: string): Promise<any> {
+    const res = await firstValueFrom(this.http.post<any>(`${this.API_URL}/paypal/capture`, { n_transaccion, orderId }));
+    return res;
   }
 }

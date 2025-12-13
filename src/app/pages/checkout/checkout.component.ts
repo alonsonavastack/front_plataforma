@@ -71,6 +71,12 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   errorMessage = signal<string>('');
   transactionNumber = signal<string>('');
 
+  // 🆕 PayPal state
+  public paypalOrderId = signal<string | null>(null); // for debugging and capture
+  public paypalButtonsRendered = signal<boolean>(false);
+  public pendingSaleTx = signal<string | null>(null);
+  public renderingPaypal = signal<boolean>(false);
+
 
 
 
@@ -84,8 +90,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   // 🆕 Conversion state (simulated for UI before backend confirmation)
   // In a real app, you might want to fetch live rates or use the backend response
   // For now, we'll rely on the backend to do the actual conversion during payment
-  // but we can show an estimate if we had the rates. 
-  // Since the prompt says backend handles it, we will show the conversion *result* 
+  // but we can show an estimate if we had the rates.
+  // Since the prompt says backend handles it, we will show the conversion *result*
   // after the user selects transfer or in the summary if we fetch rates.
   // For this implementation, we will focus on sending the country.
   // 🆕 Wallet state
@@ -198,6 +204,213 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   });
 
   // 🆕 UX IMPROVEMENTS
+
+  // Dynamically load PayPal SDK
+  private async loadPayPalSdk(): Promise<void> {
+    // If PayPal SDK already loaded, resolve
+    if ((window as any).paypal) {
+      console.log('✅ [loadPayPalSdk] PayPal SDK ya estaba cargado');
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+      const clientId = environment.paypal?.clientId || '';
+      if (!clientId) {
+        console.error('❌ [loadPayPalSdk] No PayPal clientId in frontend environment');
+        return reject(new Error('No PayPal clientId in environment.'));
+      }
+
+      console.log('🔄 [loadPayPalSdk] Cargando PayPal SDK...');
+      const script = document.createElement('script');
+      
+      // 🔥 PARÁMETROS MEJORADOS para mejor compatibilidad y visibilidad
+      script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=MXN&intent=capture&disable-funding=credit,card&components=buttons&enable-funding=venmo`;
+      script.async = true;
+      script.defer = true;
+      
+      script.onload = () => {
+        console.log('✅ [loadPayPalSdk] PayPal SDK loaded successfully');
+        // Pequeña espera para asegurar inicialización completa
+        setTimeout(() => resolve(), 100);
+      };
+      
+      script.onerror = (err) => {
+        console.error('❌ [loadPayPalSdk] Failed to load:', err);
+        reject(err || new Error('Failed to load PayPal SDK'));
+      };
+      
+      document.head.appendChild(script);
+    });
+  }
+
+  // Helper para esperar el container
+  private async waitForContainer(selector: string, timeout = 3000): Promise<HTMLElement | null> {
+    const interval = 50;
+    let waited = 0;
+    
+    while (waited < timeout) {
+      const el = document.querySelector(selector) as HTMLElement | null;
+      if (el) {
+        console.log('✅ [waitForContainer] Container encontrado:', selector);
+        return el;
+      }
+      await new Promise(r => setTimeout(r, interval));
+      waited += interval;
+    }
+    
+    console.error('❌ [waitForContainer] Container NO encontrado después de', timeout, 'ms');
+    return null;
+  }
+
+  // Render PayPal Buttons into container with server-side create/capture
+  public async renderPayPalButtons(nTransaccion?: string | null) {
+    console.log('🚦 [renderPayPalButtons] 1. INICIO');
+    console.log('💡 [renderPayPalButtons] nTransaccion recibido:', nTransaccion);
+    
+    if (!nTransaccion) {
+      nTransaccion = this.transactionNumber() || null;
+    }
+    if (!nTransaccion) {
+      console.error('❌ [renderPayPalButtons] ERROR: No hay nTransaccion');
+      throw new Error('renderPayPalButtons: nTransaccion is required');
+    }
+    
+    console.log('🔄 [renderPayPalButtons] 2. Reseteando estado...');
+    this.paypalButtonsRendered.set(false);
+    
+    try {
+      console.log('🔄 [renderPayPalButtons] 3. Cargando PayPal SDK...');
+      await this.loadPayPalSdk();
+      console.log('✅ [renderPayPalButtons] SDK cargado exitosamente');
+      
+      this.renderingPaypal.set(true);
+
+      // Create a PayPal order on the server to ensure amounts are validated
+      console.log('🔄 [renderPayPalButtons] 4. Creando orden en el servidor...');
+      const res = await this.checkoutService.createPaypalOrder(nTransaccion);
+      console.log('✅ [renderPayPalButtons] Respuesta del servidor:', res);
+      
+      if (!res || !res.orderId) {
+        console.error('❌ [renderPayPalButtons] ERROR: Respuesta inválida:', res);
+        this.errorMessage.set('No se pudo crear la orden de PayPal. Por favor intenta de nuevo.');
+        return;
+      }
+      
+      const orderId = res.orderId;
+      console.log('✅ [renderPayPalButtons] Order ID:', orderId);
+      this.paypalOrderId.set(orderId);
+
+      const paypal = (window as any).paypal;
+      if (!paypal) {
+        console.error('❌ [renderPayPalButtons] ERROR: PayPal SDK no disponible');
+        throw new Error('PayPal SDK not present');
+      }
+      
+      console.log('✅ [renderPayPalButtons] PayPal SDK disponible:', typeof paypal);
+
+      // Wait for container to be present in DOM
+      console.log('🔄 [renderPayPalButtons] 5. Esperando container...');
+      const container = await this.waitForContainer('#paypal-button-container', 5000);
+      if (!container) {
+        console.error('❌ [renderPayPalButtons] ERROR: Container no encontrado');
+        this.errorMessage.set('No se pudo inicializar PayPal. Intenta recargar la página.');
+        this.renderingPaypal.set(false);
+        return;
+      }
+      
+      console.log('✅ [renderPayPalButtons] 6. Container listo, limpiando...');
+      container.innerHTML = '';
+
+      try {
+        console.log('🔄 [renderPayPalButtons] 7. Renderizando botones de PayPal...');
+        
+        await paypal.Buttons({
+          createOrder: () => {
+            console.log('👁️ [PayPal] createOrder llamado, retornando:', orderId);
+            return orderId;
+          },
+          onApprove: async (data: any, actions: any) => {
+            console.log('✅ [PayPal] onApprove - Pago aprobado:', data);
+            try {
+              console.log('🔄 [PayPal] Capturando orden en el servidor...');
+              const captureResult = await this.checkoutService.capturePaypalOrder(nTransaccion, data.orderID || orderId);
+              console.log('✅ [PayPal] Orden capturada:', captureResult);
+              
+              // Proceso exitoso
+              this.paypalButtonsRendered.set(true);
+              this.showSuccess.set(true);
+              this.pendingSaleTx.set(null);
+
+              // Recargar servicios
+              if (this.useWalletBalance() && this.walletAmount() > 0) {
+                console.log('🔄 [PayPal] Recargando wallet...');
+                this.walletService.loadWallet();
+              }
+              
+              setTimeout(() => {
+                console.log('🔄 [PayPal] Recargando servicios de perfil...');
+                this.profileStudentService.reloadProfile();
+                this.purchasesService.loadPurchasedProducts();
+                this.profileService.reloadProfile();
+              }, 1500);
+              
+              if (!this.isDirectBuy()) {
+                console.log('🗑️ [PayPal] Limpiando carrito...');
+                this.cartService.clearCart();
+              }
+            } catch (captureError) {
+              console.error('❌ [PayPal] Error al capturar:', captureError);
+              this.errorMessage.set('Ocurrió un error al procesar el pago. Intenta de nuevo.');
+              this.renderingPaypal.set(false);
+            }
+          },
+          onError: (err: any) => {
+            console.error('❌ [PayPal] Error en Buttons:', err);
+            this.errorMessage.set('Error al cargar PayPal. Intenta de nuevo.');
+            this.renderingPaypal.set(false);
+            this.paypalButtonsRendered.set(false);
+          },
+          onCancel: (data: any) => {
+            console.info('⚠️ [PayPal] Pago cancelado por el usuario');
+            this.renderingPaypal.set(false);
+            this.paypalButtonsRendered.set(false);
+          },
+          // 🔥 NUEVO: Estilos para forzar visibilidad
+          style: {
+            layout: 'vertical',
+            color: 'gold',
+            shape: 'rect',
+            label: 'paypal',
+            height: 45
+          }
+        }).render('#paypal-button-container');
+        
+        console.log('✅ [renderPayPalButtons] 8. Botones renderizados exitosamente!');
+        this.pendingSaleTx.set(null);
+        this.paypalButtonsRendered.set(true);
+        this.renderingPaypal.set(false);
+        
+      } catch (btnErr) {
+        console.error('❌ [renderPayPalButtons] ERROR en render:', btnErr);
+        this.errorMessage.set('Error al inicializar PayPal.');
+        this.paypalButtonsRendered.set(false);
+        this.renderingPaypal.set(false);
+        return;
+      }
+
+    } catch (err) {
+      console.error('❌ [renderPayPalButtons] ERROR general:', err);
+      this.errorMessage.set('No se pudo iniciar PayPal.');
+      this.paypalButtonsRendered.set(false);
+    }
+  }
+
+  // 🧪 Debug helper to manually force render PayPal from console
+  public debugRenderPayPalNow() {
+    const nTrans = this.transactionNumber() || this.checkoutService.generateTransactionNumber();
+    console.info('🧪 [debug] Forcing renderPayPalButtons with', nTrans);
+    this.renderPayPalButtons(nTrans);
+  }
   isLoadingWallet = computed(() => this.walletService.loading());
   walletTransactions = computed(() => this.walletService.transactions());
   recentTransactions = computed(() => this.walletTransactions().slice(0, 3));
@@ -232,6 +445,10 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   // Payment methods - FROM SERVICE
   paymentMethods = this.checkoutService.availablePaymentMethods;
 
+  // Debug lists for UI
+  availableMethodIds = computed(() => this.paymentMethods().map(m => m.id));
+  allowedMethodIds = computed(() => this.allowedPaymentMethods().map(m => m.id));
+
 
 
   // Formulario para información adicional
@@ -260,6 +477,16 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
       if (!prod && cartCount === 0 && !this.showSuccess()) {
         this.router.navigate(['/']);
+      }
+    });
+
+    // 🆕 Reset PayPal buttons when method changes
+    effect(() => {
+      if (this.selectedPaymentMethod() !== 'paypal') {
+        this.paypalButtonsRendered.set(false);
+        this.paypalOrderId.set(null);
+        const container = document.getElementById('paypal-button-container');
+        if (container) container.innerHTML = '';
       }
     });
   }
@@ -337,12 +564,11 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       const balance = this.walletBalance();
       const total = this.subtotal();
 
-
       // Si el saldo no cubre el total, mostrar error y no permitir selección
       if (balance < total) {
         this.errorMessage.set(
-          `❌ Saldo insuficiente. Tienes $${balance.toFixed(2)} MXN pero el total es $${total.toFixed(2)} MXN. ` +
-          `Necesitas $${(total - balance).toFixed(2)} MXN más. Por favor, selecciona otro método de pago o usa tu saldo parcialmente.`
+          `❌ Saldo insuficiente. Tienes ${balance.toFixed(2)} MXN pero el total es ${total.toFixed(2)} MXN. ` +
+          `Necesitas ${(total - balance).toFixed(2)} MXN más. Por favor, selecciona otro método de pago o usa tu saldo parcialmente.`
         );
         return; // No seleccionar el método
       }
@@ -353,6 +579,14 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
     this.selectedPaymentMethod.set(methodId);
     this.errorMessage.set('');
+    
+    // 🔥 NUEVO: Si selecciona PayPal, procesar automáticamente
+    if (methodId === 'paypal' && this.checkoutForm.valid) {
+      console.log('🅿️ [selectPaymentMethod] PayPal seleccionado, iniciando proceso automáticamente...');
+      setTimeout(() => {
+        this.processPayment();
+      }, 300); // Pequeño delay para que la UI se actualice
+    }
   }
 
   // 🆕 Toggle uso de billetera
@@ -377,13 +611,30 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   async processPayment() {
-
+    console.log('👁️ [processPayment] 1. Iniciando proceso de pago...');
+    console.log('👁️ [processPayment] Estado actual:', {
+      isProcessing: this.isProcessing(),
+      showSuccess: this.showSuccess(),
+      selectedMethod: this.selectedPaymentMethod(),
+      useWallet: this.useWalletBalance(),
+      walletAmount: this.walletAmount(),
+      remainingAmount: this.remainingAmount(),
+      subtotal: this.subtotal()
+    });
 
     // 🔥 Prevenir múltiples clics
     if (this.isProcessing() || this.showSuccess()) {
-
+      console.log('⚠️ [processPayment] Bloqueado: Ya está procesando o completado');
       return;
     }
+
+    console.info('🔄 [Checkout] processPayment started', {
+      method: this.selectedPaymentMethod(),
+      remaining: this.remainingAmount(),
+      useWallet: this.useWalletBalance(),
+      walletAmount: this.walletAmount(),
+      transactionNumber: this.transactionNumber()
+    });
 
     // AGREGAR ESTE CÓDIGO AL INICIO:
     // ⚠️ POLÍTICA DE REEMBOLSOS
@@ -541,11 +792,48 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     // Procesar la venta
     this.checkoutService.processSale(checkoutData).subscribe({
       next: (response: any) => {
+        console.info('🔄 [Checkout] processSale response', response);
         if (response.sale) {
           this.transactionNumber.set(response.sale.n_transaccion);
         }
 
-        // ✅ ÉXITO (Wallet/PayPal)
+        // Si el método seleccionado es PayPal, renderizar botones
+        // 🔥 FIX: No verificar remainingAmount(), sino subtotal()
+        if (this.selectedPaymentMethod() === 'paypal') {
+          const amountToPay = this.remainingAmount() > 0 ? this.remainingAmount() : this.subtotal();
+          
+          if (amountToPay > 0) {
+            console.log('✅ [processPayment] Detectado PayPal, monto a pagar:', amountToPay);
+            console.log('📊 [processPayment] Datos:', {
+              selected: this.selectedPaymentMethod(),
+              remaining: this.remainingAmount(),
+              subtotal: this.subtotal(),
+              amountToPay,
+              txn: this.transactionNumber()
+            });
+            
+            // Close loader and set rendering state
+            this.isProcessing.set(false);
+            this.renderingPaypal.set(true);
+            
+            // If we have a server-side tx id, use it
+            const nTrans = response.sale?.n_transaccion || this.transactionNumber();
+            console.log('🔄 [processPayment] Llamando renderPayPalButtons con:', nTrans);
+            
+            this.renderPayPalButtons(nTrans).finally(() => {
+              console.log('✅ [processPayment] renderPayPalButtons finalizado');
+              this.renderingPaypal.set(false);
+            });
+            return;
+          } else {
+            console.warn('⚠️ [processPayment] PayPal seleccionado pero monto a pagar es 0');
+            this.errorMessage.set('Error: El monto a pagar debe ser mayor a 0');
+            this.isProcessing.set(false);
+            return;
+          }
+        }
+
+        // ✅ ÉXITO (Wallet / Otros métodos)
         this.isProcessing.set(false);
         this.showSuccess.set(true);
 
@@ -572,6 +860,25 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('❌ [processPayment] Error en la petición:', error);
+        // 409 Conflict - existing pending sale
+        if (error.status === 409 && error.error?.n_transaccion) {
+          console.info('ℹ️ [Checkout] Found existing pending sale; resuming PayPal for', error.error.n_transaccion);
+          // If PayPal selected, try to render buttons for pending sale
+          if (this.selectedPaymentMethod() === 'paypal' && this.remainingAmount() > 0) {
+            this.isProcessing.set(false);
+            this.renderingPaypal.set(true);
+            this.renderPayPalButtons(error.error.n_transaccion);
+            return;
+          }
+
+          // If not PayPal or remaining=0, show message
+          this.pendingSaleTx.set(error.error?.n_transaccion || null);
+          if (error.error?.n_transaccion) this.transactionNumber.set(error.error.n_transaccion);
+          this.errorMessage.set(error.error?.message || 'Tienes una venta pendiente. Por favor revisa tus transacciones.');
+          this.isProcessing.set(false);
+          return;
+        }
+
         this.errorMessage.set(
           error.error?.message || 'Hubo un error al procesar tu pago. Por favor intenta de nuevo.'
         );

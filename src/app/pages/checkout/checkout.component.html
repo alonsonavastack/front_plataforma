@@ -43,6 +43,13 @@
               <h3 class="text-xl font-semibold leading-6 text-white" id="modal-title">
                 ¡Compra Realizada con Éxito!
               </h3>
+              
+              <!-- 🔥 NUEVO: Saludo personalizado -->
+              @if (user(); as currentUser) {
+                <p class="mt-2 text-lg text-lime-300">
+                  ¡Hola {{ currentUser.name }}! 👋
+                </p>
+              }
 
               <!-- Mensaje -->
               <div class="mt-4 text-sm text-gray-300">
@@ -355,6 +362,14 @@
 
           <!-- 🔥 Solo mostrar métodos de pago si hay un saldo restante -->
           @if (remainingAmount() > 0 || !useWalletBalance()) {
+          <!-- DEBUG: Show available payment methods (dev-only) -->
+          @if (false) {
+          <div class="mb-3 text-xs text-gray-400">
+            <div>Debug - available methods: {{ availableMethodIds() | json }}</div>
+            <div>Debug - allowed methods: {{ allowedMethodIds() | json }}</div>
+            <div>Payment config: {{ checkoutService.paymentConfig() | json }}</div>
+          </div>
+          }
           <div class="space-y-3">
             @for (method of allowedPaymentMethods(); track method.id) {
             <!-- 🔒 VALIDACIÓN CRÍTICA: Deshabilitar wallet si no hay saldo suficiente -->
@@ -422,6 +437,7 @@
               }
             </button>
             }
+            <!-- PayPal Buttons are rendered in the right column (summary) now -->
             }
           </div>
           } @else {
@@ -618,36 +634,102 @@
 
           </div>
 
-          <!-- Botón de Pago -->
-          <button type="button" (click)="processPayment()"
-            [disabled]="isProcessing() || showSuccess() || (remainingAmount() > 0 && !selectedPaymentMethod()) || checkoutForm.invalid"
-            class="w-full bg-lime-400 text-slate-900 font-bold py-3 px-6 rounded-lg hover:bg-lime-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-all flex items-center justify-center">
+          <!-- Botón de Pago / PayPal render area -->
+          @if (selectedPaymentMethod() === 'paypal') {
+            @if (pendingSaleTx()) {
+              <div class="mb-3 p-3 bg-yellow-900/20 border border-yellow-700 rounded-lg">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-sm text-yellow-300 font-semibold">Tienes una compra pendiente: <span class="font-mono">{{ pendingSaleTx() }}</span></div>
+                    <div class="text-xs text-gray-400">Pulsa "Reanudar pago" para continuar con PayPal si no quieres crear una nueva venta.</div>
+                  </div>
+                  <div>
+                    <button (click)="renderPayPalButtons(pendingSaleTx())" class="px-3 py-2 bg-lime-500 rounded text-slate-900 font-semibold">Reanudar pago</button>
+                  </div>
+                </div>
+              </div>
+            }
+
+            @if (renderingPaypal() || paypalButtonsRendered()) {
+              <!-- 🔥 AGREGAR ESTILOS INLINE PARA FORZAR VISIBILIDAD -->
+              <div id="paypal-button-container" class="mt-4" style="min-height: 150px; width: 100%; display: block; visibility: visible;"></div>
+              @if (!paypalButtonsRendered()) {
+                <div class="mt-4 text-sm text-gray-400">Cargando PayPal... (Aguarda mientras se carga el método de pago)</div>
+                <div class="mt-2">
+                  <button type="button"
+                    class="w-full bg-slate-700 text-slate-300 font-bold py-2 px-6 rounded-lg opacity-50 cursor-not-allowed transition-all flex items-center justify-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    </svg>
+                    <span>Preparando PayPal...</span>
+                  </button>
+                </div>
+              }
+            } @else {
+              <button type="button" (click)="processPayment()"
+                [disabled]="isProcessing() || renderingPaypal() || showSuccess() || (remainingAmount() > 0 && !selectedPaymentMethod()) || checkoutForm.invalid"
+                class="w-full bg-lime-400 text-slate-900 font-bold py-3 px-6 rounded-lg hover:bg-lime-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-all flex items-center justify-center">
+                @if (isProcessing()) {
+                <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                  </path>
+                </svg>
+                <span>Procesando...</span>
+                } @else {
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                  </path>
+                </svg>
+                <span>💳 Pagar Ahora - ${{ formatPrice(subtotal()) }}</span>
+                }
+              </button>
+            }
+          } @else {
             @if (isProcessing()) {
-            <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-              </path>
-            </svg>
-            <span>Procesando...</span>
+              <button type="button"
+                class="w-full bg-slate-700 text-slate-300 font-bold py-3 px-6 rounded-lg opacity-50 cursor-not-allowed transition-all flex items-center justify-center"
+                disabled>
+                <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                  </path>
+                </svg>
+                <span>Procesando...</span>
+              </button>
+            } @else if (useWalletBalance()) {
+              <button type="button" (click)="processPayment()"
+                [disabled]="renderingPaypal() || showSuccess() || checkoutForm.invalid"
+                class="w-full bg-lime-400 text-slate-900 font-bold py-3 px-6 rounded-lg hover:bg-lime-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-all flex items-center justify-center">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                  </path>
+                </svg>
+                @if (remainingAmount() === 0) {
+                <span>✅ Confirmar Compra con Billetera</span>
+                } @else {
+                <span>💳 Pagar ${{ formatPrice(remainingAmount()) }} <small class="opacity-75 text-xs ml-1">(${{ formatPrice(walletAmount()) }} con
+                    billetera)</small></span>
+                }
+              </button>
             } @else {
-            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-              </path>
-            </svg>
-            @if (useWalletBalance()) {
-            @if (remainingAmount() === 0) {
-            <span>✅ Confirmar Compra con Billetera</span>
-            } @else {
-            <span>💳 Pagar ${{ formatPrice(remainingAmount()) }} <small class="opacity-75 text-xs ml-1">(${{
-                formatPrice(walletAmount()) }} con billetera)</small></span>
+              <button type="button" (click)="processPayment()"
+                [disabled]="renderingPaypal() || showSuccess() || checkoutForm.invalid"
+                class="w-full bg-lime-400 text-slate-900 font-bold py-3 px-6 rounded-lg hover:bg-lime-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-all flex items-center justify-center">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                  </path>
+                </svg>
+                <span>💳 Pagar Ahora - ${{ formatPrice(subtotal()) }}</span>
+              </button>
             }
-            } @else {
-            <span>💳 Pagar Ahora - ${{ formatPrice(subtotal()) }}</span>
-            }
-            }
-          </button>
+          }
+
 
           <!-- Nota informativa debajo del botón -->
           @if (useWalletBalance()) {
