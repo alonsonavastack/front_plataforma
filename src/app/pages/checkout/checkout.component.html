@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 py-8 px-4">
+<div class="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 py-8 px-4 overflow-y-auto">
   <div class="max-w-7xl mx-auto">
     <!-- Header -->
     <div class="mb-8">
@@ -40,8 +40,9 @@
 
             <!-- Título -->
             <div class="mt-4 text-center">
+              <!-- 🔥 CORREGIDO: Título más claro -->
               <h3 class="text-xl font-semibold leading-6 text-white" id="modal-title">
-                ¡Compra Realizada con Éxito!
+                ¡Compra Completada! 🎉
               </h3>
               
               <!-- 🔥 NUEVO: Saludo personalizado -->
@@ -51,12 +52,27 @@
                 </p>
               }
 
-              <!-- Mensaje -->
-              <div class="mt-4 text-sm text-gray-300">
-                <p>Gracias por tu compra. Hemos enviado los detalles de tu pedido a tu correo electrónico.</p>
-                <p class="mt-2 text-xs text-gray-400">
-                  Número de transacción: <span class="text-lime-300 font-mono">{{ transactionNumber() }}</span>
+              <!-- 🔥 CORREGIDO: SIN número de transacción -->
+              <div class="mt-4 text-sm text-gray-300 space-y-3">
+                <p>
+                  Gracias por tu compra. Hemos enviado los detalles de tu pedido a tu correo electrónico.
                 </p>
+                
+                <!-- 🔥 NUEVO: Mensaje de acceso inmediato -->
+                <div class="p-3 bg-lime-500/10 border border-lime-400/30 rounded-lg">
+                  <p class="text-lime-400 font-semibold flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" 
+                            stroke-linejoin="round" 
+                            stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    ¡Acceso inmediato a tu contenido! 🚀
+                  </p>
+                  <p class="text-xs text-gray-400 mt-1">
+                    Ve a "Mis Cursos" para empezar a aprender
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -64,7 +80,7 @@
             <div class="mt-6">
               <button (click)="closeSuccessModalAndRedirect()" type="button"
                 class="w-full inline-flex justify-center rounded-md bg-lime-500 px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm hover:bg-lime-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500 focus:ring-offset-slate-800 transition-colors">
-                Aceptar
+                Ir a Mis Cursos
               </button>
             </div>
           </div>
@@ -565,7 +581,7 @@
               <!-- LISTA DE ITEMS (CARRITO) -->
               @for (item of cartItems(); track item._id) {
               <div class="p-4 flex gap-4 group relative">
-                <img [src]="buildImageUrl(item.imagen)" class="w-20 h-20 rounded-lg object-cover bg-slate-800"
+                <img [src]="buildImageUrl(item.imagen, item.type)" class="w-20 h-20 rounded-lg object-cover bg-slate-800"
                   alt="Imagen del producto">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-start justify-between gap-4">
@@ -636,19 +652,7 @@
 
           <!-- Botón de Pago / PayPal render area -->
           @if (selectedPaymentMethod() === 'paypal') {
-            @if (pendingSaleTx()) {
-              <div class="mb-3 p-3 bg-yellow-900/20 border border-yellow-700 rounded-lg">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <div class="text-sm text-yellow-300 font-semibold">Tienes una compra pendiente: <span class="font-mono">{{ pendingSaleTx() }}</span></div>
-                    <div class="text-xs text-gray-400">Pulsa "Reanudar pago" para continuar con PayPal si no quieres crear una nueva venta.</div>
-                  </div>
-                  <div>
-                    <button (click)="renderPayPalButtons(pendingSaleTx())" class="px-3 py-2 bg-lime-500 rounded text-slate-900 font-semibold">Reanudar pago</button>
-                  </div>
-                </div>
-              </div>
-            }
+            <!-- 🔥 ELIMINADO: Mensaje de "compra pendiente" - NO debe mostrarse antes del pago -->
 
             @if (renderingPaypal() || paypalButtonsRendered()) {
               <!-- 🔥 AGREGAR ESTILOS INLINE PARA FORZAR VISIBILIDAD -->

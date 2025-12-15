@@ -3,6 +3,7 @@ import { NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { environment } from '../../../environments/environment';
 import { CourseCardComponent } from '../../shared/course-card/course-card';
 import { ProjectsCardComponent } from '../../shared/projects-card/projects-card';
@@ -59,6 +60,7 @@ export class InstructorProfileComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private http = inject(HttpClient);
+  private sanitizer = inject(DomSanitizer);
 
   // Signals
   instructor = signal<InstructorProfile | null>(null);
@@ -70,6 +72,11 @@ export class InstructorProfileComponent implements OnInit {
   // 🔥 COMPARTIR PERFIL
   isShareModalOpen = signal(false);
   copySuccess = signal(false);
+
+  // 🎥 MODAL DE VIDEO
+  isVideoModalOpen = signal(false);
+  videoModalUrl = signal<string | null>(null);
+  videoModalTitle = signal<string>('');
 
   shareUrl = computed(() => {
     const instructor = this.instructor();
@@ -282,10 +289,57 @@ export class InstructorProfileComponent implements OnInit {
     this.router.navigate(['/course-detail', course.slug]);
   }
 
-  openVideoModal(url?: string): void {
+  openVideoModal(title: string, url?: string): void {
     if (url) {
-      window.open(url, '_blank');
+      this.videoModalTitle.set(title);
+      this.videoModalUrl.set(url);
+      this.isVideoModalOpen.set(true);
+      document.body.style.overflow = 'hidden';
     }
+  }
+
+  closeVideoModal(): void {
+    this.isVideoModalOpen.set(false);
+    this.videoModalUrl.set(null);
+    this.videoModalTitle.set('');
+    document.body.style.overflow = '';
+  }
+
+  handleBuyProject(project: InstructorProject | CoreProject): void {
+    // Navegar al checkout con el proyecto
+    this.router.navigate(['/checkout'], {
+      state: {
+        product: project,
+        productType: 'project'
+      }
+    });
+  }
+
+  getEmbedUrl(url: string | null): SafeResourceUrl {
+    if (!url) {
+      return this.sanitizer.bypassSecurityTrustResourceUrl('');
+    }
+
+    // Convertir URL de YouTube a embed
+    if (url.includes('youtube.com/watch')) {
+      const videoId = url.split('v=')[1]?.split('&')[0];
+      if (videoId) {
+        return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${videoId}`);
+      }
+    } else if (url.includes('youtu.be/')) {
+      const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+      if (videoId) {
+        return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${videoId}`);
+      }
+    } else if (url.includes('vimeo.com/')) {
+      const videoId = url.split('vimeo.com/')[1]?.split('?')[0];
+      if (videoId) {
+        return this.sanitizer.bypassSecurityTrustResourceUrl(`https://player.vimeo.com/video/${videoId}`);
+      }
+    }
+    
+    // Si ya es una URL embed o no se reconoce, devolverla tal cual
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 
   openSocialMedia(url?: string): void {

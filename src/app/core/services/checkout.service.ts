@@ -116,6 +116,12 @@ export class CheckoutService {
     return this.http.post<CheckoutResponse>(`${this.API_URL}/register`, data);
   }
 
+  // 🔥 Helper para pagos con billetera (wrapper sobre processSale)
+  processWalletPayment(data: any) {
+    data.method_payment = 'wallet';
+    return this.processSale(data as CheckoutData);
+  }
+
   // 🔥 Generar número de transacción único
   generateTransactionNumber(): string {
     const timestamp = Date.now();
@@ -134,13 +140,15 @@ export class CheckoutService {
   }
 
   // 🔥 PayPal helpers: create order and capture order (server-side)
-  async createPaypalOrder(n_transaccion: string): Promise<{ orderId: string, links?: any }> {
-    const res = await firstValueFrom(this.http.post<any>(`${this.API_URL}/paypal/create`, { n_transaccion }));
+  async createPaypalOrder(n_transaccion: string, payload?: any): Promise<{ orderId: string, links?: any }> {
+    const body = payload || { n_transaccion };
+    const res = await firstValueFrom(this.http.post<any>(`${this.API_URL}/paypal/create`, body));
     return { orderId: res.orderId, links: res.links };
   }
 
-  async capturePaypalOrder(n_transaccion: string, orderId: string): Promise<any> {
-    const res = await firstValueFrom(this.http.post<any>(`${this.API_URL}/paypal/capture`, { n_transaccion, orderId }));
+  async capturePaypalOrder(n_transaccion: string, orderId: string, payload?: any): Promise<any> {
+    const body = Object.assign({ n_transaccion, orderId }, payload || {});
+    const res = await firstValueFrom(this.http.post<any>(`${this.API_URL}/paypal/capture`, body));
     return res;
   }
 }

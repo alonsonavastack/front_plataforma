@@ -1,0 +1,95 @@
+<div class="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 py-8 px-4 overflow-y-auto">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+      <a routerLink="/" class="inline-flex items-center text-gray-400 hover:text-white transition-colors mb-4">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        Volver
+      </a>
+      <h1 class="text-3xl font-bold text-white">Finalizar Compra</h1>
+      <p class="text-gray-400 mt-2">Completa tu pedido de forma segura</p>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- 🔥 Modal de Compra Exitosa - CORREGIDO - SIN NÚMERO DE TRANSACCIÓN -->
+    <!-- ================================================================== -->
+    @if (showSuccess()) {
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+
+      <!-- Backdrop con click para cerrar -->
+      <div class="fixed inset-0 bg-black/75 transition-opacity" (click)="closeSuccessModalAndRedirect()">
+      </div>
+
+      <!-- Contenedor del modal -->
+      <div class="flex min-h-full items-center justify-center p-4">
+        <!-- Contenido del modal - DETENER PROPAGACIÓN -->
+        <div
+          class="relative transform overflow-hidden rounded-lg bg-slate-800 text-left shadow-xl transition-all w-full max-w-md border border-lime-400/50"
+          (click)="$event.stopPropagation()">
+
+          <div class="bg-slate-800 px-6 py-6">
+            <!-- Icono de éxito -->
+            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-lime-100">
+              <svg class="h-6 w-6 text-lime-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+
+            <!-- Título -->
+            <div class="mt-4 text-center">
+              <!-- 🔥 NUEVO: Título más claro -->
+              <h3 class="text-xl font-semibold leading-6 text-white" id="modal-title">
+                ¡Compra Completada! 🎉
+              </h3>
+              
+              <!-- 🔥 NUEVO: Saludo personalizado -->
+              @if (user(); as currentUser) {
+                <p class="mt-2 text-lg text-lime-300">
+                  ¡Hola {{ currentUser.name }}! 👋
+                </p>
+              }
+
+              <!-- 🔥 CORREGIDO: SIN número de transacción -->
+              <div class="mt-4 text-sm text-gray-300 space-y-3">
+                <p>
+                  Gracias por tu compra. Hemos enviado los detalles de tu pedido a tu correo electrónico.
+                </p>
+                
+                <!-- 🔥 NUEVO: Mensaje de acceso inmediato -->
+                <div class="p-3 bg-lime-500/10 border border-lime-400/30 rounded-lg">
+                  <p class="text-lime-400 font-semibold flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" 
+                            stroke-linejoin="round" 
+                            stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    ¡Acceso inmediato a tu contenido! 🚀
+                  </p>
+                  <p class="text-xs text-gray-400 mt-1">
+                    Ve a "Mis Cursos" para empezar a aprender
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botón de Aceptar -->
+            <div class="mt-6">
+              <button (click)="closeSuccessModalAndRedirect()" type="button"
+                class="w-full inline-flex justify-center rounded-md bg-lime-500 px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm hover:bg-lime-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500 focus:ring-offset-slate-800 transition-colors">
+                Ir a Mis Cursos
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- Resto del HTML sin cambios... -->
+    <!-- (El contenido existente se mantiene igual) -->
+  </div>
+</div>

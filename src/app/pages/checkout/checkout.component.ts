@@ -1,4 +1,4 @@
-// checkout.component.ts - 🆕 SISTEMA DE COMPRA DIRECTA (SIN CARRITO)
+// checkout.component.ts - 🔥 VERSIÓN CORREGIDA COMPLETA
 import { Component, OnInit, OnDestroy, inject, signal, computed, effect } from '@angular/core';
 import { MxnCurrencyPipe } from '../../shared/pipes/mxn-currency.pipe';
 import { CommonModule } from '@angular/common';
@@ -8,12 +8,12 @@ import { CheckoutService, PaymentMethod } from '../../core/services/checkout.ser
 import { AuthService } from '../../core/services/auth';
 import { WalletService } from '../../core/services/wallet.service';
 import { PurchasesService } from '../../core/services/purchases.service';
-import { ProfileService } from '../../core/services/profile.service'; // 🔥 NUEVO
-import { ProfileStudentService } from '../../core/services/profile-student.service'; // 🔥 CRÍTICO
+import { ProfileService } from '../../core/services/profile.service';
+import { ProfileStudentService } from '../../core/services/profile-student.service';
 import { ModalService } from '../../core/services/modal.service';
-import { DiscountService } from '../../core/services/discount.service'; // 🔥 NUEVO
-import { CartService, CartItem } from '../../core/services/cart.service'; // 🆕 CartService restaurado
-import { CurrencyService } from '../../services/currency.service'; // 🇲🇽 NUEVO
+import { DiscountService } from '../../core/services/discount.service';
+import { CartService, CartItem } from '../../core/services/cart.service';
+import { CurrencyService } from '../../services/currency.service';
 import { environment } from '../../../environments/environment';
 
 interface CheckoutProduct {
@@ -24,14 +24,7 @@ interface CheckoutProduct {
   imagen?: string;
   slug?: string;
   type: 'course' | 'project';
-  categorie?: any; // 🔥 Necesario para descuentos por categoría
-}
-
-interface Country {
-  code: string;
-  name: string;
-  currency: string;
-  symbol: string;
+  categorie?: any;
 }
 
 @Component({
@@ -45,23 +38,22 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   authService = inject(AuthService);
   walletService = inject(WalletService);
   purchasesService = inject(PurchasesService);
-  profileService = inject(ProfileService); // 🔥 NUEVO
+  profileService = inject(ProfileService);
   modalService = inject(ModalService);
-  discountService = inject(DiscountService); // 🔥 NUEVO
-  cartService = inject(CartService); // 🆕
-  currencyService = inject(CurrencyService); // 🇲🇽 NUEVO
+  discountService = inject(DiscountService);
+  cartService = inject(CartService);
+  currencyService = inject(CurrencyService);
   router = inject(Router);
 
-  // 🔥 IMPORTAR ProfileStudentService para recargar correctamente
   private profileStudentService = inject(ProfileStudentService);
 
-  // 🆕 PRODUCTO ÚNICO EN CHECKOUT (Compra Directa)
+  // Producto único en checkout
   product = signal<CheckoutProduct | null>(null);
   productType = signal<'course' | 'project' | null>(null);
 
-  // 🆕 CARRITO (Compra Mixta)
+  // Carrito
   cartItems = computed(() => this.cartService.cart());
-  isDirectBuy = signal(true); // true = compra directa, false = carrito
+  isDirectBuy = signal(true);
 
   // State
   selectedPaymentMethod = signal<string>('');
@@ -71,44 +63,30 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   errorMessage = signal<string>('');
   transactionNumber = signal<string>('');
 
-  // 🆕 PayPal state
-  public paypalOrderId = signal<string | null>(null); // for debugging and capture
+  // PayPal state
+  public paypalOrderId = signal<string | null>(null);
   public paypalButtonsRendered = signal<boolean>(false);
   public pendingSaleTx = signal<string | null>(null);
   public renderingPaypal = signal<boolean>(false);
 
-
-
-
-  // 🆕 Multi-country support - FROM SERVICE
+  // Multi-country support
   countries = this.checkoutService.supportedCountries;
-  selectedCountry = signal<string>('MX'); // Default to Mexico
+  selectedCountry = signal<string>('MX');
   selectedCountryData = computed(() =>
     this.countries().find((c: any) => c.code === this.selectedCountry())
   );
 
-  // 🆕 Conversion state (simulated for UI before backend confirmation)
-  // In a real app, you might want to fetch live rates or use the backend response
-  // For now, we'll rely on the backend to do the actual conversion during payment
-  // but we can show an estimate if we had the rates.
-  // Since the prompt says backend handles it, we will show the conversion *result*
-  // after the user selects transfer or in the summary if we fetch rates.
-  // For this implementation, we will focus on sending the country.
-  // 🆕 Wallet state
+  // 💰 Wallet state
   walletBalance = computed(() => this.walletService.balance());
   useWalletBalance = signal(false);
   walletAmount = signal(0);
 
-  // 🆕 Descuentos
+  // Descuentos
   discounts = computed(() => this.discountService.discounts());
 
-  // 🔥 Calcular el mejor descuento disponible (para compra directa o carrito)
+  // Mejor descuento disponible
   bestDiscount = computed(() => {
-    // Si es carrito, no aplicamos descuentos individuales complejos por ahora
-    // O podríamos iterar sobre cada item. Para simplificar, en carrito usaremos descuentos simples si existen.
-    // EN ESTA VERSIÓN: Descuentos solo para Compra Directa por simplicidad, o implementar lógica iterativa.
-
-    if (!this.isDirectBuy()) return null; // TODO: Implementar descuentos globales o por item en carrito
+    if (!this.isDirectBuy()) return null;
 
     const prod = this.product();
     const type = this.productType();
@@ -117,7 +95,6 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     if (!prod || !type || !allDiscounts.length) return null;
 
     const now = Date.now();
-    // Filtrar descuentos activos
     const activeDiscounts = allDiscounts.filter(d => d.state && d.start_date_num <= now && d.end_date_num >= now);
 
     let best = null;
@@ -126,22 +103,16 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     for (const discount of activeDiscounts) {
       let applies = false;
 
-      // 1. Por Curso
       if (discount.type_segment === 1 && type === 'course') {
         if (discount.courses && discount.courses.some((c: any) => c._id === prod._id || c === prod._id)) {
           applies = true;
         }
-      }
-      // 2. Por Categoría
-      else if (discount.type_segment === 2) {
-        // Necesitamos la categoría del producto. Si viene populada en prod.categorie
+      } else if (discount.type_segment === 2) {
         const catId = prod.categorie?._id || prod.categorie;
         if (catId && discount.categories && discount.categories.some((c: any) => c._id === catId || c === catId)) {
           applies = true;
         }
-      }
-      // 3. Por Proyecto
-      else if (discount.type_segment === 3 && type === 'project') {
+      } else if (discount.type_segment === 3 && type === 'project') {
         if (discount.projects && discount.projects.some((p: any) => p._id === prod._id || p === prod._id)) {
           applies = true;
         }
@@ -149,15 +120,14 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
       if (applies) {
         let calculatedPrice = finalPrice;
-        if (discount.type_discount === 1) { // Porcentaje
+        if (discount.type_discount === 1) {
           calculatedPrice = prod.price_mxn - (prod.price_mxn * discount.discount / 100);
-        } else { // Monto fijo
+        } else {
           calculatedPrice = prod.price_mxn - discount.discount;
         }
 
         if (calculatedPrice < 0) calculatedPrice = 0;
 
-        // Si este descuento da un precio menor, es el mejor
         if (calculatedPrice < finalPrice) {
           finalPrice = calculatedPrice;
           best = {
@@ -172,16 +142,14 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return best;
   });
 
-  // 🆕 Helper para saber si hay descuento activo
   hasDiscount = computed(() => !!this.bestDiscount());
 
-  // 🆕 Total y restante (considerando descuento) - EN MXN
+  // 🔥 Total y restante (considerando descuento) - EN MXN
   subtotal = computed(() => {
     if (this.isDirectBuy()) {
       const discount = this.bestDiscount();
       return discount ? discount.finalPrice : (this.product()?.price_mxn || 0);
     } else {
-      // Suma del carrito
       return this.cartService.total();
     }
   });
@@ -190,268 +158,54 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     if (this.isDirectBuy()) {
       return this.product()?.price_mxn || 0;
     }
-    return this.subtotal(); // En carrito no mostramos precio "original" tachado global por ahora
+    return this.subtotal();
   });
 
-  // Legacy (mantener compatibilidad si algo lo usa, pero es redundante)
   subtotalMXN = computed(() => this.subtotal());
   originalPriceMXN = computed(() => this.originalPrice());
 
+  // 🔥 FIX CRÍTICO: Calcular monto restante correctamente
   remainingAmount = computed(() => {
     if (!this.useWalletBalance()) return this.subtotal();
     const remaining = this.subtotal() - this.walletAmount();
     return Math.max(0, remaining);
   });
 
-  // 🆕 UX IMPROVEMENTS
-
-  // Dynamically load PayPal SDK
-  private async loadPayPalSdk(): Promise<void> {
-    // If PayPal SDK already loaded, resolve
-    if ((window as any).paypal) {
-      console.log('✅ [loadPayPalSdk] PayPal SDK ya estaba cargado');
-      return Promise.resolve();
-    }
-
-    return new Promise((resolve, reject) => {
-      const clientId = environment.paypal?.clientId || '';
-      if (!clientId) {
-        console.error('❌ [loadPayPalSdk] No PayPal clientId in frontend environment');
-        return reject(new Error('No PayPal clientId in environment.'));
-      }
-
-      console.log('🔄 [loadPayPalSdk] Cargando PayPal SDK...');
-      const script = document.createElement('script');
-      
-      // 🔥 PARÁMETROS MEJORADOS para mejor compatibilidad y visibilidad
-      script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=MXN&intent=capture&disable-funding=credit,card&components=buttons&enable-funding=venmo`;
-      script.async = true;
-      script.defer = true;
-      
-      script.onload = () => {
-        console.log('✅ [loadPayPalSdk] PayPal SDK loaded successfully');
-        // Pequeña espera para asegurar inicialización completa
-        setTimeout(() => resolve(), 100);
-      };
-      
-      script.onerror = (err) => {
-        console.error('❌ [loadPayPalSdk] Failed to load:', err);
-        reject(err || new Error('Failed to load PayPal SDK'));
-      };
-      
-      document.head.appendChild(script);
-    });
-  }
-
-  // Helper para esperar el container
-  private async waitForContainer(selector: string, timeout = 3000): Promise<HTMLElement | null> {
-    const interval = 50;
-    let waited = 0;
-    
-    while (waited < timeout) {
-      const el = document.querySelector(selector) as HTMLElement | null;
-      if (el) {
-        console.log('✅ [waitForContainer] Container encontrado:', selector);
-        return el;
-      }
-      await new Promise(r => setTimeout(r, interval));
-      waited += interval;
-    }
-    
-    console.error('❌ [waitForContainer] Container NO encontrado después de', timeout, 'ms');
-    return null;
-  }
-
-  // Render PayPal Buttons into container with server-side create/capture
-  public async renderPayPalButtons(nTransaccion?: string | null) {
-    console.log('🚦 [renderPayPalButtons] 1. INICIO');
-    console.log('💡 [renderPayPalButtons] nTransaccion recibido:', nTransaccion);
-    
-    if (!nTransaccion) {
-      nTransaccion = this.transactionNumber() || null;
-    }
-    if (!nTransaccion) {
-      console.error('❌ [renderPayPalButtons] ERROR: No hay nTransaccion');
-      throw new Error('renderPayPalButtons: nTransaccion is required');
-    }
-    
-    console.log('🔄 [renderPayPalButtons] 2. Reseteando estado...');
-    this.paypalButtonsRendered.set(false);
-    
-    try {
-      console.log('🔄 [renderPayPalButtons] 3. Cargando PayPal SDK...');
-      await this.loadPayPalSdk();
-      console.log('✅ [renderPayPalButtons] SDK cargado exitosamente');
-      
-      this.renderingPaypal.set(true);
-
-      // Create a PayPal order on the server to ensure amounts are validated
-      console.log('🔄 [renderPayPalButtons] 4. Creando orden en el servidor...');
-      const res = await this.checkoutService.createPaypalOrder(nTransaccion);
-      console.log('✅ [renderPayPalButtons] Respuesta del servidor:', res);
-      
-      if (!res || !res.orderId) {
-        console.error('❌ [renderPayPalButtons] ERROR: Respuesta inválida:', res);
-        this.errorMessage.set('No se pudo crear la orden de PayPal. Por favor intenta de nuevo.');
-        return;
-      }
-      
-      const orderId = res.orderId;
-      console.log('✅ [renderPayPalButtons] Order ID:', orderId);
-      this.paypalOrderId.set(orderId);
-
-      const paypal = (window as any).paypal;
-      if (!paypal) {
-        console.error('❌ [renderPayPalButtons] ERROR: PayPal SDK no disponible');
-        throw new Error('PayPal SDK not present');
-      }
-      
-      console.log('✅ [renderPayPalButtons] PayPal SDK disponible:', typeof paypal);
-
-      // Wait for container to be present in DOM
-      console.log('🔄 [renderPayPalButtons] 5. Esperando container...');
-      const container = await this.waitForContainer('#paypal-button-container', 5000);
-      if (!container) {
-        console.error('❌ [renderPayPalButtons] ERROR: Container no encontrado');
-        this.errorMessage.set('No se pudo inicializar PayPal. Intenta recargar la página.');
-        this.renderingPaypal.set(false);
-        return;
-      }
-      
-      console.log('✅ [renderPayPalButtons] 6. Container listo, limpiando...');
-      container.innerHTML = '';
-
-      try {
-        console.log('🔄 [renderPayPalButtons] 7. Renderizando botones de PayPal...');
-        
-        await paypal.Buttons({
-          createOrder: () => {
-            console.log('👁️ [PayPal] createOrder llamado, retornando:', orderId);
-            return orderId;
-          },
-          onApprove: async (data: any, actions: any) => {
-            console.log('✅ [PayPal] onApprove - Pago aprobado:', data);
-            try {
-              console.log('🔄 [PayPal] Capturando orden en el servidor...');
-              const captureResult = await this.checkoutService.capturePaypalOrder(nTransaccion, data.orderID || orderId);
-              console.log('✅ [PayPal] Orden capturada:', captureResult);
-              
-              // Proceso exitoso
-              this.paypalButtonsRendered.set(true);
-              this.showSuccess.set(true);
-              this.pendingSaleTx.set(null);
-
-              // Recargar servicios
-              if (this.useWalletBalance() && this.walletAmount() > 0) {
-                console.log('🔄 [PayPal] Recargando wallet...');
-                this.walletService.loadWallet();
-              }
-              
-              setTimeout(() => {
-                console.log('🔄 [PayPal] Recargando servicios de perfil...');
-                this.profileStudentService.reloadProfile();
-                this.purchasesService.loadPurchasedProducts();
-                this.profileService.reloadProfile();
-              }, 1500);
-              
-              if (!this.isDirectBuy()) {
-                console.log('🗑️ [PayPal] Limpiando carrito...');
-                this.cartService.clearCart();
-              }
-            } catch (captureError) {
-              console.error('❌ [PayPal] Error al capturar:', captureError);
-              this.errorMessage.set('Ocurrió un error al procesar el pago. Intenta de nuevo.');
-              this.renderingPaypal.set(false);
-            }
-          },
-          onError: (err: any) => {
-            console.error('❌ [PayPal] Error en Buttons:', err);
-            this.errorMessage.set('Error al cargar PayPal. Intenta de nuevo.');
-            this.renderingPaypal.set(false);
-            this.paypalButtonsRendered.set(false);
-          },
-          onCancel: (data: any) => {
-            console.info('⚠️ [PayPal] Pago cancelado por el usuario');
-            this.renderingPaypal.set(false);
-            this.paypalButtonsRendered.set(false);
-          },
-          // 🔥 NUEVO: Estilos para forzar visibilidad
-          style: {
-            layout: 'vertical',
-            color: 'gold',
-            shape: 'rect',
-            label: 'paypal',
-            height: 45
-          }
-        }).render('#paypal-button-container');
-        
-        console.log('✅ [renderPayPalButtons] 8. Botones renderizados exitosamente!');
-        this.pendingSaleTx.set(null);
-        this.paypalButtonsRendered.set(true);
-        this.renderingPaypal.set(false);
-        
-      } catch (btnErr) {
-        console.error('❌ [renderPayPalButtons] ERROR en render:', btnErr);
-        this.errorMessage.set('Error al inicializar PayPal.');
-        this.paypalButtonsRendered.set(false);
-        this.renderingPaypal.set(false);
-        return;
-      }
-
-    } catch (err) {
-      console.error('❌ [renderPayPalButtons] ERROR general:', err);
-      this.errorMessage.set('No se pudo iniciar PayPal.');
-      this.paypalButtonsRendered.set(false);
-    }
-  }
-
-  // 🧪 Debug helper to manually force render PayPal from console
-  public debugRenderPayPalNow() {
-    const nTrans = this.transactionNumber() || this.checkoutService.generateTransactionNumber();
-    console.info('🧪 [debug] Forcing renderPayPalButtons with', nTrans);
-    this.renderPayPalButtons(nTrans);
-  }
   isLoadingWallet = computed(() => this.walletService.loading());
   walletTransactions = computed(() => this.walletService.transactions());
   recentTransactions = computed(() => this.walletTransactions().slice(0, 3));
 
-  // Computed para saber si es pago 100% con wallet
+  // 🔥 NUEVO: Computed signals para estados de pago
   isFullWalletPayment = computed(() => {
-    return this.useWalletBalance() && this.remainingAmount() === 0;
+    return this.useWalletBalance() && this.walletAmount() > 0 && this.remainingAmount() === 0;
   });
 
-  // Computed para saber si es pago mixto
   isMixedPayment = computed(() => {
     return this.useWalletBalance() && this.walletAmount() > 0 && this.remainingAmount() > 0;
   });
 
-  // 🎁 NUEVO: Detectar si el producto es GRATIS (precio final = 0)
+  needsAdditionalPaymentMethod = computed(() => {
+    return this.useWalletBalance() && this.remainingAmount() > 0 && !this.selectedPaymentMethod();
+  });
+
   isFreeProduct = computed(() => {
     return this.subtotal() === 0;
   });
 
-  // 🎁 NUEVO: Métodos de pago permitidos (solo wallet si es gratis)
   allowedPaymentMethods = computed(() => {
     if (this.isFreeProduct()) {
-      // Si es gratis, solo permitir billetera
       return this.paymentMethods().filter(m => m.id === 'wallet');
     }
-    // Si no es gratis, permitir todos los métodos
     return this.paymentMethods();
   });
 
   user = computed(() => this.authService.user());
 
-  // Payment methods - FROM SERVICE
   paymentMethods = this.checkoutService.availablePaymentMethods;
 
-  // Debug lists for UI
   availableMethodIds = computed(() => this.paymentMethods().map(m => m.id));
   allowedMethodIds = computed(() => this.allowedPaymentMethods().map(m => m.id));
 
-
-
-  // Formulario para información adicional
   checkoutForm = new FormGroup({
     acceptTerms: new FormControl(false, [Validators.requiredTrue]),
     billingName: new FormControl('', [Validators.required]),
@@ -460,7 +214,6 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
-    // 🔥 Effect para controlar el scroll del body cuando los modales están abiertos
     effect(() => {
       const isModalOpen = this.showSuccess() || this.showWarningModal();
       if (isModalOpen) {
@@ -470,7 +223,6 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       }
     });
 
-    // 🆕 Effect para validar que hay producto o carrito
     effect(() => {
       const prod = this.product();
       const cartCount = this.cartService.count();
@@ -480,7 +232,6 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       }
     });
 
-    // 🆕 Reset PayPal buttons when method changes
     effect(() => {
       if (this.selectedPaymentMethod() !== 'paypal') {
         this.paypalButtonsRendered.set(false);
@@ -492,19 +243,15 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Verificar que el usuario esté logueado
     if (!this.authService.isLoggedIn()) {
       this.router.navigate(['/login']);
       return;
     }
 
-    // 🆕 Obtener producto desde navigation state
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state || (history.state as any);
 
-
     if (state && state.product && state.productType) {
-      // MODO COMPRA DIRECTA
       const prod: CheckoutProduct = {
         ...state.product,
         type: state.productType
@@ -514,7 +261,6 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       this.isDirectBuy.set(true);
 
     } else {
-      // MODO CARRITO
       if (this.cartService.count() > 0) {
         this.isDirectBuy.set(false);
       } else {
@@ -523,19 +269,10 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       }
     }
 
-    // 🆕 Cargar saldo de billetera y transacciones
     this.walletService.loadWallet();
-
-    // 🆕 Cargar descuentos
     this.discountService.loadDiscounts().subscribe();
-
-    // 🆕 Recargar configuración del servicio para asegurar frescura
     this.checkoutService.reloadConfig();
 
-    // NOTE: Countries and Payment Settings are now loaded via signals
-    // filtered in 'availablePaymentMethods' computed property of the service.
-
-    // Pre-llenar el formulario con datos del usuario
     const currentUser = this.user();
     if (currentUser) {
       this.checkoutForm.patchValue({
@@ -544,66 +281,147 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       });
     }
 
-    // 🎁 NUEVO: Si el producto es GRATIS, auto-seleccionar billetera
     setTimeout(() => {
       if (this.isFreeProduct()) {
-
         this.selectPaymentMethod('wallet');
       }
     }, 100);
   }
 
   ngOnDestroy(): void {
-    // 🔥 Asegurar que el scroll se restaure al salir del componente
     document.body.style.overflow = '';
   }
 
+  // 🔥 MÉTODOS AUXILIARES PARA EL TEMPLATE
+
+  formatPrice(amount: number): string {
+    return amount.toFixed(2);
+  }
+
+  formatDate(date: any): string {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleDateString('es-MX', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  buildImageUrl(imageName?: string, itemType?: string): string {
+    if (!imageName) return 'https://via.placeholder.com/400x300?text=Sin+Imagen';
+
+    // Si ya es una URL completa, retornarla directamente
+    if (imageName.startsWith('http://') || imageName.startsWith('https://')) {
+      return imageName;
+    }
+
+    // Determinar el tipo: usar itemType si se proporciona, sino el del producto actual
+    const type = itemType || (this.isDirectBuy() ? this.productType() : 'course');
+    
+    // Usar las URLs configuradas en environment
+    if (type === 'project') {
+      return `${environment.images.project}${imageName}`;
+    } else {
+      return `${environment.images.course}${imageName}`;
+    }
+  }
+
+  getProductTypeName(type: string): string {
+    return type === 'course' ? 'Curso' : 'Proyecto';
+  }
+
+  getTransactionIcon(type: string): string {
+    const icons: Record<string, string> = {
+      credit: '💳',
+      refund: '↩️',
+      withdrawal: '💸',
+      purchase: '🛒',
+      bonus: '🎁',
+      default: '💰'
+    };
+    return icons[type] || icons['default'];
+  }
+
+  getTransactionColor(type: string): string {
+    const colors: Record<string, string> = {
+      credit: 'text-green-400',
+      refund: 'text-lime-400',
+      withdrawal: 'text-red-400',
+      purchase: 'text-orange-400',
+      bonus: 'text-purple-400',
+      default: 'text-gray-400'
+    };
+    return colors[type] || colors['default'];
+  }
+
+  getPaymentMethodInfo(methodId: string): PaymentMethod | undefined {
+    return this.paymentMethods().find(m => m.id === methodId);
+  }
+
+  removeFromCart(itemId: string, itemType: string): void {
+    // cartService expects itemType to be 'course' | 'project'
+    this.cartService.removeFromCart(itemId, itemType as 'course' | 'project');
+  }
+
+  // 🔥 FIX CRÍTICO: Mejorar selección de método de pago
   selectPaymentMethod(methodId: string): void {
-    // 🔒 VALIDACIÓN CRÍTICA: Si selecciona billetera, verificar saldo
-    if (methodId === 'wallet') {
+    // 🔥 Método de pago seleccionado (log simplificado)
+
+    // 🔒 VALIDACIÓN: Si selecciona billetera como método principal (no mixto)
+    if (methodId === 'wallet' && !this.useWalletBalance()) {
       const balance = this.walletBalance();
       const total = this.subtotal();
 
-      // Si el saldo no cubre el total, mostrar error y no permitir selección
+      // Si el saldo no cubre el total, mostrar error
       if (balance < total) {
         this.errorMessage.set(
-          `❌ Saldo insuficiente. Tienes ${balance.toFixed(2)} MXN pero el total es ${total.toFixed(2)} MXN. ` +
-          `Necesitas ${(total - balance).toFixed(2)} MXN más. Por favor, selecciona otro método de pago o usa tu saldo parcialmente.`
+          `❌ Saldo insuficiente. Tienes $${balance.toFixed(2)} MXN pero el total es $${total.toFixed(2)} MXN. ` +
+          `Activa el toggle "Usar saldo" para hacer un pago mixto.`
         );
-        return; // No seleccionar el método
+        return;
       }
 
-      // Si el saldo es suficiente, activar el uso de billetera
+      // Si el saldo es suficiente, activar el uso de billetera automáticamente
       this.toggleWalletPayment(true);
     }
 
     this.selectedPaymentMethod.set(methodId);
     this.errorMessage.set('');
-    
-    // 🔥 NUEVO: Si selecciona PayPal, procesar automáticamente
+
+    // 🔥 Si selecciona PayPal, procesar automáticamente
     if (methodId === 'paypal' && this.checkoutForm.valid) {
-      console.log('🅿️ [selectPaymentMethod] PayPal seleccionado, iniciando proceso automáticamente...');
       setTimeout(() => {
         this.processPayment();
-      }, 300); // Pequeño delay para que la UI se actualice
+      }, 300);
     }
   }
 
-  // 🆕 Toggle uso de billetera
+  // 🔥 FIX: Mejorar toggle de billetera
   toggleWalletPayment(force?: boolean): void {
     const newValue = force !== undefined ? force : !this.useWalletBalance();
     this.useWalletBalance.set(newValue);
 
     if (newValue) {
-      // Calcular cuánto del saldo de billetera se puede usar
+      // Calcular cuánto del saldo se puede usar
       const total = this.subtotal();
       const balance = this.walletBalance();
       const amountToUse = Math.min(balance, total);
+
       this.walletAmount.set(amountToUse);
+
+      // 🔥 NUEVO: Si la billetera cubre todo, auto-seleccionar wallet
+      if (amountToUse >= total) {
+        this.selectedPaymentMethod.set('wallet');
+      } else {
+        // 🔥 NUEVO: Si no cubre todo, limpiar método seleccionado para forzar selección
+        if (this.selectedPaymentMethod() === 'wallet') {
+          this.selectedPaymentMethod.set('');
+        }
+      }
 
     } else {
       this.walletAmount.set(0);
-      // Si se desactiva y estaba en wallet, limpiar selección
       if (this.selectedPaymentMethod() === 'wallet') {
         this.selectedPaymentMethod.set('');
       }
@@ -611,32 +429,12 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   async processPayment() {
-    console.log('👁️ [processPayment] 1. Iniciando proceso de pago...');
-    console.log('👁️ [processPayment] Estado actual:', {
-      isProcessing: this.isProcessing(),
-      showSuccess: this.showSuccess(),
-      selectedMethod: this.selectedPaymentMethod(),
-      useWallet: this.useWalletBalance(),
-      walletAmount: this.walletAmount(),
-      remainingAmount: this.remainingAmount(),
-      subtotal: this.subtotal()
-    });
+    // 🔥 Iniciando proceso de pago
 
-    // 🔥 Prevenir múltiples clics
     if (this.isProcessing() || this.showSuccess()) {
-      console.log('⚠️ [processPayment] Bloqueado: Ya está procesando o completado');
       return;
     }
 
-    console.info('🔄 [Checkout] processPayment started', {
-      method: this.selectedPaymentMethod(),
-      remaining: this.remainingAmount(),
-      useWallet: this.useWalletBalance(),
-      walletAmount: this.walletAmount(),
-      transactionNumber: this.transactionNumber()
-    });
-
-    // AGREGAR ESTE CÓDIGO AL INICIO:
     // ⚠️ POLÍTICA DE REEMBOLSOS
     const confirmed = await this.modalService.confirm({
       title: 'Política de Reembolsos',
@@ -652,7 +450,6 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     });
 
     if (!confirmed) {
-
       return;
     }
 
@@ -670,22 +467,21 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // 🔒 VALIDACIÓN CRÍTICA 1: Si usa billetera, verificar saldo suficiente
+    // 🔒 VALIDACIÓN: Si usa billetera, verificar saldo suficiente
     if (this.useWalletBalance() && this.walletAmount() > 0) {
       const balance = this.walletBalance();
       const requestedAmount = this.walletAmount();
 
       if (balance < requestedAmount) {
         this.errorMessage.set(
-          `❌ Error crítico: Saldo insuficiente. Tienes ${balance.toFixed(2)} MXN ` +
-          `pero intentas usar ${requestedAmount.toFixed(2)} MXN. Por favor, recarga la página.`
+          `❌ Error crítico: Saldo insuficiente. Tienes $${balance.toFixed(2)} MXN ` +
+          `pero intentas usar $${requestedAmount.toFixed(2)} MXN. Por favor, recarga la página.`
         );
         return;
       }
     }
 
     if (this.checkoutForm.invalid) {
-
       Object.keys(this.checkoutForm.controls).forEach(key => {
         this.checkoutForm.get(key)?.markAsTouched();
       });
@@ -696,10 +492,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     this.isProcessing.set(true);
     this.errorMessage.set('');
 
-    // ════════════════════════════════════════════════════════════════
-    // 🔥 CORRECCIÓN CRÍTICA: Determinar el método de pago correctamente
-    // ════════════════════════════════════════════════════════════════
-
+    // 🔥 CORRECCIÓN CRÍTICA: Determinar método de pago correctamente
     const walletIsActive = this.useWalletBalance();
     const walletAmountUsed = this.walletAmount();
     const remaining = this.remainingAmount();
@@ -708,7 +501,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     let finalWalletAmount: number;
     let finalRemainingAmount: number;
 
-    // CASO 1: Pago 100% con billetera (toggle activo Y saldo cubre todo)
+    // CASO 1: Pago 100% con billetera
     if (walletIsActive && remaining === 0 && walletAmountUsed > 0) {
       finalPaymentMethod = 'wallet';
       finalWalletAmount = walletAmountUsed;
@@ -716,16 +509,19 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     }
     // CASO 2: Pago mixto (billetera + otro método)
     else if (walletIsActive && walletAmountUsed > 0 && remaining > 0) {
-      finalPaymentMethod = this.selectedPaymentMethod();
-      finalWalletAmount = walletAmountUsed;
-      finalRemainingAmount = remaining;
-
-      // Validar que seleccionó un método para el restante
       if (!this.selectedPaymentMethod()) {
-        this.errorMessage.set('Por favor selecciona un método de pago para el saldo restante');
+        this.errorMessage.set(
+          `⚠️ Pago Mixto Requerido\n\n` +
+          `Tu billetera cubre $${walletAmountUsed.toFixed(2)} MXN de los $${this.subtotal().toFixed(2)} MXN totales.\n\n` +
+          `Por favor, selecciona un método de pago para completar los $${remaining.toFixed(2)} MXN restantes.`
+        );
         this.isProcessing.set(false);
         return;
       }
+
+      finalPaymentMethod = this.selectedPaymentMethod();
+      finalWalletAmount = walletAmountUsed;
+      finalRemainingAmount = remaining;
     }
     // CASO 3: Sin billetera - Pago normal
     else {
@@ -733,7 +529,6 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       finalWalletAmount = 0;
       finalRemainingAmount = this.subtotal();
 
-      // Validar que seleccionó un método
       if (!finalPaymentMethod) {
         this.errorMessage.set('Por favor selecciona un método de pago');
         this.isProcessing.set(false);
@@ -741,245 +536,263 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       }
     }
 
+    console.log('✅ [processPayment] Método final determinado');
+    // Preparar items del carrito/producto
+    let items: any[] = [];
 
-    // Preparar items de la venta
-    let detail = [];
-    // 🔥 FIX: Definir discount aquí para que esté disponible en el bloque if
-    const discount = this.bestDiscount();
-
-    if (isDirect) {
-      // Compra Directa
-      detail = [{
-        product: prod!._id,
-        product_type: prod!.type,
-        title: prod!.title,
-        price_unit: this.subtotal(), // Precio final con descuento
-        discount: discount ? discount.discount : 0,
-        type_discount: discount ? discount.type_discount : 0,
-        campaign_discount: discount ? discount.type_campaign : null
+    if (isDirect && prod) {
+      items = [{
+        product: prod._id,
+        product_type: this.productType(),
+        title: prod.title,
+        price_unit: this.subtotal(),
+        imagen: prod.imagen
       }];
     } else {
-      // Compra de Carrito
-      detail = cartItems.map(item => ({
+      items = cartItems.map(item => ({
         product: item._id,
         product_type: item.type,
         title: item.title,
         price_unit: item.price_mxn,
-        discount: 0, // TODO: Implementar descuentos en carrito
-        type_discount: 0,
-        campaign_discount: null
+        imagen: item.imagen
       }));
     }
 
-    const checkoutData: any = {
+    const nTransaccion = this.checkoutService.generateTransactionNumber();
+    this.transactionNumber.set(nTransaccion);
+
+    const payload: any = {
+      n_transaccion: nTransaccion,
       method_payment: finalPaymentMethod,
-      currency_total: 'MXN',
-      currency_payment: 'MXN',
-      total: this.subtotal(), // 🔥 Precio final
-      n_transaccion: this.checkoutService.generateTransactionNumber(),
-      // price_dolar: this.checkoutService.getExchangeRate(), // REMOVED
-      detail: detail,
-      // 🔥 SIEMPRE enviar estos campos con valores correctos
-      use_wallet: walletIsActive && finalWalletAmount > 0,
+      subtotal_mxn: finalRemainingAmount,
+      total: finalRemainingAmount,
+      use_wallet: walletIsActive,
       wallet_amount: finalWalletAmount,
       remaining_amount: finalRemainingAmount,
-      // country: this.selectedCountry() // REMOVED
+      detail: items,
+      billing: {
+        name: this.checkoutForm.value.billingName || '',
+        email: this.checkoutForm.value.billingEmail || '',
+        phone: this.checkoutForm.value.billingPhone || ''
+      }
     };
 
+    // 🔥 Guardar payload temporal (sin loguear info sensible)
+    (this as any).pendingPaymentPayload = payload;
 
-    this.transactionNumber.set(checkoutData.n_transaccion);
+    try {
+      if (finalPaymentMethod === 'wallet') {
+        // Pago 100% con wallet
+        const resp = await this.checkoutService.processWalletPayment(payload).toPromise();
+        console.log('✅ [processPayment] Wallet payment exitoso');
 
-    // Procesar la venta
-    this.checkoutService.processSale(checkoutData).subscribe({
-      next: (response: any) => {
-        console.info('🔄 [Checkout] processSale response', response);
-        if (response.sale) {
-          this.transactionNumber.set(response.sale.n_transaccion);
+        this.showSuccess.set(true);
+        this.walletService.loadWallet();
+
+        setTimeout(() => {
+          this.profileStudentService.reloadProfile();
+          this.purchasesService.loadPurchasedProducts();
+          this.profileService.reloadProfile();
+        }, 1500);
+
+        if (!isDirect) {
+          this.cartService.clearCart();
         }
 
-        // Si el método seleccionado es PayPal, renderizar botones
-        // 🔥 FIX: No verificar remainingAmount(), sino subtotal()
-        if (this.selectedPaymentMethod() === 'paypal') {
-          const amountToPay = this.remainingAmount() > 0 ? this.remainingAmount() : this.subtotal();
-          
-          if (amountToPay > 0) {
-            console.log('✅ [processPayment] Detectado PayPal, monto a pagar:', amountToPay);
-            console.log('📊 [processPayment] Datos:', {
-              selected: this.selectedPaymentMethod(),
-              remaining: this.remainingAmount(),
-              subtotal: this.subtotal(),
-              amountToPay,
-              txn: this.transactionNumber()
-            });
-            
-            // Close loader and set rendering state
-            this.isProcessing.set(false);
-            this.renderingPaypal.set(true);
-            
-            // If we have a server-side tx id, use it
-            const nTrans = response.sale?.n_transaccion || this.transactionNumber();
-            console.log('🔄 [processPayment] Llamando renderPayPalButtons con:', nTrans);
-            
-            this.renderPayPalButtons(nTrans).finally(() => {
-              console.log('✅ [processPayment] renderPayPalButtons finalizado');
-              this.renderingPaypal.set(false);
-            });
-            return;
-          } else {
-            console.warn('⚠️ [processPayment] PayPal seleccionado pero monto a pagar es 0');
-            this.errorMessage.set('Error: El monto a pagar debe ser mayor a 0');
-            this.isProcessing.set(false);
-            return;
-          }
-        }
+      } else if (finalPaymentMethod === 'paypal') {
+        // PayPal (mixto o 100%)
+        // No registrar venta aún: la venta solo se creará en el servidor al capturar el pago
+        // 🔥 NO guardar pendingSaleTx - no es necesario mostrar número antes del pago
+        await this.renderPayPalButtons(nTransaccion);
 
-        // ✅ ÉXITO (Wallet / Otros métodos)
-        this.isProcessing.set(false);
+      } else {
+        // Otros métodos (stripe, oxxo, etc)
+        const resp = await this.checkoutService.processSale(payload).toPromise();
+        console.log('✅ [processPayment] Pago registrado');
+
         this.showSuccess.set(true);
 
-        // 🔄 Recargar servicios después de una venta exitosa
-        // 1. Recargar billetera inmediatamente si se usó
-        if (walletIsActive && finalWalletAmount > 0) {
+        if (finalWalletAmount > 0) {
           this.walletService.loadWallet();
         }
 
-        // 2. Recargar perfil con un pequeño delay para asegurar que el backend terminó
         setTimeout(() => {
-          // 🔥 CRÍTICO: Llamar a reloadProfile() para actualizar el estado global
           this.profileStudentService.reloadProfile();
-
-          // También recargar otros servicios
           this.purchasesService.loadPurchasedProducts();
           this.profileService.reloadProfile();
-        }, 2000);
+        }, 1500);
 
-        // 3. Limpiar carrito si fue compra de carrito
-        if (!this.isDirectBuy()) {
+        if (!isDirect) {
           this.cartService.clearCart();
         }
-      },
-      error: (error) => {
-        console.error('❌ [processPayment] Error en la petición:', error);
-        // 409 Conflict - existing pending sale
-        if (error.status === 409 && error.error?.n_transaccion) {
-          console.info('ℹ️ [Checkout] Found existing pending sale; resuming PayPal for', error.error.n_transaccion);
-          // If PayPal selected, try to render buttons for pending sale
-          if (this.selectedPaymentMethod() === 'paypal' && this.remainingAmount() > 0) {
-            this.isProcessing.set(false);
-            this.renderingPaypal.set(true);
-            this.renderPayPalButtons(error.error.n_transaccion);
-            return;
-          }
+      }
 
-          // If not PayPal or remaining=0, show message
-          this.pendingSaleTx.set(error.error?.n_transaccion || null);
-          if (error.error?.n_transaccion) this.transactionNumber.set(error.error.n_transaccion);
-          this.errorMessage.set(error.error?.message || 'Tienes una venta pendiente. Por favor revisa tus transacciones.');
-          this.isProcessing.set(false);
-          return;
-        }
-
-        this.errorMessage.set(
-          error.error?.message || 'Hubo un error al procesar tu pago. Por favor intenta de nuevo.'
-        );
+    } catch (error: any) {
+      console.error('❌ [processPayment] Error:', error);
+      this.errorMessage.set(error?.error?.message || 'Error al procesar el pago');
+    } finally {
+      if (finalPaymentMethod !== 'paypal') {
         this.isProcessing.set(false);
       }
-    });
+    }
   }
 
   closeSuccessModalAndRedirect(): void {
     this.showSuccess.set(false);
-    this.router.navigate(['/profile-student'], { fragment: 'purchases' });
+    this.router.navigate(['/profile-student']);
   }
 
+  // ====== PAYPAL METHODS ======
 
-
-  buildImageUrl(imagen?: string): string {
-    if (!imagen) {
-      return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzFlMjkzYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NDc0OGIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5TaW4gSW1hZ2VuPC90ZXh0Pjwvc3ZnPg==';
+  private async loadPayPalSdk(): Promise<void> {
+    if ((window as any).paypal) {
+      return Promise.resolve();
     }
 
-    const img = String(imagen).trim();
+    return new Promise((resolve, reject) => {
+      const clientId = environment.paypal?.clientId || '';
+      if (!clientId) {
+        return reject(new Error('No PayPal clientId'));
+      }
 
-    // Si ya es una URL completa, devolverla tal cual
-    if (/^https?:\/\//i.test(img)) {
-      return img;
-    }
+      const script = document.createElement('script');
+      script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=MXN&intent=capture&disable-funding=credit,card&components=buttons&enable-funding=venmo`;
+      script.async = true;
+      script.defer = true;
 
-    // Construir la URL según el tipo de producto
-    const productType = this.productType();
-    if (productType === 'project') {
-      return `${environment.images.project}${img}`;
-    }
+      script.onload = () => {
+        setTimeout(() => resolve(), 100);
+      };
 
-    // Por defecto, cursos
-    return `${environment.images.course}${img}`;
-  }
+      script.onerror = (err) => reject(err);
 
-  // 🆕 Eliminar item del carrito
-  removeFromCart(itemId: string, type: 'course' | 'project') {
-    this.cartService.removeFromCart(itemId, type);
-    // Si el carrito queda vacío, el effect redirigirá al home
-  }
-
-  formatPrice(price: number): string {
-    return price.toFixed(2);
-  }
-
-  getPaymentMethodInfo(methodId: string): PaymentMethod | undefined {
-    return this.paymentMethods().find(m => m.id === methodId);
-  }
-
-  getProductTypeName(type: string): string {
-    return type === 'course' ? 'Curso' : 'Proyecto';
-  }
-
-  // 📋 Función para copiar al portapapeles
-  copyToClipboard(text: string, type: string): void {
-    navigator.clipboard.writeText(text).then(() => {
-      alert(`✅ ${type === 'cuenta' ? 'Número de cuenta' : type === 'clabe' ? 'CLABE' : 'Número de transacción'} copiado al portapapeles`);
-    }).catch(err => {
-      alert('❌ No se pudo copiar. Por favor, copia manualmente.');
+      document.head.appendChild(script);
     });
   }
 
-  // 🆕 HELPER METHODS PARA UX
-  formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+  private async waitForContainer(selector: string, timeout = 3000): Promise<HTMLElement | null> {
+    const interval = 50;
+    let waited = 0;
 
-    if (diffMins < 1) return 'Hace un momento';
-    if (diffMins < 60) return `Hace ${diffMins} min`;
-    if (diffHours < 24) return `Hace ${diffHours}h`;
-    if (diffDays < 7) return `Hace ${diffDays}d`;
+    while (waited < timeout) {
+      const el = document.querySelector(selector) as HTMLElement | null;
+      if (el) return el;
+      await new Promise(r => setTimeout(r, interval));
+      waited += interval;
+    }
 
-    return date.toLocaleDateString('es-MX', { month: 'short', day: 'numeric' });
+    return null;
   }
 
-  getTransactionIcon(type: string): string {
-    switch (type) {
-      case 'credit': return '💰';
-      case 'debit': return '💳';
-      case 'refund': return '🔄';
-      default: return '💵';
+  public async renderPayPalButtons(nTransaccion?: string | null) {
+    // 🔥 Renderizando botones de PayPal
+
+    if (!nTransaccion) {
+      nTransaccion = this.transactionNumber() || null;
+    }
+    if (!nTransaccion) {
+      throw new Error('renderPayPalButtons: nTransaccion is required');
+    }
+
+    this.paypalButtonsRendered.set(false);
+
+    try {
+      await this.loadPayPalSdk();
+      this.renderingPaypal.set(true);
+
+      const payload = (this as any).pendingPaymentPayload || { n_transaccion: nTransaccion };
+      const res = await this.checkoutService.createPaypalOrder(nTransaccion, payload);
+
+      if (!res || !res.orderId) {
+        this.errorMessage.set('No se pudo crear la orden de PayPal');
+        return;
+      }
+
+      const orderId = res.orderId;
+      this.paypalOrderId.set(orderId);
+
+      const paypal = (window as any).paypal;
+      if (!paypal) {
+        throw new Error('PayPal SDK not present');
+      }
+
+      const container = await this.waitForContainer('#paypal-button-container', 5000);
+      if (!container) {
+        this.errorMessage.set('No se pudo inicializar PayPal');
+        this.renderingPaypal.set(false);
+        return;
+      }
+
+      container.innerHTML = '';
+
+      await paypal.Buttons({
+        createOrder: () => orderId,
+            onApprove: async (data: any, actions: any) => {
+          console.log('✅ [PayPal] onApprove');
+          try {
+            const captureResult = await this.checkoutService.capturePaypalOrder(nTransaccion, data.orderID || orderId, (this as any).pendingPaymentPayload);
+            console.log('✅ [PayPal] Pago capturado exitosamente');
+
+            this.paypalButtonsRendered.set(true);
+            this.showSuccess.set(true);
+            // 🔥 Limpiar payload temporal
+            (this as any).pendingPaymentPayload = undefined;
+
+            if (this.useWalletBalance() && this.walletAmount() > 0) {
+              this.walletService.loadWallet();
+            }
+
+            setTimeout(() => {
+              this.profileStudentService.reloadProfile();
+              this.purchasesService.loadPurchasedProducts();
+              this.profileService.reloadProfile();
+            }, 1500);
+
+            if (!this.isDirectBuy()) {
+              this.cartService.clearCart();
+            }
+          } catch (captureError) {
+            console.error('❌ [PayPal] Error al capturar:', captureError);
+            this.errorMessage.set('Error al procesar el pago');
+            this.renderingPaypal.set(false);
+          }
+        },
+        onError: (err: any) => {
+          console.error('❌ [PayPal] Error:', err);
+          this.errorMessage.set('Error al cargar PayPal');
+          this.renderingPaypal.set(false);
+          this.paypalButtonsRendered.set(false);
+        },
+        onCancel: (data: any) => {
+          console.info('⚠️ [PayPal] Cancelado');
+          this.renderingPaypal.set(false);
+          this.paypalButtonsRendered.set(false);
+          // Limpiar payload temporal para evitar reuso accidental
+          (this as any).pendingPaymentPayload = undefined;
+        },
+        style: {
+          layout: 'vertical',
+          color: 'gold',
+          shape: 'rect',
+          label: 'paypal',
+          height: 45
+        }
+      }).render('#paypal-button-container');
+
+      // 🔥 NO usar pendingSaleTx
+      this.paypalButtonsRendered.set(true);
+      this.renderingPaypal.set(false);
+
+    } catch (err) {
+      console.error('❌ [renderPayPalButtons] Error:', err);
+      this.errorMessage.set('No se pudo iniciar PayPal');
+      this.paypalButtonsRendered.set(false);
     }
   }
 
-  getTransactionColor(type: string): string {
-    switch (type) {
-      case 'credit': return 'text-green-400';
-      case 'debit': return 'text-red-400';
-      case 'refund': return 'text-blue-400';
-      default: return 'text-gray-400';
-    }
-  }
-
-  // 🆕 Volver al home
-  goBack(): void {
-    this.router.navigate(['/']);
+  public debugRenderPayPalNow() {
+    const nTrans = this.transactionNumber() || this.checkoutService.generateTransactionNumber();
+    console.info('🧪 [debug] Forcing renderPayPalButtons with', nTrans);
+    this.renderPayPalButtons(nTrans);
   }
 }

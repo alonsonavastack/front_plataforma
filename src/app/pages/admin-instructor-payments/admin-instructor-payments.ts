@@ -1,8 +1,9 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, effect } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminPaymentService, InstructorWithEarnings, CommissionSettings } from '../../core/services/admin-payment.service';
 import { ModalService } from '../../core/services/modal.service';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-admin-instructor-payments',
@@ -16,7 +17,7 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   private modalService = inject(ModalService);
 
   instructors = this.adminPaymentService.instructors;
-  summary = this.adminPaymentService.summary;
+  summary = this.adminPaymentService.instructorsSummary;
   isLoading = this.adminPaymentService.isLoadingInstructors;
   error = this.adminPaymentService.instructorsError;
 
@@ -24,17 +25,27 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   settings = this.adminPaymentService.commissionSettings;
   isLoadingSettings = this.adminPaymentService.isLoadingCommission;
 
+  // 🆕 Formulario de filtros actualizado con fechas
   filterForm = new FormGroup({
     status: new FormControl('all'),
     minAmount: new FormControl<number | null>(0),
-    country: new FormControl('all'), // 🔥 NUEVO: Filtro por país
-    paymentMethod: new FormControl('all'), // 🔥 NUEVO: Filtro por método de pago
+    country: new FormControl('all'),
+    paymentMethod: new FormControl('all'), // ✅ Actualizado: solo wallet, paypal, mixed_paypal
+    startDate: new FormControl<string | null>(null),
+    endDate: new FormControl<string | null>(null),
   });
 
   hasInstructors = computed(() => this.instructors().length > 0);
   totalEarnings = computed(() => Number(this.summary()?.totalEarnings) || 0);
 
-  // 🔥 NUEVO: Filtros de país y método de pago
+  // 🆕 Estadísticas por método de pago
+  paymentMethodStats = computed(() => (this.summary() as any)?.paymentMethodStats || {
+    wallet: { count: 0, total: 0 },
+    paypal: { count: 0, total: 0 },
+    mixed_paypal: { count: 0, total: 0, wallet_part: 0, paypal_part: 0 }
+  });
+
+  // Filtros de país
   availableCountries = computed(() => {
     const instructors = this.instructors();
     const countries = new Set<string>();
@@ -45,21 +56,16 @@ export class AdminInstructorPaymentsComponent implements OnInit {
     return Array.from(countries).sort();
   });
 
-  // Instructores filtrados
+  // Instructores filtrados (solo por país en frontend, resto en backend)
   filteredInstructors = computed(() => {
     let instructors = this.instructors();
     const country = this.filterForm.get('country')?.value;
-    const paymentMethod = this.filterForm.get('paymentMethod')?.value;
 
     if (country && country !== 'all') {
       instructors = instructors.filter((i: InstructorWithEarnings) => {
         const instructorCountry = i.instructor.country || i.paymentConfig.country || 'INTL';
         return instructorCountry === country;
       });
-    }
-
-    if (paymentMethod && paymentMethod !== 'all') {
-      instructors = instructors.filter((i: InstructorWithEarnings) => i.paymentConfig.preferredMethod === paymentMethod);
     }
 
     return instructors;
@@ -103,41 +109,79 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   });
 
   ngOnInit() {
+    // 🔥 Cargar datos iniciales
     this.loadInstructors();
     this.loadSettings();
+
+    // 🔥 DEBOUNCING: Escuchar cambios en filtros con delay
+    this.filterForm.valueChanges
+      .pipe(
+        debounceTime(500), // Esperar 500ms después del último cambio
+        distinctUntilChanged() // Solo si el valor cambió
+      )
+      .subscribe(() => {
+        console.log('🔄 [AdminPayments] Filtros cambiados (debounced)');
+        this.currentPage.set(1);
+        this.loadInstructors();
+      });
   }
 
   loadSettings() {
-    this.adminPaymentService.reloadCommissionSettings();
+    // 🔥 CORRECCIÓN: Suscribirse al observable
+    this.adminPaymentService.loadCommissionSettings().subscribe({
+      next: () => {
+        console.log('✅ [AdminPayments] Settings cargados');
+      },
+      error: (err) => {
+        console.error('❌ [AdminPayments] Error al cargar settings:', err);
+      }
+    });
   }
 
   loadInstructors() {
     const formValue = this.filterForm.value;
-    const filters: { status?: string; minAmount?: number } = {};
-
-    if (formValue.status && formValue.status !== 'all') {
-      filters.status = formValue.status;
-    }
-    if (formValue.minAmount && formValue.minAmount > 0) {
-      filters.minAmount = formValue.minAmount;
-    }
-
-    const status = filters.status || 'all';
-    const minAmount = filters.minAmount || 0;
-
-    this.adminPaymentService.setInstructorFilters({ status, minAmount });
+    
+    console.log('📋 [AdminPayments] Form Value:', formValue);
+    
+    const filters: { 
+      status?: string; 
+      minAmount?: number; 
+      paymentMethod?: string;
+      startDate?: string;
+      endDate?: string;
+    } = {
+      status: formValue.status === 'all' ? undefined : formValue.status || undefined,
+      minAmount: (formValue.minAmount && formValue.minAmount > 0) ? formValue.minAmount : undefined,
+      paymentMethod: formValue.paymentMethod === 'all' ? undefined : formValue.paymentMethod || undefined,
+      startDate: formValue.startDate || undefined,
+      endDate: formValue.endDate || undefined
+    };
+    
+    // ✅ Limpiar propiedades undefined
+    Object.keys(filters).forEach(key => {
+      if (filters[key as keyof typeof filters] === undefined) {
+        delete filters[key as keyof typeof filters];
+      }
+    });
+    
+    console.log('🔍 [AdminPayments] Filtros enviados al backend:', filters);
+    console.log('🔍 [AdminPayments] Número de filtros activos:', Object.keys(filters).length);
+    
+    // 🔥 CORRECCIÓN: Llamar al método correcto del servicio
+    this.adminPaymentService.loadInstructors(filters).subscribe({
+      next: () => {
+        console.log('✅ [AdminPayments] Instructores cargados exitosamente');
+      },
+      error: (err) => {
+        console.error('❌ [AdminPayments] Error al cargar instructores:', err);
+      }
+    });
   }
 
   onFilterChange() {
-    this.currentPage.set(1);
-    // Solo recargar si cambia el filtro de status o minAmount
-    const country = this.filterForm.get('country')?.value;
-    const paymentMethod = this.filterForm.get('paymentMethod')?.value;
-
-    // Si solo cambió país o método, no recargar (se filtra en el computed)
-    if (country === 'all' && paymentMethod === 'all') {
-      this.loadInstructors();
-    }
+    // 🔥 REMOVIDO: Ya no necesitamos este método porque el debouncing
+    // en ngOnInit maneja los cambios automáticamente
+    // Este método se puede mantener vacío para compatibilidad con el template
   }
 
   clearFilters() {
@@ -145,12 +189,43 @@ export class AdminInstructorPaymentsComponent implements OnInit {
       status: 'all',
       minAmount: 0,
       country: 'all',
-      paymentMethod: 'all'
+      paymentMethod: 'all',
+      startDate: null,
+      endDate: null
     });
     this.currentPage.set(1);
     this.loadInstructors();
   }
 
+  // 🆕 NUEVOS HELPERS para métodos de pago
+  getPaymentMethodIcon(method: string): string {
+    const icons: Record<string, string> = {
+      wallet: '💰',
+      paypal: '💳',
+      mixed_paypal: '🔀'
+    };
+    return icons[method] || '❓';
+  }
+
+  getPaymentMethodName(method: string): string {
+    const names: Record<string, string> = {
+      wallet: 'Billetera',
+      paypal: 'PayPal',
+      mixed_paypal: 'Mixto (Wallet + PayPal)'
+    };
+    return names[method] || method;
+  }
+
+  getPaymentMethodBadgeClass(method: string): string {
+    const classes: Record<string, string> = {
+      wallet: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+      paypal: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      mixed_paypal: 'bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-cyan-400 border-cyan-500/30'
+    };
+    return classes[method] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+  }
+
+  // Métodos de navegación y helpers existentes
   changePage(page: number): void {
     if (page < 1 || page > this.totalPages()) return;
     this.currentPage.set(page);
@@ -191,9 +266,6 @@ export class AdminInstructorPaymentsComponent implements OnInit {
     if (config.preferredMethod === 'paypal') {
       return `PayPal: ${config.paypalConnected ? 'Conectado' : 'No Conectado'}`;
     }
-    if (config.preferredMethod === 'paypal') {
-      return `PayPal: ${config.paypalConnected ? 'Conectado' : 'No Conectado'}`;
-    }
     return 'Método de pago no especificado';
   }
 
@@ -215,7 +287,6 @@ export class AdminInstructorPaymentsComponent implements OnInit {
     return texts[method as keyof typeof texts] || method.charAt(0).toUpperCase() + method.slice(1);
   }
 
-  // 🔥 NUEVO: Obtener bandera de país
   getCountryFlag(country: string): string {
     const flags: Record<string, string> = {
       'MX': '🇲🇽',
@@ -229,7 +300,6 @@ export class AdminInstructorPaymentsComponent implements OnInit {
     return flags[country] || '🌍';
   }
 
-  // 🔥 NUEVO: Obtener nombre del país
   getCountryName(country: string): string {
     const names: Record<string, string> = {
       'MX': 'México',
@@ -242,9 +312,6 @@ export class AdminInstructorPaymentsComponent implements OnInit {
     };
     return names[country] || country;
   }
-
-  // 🔥 NUEVO: Determinar si se puede pagar con Mercado Pago
-
 
   viewInstructorDetails(instructorId: string) {
     if (instructorId) {
@@ -302,7 +369,6 @@ export class AdminInstructorPaymentsComponent implements OnInit {
         let message = `✅ Proceso completado:\n\n` +
           `📦 Productos procesados: ${result.processed}\n` +
           `⏩ Productos omitidos: ${result.skipped}\n` +
-          `   (ver detalles más abajo)\n` +
           `📊 Total de productos: ${result.total}\n` +
           `💳 Ventas revisadas: ${result.sales_reviewed}\n\n`;
 
@@ -310,26 +376,12 @@ export class AdminInstructorPaymentsComponent implements OnInit {
           message += 'Detalles de productos omitidos:\n';
           const maxShow = 10;
           result.skipped_details.slice(0, maxShow).forEach((d: any, i: number) => {
-            message += `${i + 1}. Sale ${d.sale} - ${d.title || d.product} - Motivo: ${d.reason}` + (d.error ? ` (error: ${d.error})` : '') + '\n';
+            message += `${i + 1}. Sale ${d.sale} - ${d.title || d.product} - Motivo: ${d.reason}\n`;
           });
           if (result.skipped_details.length > maxShow) {
             message += `... y ${result.skipped_details.length - maxShow} más\n`;
           }
-          message += '\n';
         }
-
-        if (result.processed_details && Array.isArray(result.processed_details) && result.processed_details.length > 0) {
-          message += 'Productos procesados:\n';
-          result.processed_details.slice(0, 10).forEach((p: any, i: number) => {
-            message += `${i + 1}. Sale ${p.sale} - ${p.title || p.product}\n`;
-          });
-          if (result.processed_details.length > 10) {
-            message += `... y ${result.processed_details.length - 10} más\n`;
-          }
-          message += '\n';
-        }
-
-        message += 'Recargando lista de instructores...';
 
         this.modalService.alert({
           title: 'Proceso Completado',

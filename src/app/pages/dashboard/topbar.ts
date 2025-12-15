@@ -4,14 +4,13 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
 import { AnimateService } from '../../core/animate.service';
 import { NotificationsService } from '../../core/services/notifications.service';
-import { BankNotificationsService } from '../../core/services/bank-notifications.service';
 import { ReviewNotificationsService } from '../../core/services/review-notifications.service';
 import { RefundNotificationsService } from '../../core/services/refund-notifications.service';
 import { SystemConfigService } from '../../core/services/system-config.service';
 import { ClickOutsideDirective } from '../../shared/directives/click-outside.directive';
 import { initFlowbite } from 'flowbite';
 import { ToastService } from '../../core/services/toast.service';
-import { environment } from '../../../environments/environment'; // 🔥 IMPORTAR ENVIRONMENT
+import { environment } from '../../../environments/environment';
 
 @Component({
   standalone: true,
@@ -25,13 +24,12 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
   router = inject(Router);
   animate = inject(AnimateService);
   notificationsService = inject(NotificationsService);
-  bankNotificationsService = inject(BankNotificationsService);
   reviewNotificationsService = inject(ReviewNotificationsService);
   refundNotificationsService = inject(RefundNotificationsService);
-  systemConfigService = inject(SystemConfigService); // 🔥 NUEVO
+  systemConfigService = inject(SystemConfigService);
 
   isSidebarCollapsed = input.required<boolean>();
-  toggleSidebar = output<void>(); // 🔥 Evento para abrir/cerrar sidebar
+  toggleSidebar = output<void>();
 
   // Lógica para el menú de perfil
   isProfileMenuOpen = signal(false);
@@ -39,13 +37,10 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
   // Lógica para el menú de notificaciones de ventas
   isNotificationsMenuOpen = signal(false);
 
-  // Lógica para el menú de notificaciones bancarias
-  isBankNotificationsMenuOpen = signal(false);
-
   // Lógica para el menú de notificaciones de reviews (instructores)
   isReviewNotificationsMenuOpen = signal(false);
 
-  // 🆕 Lógica para el menú de notificaciones de reembolsos (admin/instructor)
+  // Lógica para el menú de notificaciones de reembolsos (admin/instructor)
   isRefundNotificationsMenuOpen = signal(false);
 
   toggleProfileMenu() {
@@ -60,28 +55,13 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isNotificationsMenuOpen.update(v => !v);
     // Cerrar otros menús
     if (this.isProfileMenuOpen()) this.isProfileMenuOpen.set(false);
-    if (this.isBankNotificationsMenuOpen()) this.isBankNotificationsMenuOpen.set(false);
 
     // Cargar notificaciones cuando se abre el menú
     if (this.isNotificationsMenuOpen()) {
-
       this.notificationsService.loadNotifications().subscribe({
         error: (err) => this.toast.error('❌ Error al cargar notificaciones:', err)
       });
       this.notificationsService.markAllAsRead();
-    }
-  }
-
-  toggleBankNotificationsMenu() {
-    this.isBankNotificationsMenuOpen.update(v => !v);
-    // Cerrar otros menús
-    if (this.isProfileMenuOpen()) this.isProfileMenuOpen.set(false);
-    if (this.isNotificationsMenuOpen()) this.isNotificationsMenuOpen.set(false);
-    if (this.isReviewNotificationsMenuOpen()) this.isReviewNotificationsMenuOpen.set(false);
-
-    // Cargar notificaciones bancarias cuando se abre el menú
-    if (this.isBankNotificationsMenuOpen()) {
-      this.bankNotificationsService.loadNotifications();
     }
   }
 
@@ -90,7 +70,6 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
     // Cerrar otros menús
     if (this.isProfileMenuOpen()) this.isProfileMenuOpen.set(false);
     if (this.isNotificationsMenuOpen()) this.isNotificationsMenuOpen.set(false);
-    if (this.isBankNotificationsMenuOpen()) this.isBankNotificationsMenuOpen.set(false);
     if (this.isRefundNotificationsMenuOpen()) this.isRefundNotificationsMenuOpen.set(false);
 
     // Cargar notificaciones de reviews cuando se abre el menú
@@ -99,15 +78,11 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  /**
-   * 🆕 Toggle menú de notificaciones de reembolsos
-   */
   toggleRefundNotificationsMenu() {
     this.isRefundNotificationsMenuOpen.update(v => !v);
     // Cerrar otros menús
     if (this.isProfileMenuOpen()) this.isProfileMenuOpen.set(false);
     if (this.isNotificationsMenuOpen()) this.isNotificationsMenuOpen.set(false);
-    if (this.isBankNotificationsMenuOpen()) this.isBankNotificationsMenuOpen.set(false);
     if (this.isReviewNotificationsMenuOpen()) this.isReviewNotificationsMenuOpen.set(false);
 
     // Cargar notificaciones de reembolsos cuando se abre el menú
@@ -189,32 +164,22 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit(): void {
-    // 🔥 Cargar configuración del sistema
-
-
     const user = this.authService.user();
 
-    // Admin: WebSocket ventas + Polling bancario
+    // Admin: WebSocket ventas
     if (user?.rol === 'admin') {
-
       // Iniciar notificaciones de ventas (WebSocket)
       this.notificationsService.startWebSocket(user._id, user.rol);
-      this.notificationsService.loadNotifications().subscribe({
-
-      });
-
-      // Iniciar notificaciones bancarias (Polling)
-      this.bankNotificationsService.startPolling();
+      this.notificationsService.loadNotifications().subscribe();
     }
 
     // Instructor: Polling de reviews sin respuesta
     if (user?.rol === 'instructor') {
       this.reviewNotificationsService.startPolling();
-      // 🆕 Polling de reembolsos para instructor
       this.refundNotificationsService.startPolling();
     }
 
-    // 🆕 Admin: Polling de reembolsos
+    // Admin: Polling de reembolsos
     if (user?.rol === 'admin') {
       this.refundNotificationsService.startPolling();
     }
@@ -224,9 +189,8 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
     // Desconectar WebSocket y limpiar notificaciones al destruir el componente
     this.notificationsService.stopWebSocket();
     this.notificationsService.clearNotifications();
-    this.bankNotificationsService.stopPolling();
     this.reviewNotificationsService.stopPolling();
-    this.refundNotificationsService.stopPolling(); // 🆕
+    this.refundNotificationsService.stopPolling();
   }
 
   logout() {

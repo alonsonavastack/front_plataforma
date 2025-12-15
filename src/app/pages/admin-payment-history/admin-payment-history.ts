@@ -59,7 +59,10 @@ export class AdminPaymentHistoryComponent implements OnInit {
       filters.status = formValue.status;
     }
 
-    this.adminPaymentService.setPaymentHistoryFilters(filters);
+    // Load payments history using the service (will update signals internally)
+    this.adminPaymentService.loadPaymentsHistory(filters).subscribe({
+      error: (err) => this.actionError.set(err?.error?.message || 'Error al cargar historial de pagos')
+    });
   }
 
   onFilterChange() {

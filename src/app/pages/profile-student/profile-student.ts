@@ -1128,6 +1128,26 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // 🔥 NUEVO: Verificar si ya existe una solicitud de reembolso
+    if (this.hasRefundRequest(sale._id)) {
+      const refundStatus = this.getRefundStatus(sale._id);
+      
+      if (refundStatus?.status === 'rejected') {
+        this.toast.error(
+          'Reembolso No Disponible',
+          '⛔ Ya solicitaste un reembolso para esta compra y fue rechazado. Solo se permite 1 solicitud de reembolso por compra.',
+          7000
+        );
+      } else {
+        this.toast.warning(
+          'Reembolso Ya Solicitado',
+          `Ya existe una solicitud de reembolso para esta compra con estado: ${refundStatus?.statusText || 'En proceso'}`,
+          6000
+        );
+      }
+      return;
+    }
+
     // Verificar que la venta tenga productos
     if (!sale.detail || sale.detail.length === 0) {
       alert('⚠️ Esta venta no tiene productos');
@@ -1213,7 +1233,8 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Verifica si ya existe una solicitud de reembolso ACTIVA para una venta específica
+   * Verifica si ya existe una solicitud de reembolso para una venta específica
+   * Retorna true si existe un reembolso (ACTIVO o RECHAZADO)
    */
   hasRefundRequest(saleId: string): boolean {
     const refundList = this.refunds() as any[];
@@ -1224,10 +1245,9 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
       // 🔥 FIX: Validar que refund.sale no sea null antes de acceder a _id
       const refundSaleId = (refund.sale && typeof refund.sale === 'object') ? refund.sale._id : refund.sale;
 
-      // 🔥 CRÍTICO: Solo considerar reembolsos activos
-      const isActive = ['pending', 'approved', 'processing', 'completed'].includes(refund.status);
-
-      return refundSaleId === saleId && isActive;
+      // 🔥 CRÍTICO: Considerar cualquier reembolso, incluyendo rechazados
+      // Solo se permite 1 reembolso por compra, independientemente del estado
+      return refundSaleId === saleId;
     });
   }
 

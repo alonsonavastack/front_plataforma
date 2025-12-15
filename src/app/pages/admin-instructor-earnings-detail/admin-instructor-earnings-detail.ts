@@ -47,7 +47,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
   selectedEarnings = signal<string[]>([]);
 
   filterForm = new FormGroup({
-    status: new FormControl('all'),
+    status: new FormControl('all'), // ✅ CORRECCIÓN: Mostrar todas las ganancias pendientes de pago
     startDate: new FormControl(''),
     endDate: new FormControl(''),
   });
@@ -120,6 +120,9 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
   ngOnInit() {
     this.instructorId = this.route.snapshot.paramMap.get('id')!;
     if (this.instructorId) {
+      console.log('📊 [EarningsDetail] Cargando TODAS las ganancias (pending + available)');
+      console.log('   ➜ Instructor ID:', this.instructorId);
+      console.log('   ➜ Filtros iniciales:', this.filterForm.value);
       this.loadEarnings();
     }
   }
@@ -138,7 +141,22 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
       filters.endDate = formValue.endDate;
     }
 
-    this.adminPaymentService.loadInstructorEarnings(this.instructorId, filters);
+    // 🔥 Logs de debugging
+    console.log('📊 [EarningsDetail] Cargando ganancias con filtros:', {
+      instructorId: this.instructorId,
+      filters: filters,
+      formValue: formValue
+    });
+
+    // 🔥 CORRECCIÓN: Suscribirse al observable
+    this.adminPaymentService.loadInstructorEarnings(this.instructorId, filters).subscribe({
+      next: () => {
+        console.log('✅ [EarningsDetail] Ganancias cargadas exitosamente');
+      },
+      error: (err) => {
+        console.error('❌ [EarningsDetail] Error al cargar ganancias:', err);
+      }
+    });
   }
 
   onFilterChange() {
@@ -148,7 +166,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
 
   clearFilters() {
     this.filterForm.reset({
-      status: 'all',
+      status: 'all', // ✅ CORRECCIÓN: Volver a mostrar todas
       startDate: '',
       endDate: ''
     });
@@ -208,9 +226,22 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
 
   selectAll() {
     // Solo seleccionar ganancias con estado 'available'
-    const availableEarningIds = this.validEarnings()
-      .filter((e: Earning) => e.status === 'available')
-      .map((e: Earning) => e._id);
+    const availableEarnings = this.validEarnings()
+      .filter((e: Earning) => e.status === 'available');
+    
+    const availableEarningIds = availableEarnings.map((e: Earning) => e._id);
+    
+    console.log('✅ [selectAll] Seleccionando ganancias disponibles:', {
+      total_validEarnings: this.validEarnings().length,
+      available_count: availableEarnings.length,
+      selected_ids: availableEarningIds
+    });
+    
+    if (availableEarnings.length === 0) {
+      alert('⚠️ No hay ganancias "disponibles" para seleccionar.\n\nLas ganancias deben estar en estado "available" para ser seleccionadas.');
+      return;
+    }
+    
     this.selectedEarnings.set(availableEarningIds);
   }
 
@@ -338,5 +369,13 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
     const imgElement = event.target as HTMLImageElement;
     // Usar un placeholder con el nombre del producto
     imgElement.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(product?.title || 'Producto')}&background=10b981&color=fff&size=48`;
+  }
+
+  /**
+   * Obtener umbral mínimo de pago desde settings
+   */
+  getMinimumThreshold(): number {
+    // TODO: Obtener de settings reales del servicio
+    return 50.00;
   }
 }

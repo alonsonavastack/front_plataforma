@@ -1,7 +1,7 @@
-import { Injectable, inject, signal, computed, resource } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-// rxResource removed
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { Earning } from '../models/instructor-earning.model';
 
@@ -19,6 +19,11 @@ export interface InstructorWithEarnings {
     count: number;
     oldestDate: string;
     newestDate: string;
+    paymentMethods?: {
+      wallet: { count: number; total: number };
+      paypal: { count: number; total: number };
+      mixed_paypal: { count: number; total: number };
+    };
   };
   paymentConfig: {
     preferredMethod: string;
@@ -81,25 +86,6 @@ export interface CommissionSettings {
   }>;
 }
 
-interface InstructorFilters {
-  status: string;
-  minAmount: number;
-}
-
-interface EarningsFilters {
-  instructorId: string;
-  status?: string;
-  startDate?: string;
-  endDate?: string;
-}
-
-interface PaymentHistoryFilters {
-  status?: string;
-  instructor?: string;
-  page: number;
-  limit: number;
-}
-
 @Injectable({
   providedIn: 'root'
 })
@@ -107,166 +93,206 @@ export class AdminPaymentService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.url}admin`;
 
-  // 🔥 Signals para filtros de instructores con ganancias
-  private instructorStatusInput = signal('available');
-  private instructorMinAmountInput = signal(0);
+  // 🔥 SIGNALS para estado (en lugar de resource)
+  // Instructores con ganancias
+  instructors = signal<InstructorWithEarnings[]>([]);
+  instructorsSummary = signal<{ totalInstructors: number; totalEarnings: string } | null>(null);
+  isLoadingInstructors = signal(false);
+  instructorsError = signal<any>(null);
 
-  // 🔥 rxResource reemplazado por resource standard
-  private instructorsResource = resource({
-    loader: () => {
-      const params = new HttpParams()
-        .set('status', this.instructorStatusInput())
-        .set('minAmount', this.instructorMinAmountInput().toString());
+  // Ganancias de instructor específico
+  earnings = signal<Earning[]>([]);
+  instructor = signal<any>(null);
+  paymentConfig = signal<any>(null);
+  earningsTotals = signal<any>(null);
+  isLoadingEarnings = signal(false);
+  earningsError = signal<any>(null);
 
-      return firstValueFrom(this.http.get<{
-        success: boolean;
-        instructors: InstructorWithEarnings[];
-        summary: { totalInstructors: number; totalEarnings: string };
-      }>(`${this.apiUrl}/instructors/payments`, { params }));
+  // Historial de pagos
+  paymentsHistory = signal<PaymentResponse[]>([]);
+  paymentsPagination = signal<any>(null);
+  isLoadingPaymentsHistory = signal(false);
+  paymentsHistoryError = signal<any>(null);
+
+  // Configuración de comisiones
+  commissionSettings = signal<CommissionSettings | null>(null);
+  isLoadingCommission = signal(false);
+  commissionError = signal<any>(null);
+
+  // 🔥 MÉTODOS PARA CARGAR DATOS
+
+  /**
+   * Cargar instructores con ganancias
+   */
+  loadInstructors(filters: {
+    status?: string;
+    minAmount?: number;
+    paymentMethod?: string;
+    startDate?: string;
+    endDate?: string;
+  } = {}): Observable<any> {
+    console.log('🔄 [AdminPaymentService] Cargando instructores con filtros:', filters);
+
+    this.isLoadingInstructors.set(true);
+    this.instructorsError.set(null);
+
+    let params = new HttpParams()
+      .set('status', filters.status || 'all')
+      .set('minAmount', (filters.minAmount || 0).toString());
+
+    if (filters.paymentMethod && filters.paymentMethod !== 'all') {
+      params = params.set('paymentMethod', filters.paymentMethod);
     }
-  });
-
-  // 🔥 Señales públicas derivadas
-  public instructors = computed(() => this.instructorsResource.value()?.instructors ?? []);
-  public summary = computed(() => this.instructorsResource.value()?.summary ?? null);
-  public isLoadingInstructors = computed(() => this.instructorsResource.isLoading());
-  public instructorsError = computed(() => this.instructorsResource.error());
-
-  // 🔥 Signals para filtros de ganancias de instructor específico
-  private earningsInstructorIdInput = signal('');
-  private earningsStatusInput = signal<string | undefined>(undefined);
-  private earningsStartDateInput = signal<string | undefined>(undefined);
-  private earningsEndDateInput = signal<string | undefined>(undefined);
-
-  // 🔥 rxResource reemplazado por resource standard
-  private earningsResource = resource({
-    loader: () => {
-      const instructorId = this.earningsInstructorIdInput();
-      if (!instructorId) return Promise.resolve(null);
-
-      let params = new HttpParams();
-      const status = this.earningsStatusInput();
-      if (status) params = params.set('status', status);
-      const startDate = this.earningsStartDateInput();
-      if (startDate) params = params.set('startDate', startDate);
-      const endDate = this.earningsEndDateInput();
-      if (endDate) params = params.set('endDate', endDate);
-
-      return firstValueFrom(this.http.get<{
-        success: boolean;
-        instructor: any;
-        earnings: Earning[];
-        paymentConfig: any;
-        totals: any;
-      }>(`${this.apiUrl}/instructors/${instructorId}/earnings`, { params }));
+    if (filters.startDate) {
+      params = params.set('startDate', filters.startDate);
     }
-  });
-
-  // 🔥 Señales públicas para ganancias
-  public earnings = computed(() => this.earningsResource.value()?.earnings ?? []);
-  public instructor = computed(() => this.earningsResource.value()?.instructor ?? null);
-  public paymentConfig = computed(() => this.earningsResource.value()?.paymentConfig ?? null);
-  public earningsTotals = computed(() => this.earningsResource.value()?.totals ?? null);
-  public isLoadingEarnings = computed(() => this.earningsResource.isLoading());
-  public earningsError = computed(() => this.earningsResource.error());
-
-  // 🔥 Signals para filtros de historial de pagos
-  private paymentHistoryStatusInput = signal<string | undefined>(undefined);
-  private paymentHistoryInstructorInput = signal<string | undefined>(undefined);
-  private paymentHistoryPageInput = signal(1);
-  private paymentHistoryLimitInput = signal(10);
-
-  // 🔥 rxResource reemplazado por resource standard
-  private paymentsHistoryResource = resource({
-    loader: () => {
-      let params = new HttpParams();
-      const status = this.paymentHistoryStatusInput();
-      if (status) params = params.set('status', status);
-      const instructor = this.paymentHistoryInstructorInput();
-      if (instructor) params = params.set('instructor', instructor);
-      params = params.set('page', this.paymentHistoryPageInput().toString());
-      params = params.set('limit', this.paymentHistoryLimitInput().toString());
-
-      return firstValueFrom(this.http.get<{
-        success: boolean;
-        payments: PaymentResponse[];
-        pagination: any;
-      }>(`${this.apiUrl}/payments`, { params }));
+    if (filters.endDate) {
+      params = params.set('endDate', filters.endDate);
     }
-  });
 
-  // 🔥 Señales públicas para historial
-  public paymentsHistory = computed(() => this.paymentsHistoryResource.value()?.payments ?? []);
-  public paymentsPagination = computed(() => this.paymentsHistoryResource.value()?.pagination ?? null);
-  public isLoadingPaymentsHistory = computed(() => this.paymentsHistoryResource.isLoading());
-  public paymentsHistoryError = computed(() => this.paymentsHistoryResource.error());
-
-  // 🔥 Signal para configuración de comisiones
-  private commissionReloadTrigger = signal(0);
-
-  // 🔥 rxResource reemplazado por resource standard
-  private commissionResource = resource({
-    loader: () => {
-      this.commissionReloadTrigger();
-      return firstValueFrom(this.http.get<{
-        success: boolean;
-        settings: CommissionSettings;
-      }>(`${this.apiUrl}/commission-settings`));
-    }
-  });
-
-  // 🔥 Señales públicas para comisiones
-  public commissionSettings = computed(() => this.commissionResource.value()?.settings ?? null);
-  public isLoadingCommission = computed(() => this.commissionResource.isLoading());
-  public commissionError = computed(() => this.commissionResource.error());
-
-  // 🔥 Métodos para actualizar filtros de instructores
-  setInstructorFilters(filters: Partial<InstructorFilters>): void {
-    if (filters.status !== undefined) this.instructorStatusInput.set(filters.status);
-    if (filters.minAmount !== undefined) this.instructorMinAmountInput.set(filters.minAmount);
+    return this.http.get<{
+      success: boolean;
+      instructors: InstructorWithEarnings[];
+      summary: { totalInstructors: number; totalEarnings: string };
+    }>(`${this.apiUrl}/instructors/payments`, { params }).pipe(
+      tap({
+        next: (response) => {
+          console.log('✅ [AdminPaymentService] Instructores cargados:', response.instructors.length);
+          this.instructors.set(response.instructors);
+          this.instructorsSummary.set(response.summary);
+          this.isLoadingInstructors.set(false);
+        },
+        error: (error) => {
+          console.error('❌ [AdminPaymentService] Error al cargar instructores:', error);
+          this.instructorsError.set(error);
+          this.isLoadingInstructors.set(false);
+        }
+      })
+    );
   }
 
-  // 🔥 Métodos para cargar ganancias de un instructor
-  loadInstructorEarnings(instructorId: string, filters?: Partial<EarningsFilters>): void {
-    this.earningsInstructorIdInput.set(instructorId);
-    if (filters?.status !== undefined) this.earningsStatusInput.set(filters.status);
-    if (filters?.startDate !== undefined) this.earningsStartDateInput.set(filters.startDate);
-    if (filters?.endDate !== undefined) this.earningsEndDateInput.set(filters.endDate);
+  /**
+   * Cargar ganancias de un instructor específico
+   */
+  loadInstructorEarnings(instructorId: string, filters: {
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+  } = {}): Observable<any> {
+    console.log('📊 [AdminPaymentService] Cargando ganancias para instructor:', instructorId, 'con filtros:', filters);
+
+    this.isLoadingEarnings.set(true);
+    this.earningsError.set(null);
+
+    let params = new HttpParams();
+    if (filters.status) params = params.set('status', filters.status);
+    if (filters.startDate) params = params.set('startDate', filters.startDate);
+    if (filters.endDate) params = params.set('endDate', filters.endDate);
+
+    return this.http.get<{
+      success: boolean;
+      instructor: any;
+      earnings: Earning[];
+      paymentConfig: any;
+      totals: any;
+    }>(`${this.apiUrl}/instructors/${instructorId}/earnings`, { params }).pipe(
+      tap({
+        next: (response) => {
+          console.log('✅ [AdminPaymentService] Ganancias cargadas:', {
+            count: response.earnings.length,
+            totals: response.totals
+          });
+          this.earnings.set(response.earnings);
+          this.instructor.set(response.instructor);
+          this.paymentConfig.set(response.paymentConfig);
+          this.earningsTotals.set(response.totals);
+          this.isLoadingEarnings.set(false);
+        },
+        error: (error) => {
+          console.error('❌ [AdminPaymentService] Error al cargar ganancias:', error);
+          this.earningsError.set(error);
+          this.isLoadingEarnings.set(false);
+        }
+      })
+    );
   }
 
-  clearInstructorEarnings(): void {
-    this.earningsInstructorIdInput.set('');
-    this.earningsStatusInput.set(undefined);
-    this.earningsStartDateInput.set(undefined);
-    this.earningsEndDateInput.set(undefined);
+  /**
+   * Cargar historial de pagos
+   */
+  loadPaymentsHistory(filters: {
+    status?: string;
+    instructor?: string;
+    page?: number;
+    limit?: number;
+  } = {}): Observable<any> {
+    this.isLoadingPaymentsHistory.set(true);
+    this.paymentsHistoryError.set(null);
+
+    let params = new HttpParams();
+    if (filters.status) params = params.set('status', filters.status);
+    if (filters.instructor) params = params.set('instructor', filters.instructor);
+    params = params.set('page', (filters.page || 1).toString());
+    params = params.set('limit', (filters.limit || 10).toString());
+
+    return this.http.get<{
+      success: boolean;
+      payments: PaymentResponse[];
+      pagination: any;
+    }>(`${this.apiUrl}/payments`, { params }).pipe(
+      tap({
+        next: (response) => {
+          this.paymentsHistory.set(response.payments);
+          this.paymentsPagination.set(response.pagination);
+          this.isLoadingPaymentsHistory.set(false);
+        },
+        error: (error) => {
+          this.paymentsHistoryError.set(error);
+          this.isLoadingPaymentsHistory.set(false);
+        }
+      })
+    );
   }
 
-  // 🔥 Métodos para historial de pagos
-  setPaymentHistoryFilters(filters: Partial<PaymentHistoryFilters>): void {
-    if (filters.status !== undefined) this.paymentHistoryStatusInput.set(filters.status);
-    if (filters.instructor !== undefined) this.paymentHistoryInstructorInput.set(filters.instructor);
-    if (filters.page !== undefined) this.paymentHistoryPageInput.set(filters.page);
-    if (filters.limit !== undefined) this.paymentHistoryLimitInput.set(filters.limit);
+  /**
+   * Cargar configuración de comisiones
+   */
+  loadCommissionSettings(): Observable<any> {
+    this.isLoadingCommission.set(true);
+    this.commissionError.set(null);
+
+    return this.http.get<{
+      success: boolean;
+      settings: CommissionSettings;
+    }>(`${this.apiUrl}/commission-settings`).pipe(
+      tap({
+        next: (response) => {
+          this.commissionSettings.set(response.settings);
+          this.isLoadingCommission.set(false);
+        },
+        error: (error) => {
+          this.commissionError.set(error);
+          this.isLoadingCommission.set(false);
+        }
+      })
+    );
   }
 
-  // 🔥 Recargar datos manualmente
-  reloadInstructors(): void {
-    this.instructorsResource.reload();
-  }
-
-  reloadEarnings(): void {
-    this.earningsResource.reload();
-  }
-
-  reloadPaymentsHistory(): void {
-    this.paymentsHistoryResource.reload();
-  }
-
+  /**
+   * Backwards-compatible wrapper used by components that expect
+   * a `reloadCommissionSettings` method. Calls the existing
+   * `loadCommissionSettings` and subscribes so callers don't need
+   * to subscribe themselves when they just want the data refreshed.
+   */
   reloadCommissionSettings(): void {
-    this.commissionReloadTrigger.update(v => v + 1);
+    this.loadCommissionSettings().subscribe({
+      next: () => {},
+      error: () => {}
+    });
   }
 
-  // 🔥 Métodos imperativos (para operaciones CRUD)
+  // 🔥 MÉTODOS IMPERATIVOS (para operaciones CRUD)
+
   createPayment(instructorId: string, data: CreatePaymentRequest) {
     return this.http.post<{
       success: boolean;
