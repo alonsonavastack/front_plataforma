@@ -6,6 +6,8 @@ import { AuthService } from '../../core/services/auth';
 import { AnimateService } from '../../core/animate.service';
 import { SystemConfigService } from '../../core/services/system-config.service';
 import { WalletService } from '../../core/services/wallet.service'; // 🔥 Para billetera
+import { CoursesService } from '../../core/services/courses';
+import { ProjectService } from '../../core/services/project.service';
 import { initFlowbite } from 'flowbite';
 import { environment } from '../../../environments/environment.development';
 
@@ -22,7 +24,15 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   walletService = inject(WalletService); // 🔥 Para billetera
   router = inject(Router);
   animate = inject(AnimateService);
+
   systemConfigService = inject(SystemConfigService);
+  coursesService = inject(CoursesService); // 🔥 Service
+  projectService = inject(ProjectService); // 🔥 Service
+
+  // Signals for notifications
+  pendingCoursesCount = signal(0);
+  pendingProjectsCount = signal(0);
+  totalPendingReviews = computed(() => this.pendingCoursesCount() + this.pendingProjectsCount());
 
   @ViewChild('headerElement') headerEl!: ElementRef<AnimationCallbackEvent>;
 
@@ -34,9 +44,46 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   });
 
   constructor() {
-    if (this.authService.isLoggedIn()) {
-      this.walletService.loadWallet();
-    }
+    effect(() => {
+      if (this.authService.isLoggedIn()) {
+        this.walletService.loadWallet();
+
+        // Load pending reviews for admin/instructor
+        if (this.authService.user()?.rol === 'admin' || this.authService.user()?.rol === 'instructor') {
+          this.fetchPendingReviews();
+        }
+      }
+    });
+
+    // DEBUG: Check why wallet might be hidden
+    effect(() => {
+      console.log('HEADER DEBUG:', {
+        isLoggedIn: this.authService.isLoggedIn(),
+        isOnAuthPage: this.isOnAuthPage(),
+        user: this.authService.user(),
+        url: this.router.url
+      });
+    });
+  }
+
+
+  fetchPendingReviews() {
+    // 1 = Borrador/Pendiente
+    this.coursesService.getCoursesAdmin(1).subscribe({
+      next: (res) => {
+        // Asumiendo que res.courses son los filtrados
+        this.pendingCoursesCount.set(res.courses.length);
+      },
+      error: () => this.pendingCoursesCount.set(0)
+    });
+
+    this.projectService.getProjectsAdmin(1).subscribe({
+      next: (res) => {
+        // Asumiendo que res.projects son los filtrados
+        this.pendingProjectsCount.set(res.projects.length);
+      },
+      error: () => this.pendingProjectsCount.set(0)
+    });
   }
 
   // Fix: Bind the function once to ensure add/remove works correctly

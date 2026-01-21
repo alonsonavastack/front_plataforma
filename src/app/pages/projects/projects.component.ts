@@ -1,4 +1,4 @@
-
+import { HttpEventType, HttpEvent } from '@angular/common/http';
 import { Component, OnInit, inject, signal, computed } from "@angular/core";
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { Project } from "../../core/models/home.models";
@@ -72,6 +72,8 @@ export class ProjectsComponent implements OnInit {
   deletingFileId = signal<string | null>(null);
   fileErrorMessages = signal<string[]>([]);
   fileSuccessMessage = signal<string>('');
+  uploadPercentage = signal(0); // 🆕 Progreso de subida
+  deletePercentage = signal(0); // 🆕 Progreso de eliminación
 
   private readonly MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
@@ -590,24 +592,43 @@ export class ProjectsComponent implements OnInit {
     });
 
     this.projectService.uploadFiles(projectId, formData).subscribe({
-      next: (response) => {
-        this.fileSuccessMessage.set(`Se subieron ${response.uploadedFiles} archivo(s) correctamente`);
+      next: (event: HttpEvent<any>) => {
+        switch (event.type) {
+          case HttpEventType.UploadProgress:
+            if (event.total) {
+              const progress = Math.round((100 * event.loaded) / event.total);
+              this.uploadPercentage.set(progress);
+            }
+            break;
 
-        if (response.errors && response.errors.length > 0) {
-          this.fileErrorMessages.set(response.errors);
+          case HttpEventType.Response:
+            // Al finalizar, aseguramos 100% y esperamos un poco
+            this.uploadPercentage.set(100);
+
+            setTimeout(() => {
+              const response = event.body;
+              this.fileSuccessMessage.set(`Se subieron ${response.uploadedFiles} archivo(s) correctamente`);
+
+              if (response.errors && response.errors.length > 0) {
+                this.fileErrorMessages.set(response.errors);
+              }
+
+              this.selectedFiles.set([]);
+              this.loadProjectFiles(projectId);
+              this.uploadingFiles.set(false);
+              this.uploadPercentage.set(0); // Resetear progreso
+
+              setTimeout(() => {
+                this.fileSuccessMessage.set('');
+              }, 5000);
+            }, 1000); // 1 segundo de "Completado" al 100%
+            break;
         }
-
-        this.selectedFiles.set([]);
-        this.loadProjectFiles(projectId);
-        this.uploadingFiles.set(false);
-
-        setTimeout(() => {
-          this.fileSuccessMessage.set('');
-        }, 5000);
       },
       error: (error) => {
         this.fileErrorMessages.set(['Error al subir los archivos. Por favor, intenta de nuevo.']);
         this.uploadingFiles.set(false);
+        this.uploadPercentage.set(0);
       }
     });
   }
@@ -621,20 +642,39 @@ export class ProjectsComponent implements OnInit {
     if (!projectId) return;
 
     this.deletingFileId.set(file._id);
+    this.deletePercentage.set(0);
+
+    // Simular progreso de eliminación (hasta 90%)
+    let progress = 0;
+    const interval = setInterval(() => {
+      if (progress < 90) {
+        progress += Math.floor(Math.random() * 5) + 5;
+        if (progress > 90) progress = 90;
+        this.deletePercentage.set(progress);
+      }
+    }, 200);
 
     this.projectService.deleteFile(projectId, file._id).subscribe({
       next: (response) => {
-        this.fileSuccessMessage.set('Archivo eliminado correctamente');
-        this.loadProjectFiles(projectId);
-        this.deletingFileId.set(null);
+        clearInterval(interval);
+        this.deletePercentage.set(100);
 
         setTimeout(() => {
-          this.fileSuccessMessage.set('');
-        }, 3000);
+          this.fileSuccessMessage.set('Archivo eliminado correctamente');
+          this.loadProjectFiles(projectId);
+          this.deletingFileId.set(null);
+          this.deletePercentage.set(0);
+
+          setTimeout(() => {
+            this.fileSuccessMessage.set('');
+          }, 3000);
+        }, 1000); // 1 segundo en 100%
       },
       error: (error) => {
+        clearInterval(interval);
         this.fileErrorMessages.set(['Error al eliminar el archivo']);
         this.deletingFileId.set(null);
+        this.deletePercentage.set(0);
       }
     });
   }

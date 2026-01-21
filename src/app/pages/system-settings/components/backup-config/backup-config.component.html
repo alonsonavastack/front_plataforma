@@ -40,6 +40,36 @@
                 {{ isDownloading() ? 'Generando...' : 'Descargar Respaldo' }}
             </button>
         </div>
+
+
+
+        <!-- Progress Bar (Solo visible descargando) -->
+        <div *ngIf="isDownloading()" class="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+            <div class="flex justify-between mb-1">
+                <span class="text-sm font-medium text-blue-700">
+                    <i class="fas fa-cog fa-spin mr-2" *ngIf="downloadPercentage() === 0"></i>
+                    {{ downloadPercentage() > 0 ? 'Descargando archivo...' : 'Generando respaldo...' }}
+                </span>
+                <span class="text-sm font-medium text-blue-700">{{ downloadPercentage() }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                <!-- Barra animada indeterminada cuando está en 0% (Generando) -->
+                <div *ngIf="downloadPercentage() === 0" class="bg-blue-600 h-2.5 rounded-full animate-pulse w-full">
+                </div>
+
+                <!-- Barra normal cuando hay progreso -->
+                <div *ngIf="downloadPercentage() > 0"
+                    class="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-out"
+                    [style.width.%]="downloadPercentage()">
+                </div>
+            </div>
+
+            <!-- Hint para el usuario -->
+            <p *ngIf="downloadPercentage() === 0" class="text-xs text-blue-500 mt-2">
+                El servidor está preparando el archivo. Esto puede tardar unos segundos dependiendo del tamaño de la
+                base de datos.
+            </p>
+        </div>
     </div>
 
     <!-- SECCIÓN DE RESTAURACIÓN -->

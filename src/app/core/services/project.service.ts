@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpEvent } from '@angular/common/http';
 import { Injectable, inject, signal, effect, computed } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -83,8 +83,11 @@ export class ProjectService {
    * @param projectId ID del proyecto
    * @param formData FormData con los archivos ZIP
    */
-  uploadFiles(projectId: string, formData: FormData): Observable<any> {
-    return this.http.post<any>(`${this.url}/upload-files/${projectId}`, formData);
+  uploadFiles(projectId: string, formData: FormData): Observable<HttpEvent<any>> {
+    return this.http.post<any>(`${this.url}/upload-files/${projectId}`, formData, {
+      reportProgress: true,
+      observe: 'events'
+    });
   }
 
   /**

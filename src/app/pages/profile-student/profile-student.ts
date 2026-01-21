@@ -793,10 +793,48 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
         this.profileStudentService.reloadProfile();
         this.isSubmitting.set(false);
       },
-      error: (err) => {
-        this.toast.error('Error', 'Ocurrió un error al actualizar tu perfil.');
-        this.isSubmitting.set(false);
+    });
+  }
+
+  // 🗑️ Eliminar cuenta de usuario
+  async deleteAccount() {
+    const confirmed = await this.modalService.confirm({
+      title: '¿Estás seguro de eliminar tu cuenta?',
+      message: 'Esta acción es irreversible. Perderás acceso a todos tus cursos, proyectos y el historial de compras de forma permanente. ¿Deseas continuar?',
+      icon: 'error',
+      confirmText: 'Sí, continuar',
+      cancelText: 'Cancelar'
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    // 🔒 Solicitar contraseña para confirmar
+    const password = await this.modalService.prompt({
+      title: 'Confirmación de Seguridad',
+      message: 'Por favor, introduce tu contraseña actual para confirmar la eliminación definitiva de tu cuenta.',
+      icon: 'warning',
+      confirmText: 'ELIMINAR MI CUENTA',
+      cancelText: 'Cancelar',
+      inputType: 'password',
+      placeholder: 'Tu contraseña actual'
+    });
+
+    if (!password) {
+      return;
+    }
+
+    this.profileStudentService.deleteAccount(password as string).subscribe({
+      next: () => {
+        this.toast.success('Cuenta eliminada', 'Tu cuenta ha sido eliminada correctamente.');
+        this.authService.logout(); // Cerrar sesión
       },
+      error: (err) => {
+        console.error(err);
+        const errorMsg = err.error?.message_text || 'No se pudo eliminar la cuenta. Verifica tu contraseña.';
+        this.toast.error('Error', errorMsg);
+      }
     });
   }
 

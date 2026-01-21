@@ -119,9 +119,11 @@ export class SystemConfigService {
   /**
    * Descargar respaldo manual
    */
-  downloadBackup(): Observable<Blob> {
+  downloadBackup(): Observable<any> {
     return this.http.get(`${this.API_URL}/backup/download`, {
-      responseType: 'blob'
+      responseType: 'blob',
+      reportProgress: true,
+      observe: 'events'
     });
   }
 
@@ -131,6 +133,9 @@ export class SystemConfigService {
   restoreBackup(file: File): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.http.post(`${this.API_URL}/backup/restore`, formData);
+    return this.http.post(`${this.API_URL}/backup/restore`, formData, {
+      reportProgress: true,
+      observe: 'events'
+    });
   }
 }

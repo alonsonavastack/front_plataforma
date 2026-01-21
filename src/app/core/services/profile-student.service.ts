@@ -227,4 +227,15 @@ export class ProfileStudentService {
   loadRefunds(): Observable<any> {
     return this.http.get(`${environment.url}refunds/list`);
   }
+
+  deleteAccount(password: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    });
+    // Angular HttpClient delete supports body
+    return this.http.delete(`${environment.url}users/delete-my-account`, {
+      headers,
+      body: { password }
+    });
+  }
 }

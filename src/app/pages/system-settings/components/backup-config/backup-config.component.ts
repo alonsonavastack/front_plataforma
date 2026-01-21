@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { SystemConfigService } from '../../../../core/services/system-config.service';
 import { WebsocketService } from '../../../../core/services/websocket.service';
 import { Subscription } from 'rxjs';
+import { HttpEventType, HttpEvent } from '@angular/common/http';
 
 @Component({
     selector: 'app-backup-config',
@@ -21,6 +22,9 @@ export class BackupConfigComponent implements OnInit, OnDestroy {
     // Progreso en tiempo real
     restorePercentage = signal(0);
     restoreMessage = signal('');
+
+    // Progreso de descarga
+    downloadPercentage = signal(0);
 
     ngOnInit() {
         // Escuchar eventos de progreso del socket
@@ -44,21 +48,54 @@ export class BackupConfigComponent implements OnInit, OnDestroy {
         if (this.isDownloading()) return;
 
         this.isDownloading.set(true);
+        this.downloadPercentage.set(0);
+
+        // Simulamos progreso mientras el servidor genera el archivo (hasta 90%)
+        let progress = 0;
+        const interval = setInterval(() => {
+            if (progress < 90) {
+                // Incremento variable para que parezca natural
+                progress += Math.floor(Math.random() * 3) + 1;
+                if (progress > 90) progress = 90;
+                this.downloadPercentage.set(progress);
+            }
+        }, 800);
 
         this.systemConfigService.downloadBackup().subscribe({
-            next: (blob) => {
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-                link.download = `backup-${timestamp}.zip`;
-                link.click();
-                window.URL.revokeObjectURL(url);
-                this.isDownloading.set(false);
+            next: (event: HttpEvent<any>) => {
+                switch (event.type) {
+                    case HttpEventType.DownloadProgress:
+                        clearInterval(interval); // Detener simulación
+                        if (event.total) {
+                            const realProgress = Math.round((100 * event.loaded) / event.total);
+                            this.downloadPercentage.set(Math.max(realProgress, progress)); // No retroceder
+                        }
+                        break;
+                    case HttpEventType.Response:
+                        clearInterval(interval); // Detener simulación
+                        this.downloadPercentage.set(100); // Forzar 100% al finalizar
+
+                        setTimeout(() => {
+                            const blob = event.body;
+                            const url = window.URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                            link.download = `backup-${timestamp}.zip`;
+                            link.click();
+                            window.URL.revokeObjectURL(url);
+
+                            this.isDownloading.set(false);
+                            this.downloadPercentage.set(0);
+                        }, 1000); // Esperar 1s para que el usuario vea el 100%
+                        break;
+                }
             },
             error: () => {
+                clearInterval(interval); // Detener simulación
                 alert('❌ Error al descargar el respaldo');
                 this.isDownloading.set(false);
+                this.downloadPercentage.set(0);
             }
         });
     }
@@ -88,16 +125,33 @@ export class BackupConfigComponent implements OnInit, OnDestroy {
         this.restoreMessage.set('Iniciando carga...');
 
         this.systemConfigService.restoreBackup(file).subscribe({
-            next: (response) => {
-                alert('✅ Base de datos restaurada correctamente.\n\n' + response.message);
-                this.isRestoring.set(false);
-                // Reload ya manejado por socket al llegar a 100%
+            next: (event: HttpEvent<any>) => {
+                switch (event.type) {
+                    case HttpEventType.UploadProgress:
+                        if (event.total) {
+                            const progress = Math.round((100 * event.loaded) / event.total);
+                            this.restorePercentage.set(progress);
+                            this.restoreMessage.set('Subiendo archivo...');
+                        }
+                        break;
+                    case HttpEventType.Response:
+                        this.restorePercentage.set(100);
+                        this.restoreMessage.set('Completado');
+
+                        setTimeout(() => {
+                            alert('✅ Base de datos restaurada correctamente.\n\n' + event.body.message);
+                            this.isRestoring.set(false);
+                            this.restorePercentage.set(0);
+                        }, 1000);
+                        break;
+                }
             },
             error: (err) => {
                 console.error(err);
                 const errorMsg = err.error?.message || 'Error desconocido';
                 alert('❌ Error al restaurar la base de datos:\n' + errorMsg);
                 this.isRestoring.set(false);
+                this.restorePercentage.set(0);
             }
         });
     }
