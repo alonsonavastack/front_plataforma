@@ -1,0 +1,104 @@
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SystemConfigService } from '../../../../core/services/system-config.service';
+import { WebsocketService } from '../../../../core/services/websocket.service';
+import { Subscription } from 'rxjs';
+
+@Component({
+    selector: 'app-backup-config',
+    standalone: true,
+    imports: [CommonModule],
+    templateUrl: './backup-config.component.html'
+})
+export class BackupConfigComponent implements OnInit, OnDestroy {
+    private systemConfigService = inject(SystemConfigService);
+    private websocketService = inject(WebsocketService);
+    private wsSubscription?: Subscription;
+
+    isDownloading = signal(false);
+    isRestoring = signal(false);
+
+    // Progreso en tiempo real
+    restorePercentage = signal(0);
+    restoreMessage = signal('');
+
+    ngOnInit() {
+        // Escuchar eventos de progreso del socket
+        this.wsSubscription = this.websocketService.restoreProgress$.subscribe(data => {
+            console.log('📡 Progreso recibido:', data);
+            this.restorePercentage.set(data.percentage);
+            this.restoreMessage.set(data.message);
+
+            // Si llega al 100%, esperar un poco y recargar
+            if (data.percentage === 100) {
+                setTimeout(() => window.location.reload(), 2000);
+            }
+        });
+    }
+
+    ngOnDestroy() {
+        this.wsSubscription?.unsubscribe();
+    }
+
+    downloadBackup() {
+        if (this.isDownloading()) return;
+
+        this.isDownloading.set(true);
+
+        this.systemConfigService.downloadBackup().subscribe({
+            next: (blob) => {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                link.download = `backup-${timestamp}.zip`;
+                link.click();
+                window.URL.revokeObjectURL(url);
+                this.isDownloading.set(false);
+            },
+            error: () => {
+                alert('❌ Error al descargar el respaldo');
+                this.isDownloading.set(false);
+            }
+        });
+    }
+
+    onFileSelected(event: any) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (!file.name.endsWith('.zip')) {
+            alert('❌ Por favor selecciona un archivo .zip válido');
+            return;
+        }
+
+        if (confirm('⚠️ ¿Estás seguro de que quieres restaurar este respaldo?\n\nESTA ACCIÓN ES DESTRUCTIVA: Se borrarán todos los datos actuales y se reemplazarán con los del respaldo.\n\nEsta acción no se puede deshacer.')) {
+            this.restoreBackup(file);
+        } else {
+            // Reset input
+            event.target.value = '';
+        }
+    }
+
+    restoreBackup(file: File) {
+        if (this.isRestoring()) return;
+
+        this.isRestoring.set(true);
+        this.restorePercentage.set(0);
+        this.restoreMessage.set('Iniciando carga...');
+
+        this.systemConfigService.restoreBackup(file).subscribe({
+            next: (response) => {
+                alert('✅ Base de datos restaurada correctamente.\n\n' + response.message);
+                this.isRestoring.set(false);
+                // Reload ya manejado por socket al llegar a 100%
+            },
+            error: (err) => {
+                console.error(err);
+                const errorMsg = err.error?.message || 'Error desconocido';
+                alert('❌ Error al restaurar la base de datos:\n' + errorMsg);
+                this.isRestoring.set(false);
+            }
+        });
+    }
+}

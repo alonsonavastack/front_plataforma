@@ -10,6 +10,7 @@ import { ContactInfoComponent } from './components/contact-info/contact-info.com
 import { SocialMediaComponent } from './components/social-media/social-media.component';
 import { AuthService } from '../../core/services/auth';
 import { AdminPaymentSettingsComponent } from '../admin-payment-settings/admin-payment-settings.component'; // 🆕
+import { BackupConfigComponent } from './components/backup-config/backup-config.component';
 
 @Component({
   selector: 'app-system-settings',
@@ -19,7 +20,8 @@ import { AdminPaymentSettingsComponent } from '../admin-payment-settings/admin-p
     BasicInfoComponent,
     ContactInfoComponent,
     SocialMediaComponent,
-    AdminPaymentSettingsComponent // 🆕
+    AdminPaymentSettingsComponent, // 🆕
+    BackupConfigComponent
   ],
   templateUrl: './system-settings.component.html'
 })
@@ -37,7 +39,7 @@ export class SystemSettingsComponent implements OnInit {
 
   // Signals para UI
   isSaving = signal(false);
-  activeTab = signal<'basic' | 'contact' | 'social' | 'payment'>('basic');
+  activeTab = signal<'basic' | 'contact' | 'social' | 'payment' | 'backup'>('basic');
   showSuccess = signal(false);
   formIsValid = signal(false); // 🔥 Signal reactivo para estado del formulario
 
@@ -103,7 +105,10 @@ export class SystemSettingsComponent implements OnInit {
       twitch: [''],
       twitter: [''],
       linkedin: [''],
-      website: ['']
+      website: [''],
+
+      // Backup
+      backup_enabled: [false]
     });
   }
 
@@ -141,7 +146,9 @@ export class SystemSettingsComponent implements OnInit {
       twitch: config.socialMedia?.twitch || '',
       twitter: config.socialMedia?.twitter || '',
       linkedin: config.socialMedia?.linkedin || '',
-      website: config.socialMedia?.website || ''
+      website: config.socialMedia?.website || '',
+
+      backup_enabled: config.backup?.enabled || false
     });
 
     // ❌ ELIMINADO: No se puede hacer .set() en un computed signal
@@ -158,7 +165,7 @@ export class SystemSettingsComponent implements OnInit {
   /**
    * Cambiar tab activo
    */
-  setActiveTab(tab: 'basic' | 'contact' | 'social' | 'payment'): void {
+  setActiveTab(tab: 'basic' | 'contact' | 'social' | 'payment' | 'backup'): void {
     this.activeTab.set(tab);
   }
 
@@ -215,7 +222,11 @@ export class SystemSettingsComponent implements OnInit {
       formData.append('twitch', formValues.twitch || '');
       formData.append('twitter', formValues.twitter || '');
       formData.append('linkedin', formValues.linkedin || '');
+      formData.append('linkedin', formValues.linkedin || '');
       formData.append('website', formValues.website || '');
+
+      // Backup
+      formData.append('backup_enabled', String(formValues.backup_enabled));
 
       // Agregar logo si hay uno nuevo
       const logoFile = this.basicInfoComponent?.getLogoFile();

@@ -52,6 +52,11 @@ export interface RefundNotification {
   requestedAt: string;
 }
 
+export interface RestoreProgressNotification {
+  percentage: number;
+  message: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -63,12 +68,14 @@ export class WebsocketService {
   private newSaleSubject = new Subject<SaleNotification>();
   private saleStatusUpdateSubject = new Subject<SaleNotification>();
   private newRefundRequestSubject = new Subject<RefundNotification>(); // 🆕
+  private restoreProgressSubject = new Subject<RestoreProgressNotification>(); // 🆕 Backup Progress
   private connectionSubject = new Subject<boolean>();
 
   // Observables públicos
   public newSale$ = this.newSaleSubject.asObservable();
   public saleStatusUpdate$ = this.saleStatusUpdateSubject.asObservable();
   public newRefundRequest$ = this.newRefundRequestSubject.asObservable(); // 🆕
+  public restoreProgress$ = this.restoreProgressSubject.asObservable(); // 🆕
   public connection$ = this.connectionSubject.asObservable();
 
   constructor() { }
@@ -136,6 +143,11 @@ export class WebsocketService {
     // 🆕 Evento: Nueva solicitud de reembolso
     this.socket.on('new_refund_request', (refund: RefundNotification) => {
       this.newRefundRequestSubject.next(refund);
+    });
+
+    // 🆕 Evento: Progreso de Restauración
+    this.socket.on('restore_progress', (data: RestoreProgressNotification) => {
+      this.restoreProgressSubject.next(data);
     });
 
     // Evento: Desconexión

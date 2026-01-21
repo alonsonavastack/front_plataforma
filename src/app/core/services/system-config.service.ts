@@ -115,4 +115,22 @@ export class SystemConfigService {
       error: null
     });
   }
+
+  /**
+   * Descargar respaldo manual
+   */
+  downloadBackup(): Observable<Blob> {
+    return this.http.get(`${this.API_URL}/backup/download`, {
+      responseType: 'blob'
+    });
+  }
+
+  /**
+   * Restaurar respaldo desde ZIP
+   */
+  restoreBackup(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${this.API_URL}/backup/restore`, formData);
+  }
 }

@@ -52,6 +52,13 @@
           class="flex-1 px-4 py-3 rounded-lg font-medium transition-all">
           💳 Métodos de Pago
         </button>
+
+        <button (click)="setActiveTab('backup')" [class.bg-lime-500]="activeTab() === 'backup'"
+          [class.text-slate-900]="activeTab() === 'backup'" [class.text-slate-300]="activeTab() !== 'backup'"
+          [class.hover:bg-slate-700]="activeTab() !== 'backup'"
+          class="flex-1 px-4 py-3 rounded-lg font-medium transition-all">
+          💾 Backups
+        </button>
       </div>
     </div>
 
@@ -67,7 +74,12 @@
     <!-- Tab: Métodos de Pago (Fuera del form principal) -->
     @if (activeTab() === 'payment') {
     <app-admin-payment-settings />
-    } @else {
+    }
+    <!-- Tab: Backups (Fuera del form principal) -->
+    @else if (activeTab() === 'backup') {
+    <app-backup-config />
+    }
+    @else {
     <!-- Formulario para otras configuraciones -->
     <form [formGroup]="configForm" (ngSubmit)="onSubmit()">
       <!-- Tab: Información Básica -->

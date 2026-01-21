@@ -1,0 +1,103 @@
+<div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+            <i class="fas fa-database mr-2 text-primary-600"></i>
+            Respaldo y Restauración
+        </h3>
+    </div>
+
+    <div class="mb-6 text-sm text-gray-500 dark:text-gray-400">
+        <p>
+            Administre las copias de seguridad de su base de datos. Puede descargar un respaldo actual o restaurar uno
+            anterior.
+        </p>
+    </div>
+
+    <!-- SECCIÓN DE DESCARGA -->
+    <div class="mb-8">
+        <h4 class="text-md font-medium text-gray-900 dark:text-white mb-3">Descargar Respaldo Actual</h4>
+        <div
+            class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+
+            <div class="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                <i class="fas fa-file-archive text-2xl mr-3 text-yellow-500"></i>
+                <div>
+                    <span class="block font-semibold">Generar ZIP</span>
+                    <span class="text-xs">Incluye dump completo de MongoDB</span>
+                </div>
+            </div>
+
+            <button (click)="downloadBackup()" [disabled]="isDownloading() || isRestoring()"
+                class="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-white inline-flex items-center justify-center bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 rounded-lg text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 disabled:opacity-50 disabled:cursor-not-allowed">
+
+                <span *ngIf="isDownloading()" class="mr-2">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </span>
+                <span *ngIf="!isDownloading()" class="mr-2">
+                    <i class="fas fa-download"></i>
+                </span>
+                {{ isDownloading() ? 'Generando...' : 'Descargar Respaldo' }}
+            </button>
+        </div>
+    </div>
+
+    <!-- SECCIÓN DE RESTAURACIÓN -->
+    <div class="mb-4">
+        <h4 class="text-md font-medium text-red-600 dark:text-red-400 mb-3 flex items-center">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            Restaurar Base de Datos
+        </h4>
+
+        <div
+            class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-200 dark:border-red-900/30">
+
+            <div class="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                <i class="fas fa-upload text-2xl mr-3 text-red-500"></i>
+                <div>
+                    <span class="block font-semibold text-gray-900 dark:text-gray-100">Subir archivo ZIP</span>
+                    <span class="text-xs text-red-600 dark:text-red-400 font-bold">⚠️ Esta acción reemplazará toda la
+                        base de datos actual.</span>
+                </div>
+            </div>
+
+            <div class="w-full sm:w-auto">
+                <input type="file" #fileInput (change)="onFileSelected($event)" accept=".zip" class="hidden">
+
+                <button (click)="fileInput.click()" [disabled]="isRestoring() || isDownloading()"
+                    class="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-white inline-flex items-center justify-center bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 rounded-lg text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900 disabled:opacity-50 disabled:cursor-not-allowed">
+
+                    <span *ngIf="isRestoring()" class="mr-2">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </span>
+                    <span *ngIf="!isRestoring()" class="mr-2">
+                        <i class="fas fa-upload"></i>
+                    </span>
+                    {{ isRestoring() ? 'Restaurando...' : 'Subir y Restaurar' }}
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress Bar (Solo visible restaurando) -->
+        <div *ngIf="isRestoring()" class="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+            <div class="flex justify-between mb-1">
+                <span class="text-sm font-medium text-blue-700">{{ restoreMessage() }}</span>
+                <span class="text-sm font-medium text-blue-700">{{ restorePercentage() }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-out"
+                    [style.width.%]="restorePercentage()"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4 flex items-start p-4 mb-4 text-sm text-blue-800 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400"
+        role="alert">
+        <i class="fas fa-info-circle flex-shrink-0 w-4 h-4 mt-[2px] mr-3"></i>
+        <div>
+            <span class="font-medium">Nota:</span>
+            Para la restauración, asegúrese de subir un archivo .zip válido generado previamente por este sistema. El
+            proceso puede tardar unos minutos.
+        </div>
+    </div>
+</div>
