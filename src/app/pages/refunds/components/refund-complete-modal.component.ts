@@ -28,7 +28,7 @@ import { Refund } from '../../../core/services/refunds.service';
                 </h2>
                 @if (refund()) {
                   <p class="text-slate-400">
-                    Transferencia a {{ refund()!.user?.name }} {{ refund()!.user?.surname }}
+                    Reembolso a {{ refund()!.user?.name }} {{ refund()!.user?.surname }}
                   </p>
                 }
               </div>
@@ -57,39 +57,35 @@ import { Refund } from '../../../core/services/refunds.service';
                 </div>
               </div>
 
-              <!-- Datos Bancarios del Cliente -->
+              <!-- Método de Pago -->
               <div class="bg-slate-900 rounded-lg p-4">
-                <h3 class="text-sm font-medium text-slate-400 mb-3">🏦 Información Bancaria</h3>
+                <h3 class="text-sm font-medium text-slate-400 mb-3">💳 Método de Pago</h3>
                 <div class="space-y-2">
                   <div class="flex justify-between">
-                    <span class="text-slate-400">Banco:</span>
-                    <span class="text-white font-medium">{{ ref.refundDetails.bankName || '-' }}</span>
+                    <span class="text-slate-400">Método:</span>
+                    <span class="text-white font-medium">{{ ref.sale?.paymentMethod || 'N/A' }}</span>
                   </div>
                   <div class="flex justify-between">
-                    <span class="text-slate-400">Titular:</span>
+                    <span class="text-slate-400">Nota:</span>
                     <span class="text-white">{{ ref.refundDetails.accountHolder || '-' }}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-slate-400">Cuenta:</span>
-                    <span class="text-white font-mono text-sm">{{ ref.refundDetails.bankAccount || '-' }}</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Campo: Número de Referencia -->
+              <!-- Campo: Número de Referencia / ID (opcional) -->
               <div>
                 <label class="block text-sm font-medium text-slate-300 mb-2">
-                  Número de Referencia / Folio de Transferencia *
+                  Número de Referencia / ID de Transacción (opcional)
                 </label>
                 <input
                   type="text"
                   [(ngModel)]="receiptNumber"
-                  placeholder="Ej: TR123456789"
+                  placeholder="Ej: TR123456789 o TXN12345"
                   class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-lime-400"
                   [disabled]="isProcessing()"
                 />
                 <p class="text-xs text-slate-400 mt-1">
-                  Ingresa el número de referencia o folio que proporciona tu banco
+                  Opcional: Ingresa el ID de transacción o referencia si aplica (PayPal / proveedor de pago).
                 </p>
               </div>
 
@@ -106,7 +102,7 @@ import { Refund } from '../../../core/services/refunds.service';
                   [disabled]="isProcessing()"
                 />
                 <p class="text-xs text-slate-400 mt-1">
-                  Opcional: Sube el comprobante de transferencia (imagen o PDF)
+                  Opcional: Sube el comprobante (imagen o PDF)
                 </p>
               </div>
 
@@ -115,14 +111,14 @@ import { Refund } from '../../../core/services/refunds.service';
                 <div class="flex items-start gap-3">
                   <span class="text-2xl flex-shrink-0">ℹ️</span>
                   <div class="text-sm text-blue-300">
-                    <p class="font-medium mb-1">Instrucciones:</p>
-                    <ol class="list-decimal list-inside space-y-1 text-blue-200">
-                      <li>Realiza la transferencia a los datos bancarios mostrados</li>
-                      <li>Ingresa el número de referencia proporcionado por tu banco</li>
-                      <li>Opcionalmente, sube el comprobante de pago</li>
-                      <li>El cliente recibirá una notificación automáticamente</li>
-                    </ol>
-                  </div>
+                      <p class="font-medium mb-1">Instrucciones:</p>
+                      <ol class="list-decimal list-inside space-y-1 text-blue-200">
+                        <li>Procesa el reembolso a través del método de pago indicado (PayPal o Wallet)</li>
+                        <li>Si corresponde, ingresa el ID de transacción o número de referencia</li>
+                        <li>Opcionalmente, sube un comprobante (imagen o PDF)</li>
+                        <li>El cliente recibirá una notificación automáticamente</li>
+                      </ol>
+                    </div>
                 </div>
               </div>
 
@@ -133,7 +129,7 @@ import { Refund } from '../../../core/services/refunds.service';
                   <div class="text-sm text-yellow-300">
                     <p class="font-medium mb-1">Importante:</p>
                     <p class="text-yellow-200">
-                      Solo marca como completado si ya realizaste la transferencia. 
+                      Solo marca como completado si ya procesaste el reembolso.
                       Esta acción no se puede deshacer.
                     </p>
                   </div>
@@ -146,7 +142,7 @@ import { Refund } from '../../../core/services/refunds.service';
               <div class="flex gap-3">
                 <button
                   (click)="handleComplete()"
-                  [disabled]="!receiptNumber.trim() || isProcessing()"
+                  [disabled]="isProcessing()"
                   class="flex-1 px-4 py-3 bg-lime-500 hover:bg-lime-600 disabled:opacity-50 disabled:cursor-not-allowed text-black font-medium rounded-lg transition-colors"
                 >
                   @if (isProcessing()) {
@@ -225,9 +221,10 @@ export class RefundCompleteModalComponent {
 
   handleComplete() {
     const ref = this.refund();
-    if (!ref || !this.receiptNumber.trim() || this.isProcessing()) return;
+    if (!ref || this.isProcessing()) return;
 
-    const confirmMsg = `¿Confirmar que has transferido ${this.formatCurrency(ref.calculations.refundAmount)}?\n\nNúmero de referencia: ${this.receiptNumber.trim()}\n\nEsta acción no se puede deshacer.`;
+    const reference = this.receiptNumber.trim() || 'N/A';
+    const confirmMsg = `¿Confirmar que has procesado el reembolso de ${this.formatCurrency(ref.calculations.refundAmount)}?\n\nID de transacción: ${reference}\n\nEsta acción no se puede deshacer.`;
 
     if (!confirm(confirmMsg)) return;
 

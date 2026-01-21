@@ -1,4 +1,5 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { ToastService } from '../../core/services/toast.service';
 
 import { ReactiveFormsModule, FormGroup, FormControl, FormsModule } from '@angular/forms';
 import { AdminPaymentService } from '../../core/services/admin-payment.service';
@@ -12,6 +13,7 @@ import { environment } from '../../../environments/environment';
 })
 export class AdminPaymentHistoryComponent implements OnInit {
   private adminPaymentService = inject(AdminPaymentService);
+  private toast = inject(ToastService);
 
   payments = this.adminPaymentService.paymentsHistory;
   isLoading = this.adminPaymentService.isLoadingPaymentsHistory;
@@ -202,6 +204,18 @@ export class AdminPaymentHistoryComponent implements OnInit {
       month: 'short',
       day: 'numeric'
     });
+  }
+
+  /** Copiar monto (numérico) al portapapeles para pegar en PayPal */
+  async copyAmount(amount?: number) {
+    const value = (typeof amount === 'number') ? amount.toFixed(2) : '0.00';
+    try {
+      await navigator.clipboard.writeText(value);
+      this.toast.success('Monto copiado', `${value} MXN`);
+    } catch (err) {
+      console.error('❌ [AdminPaymentHistory.copyAmount] Error copiando al portapapeles:', err);
+      this.toast.error('No se pudo copiar', 'Tu navegador no permite el portapapeles');
+    }
   }
 
   getStatusBadgeClass(status: string): string {

@@ -34,6 +34,8 @@ import { NavId, NavItem } from './nav.types';
 import { SystemSettingsComponent } from "../system-settings/system-settings.component";
 import { SystemConfigService } from '../../core/services/system-config.service'; // 🔥 NUEVO
 import { ReportsComponent } from '../reports/reports.component';
+import { AdminTaxBreakdownComponent } from '../admin-tax-breakdown/admin-tax-breakdown.component'; // 🧮 NUEVO
+import { CouponsComponent } from './coupons/coupons.component'; // 🎟 NUEVO
 
 @Component({
   standalone: true,
@@ -63,7 +65,10 @@ import { ReportsComponent } from '../reports/reports.component';
     SystemSettingsComponent,
     RefundsComponent,
     AdminWalletsComponent,
-    ReviewNotificationsComponent // 🔥 NUEVO
+    AdminWalletsComponent,
+    ReviewNotificationsComponent, // 🔥 NUEVO
+    AdminTaxBreakdownComponent, // 🧮 NUEVO
+    CouponsComponent // 🎟 NUEVO
   ],
   templateUrl: './dashboard.html',
 })
@@ -149,6 +154,14 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // 🔥 SET ACTIVE MEJORADO
   setActive(s: NavId) {
+    // 🔥 VALIDAR ACCESO A MÓDULO
+    if (!this.isSectionAllowed(s)) {
+      // Redirigir a una sección segura por defecto
+      const fallback = this.authService.user()?.rol === 'admin' ? 'executive-dashboard' : 'instructor-earnings';
+      this.setActive(fallback as NavId); // Recursivo pero seguro porque los fallbacks son seguros
+      return;
+    }
+
     this.active = s;
 
     // Actualizar la URL con query param
@@ -169,6 +182,15 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.isMobile()) {
       this.closeMobileSidebar();
     }
+  }
+
+  // 🔥 CHECK: Validar si la sección está permitida
+  private isSectionAllowed(section: NavId): boolean {
+    if (section === 'courses') {
+      const coursesEnabled = this.systemConfigService.config()?.modules?.courses ?? true;
+      return coursesEnabled;
+    }
+    return true;
   }
 
   // 🔥 MÉTODO DEDICADO PARA CERRAR SIDEBAR EN MÓVIL
@@ -217,11 +239,13 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     { id: 'admin-instructor-payments', label: 'Pagos a Instructores', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', adminOnly: true },
     { id: 'admin-payment-history', label: 'Historial de Pagos', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', adminOnly: true },
     { id: 'admin-commission-settings', label: 'Comisiones', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', adminOnly: true },
+    { id: 'admin-tax-breakdown', label: 'Desglose Fiscal', icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z', adminOnly: true }, // 🧮 NUEVO
 
     // Instructor - Pagos
     { id: 'instructor-earnings', label: 'Mis Ganancias', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
     { id: 'instructor-payment-history', label: 'Mis Pagos', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
     { id: 'instructor-payment-config', label: 'Config. de Pago', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.608 3.292 0z M12 12a3 3 0 100-6 3 3 0 000 6z' },
+    { id: 'coupons', label: 'Cupones de Referido', icon: 'M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z' }, // 🎟 NUEVO
     // 💰 Admin - Reembolsos
     { id: 'refunds', label: 'Solicitudes de Reembolso', icon: 'M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6', adminOnly: true },
     // 💰 Admin - Billeteras
@@ -232,6 +256,16 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const user = this.authService.user();
     const userRole = user?.rol;
 
+    // 🔥 VERIFICAR SI EL MÓDULO DE CURSOS ESTÁ ACTIVO
+    // Si no está definido (undefined), asumimos true por defecto
+    const coursesEnabled = this.systemConfigService.config()?.modules?.courses ?? true;
+
+    // Si está desactivado, filtramos 'courses' de la lista base
+    let allowedItems = this.allItems;
+    if (!coursesEnabled) {
+      allowedItems = this.allItems.filter(item => item.id !== 'courses');
+    }
+
     // Si no hay usuario, retornar vacío
     if (!user || !userRole) {
       return [];
@@ -240,7 +274,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     // Admin ve TODOS los items sin excepción
     if (userRole === 'admin') {
       // Ordenar para que 'executive-dashboard' aparezca primero
-      return this.allItems.sort((a, b) => {
+      return allowedItems.sort((a, b) => {
         if (a.id === 'executive-dashboard') return -1;
         if (b.id === 'executive-dashboard') return 1;
         return 0;
@@ -251,7 +285,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     // Instructores ven items filtrados
     if (userRole === 'instructor') {
       // 🔥 FILTRAR: Solo items que NO tengan adminOnly: true
-      return this.allItems.filter(item => {
+      return allowedItems.filter(item => {
         // Si el item tiene adminOnly: true, ocultarlo
         if ('adminOnly' in item && item.adminOnly) {
           return false;
@@ -285,6 +319,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Cargar configuración del sistema para validar módulos
+    this.systemConfigService.getConfig(); // 🔥 IMPORTANTE
+
     // Establecer estado inicial basado en tamaño de pantalla
     this.screenWidth.set(window.innerWidth);
     if (window.innerWidth >= 1024) {
@@ -307,7 +344,20 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     // Leer query param para restaurar sección activa (override)
     this.route.queryParams.subscribe(params => {
       if (params['section']) {
-        this.active = params['section'] as NavId;
+        const requestedSection = params['section'] as NavId;
+        // Validar si está permitido
+        if (this.isSectionAllowed(requestedSection)) {
+          this.active = requestedSection;
+        } else {
+          // Si no está permitido, redirigir a default
+          const initialSection = user?.rol === 'admin' ? 'executive-dashboard' : 'instructor-earnings';
+          this.active = initialSection as NavId;
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { section: initialSection },
+            queryParamsHandling: 'merge'
+          });
+        }
       } else {
         // Si no hay query param, aplicar sección inicial
         const initialSection = user?.rol === 'admin' ? 'executive-dashboard' : 'instructor-earnings';

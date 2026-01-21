@@ -219,7 +219,7 @@ export class InstructorPaymentService {
 
   // 🔥 Recargar datos manualmente (IMPERATIVO)
   reloadPaymentConfig(): void {
-    console.log('🔄 [Service] reloadPaymentConfig llamado');
+    // 🔒 LOG REMOVIDO POR SEGURIDAD
     this._isLoadingPaymentConfig.set(true);
     this._paymentConfigError.set(null);
 
@@ -227,7 +227,7 @@ export class InstructorPaymentService {
       `${this.apiUrl}/payment-config`
     ).subscribe({
       next: (response) => {
-        console.log('✅ [Service] Config recibida:', response.config);
+        // 🔒 LOG REMOVIDO POR SEGURIDAD
         this._paymentConfig.set(response.config);
         this._isLoadingPaymentConfig.set(false);
       },

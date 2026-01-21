@@ -37,6 +37,17 @@ export interface CourseDetailResponse {
   student_have_course: boolean;
 }
 
+export interface ProjectDetailResponse {
+  project: Project | undefined;
+  reviews: any[];
+  project_relateds: Project[];
+  student_have_project: boolean;
+  metrics?: {
+    avg_rating: string;
+    total_reviews: number;
+  }
+}
+
 @Injectable({ providedIn: "root" })
 export class HomeService {
   private http = inject(HttpClient);
@@ -54,13 +65,13 @@ export class HomeService {
     projects_featured: [],
     courses_featured: [],
   });
-  
+
   private homeLoading = signal(false);
   private homeError = signal<any>(null);
-  
+
   private coursesData = signal<CoursePublic[]>([]);
   private coursesLoading = signal(false);
-  
+
   private projectsData = signal<Project[]>([]);
   private projectsLoading = signal(false);
 
@@ -72,7 +83,7 @@ export class HomeService {
 
   allCourses = this.coursesData.asReadonly();
   allProjects = this.projectsData.asReadonly();
-  
+
   isLoadingCourses = this.coursesLoading.asReadonly();
   isLoadingProjects = this.projectsLoading.asReadonly();
 
@@ -99,7 +110,7 @@ export class HomeService {
     this.homeLoading.set(true);
     this.homeError.set(null);
     const url = `${this.base}home/list${toQuery({ TIME_NOW: Date.now() })}`;
-    
+
     this.http.get<HomeApiResponse>(url).subscribe({
       next: (data) => {
         this.homeData.set(data);
@@ -115,7 +126,7 @@ export class HomeService {
   reloadAllCourses() {
     this.coursesLoading.set(true);
     const url = `${this.base}home/get_all_courses`;
-    
+
     this.http.get<{ courses: CoursePublic[] }>(url).pipe(
       map(response => response.courses || [])
     ).subscribe({
@@ -132,7 +143,7 @@ export class HomeService {
   reloadAllProjects() {
     this.projectsLoading.set(true);
     const url = `${this.base}home/get_all_projects`;
-    
+
     this.http.get<{ projects: Project[] }>(url).pipe(
       map(response => response.projects || [])
     ).subscribe({
@@ -184,14 +195,14 @@ export class HomeService {
 
     const load = () => {
       const slug = slugSignal();
-      
+
       if (!slug || slug === lastSlug) return;
       lastSlug = slug;
-      
+
       loading.set(true);
       error.set(null);
       const url = `${this.base}home/landing-curso/${slug}${toQuery({ TIME_NOW: Date.now() })}`;
-      
+
       this.http.get<CourseDetailResponse>(url).subscribe({
         next: (response) => {
           data.set(response);
@@ -218,8 +229,65 @@ export class HomeService {
     };
   };
 
+  // 📄 Detalle de proyecto - REACTIVO AUTOMÁTICO
+  projectPublicResource = (idSignal: () => string) => {
+    const data = signal<ProjectDetailResponse>({
+      project: undefined,
+      reviews: [],
+      project_relateds: [],
+      student_have_project: false,
+    });
+    const loading = signal(false);
+    const error = signal<any>(null);
+    let lastId = '';
+
+    const load = () => {
+      const id = idSignal();
+
+      if (!id || id === lastId) return;
+      lastId = id;
+
+      loading.set(true);
+      error.set(null);
+      const url = `${this.base}home/landing-project/${id}${toQuery({ TIME_NOW: Date.now() })}`;
+
+      this.http.get<ProjectDetailResponse>(url).subscribe({
+        next: (response) => {
+          data.set(response);
+          loading.set(false);
+        },
+        error: (err) => {
+          error.set(err);
+          loading.set(false);
+        }
+      });
+    };
+
+    effect(() => {
+      load();
+    }, { allowSignalWrites: true });
+
+    return {
+      value: data.asReadonly(),
+      isLoading: loading.asReadonly(),
+      hasError: computed(() => !!error()),
+      error: error.asReadonly(),
+      reload: load,
+    };
+  };
+
   buildCourseImageUrl(imageName?: string): string {
     if (!imageName) return 'https://i.pravatar.cc/300?u=placeholder';
     return `${this.base}courses/imagen-course/${imageName}`;
+  }
+
+  buildProjectImageUrl(imageName?: string): string {
+    if (!imageName) return 'https://i.pravatar.cc/300?u=placeholder';
+    return `${this.base}projects/imagen-project/${imageName}`;
+  }
+
+  downloadProjectFile(projectId: string, filename: string) {
+    const url = `${this.base}projects/download-file/${projectId}/${filename}`;
+    return this.http.get(url, { responseType: 'blob' });
   }
 }

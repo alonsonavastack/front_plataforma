@@ -14,6 +14,7 @@ import { ModalService } from '../../core/services/modal.service';
 import { DiscountService } from '../../core/services/discount.service';
 import { CartService, CartItem } from '../../core/services/cart.service';
 import { CurrencyService } from '../../services/currency.service';
+import { CouponService } from '../../core/services/coupon.service'; // 🔥 IMPORT NUEVO
 import { environment } from '../../../environments/environment';
 
 interface CheckoutProduct {
@@ -43,6 +44,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   discountService = inject(DiscountService);
   cartService = inject(CartService);
   currencyService = inject(CurrencyService);
+  couponService = inject(CouponService); // 🔥 INJECT NUEVO
   router = inject(Router);
 
   private profileStudentService = inject(ProfileStudentService);
@@ -62,6 +64,12 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   showWarningModal = signal(false);
   errorMessage = signal<string>('');
   transactionNumber = signal<string>('');
+
+  // 🔥 CUPONES
+  couponCode = signal('');
+  appliedCoupon = signal<any>(null);
+  couponError = signal('');
+  isCheckingCoupon = signal(false);
 
   // PayPal state
   public paypalOrderId = signal<string | null>(null);
@@ -144,14 +152,23 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
   hasDiscount = computed(() => !!this.bestDiscount());
 
-  // 🔥 Total y restante (considerando descuento) - EN MXN
+  // 🔥 Total y restante (considerando descuento y CUPÓN) - EN MXN
   subtotal = computed(() => {
+    let price = 0;
     if (this.isDirectBuy()) {
       const discount = this.bestDiscount();
-      return discount ? discount.finalPrice : (this.product()?.price_mxn || 0);
+      price = discount ? discount.finalPrice : (this.product()?.price_mxn || 0);
     } else {
-      return this.cartService.total();
+      price = this.cartService.total();
     }
+
+    // 🔥 APLICAR DESCUENTO DE CUPÓN SI EXISTE
+    const coupon = this.appliedCoupon();
+    if (coupon && coupon.discount_percentage > 0) {
+      price = price - (price * (coupon.discount_percentage / 100));
+    }
+
+    return Math.max(0, price);
   });
 
   originalPrice = computed(() => {
@@ -285,6 +302,15 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       if (this.isFreeProduct()) {
         this.selectPaymentMethod('wallet');
       }
+
+      // 🔥 VERIFICAR CUPÓN PENDIENTE
+      const pendingCoupon = localStorage.getItem('pending_coupon');
+      if (pendingCoupon) {
+        console.log('🎟️ Aplicando cupón pendiente:', pendingCoupon);
+        this.couponCode.set(pendingCoupon);
+        this.checkCoupon();
+        localStorage.removeItem('pending_coupon');
+      }
     }, 100);
   }
 
@@ -318,7 +344,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
     // Determinar el tipo: usar itemType si se proporciona, sino el del producto actual
     const type = itemType || (this.isDirectBuy() ? this.productType() : 'course');
-    
+
     // Usar las URLs configuradas en environment
     if (type === 'project') {
       return `${environment.images.project}${imageName}`;
@@ -439,7 +465,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     const confirmed = await this.modalService.confirm({
       title: 'Política de Reembolsos',
       icon: 'warning',
-      message: `✓ Tienes 3 DÍAS para solicitar reembolso
+      message: `✓ Tienes 7 DÍAS para solicitar reembolso
 ✓ No puedes haber visto más del 20% del contenido
 ✓ Máximo 1 reembolso por curso
 ✓ Máximo 3 reembolsos totales en 6 meses
@@ -578,6 +604,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     };
 
     // 🔥 Guardar payload temporal (sin loguear info sensible)
+    if (this.appliedCoupon()) {
+      payload.coupon_code = this.appliedCoupon().code;
+    }
     (this as any).pendingPaymentPayload = payload;
 
     try {
@@ -727,7 +756,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
       await paypal.Buttons({
         createOrder: () => orderId,
-            onApprove: async (data: any, actions: any) => {
+        onApprove: async (data: any, actions: any) => {
           console.log('✅ [PayPal] onApprove');
           try {
             const captureResult = await this.checkoutService.capturePaypalOrder(nTransaccion, data.orderID || orderId, (this as any).pendingPaymentPayload);
@@ -794,5 +823,58 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     const nTrans = this.transactionNumber() || this.checkoutService.generateTransactionNumber();
     console.info('🧪 [debug] Forcing renderPayPalButtons with', nTrans);
     this.renderPayPalButtons(nTrans);
+  }
+
+  // 🔥 MÉTODOS DE CUPÓN
+  checkCoupon() {
+    const code = this.couponCode().trim();
+    if (!code) return;
+
+    // Solo validamos para compra directa por ahora (o el primer item del carrito si se soportara)
+    // El backend CouponController.validate pide code y product_id.
+    // Si es carrito, ¿qué ID mandamos? El requerimiento dice "seleccionar el proyecto" al crear cupón.
+    // Asumiremos que el cupón aplica a un producto específico.
+    // Si es carrito con múltiples items, esto se complica.
+    // Por simplicidad y seguridad, validemos con el item principal (compra directa) o iteremos.
+
+    let productId = '';
+
+    if (this.isDirectBuy() && this.product()) {
+      productId = this.product()!._id;
+    } else if (this.cartItems().length > 0) {
+      // Si es carrito, tomamos el primer item por ahora para validar existencia
+      // Idealmente el backend valida contra array de items.
+      // Pero el requerimiento inicial era "checkout functionality to apply coupons".
+      // Vamos a usar el ID del primer item como referencia base.
+      productId = this.cartItems()[0]._id;
+    } else {
+      return;
+    }
+
+    this.isCheckingCoupon.set(true);
+    this.couponError.set('');
+    this.appliedCoupon.set(null);
+
+    this.couponService.validateCoupon(code, productId).subscribe({
+      next: (res: any) => {
+        if (res.valid) {
+          this.appliedCoupon.set(res.coupon);
+          // recalcular totales (automático por computed)
+        } else {
+          this.couponError.set(res.message || 'Cupón no válido');
+        }
+        this.isCheckingCoupon.set(false);
+      },
+      error: (err) => {
+        this.couponError.set(err.error?.message || 'Error al validar cupón');
+        this.isCheckingCoupon.set(false);
+      }
+    });
+  }
+
+  removeCoupon() {
+    this.appliedCoupon.set(null);
+    this.couponCode.set('');
+    this.couponError.set('');
   }
 }

@@ -41,7 +41,21 @@ export const routes: Routes = [
       ),
     canActivate: [roleGuard(["admin"])],
   },
+  // 🧮 SISTEMA FISCAL
+  {
+    path: "admin-tax-breakdown",
+    loadComponent: () =>
+      import(
+        "./pages/admin-tax-breakdown/admin-tax-breakdown.component"
+      ).then((m) => m.AdminTaxBreakdownComponent),
+    canActivate: [roleGuard(["admin"])],
+  },
 
+  {
+    path: "instructors",
+    loadComponent: () =>
+      import("./pages/instructors/instructors").then((m) => m.InstructorsComponent),
+  },
   {
     path: "login",
     loadComponent: () =>
@@ -67,6 +81,13 @@ export const routes: Routes = [
     loadComponent: () =>
       import("./pages/course-detail/course-detail").then(
         (m) => m.CourseDetailComponent
+      ),
+  },
+  {
+    path: "project-detail/:id",
+    loadComponent: () =>
+      import("./pages/project-detail/project-detail").then(
+        (m) => m.ProjectDetailComponent
       ),
   },
   {

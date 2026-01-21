@@ -122,7 +122,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
     if (this.instructorId) {
       console.log('📊 [EarningsDetail] Cargando TODAS las ganancias (pending + available)');
       console.log('   ➜ Instructor ID:', this.instructorId);
-      console.log('   ➜ Filtros iniciales:', this.filterForm.value);
+      // 🔒 LOG REMOVIDO POR SEGURIDAD
       this.loadEarnings();
     }
   }

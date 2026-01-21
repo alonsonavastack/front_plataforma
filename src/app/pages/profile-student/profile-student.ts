@@ -12,7 +12,9 @@ import { CheckoutService } from '../../core/services/checkout.service';
 import { CountryCodeSelectorComponent, CountryCode } from '../../shared/country-code-selector/country-code-selector';
 
 import { ProfileStudentService } from '../../core/services/profile-student.service';
-import type { EnrolledCourse, Sale, Project, ProjectFile, ProfileData } from '../../core/services/profile-student.service';
+import { SystemConfigService } from '../../core/services/system-config.service';
+import type { EnrolledCourse, Project, ProjectFile, ProfileData } from '../../core/services/profile-student.service';
+import { Sale } from '../../core/models/sale.model';
 import { ProjectService } from '../../core/services/project.service';
 import { environment } from '../../../environments/environment';
 type ProfileSection = 'courses' | 'projects' | 'purchases' | 'edit' | 'refunds' | 'wallet';
@@ -43,6 +45,7 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
   projectService = inject(ProjectService);
   checkoutService = inject(CheckoutService);
   authService = inject(AuthService);
+  systemConfigService = inject(SystemConfigService);
   walletService: WalletService = inject(WalletService);
   private toast = inject(ToastService);
   private modalService = inject(ModalService);
@@ -91,12 +94,21 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('profile-active-section') as ProfileSection | null;
       if (stored && ['courses', 'projects', 'purchases', 'edit', 'refunds', 'wallet'].includes(stored)) {
+        // 🔥 Si está almacenado 'courses' pero el módulo está desactivado, default a 'projects'
+        if (stored === 'courses' && !this.coursesEnabled()) {
+          return 'projects';
+        }
         return stored;
       }
     }
 
-    // Default: courses
-    return 'courses';
+    // Default: courses (o projects si courses está desactivado)
+    return this.coursesEnabled() ? 'courses' : 'projects';
+  });
+
+  // 🔥 CHECK: Módulo de cursos habilitado
+  coursesEnabled = computed(() => {
+    return this.systemConfigService.config()?.modules?.courses ?? true;
   });
 
   // Señal para el estado de envío del formulario
@@ -198,29 +210,30 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
     return hasRefund;
   }
 
-  // 🔥 NUEVO: Verificar si la compra está dentro del período de reembolso (3 días)
+  // 🔥 NUEVO: Configurable: número de días permitidos para solicitar reembolso
+  private readonly REFUND_DAYS = 7;
+
+  // Verificar si la compra está dentro del período de reembolso (7 días)
   isWithinRefundPeriod(saleDate: string | Date): boolean {
     const purchaseDate = new Date(saleDate);
     const now = new Date();
     const diffInDays = Math.floor((now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24));
-    const isWithin = diffInDays <= 3; // 🔥 CAMBIO: 3 días
-
-
+    const isWithin = diffInDays <= this.REFUND_DAYS;
 
     return isWithin;
   }
 
-  // 🔥 NUEVO: Método helper para calcular días desde la compra (para usar en template)
+  // Método helper para calcular días desde la compra (para usar en template)
   getDaysSincePurchase(saleDate: string | Date): number {
     const purchaseDate = new Date(saleDate);
     const now = new Date();
     return Math.floor((now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24));
   }
 
-  // 🔥 NUEVO: Método helper para calcular días restantes (para usar en template)
+  // Método helper para calcular días restantes (para usar en template)
   getDaysLeftForRefund(saleDate: string | Date): number {
     const daysSince = this.getDaysSincePurchase(saleDate);
-    return Math.max(0, 3 - daysSince);
+    return Math.max(0, this.REFUND_DAYS - daysSince);
   }
 
   // 🔥 NUEVO: Obtener productos reembolsables de una venta
@@ -1131,7 +1144,7 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
     // 🔥 NUEVO: Verificar si ya existe una solicitud de reembolso
     if (this.hasRefundRequest(sale._id)) {
       const refundStatus = this.getRefundStatus(sale._id);
-      
+
       if (refundStatus?.status === 'rejected') {
         this.toast.error(
           'Reembolso No Disponible',
@@ -1315,8 +1328,8 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
       // Guardar en el mapa temporal
       this.selectedVoucherFiles.set(sale._id, file);
 
-      // Forzar detección de cambios (aunque Angular Signals lo maneja, el Map no es reactivo por sí solo si no se usa un signal wrapper, 
-      // pero podemos usar un signal auxiliar o simplemente forzar actualización si fuera necesario. 
+      // Forzar detección de cambios (aunque Angular Signals lo maneja, el Map no es reactivo por sí solo si no se usa un signal wrapper,
+      // pero podemos usar un signal auxiliar o simplemente forzar actualización si fuera necesario.
       // En este caso, usaremos un método helper en el template para leer el mapa).
     }
   }

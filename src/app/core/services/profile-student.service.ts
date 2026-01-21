@@ -83,7 +83,7 @@ export class ProfileStudentService {
     loader: async () => {
       const token = this.authService.token();
       if (!token) {
-        console.warn('⚠️ [ProfileStudentService] No hay token, no se carga perfil');
+        // 🔒 LOG REMOVIDO POR SEGURIDAD
         return null;
       }
       const timestamp = Date.now();
@@ -96,7 +96,7 @@ export class ProfileStudentService {
     loader: async () => {
       const token = this.authService.token();
       if (!token) {
-        console.warn('⚠️ [ProfileStudentService] No hay token, no se cargan reembolsos');
+        // 🔒 LOG REMOVIDO POR SEGURIDAD
         return [];
       }
       const timestamp = Date.now();

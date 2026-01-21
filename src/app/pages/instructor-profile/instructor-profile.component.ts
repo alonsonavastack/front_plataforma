@@ -8,6 +8,7 @@ import { environment } from '../../../environments/environment';
 import { CourseCardComponent } from '../../shared/course-card/course-card';
 import { ProjectsCardComponent } from '../../shared/projects-card/projects-card';
 import { Project as CoreProject, CoursePublic } from '../../core/models/home.models';
+import { SystemConfigService } from '../../core/services/system-config.service';
 
 interface InstructorProfile {
   _id: string;
@@ -61,6 +62,7 @@ export class InstructorProfileComponent implements OnInit {
   private router = inject(Router);
   private http = inject(HttpClient);
   private sanitizer = inject(DomSanitizer);
+  private systemConfigService = inject(SystemConfigService); // 🆕
 
   // Signals
   instructor = signal<InstructorProfile | null>(null);
@@ -68,6 +70,9 @@ export class InstructorProfileComponent implements OnInit {
   projects = signal<InstructorProject[]>([]);
   isLoading = signal(true);
   error = signal<string | null>(null);
+
+  // 🆕 Configuración de módulos
+  coursesEnabled = computed(() => this.systemConfigService.config()?.modules?.courses ?? true);
 
   // 🔥 COMPARTIR PERFIL
   isShareModalOpen = signal(false);
@@ -90,7 +95,9 @@ export class InstructorProfileComponent implements OnInit {
   // 🆕 FILTROS
   searchTerm = signal('');
   selectedCategory = signal<string>('all'); // 'all' o ID de categoría
-  activeTab = signal<'courses' | 'projects'>('courses'); // Tab activo
+
+  // ✅ Inicializar tab activo según configuración
+  activeTab = signal<'courses' | 'projects'>('courses'); // Se actualizará en el efecto o init
 
   // ✅ Categorías únicas (cursos + proyectos)
   availableCategories = computed(() => {
@@ -223,6 +230,11 @@ export class InstructorProfileComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // ✅ Ajustar tab inicial si cursos están desactivados
+    if (!this.coursesEnabled()) {
+      this.activeTab.set('projects');
+    }
+
     this.route.params.subscribe(params => {
       const instructorSlug = params['slug']; // 🆕 Cambiar de 'id' a 'slug'
       if (instructorSlug) {
@@ -337,7 +349,7 @@ export class InstructorProfileComponent implements OnInit {
         return this.sanitizer.bypassSecurityTrustResourceUrl(`https://player.vimeo.com/video/${videoId}`);
       }
     }
-    
+
     // Si ya es una URL embed o no se reconoce, devolverla tal cual
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }

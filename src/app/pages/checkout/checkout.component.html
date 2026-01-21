@@ -44,12 +44,12 @@
               <h3 class="text-xl font-semibold leading-6 text-white" id="modal-title">
                 ¡Compra Completada! 🎉
               </h3>
-              
+
               <!-- 🔥 NUEVO: Saludo personalizado -->
               @if (user(); as currentUser) {
-                <p class="mt-2 text-lg text-lime-300">
-                  ¡Hola {{ currentUser.name }}! 👋
-                </p>
+              <p class="mt-2 text-lg text-lime-300">
+                ¡Hola {{ currentUser.name }}! 👋
+              </p>
               }
 
               <!-- 🔥 CORREGIDO: SIN número de transacción -->
@@ -57,15 +57,13 @@
                 <p>
                   Gracias por tu compra. Hemos enviado los detalles de tu pedido a tu correo electrónico.
                 </p>
-                
+
                 <!-- 🔥 NUEVO: Mensaje de acceso inmediato -->
                 <div class="p-3 bg-lime-500/10 border border-lime-400/30 rounded-lg">
                   <p class="text-lime-400 font-semibold flex items-center justify-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" 
-                            stroke-linejoin="round" 
-                            stroke-width="2"
-                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                     </svg>
                     ¡Acceso inmediato a tu contenido! 🚀
                   </p>
@@ -479,21 +477,9 @@
 
         <!-- Formulario de información de facturación -->
         <div class="bg-slate-800/50 rounded-lg border border-white/10 p-6">
-          <h2 class="text-xl font-semibold text-white mb-4">Información de Facturación</h2>
+          <h2 class="text-xl font-semibold text-white mb-4">Datos Personales</h2>
 
           <form [formGroup]="checkoutForm" class="space-y-4">
-            <!-- 🆕 Selector de País -->
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">País *</label>
-              <select [value]="selectedCountry()" (change)="selectedCountry.set($any($event.target).value)"
-                class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent">
-                @for (country of countries(); track country.code) {
-                <option [value]="country.code">
-                  {{ country.name }} ({{ country.currency }})
-                </option>
-                }
-              </select>
-            </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-2">Nombre Completo *</label>
@@ -581,8 +567,8 @@
               <!-- LISTA DE ITEMS (CARRITO) -->
               @for (item of cartItems(); track item._id) {
               <div class="p-4 flex gap-4 group relative">
-                <img [src]="buildImageUrl(item.imagen, item.type)" class="w-20 h-20 rounded-lg object-cover bg-slate-800"
-                  alt="Imagen del producto">
+                <img [src]="buildImageUrl(item.imagen, item.type)"
+                  class="w-20 h-20 rounded-lg object-cover bg-slate-800" alt="Imagen del producto">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-start justify-between gap-4">
                     <div>
@@ -621,181 +607,224 @@
                 {{ subtotal() | mxnCurrency }}
               </span>
             </div>
-          </div>
-          <!-- Totales -->
-          <div class="border-t border-slate-700 pt-4 space-y-2 mb-6">
-            <div class="flex justify-between text-gray-400">
-              <span>Subtotal</span>
-              <span>${{ formatPrice(originalPrice()) }}</span>
+            <!-- Sección de Cupones -->
+            <div class="p-4 bg-white/5 border-t border-slate-700">
+              @if (!appliedCoupon()) {
+              <div class="flex gap-2">
+                <input type="text" [value]="couponCode()" (input)="couponCode.set($any($event.target).value)"
+                  (keyup.enter)="checkCoupon()" placeholder="Código de cupón"
+                  class="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-lime-500">
+                <button (click)="checkCoupon()" [disabled]="isCheckingCoupon() || !couponCode()"
+                  class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
+                  {{ isCheckingCoupon() ? '...' : 'Aplicar' }}
+                </button>
+              </div>
+              @if (couponError()) {
+              <p class="text-xs text-red-400 mt-2">{{ couponError() }}</p>
+              }
+              } @else {
+              <div class="flex items-center justify-between p-3 bg-lime-500/10 border border-lime-500/30 rounded-lg">
+                <div class="flex items-center gap-2">
+                  <svg class="w-5 h-5 text-lime-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                  <div>
+                    <p class="text-sm font-bold text-lime-400">Cupón: {{ appliedCoupon().code }}</p>
+                    @if (appliedCoupon().discount_percentage > 0) {
+                    <p class="text-xs text-lime-300/80">-{{ appliedCoupon().discount_percentage }}% descuento</p>
+                    } @else {
+                    <p class="text-xs text-lime-300/80">Referido aplicado</p>
+                    }
+                  </div>
+                </div>
+                <button (click)="removeCoupon()" class="text-slate-400 hover:text-white">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              }
             </div>
 
-            <!-- 🔥 MOSTRAR DESCUENTO -->
-            @if (bestDiscount(); as discount) {
-            <div class="flex justify-between text-lime-400">
-              <span>Descuento</span>
-              <span>-${{ formatPrice(discount.savedAmount) }}</span>
+            <!-- Totales -->
+            <div class="border-t border-slate-700 pt-4 space-y-2 mb-6">
+              <div class="flex justify-between text-gray-400">
+                <span>Subtotal</span>
+                <span>${{ formatPrice(originalPrice()) }}</span>
+              </div>
+
+              <!-- 🔥 MOSTRAR DESCUENTO -->
+              @if (bestDiscount(); as discount) {
+              <div class="flex justify-between text-lime-400">
+                <span>Descuento</span>
+                <span>-${{ formatPrice(discount.savedAmount) }}</span>
+              </div>
+              } @else {
+              <div class="flex justify-between text-gray-400">
+                <span>Descuentos</span>
+                <span>$0.00</span>
+              </div>
+              }
+
+              <div class="flex justify-between text-xl font-bold text-white pt-2 border-t border-slate-700">
+                <span>Total</span>
+                <span class="text-lime-400">${{ formatPrice(subtotal()) }} MXN</span>
+              </div>
+
+
             </div>
-            } @else {
-            <div class="flex justify-between text-gray-400">
-              <span>Descuentos</span>
-              <span>$0.00</span>
-            </div>
-            }
 
-            <div class="flex justify-between text-xl font-bold text-white pt-2 border-t border-slate-700">
-              <span>Total</span>
-              <span class="text-lime-400">${{ formatPrice(subtotal()) }} MXN</span>
-            </div>
-
-
-          </div>
-
-          <!-- Botón de Pago / PayPal render area -->
-          @if (selectedPaymentMethod() === 'paypal') {
+            <!-- Botón de Pago / PayPal render area -->
+            @if (selectedPaymentMethod() === 'paypal') {
             <!-- 🔥 ELIMINADO: Mensaje de "compra pendiente" - NO debe mostrarse antes del pago -->
 
             @if (renderingPaypal() || paypalButtonsRendered()) {
-              <!-- 🔥 AGREGAR ESTILOS INLINE PARA FORZAR VISIBILIDAD -->
-              <div id="paypal-button-container" class="mt-4" style="min-height: 150px; width: 100%; display: block; visibility: visible;"></div>
-              @if (!paypalButtonsRendered()) {
-                <div class="mt-4 text-sm text-gray-400">Cargando PayPal... (Aguarda mientras se carga el método de pago)</div>
-                <div class="mt-2">
-                  <button type="button"
-                    class="w-full bg-slate-700 text-slate-300 font-bold py-2 px-6 rounded-lg opacity-50 cursor-not-allowed transition-all flex items-center justify-center">
-                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    </svg>
-                    <span>Preparando PayPal...</span>
-                  </button>
-                </div>
-              }
-            } @else {
-              <button type="button" (click)="processPayment()"
-                [disabled]="isProcessing() || renderingPaypal() || showSuccess() || (remainingAmount() > 0 && !selectedPaymentMethod()) || checkoutForm.invalid"
-                class="w-full bg-lime-400 text-slate-900 font-bold py-3 px-6 rounded-lg hover:bg-lime-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-all flex items-center justify-center">
-                @if (isProcessing()) {
-                <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                  </path>
-                </svg>
-                <span>Procesando...</span>
-                } @else {
-                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-                  </path>
-                </svg>
-                <span>💳 Pagar Ahora - ${{ formatPrice(subtotal()) }}</span>
-                }
-              </button>
-            }
-          } @else {
-            @if (isProcessing()) {
+            <!-- 🔥 AGREGAR ESTILOS INLINE PARA FORZAR VISIBILIDAD -->
+            <div id="paypal-button-container" class="mt-4"
+              style="min-height: 150px; width: 100%; display: block; visibility: visible;"></div>
+            @if (!paypalButtonsRendered()) {
+            <div class="mt-4 text-sm text-gray-400">Cargando PayPal... (Aguarda mientras se carga el método de pago)
+            </div>
+            <div class="mt-2">
               <button type="button"
-                class="w-full bg-slate-700 text-slate-300 font-bold py-3 px-6 rounded-lg opacity-50 cursor-not-allowed transition-all flex items-center justify-center"
-                disabled>
-                <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                class="w-full bg-slate-700 text-slate-300 font-bold py-2 px-6 rounded-lg opacity-50 cursor-not-allowed transition-all flex items-center justify-center">
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                  </path>
                 </svg>
-                <span>Procesando...</span>
+                <span>Preparando PayPal...</span>
               </button>
+            </div>
+            }
+            } @else {
+            <button type="button" (click)="processPayment()"
+              [disabled]="isProcessing() || renderingPaypal() || showSuccess() || (remainingAmount() > 0 && !selectedPaymentMethod()) || checkoutForm.invalid"
+              class="w-full bg-lime-400 text-slate-900 font-bold py-3 px-6 rounded-lg hover:bg-lime-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-all flex items-center justify-center">
+              @if (isProcessing()) {
+              <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
+              </svg>
+              <span>Procesando...</span>
+              } @else {
+              <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                </path>
+              </svg>
+              <span>💳 Pagar Ahora - ${{ formatPrice(subtotal()) }}</span>
+              }
+            </button>
+            }
+            } @else {
+            @if (isProcessing()) {
+            <button type="button"
+              class="w-full bg-slate-700 text-slate-300 font-bold py-3 px-6 rounded-lg opacity-50 cursor-not-allowed transition-all flex items-center justify-center"
+              disabled>
+              <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
+              </svg>
+              <span>Procesando...</span>
+            </button>
             } @else if (useWalletBalance()) {
-              <button type="button" (click)="processPayment()"
-                [disabled]="renderingPaypal() || showSuccess() || checkoutForm.invalid"
-                class="w-full bg-lime-400 text-slate-900 font-bold py-3 px-6 rounded-lg hover:bg-lime-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-all flex items-center justify-center">
-                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-                  </path>
-                </svg>
-                @if (remainingAmount() === 0) {
-                <span>✅ Confirmar Compra con Billetera</span>
-                } @else {
-                <span>💳 Pagar ${{ formatPrice(remainingAmount()) }} <small class="opacity-75 text-xs ml-1">(${{ formatPrice(walletAmount()) }} con
-                    billetera)</small></span>
-                }
-              </button>
+            <button type="button" (click)="processPayment()"
+              [disabled]="renderingPaypal() || showSuccess() || checkoutForm.invalid"
+              class="w-full bg-lime-400 text-slate-900 font-bold py-3 px-6 rounded-lg hover:bg-lime-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-all flex items-center justify-center">
+              <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                </path>
+              </svg>
+              @if (remainingAmount() === 0) {
+              <span>✅ Confirmar Compra con Billetera</span>
+              } @else {
+              <span>💳 Pagar ${{ formatPrice(remainingAmount()) }} <small class="opacity-75 text-xs ml-1">(${{
+                  formatPrice(walletAmount()) }} con
+                  billetera)</small></span>
+              }
+            </button>
             } @else {
-              <button type="button" (click)="processPayment()"
-                [disabled]="renderingPaypal() || showSuccess() || checkoutForm.invalid"
-                class="w-full bg-lime-400 text-slate-900 font-bold py-3 px-6 rounded-lg hover:bg-lime-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-all flex items-center justify-center">
-                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-                  </path>
-                </svg>
-                <span>💳 Pagar Ahora - ${{ formatPrice(subtotal()) }}</span>
-              </button>
+            <button type="button" (click)="processPayment()"
+              [disabled]="renderingPaypal() || showSuccess() || checkoutForm.invalid"
+              class="w-full bg-lime-400 text-slate-900 font-bold py-3 px-6 rounded-lg hover:bg-lime-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-all flex items-center justify-center">
+              <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                </path>
+              </svg>
+              <span>💳 Pagar Ahora - ${{ formatPrice(subtotal()) }}</span>
+            </button>
             }
-          }
-
-
-          <!-- Nota informativa debajo del botón -->
-          @if (useWalletBalance()) {
-          <p class="text-sm text-center text-gray-400 mt-3">
-            @if (remainingAmount() === 0) {
-            🎉 Tu saldo cubre el 100% de la compra
-            } @else {
-            💡 Se usarán ${{ formatPrice(walletAmount()) }} de tu billetera + ${{ formatPrice(remainingAmount()) }} con
-            {{ getPaymentMethodInfo(selectedPaymentMethod())?.name || 'otro método' }}
             }
-          </p>
-          }
 
-          <!-- Seguridad -->
-          <div class="mt-4 flex items-center justify-center text-xs text-gray-500">
-            <svg class="w-4 h-4 mr-1 text-lime-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd"
-                d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                clip-rule="evenodd"></path>
-            </svg>
-            Pago seguro y encriptado
+
+            <!-- Nota informativa debajo del botón -->
+            @if (useWalletBalance()) {
+            <p class="text-sm text-center text-gray-400 mt-3">
+              @if (remainingAmount() === 0) {
+              🎉 Tu saldo cubre el 100% de la compra
+              } @else {
+              💡 Se usarán ${{ formatPrice(walletAmount()) }} de tu billetera + ${{ formatPrice(remainingAmount()) }}
+              con
+              {{ getPaymentMethodInfo(selectedPaymentMethod())?.name || 'otro método' }}
+              }
+            </p>
+            }
+
+            <!-- Seguridad -->
+            <div class="mt-4 flex items-center justify-center text-xs text-gray-500">
+              <svg class="w-4 h-4 mr-1 text-lime-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                  clip-rule="evenodd"></path>
+              </svg>
+              Pago seguro y encriptado
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Garantía -->
-    <div class="mt-8 bg-slate-800/30 rounded-lg border border-white/10 p-6">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="flex items-start space-x-3">
-          <svg class="w-6 h-6 text-lime-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
-            </path>
-          </svg>
-          <div>
-            <h3 class="font-semibold text-white mb-1">Pago Seguro</h3>
-            <p class="text-sm text-gray-400">Tus datos están protegidos con encriptación SSL</p>
+      <!-- Garantía -->
+      <div class="mt-8 bg-slate-800/30 rounded-lg border border-white/10 p-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="flex items-start space-x-3">
+            <svg class="w-6 h-6 text-lime-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+              </path>
+            </svg>
+            <div>
+              <h3 class="font-semibold text-white mb-1">Pago Seguro</h3>
+              <p class="text-sm text-gray-400">Tus datos están protegidos con encriptación SSL</p>
+            </div>
           </div>
-        </div>
-        <div class="flex items-start space-x-3">
-          <svg class="w-6 h-6 text-lime-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <div>
-            <h3 class="font-semibold text-white mb-1">Acceso Inmediato</h3>
-            <p class="text-sm text-gray-400">Accede a tus cursos inmediatamente después del pago</p>
+          <div class="flex items-start space-x-3">
+            <svg class="w-6 h-6 text-lime-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+              <h3 class="font-semibold text-white mb-1">Acceso Inmediato</h3>
+              <p class="text-sm text-gray-400">Accede a tus cursos inmediatamente después del pago</p>
+            </div>
           </div>
-        </div>
-        <div class="flex items-start space-x-3">
-          <svg class="w-6 h-6 text-lime-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
-            </path>
-          </svg>
-          <div>
-            <h3 class="font-semibold text-white mb-1">Confirmación por Email</h3>
-            <p class="text-sm text-gray-400">Recibirás un comprobante de tu compra</p>
+          <div class="flex items-start space-x-3">
+            <svg class="w-6 h-6 text-lime-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+              </path>
+            </svg>
+            <div>
+              <h3 class="font-semibold text-white mb-1">Confirmación por Email</h3>
+              <p class="text-sm text-gray-400">Recibirás un comprobante de tu compra</p>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>

@@ -1,0 +1,41 @@
+<app-header></app-header>
+
+<main class="max-w-4xl mx-auto p-6">
+  <h1 class="text-3xl font-bold mb-4">Política de Reembolso</h1>
+
+  <p class="text-slate-400 mb-4">Última actualización: {{ currentDate | date:'dd/MM/yyyy' }}</p>
+
+  <section class="space-y-4 text-slate-200">
+    <p>
+      En Dev-Sharks nos esforzamos por ofrecer productos y servicios de alta calidad. Si no quedas satisfecho
+      con una compra, puedes solicitar un reembolso de acuerdo con las condiciones descritas a continuación.
+    </p>
+
+    <h2 class="text-xl font-semibold">Métodos de reembolso</h2>
+    <p>
+      Los reembolsos se procesan únicamente a través de los métodos de pago soportados por la plataforma: <strong>PayPal</strong>
+      o <strong>Billetera interna (Wallet)</strong>. No se procesarán transferencias bancarias directas para reembolsos.
+    </p>
+
+    <h2 class="text-xl font-semibold">Plazos</h2>
+    <p>
+      Las solicitudes de reembolso serán revisadas y procesadas en un plazo de 3 a 7 días hábiles desde la aprobación.
+      El tiempo efectivo para que los fondos se reflejen en la cuenta del cliente depende del proveedor de pago (PayPal o la plataforma de Wallet).
+    </p>
+
+    <h2 class="text-xl font-semibold">Condiciones</h2>
+    <ul class="list-disc list-inside">
+      <li>Los reembolsos se aplican a compras que cumplan con nuestras condiciones de devolución.</li>
+      <li>Si la compra fue pagada parcialmente con Wallet y/o PayPal, el reembolso seguirá el orden y las proporciones originales, priorizando la devolución a la Wallet cuando aplique.</li>
+      <li>Los cargos por servicios externos (comisiones de PayPal, cargos por transacción) pueden afectar la cantidad final recibida por el cliente.</li>
+    </ul>
+
+    <h2 class="text-xl font-semibold">Contacto</h2>
+    <p>
+      Para solicitar un reembolso o si tienes dudas, por favor contacta al equipo de soporte a través de
+      <a class="text-lime-400 underline" href="mailto:soporte@dev-sharks.example">soporte@dev-sharks.example</a>.
+    </p>
+  </section>
+</main>
+
+<app-footer></app-footer>

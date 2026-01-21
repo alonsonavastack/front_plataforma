@@ -16,6 +16,25 @@
         <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
           <div class="divide-y divide-gray-700 rounded-lg bg-gray-800/50 border border-gray-700">
 
+            <!-- 🔥 SECCIÓN MÓDULOS GLOBALES -->
+            <div class="flex items-center justify-between p-4 bg-lime-900/10">
+              <div>
+                <h3 class="font-medium text-white flex items-center gap-2">
+                  <span class="text-lime-400">⚡</span>
+                  Módulo de Cursos (Global)
+                </h3>
+                <p class="text-sm text-gray-400">Activa o desactiva TODA la funcionalidad de cursos en la plataforma (Menú, Rutas, Creación).</p>
+                <p class="text-xs text-lime-400/70 mt-1">Si se desactiva, instructores y alumnos no verán la opción de cursos.</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox"
+                       class="sr-only peer"
+                       [checked]="coursesModuleEnabled()"
+                       (change)="onModuleToggle($event)">
+                <div class="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-lime-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-lime-500"></div>
+              </label>
+            </div>
+
             <!-- Fila para Cursos Destacados -->
             <div class="flex items-center justify-between p-4">
               <div>

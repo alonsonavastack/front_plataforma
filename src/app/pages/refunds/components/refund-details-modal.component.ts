@@ -115,7 +115,7 @@ import { Refund } from '../../../core/services/refunds.service';
               @if (ref.calculations) {
                 <div class="bg-slate-900 rounded-lg p-4">
                   <h3 class="text-sm font-medium text-slate-400 mb-4">📊 Desglose Financiero</h3>
-                  
+
                   <div class="space-y-3">
                     <!-- Monto Original -->
                     <div class="flex justify-between py-2 border-b border-white/10">
@@ -200,26 +200,22 @@ import { Refund } from '../../../core/services/refunds.service';
                 </div>
               }
 
-              <!-- Datos Bancarios -->
+              <!-- Método de Pago / Detalles -->
               @if (ref.refundDetails) {
                 <div class="bg-slate-900 rounded-lg p-4">
-                  <h3 class="text-sm font-medium text-slate-400 mb-3">🏦 Datos Bancarios</h3>
+                  <h3 class="text-sm font-medium text-slate-400 mb-3">💳 Método de Pago</h3>
                   <div class="space-y-2">
                     <div class="flex justify-between">
-                      <span class="text-slate-400">Banco:</span>
-                      <span class="text-white">{{ ref.refundDetails.bankName || '-' }}</span>
+                      <span class="text-slate-400">Método:</span>
+                      <span class="text-white">{{ ref.sale?.paymentMethod || 'N/A' }}</span>
                     </div>
                     <div class="flex justify-between">
-                      <span class="text-slate-400">Titular:</span>
+                      <span class="text-slate-400">Titular / Nota:</span>
                       <span class="text-white">{{ ref.refundDetails.accountHolder || '-' }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                      <span class="text-slate-400">Cuenta:</span>
-                      <span class="text-white font-mono">{{ ref.refundDetails.bankAccount || '-' }}</span>
                     </div>
                     @if (ref.refundDetails.receiptNumber) {
                       <div class="flex justify-between">
-                        <span class="text-slate-400">Referencia:</span>
+                        <span class="text-slate-400">Referencia / ID:</span>
                         <span class="text-lime-300 font-medium">{{ ref.refundDetails.receiptNumber }}</span>
                       </div>
                     }
@@ -236,13 +232,13 @@ import { Refund } from '../../../core/services/refunds.service';
                       <span class="text-white text-sm">Archivo subido:</span>
                       <span class="text-lime-300 text-sm">✅ Disponible</span>
                     </div>
-                    
+
                     <!-- Vista previa del comprobante -->
                     <div class="border border-white/10 rounded-lg overflow-hidden bg-slate-800">
                       @if (isImageFile(ref.refundDetails.receiptImage!)) {
                         <!-- Es una imagen -->
                         <div class="relative group">
-                          <img 
+                          <img
                             [src]="getReceiptUrl(ref.refundDetails.receiptImage!)"
                             [alt]="'Comprobante de reembolso'"
                             class="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"

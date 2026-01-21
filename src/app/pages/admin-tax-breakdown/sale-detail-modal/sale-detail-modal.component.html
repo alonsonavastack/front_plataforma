@@ -1,0 +1,221 @@
+<div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+    (click)="close.emit()">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl relative"
+        (click)="$event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800 p-6 flex justify-between items-center">
+            <div class="flex-1">
+                <h2 class="text-2xl font-bold text-white">Desglose Fiscal Detallado</h2>
+                <div class="flex items-center gap-3 mt-1 flex-wrap">
+                    <p class="text-slate-400 text-sm">Venta <span class="text-lime-400 font-mono">{{ retention.sale?.code }}</span></p>
+
+                    <!-- Botón Declarar (solo si está pending) -->
+                    @if (retention.status === 'pending') {
+                    <button (click)="onDeclare()" [disabled]="isDeclaring()"
+                        class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-1 rounded-full transition-all flex items-center gap-2 shadow-lg shadow-green-500/30">
+                        @if (isDeclaring()) {
+                        <i class="fas fa-spinner fa-spin"></i> Procesando...
+                        } @else {
+                        <i class="fas fa-check-double"></i> Declarar Ahora
+                        }
+                    </button>
+                    }
+
+                    <!-- Descarga CFDI (solo si está declared) -->
+                    @if (retention.status === 'declared') {
+                    <div class="flex items-center gap-2">
+                        @if (retention.cfdi_xml_url) {
+                        <a href="{{ retention.cfdi_xml_url }}" target="_blank" 
+                           class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3 py-1 rounded-full transition-all flex items-center gap-2">
+                            <i class="fas fa-download"></i> XML
+                        </a>
+                        }
+                        @if (retention.cfdi_pdf_url) {
+                        <a href="{{ retention.cfdi_pdf_url }}" target="_blank" 
+                           class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3 py-1 rounded-full transition-all flex items-center gap-2">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+            <button (click)="close.emit()"
+                class="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-8">
+
+            <!-- 💰 Flujo de Efectivo -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <!-- 1. Venta Bruta -->
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-blue-500/30 relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all"></div>
+                    <p class="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-2">1. Cliente Paga</p>
+                    <p class="text-2xl font-bold text-white mb-1">{{ getClientTotal() | currency:'MXN' }}</p>
+                    <p class="text-xs text-slate-500">Monto total de la venta</p>
+                </div>
+
+                <!-- 2. PayPal Recibir -->
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-yellow-500/30 relative overflow-hidden group">
+                    <p class="text-xs font-semibold text-yellow-500 uppercase tracking-wider mb-2">2. Comisión PayPal (In)</p>
+                    <p class="text-2xl font-bold text-white mb-1">-{{ getPayPalInCommission() | currency:'MXN' }}</p>
+                    <p class="text-xs text-slate-500">4% + $4.00 MXN</p>
+                </div>
+
+                <!-- 3. Neto Disponible -->
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-white/20 relative overflow-hidden group">
+                    <p class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">3. Neto a Repartir</p>
+                    <p class="text-2xl font-bold text-white mb-1">{{ retention.gross_earning * 2 | currency:'MXN' }}</p>
+                    <p class="text-xs text-slate-500">División 50/50</p>
+                </div>
+
+                <!-- 4. Bruto Instructor -->
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-purple-500/30 relative overflow-hidden group">
+                    <p class="text-xs font-semibold text-purple-400 uppercase tracking-wider mb-2">4. Bruto Instructor (50%)</p>
+                    <p class="text-2xl font-bold text-white mb-1">{{ retention.gross_earning | currency:'MXN' }}</p>
+                </div>
+
+                <!-- 5. Retenciones SAT -->
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-red-500/30 relative overflow-hidden group">
+                    <p class="text-xs font-semibold text-red-400 uppercase tracking-wider mb-2">5. Retenciones SAT</p>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-slate-400 text-xs">ISR (10%)</span>
+                        <span class="text-red-300 font-mono text-sm">-{{ retention.isr_retention | currency:'MXN' }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-xs">IVA (10.6%)</span>
+                        <span class="text-red-300 font-mono text-sm">-{{ retention.iva_retention | currency:'MXN' }}</span>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-slate-700 flex justify-between">
+                        <span class="text-white text-xs font-bold">Total</span>
+                        <span class="text-red-400 font-bold">-{{ retention.total_retention | currency:'MXN' }}</span>
+                    </div>
+                </div>
+
+                <!-- 6. PayPal Enviar -->
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-orange-500/30 relative overflow-hidden group">
+                    <p class="text-xs font-semibold text-orange-400 uppercase tracking-wider mb-2">6. Comisión PayPal (Out)</p>
+                    <p class="text-2xl font-bold text-white mb-1">-{{ retention.paypal_send_commission | currency:'MXN' }}</p>
+                    <p class="text-xs text-slate-500">Al transferir al instructor</p>
+                </div>
+            </div>
+
+            <!-- 🏁 Resultado Final -->
+            <div class="bg-gradient-to-r from-lime-900/20 to-green-900/20 p-6 rounded-2xl border border-lime-500/30 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-full bg-lime-500/20 flex items-center justify-center border border-lime-500/50">
+                        <i class="fas fa-money-bill-wave text-lime-400 text-3xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-lime-400 font-bold text-lg">Pago Neto al Instructor</p>
+                        <p class="text-slate-400 text-sm">Monto final depositado en cuenta</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-4xl font-bold text-white tracking-tight">{{ retention.net_pay | currency:'MXN' }}</p>
+                    <p class="text-xs text-lime-500 font-medium bg-lime-500/10 px-2 py-1 rounded inline-block mt-1">
+                        Ya descontado impuestos y comisiones
+                    </p>
+                </div>
+            </div>
+
+            <!-- 🏛️ Control Fiscal -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-800 pt-6">
+                
+                <!-- Instructor Status -->
+                <div>
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fas fa-user-tie text-purple-400"></i>
+                        Estatus Fiscal Instructor
+                    </h3>
+                    <div class="space-y-3">
+                        <!-- Periodo -->
+                        <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700/50 flex justify-between items-center">
+                            <span class="text-slate-400 text-sm flex items-center gap-2">
+                                <i class="fas fa-calendar text-slate-500"></i>
+                                Periodo Fiscal
+                            </span>
+                            <span class="text-white font-bold">{{ retention.month }}/{{ retention.year }}</span>
+                        </div>
+
+                        <!-- Estado -->
+                        <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700/50 flex justify-between items-center">
+                            <span class="text-slate-400 text-sm flex items-center gap-2">
+                                <i class="fas fa-flag text-slate-500"></i>
+                                Estatus Declaración
+                            </span>
+                            <span class="uppercase font-bold text-xs px-3 py-1 rounded-full" [ngClass]="{
+                               'bg-green-500/20 text-green-500 border border-green-500/30': retention.status === 'declared',
+                               'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30': retention.status === 'pending',
+                               'bg-purple-500/20 text-purple-500 border border-purple-500/30': retention.status === 'paid'
+                            }">
+                                @switch (retention.status) {
+                                @case ('paid') { ✓ PAGADO }
+                                @case ('declared') { ✓ DECLARADO }
+                                @default { ⏳ PENDIENTE }
+                                }
+                            </span>
+                        </div>
+
+                        <!-- UUID del CFDI (solo si está declared) -->
+                        @if (retention.status === 'declared' && retention.cfdi_uuid) {
+                        <div class="bg-slate-800/50 p-4 rounded-lg border border-lime-500/30">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="fas fa-barcode text-lime-400"></i>
+                                <span class="text-slate-400 text-xs font-semibold uppercase">UUID del CFDI</span>
+                            </div>
+                            <code class="text-lime-400 text-xs font-mono break-all block bg-slate-900/50 p-2 rounded">{{ retention.cfdi_uuid }}</code>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Platform Profit Breakdown -->
+                @if (retention.platform_breakdown) {
+                <div>
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fas fa-building text-purple-400"></i>
+                        Ganancia de la Plataforma
+                    </h3>
+                    <div class="bg-slate-800/50 rounded-lg border border-slate-700/50 overflow-hidden">
+                        <!-- Bruto -->
+                        <div class="p-4 flex justify-between border-b border-slate-700/50">
+                            <span class="text-slate-300 text-sm font-medium">Bruto (50%)</span>
+                            <span class="text-white font-bold">{{ retention.platform_breakdown.platform_share | currency:'MXN' }}</span>
+                        </div>
+                        <!-- Costos PayPal -->
+                        <div class="p-4 flex justify-between border-b border-slate-700/50 bg-red-500/5">
+                            <span class="text-slate-400 text-sm flex items-center gap-2">
+                                <i class="fas fa-credit-card text-red-400 text-xs"></i>
+                                Costos PayPal
+                            </span>
+                            <span class="text-red-400 font-medium">-{{ retention.platform_breakdown.total_paypal_commissions | currency:'MXN' }}</span>
+                        </div>
+                        <!-- Impuestos -->
+                        <div class="p-4 flex justify-between border-b border-slate-700/50 bg-red-500/5">
+                            <span class="text-slate-400 text-sm flex items-center gap-2">
+                                <i class="fas fa-receipt text-red-400 text-xs"></i>
+                                Impuestos (ISR+IVA)
+                            </span>
+                            <span class="text-red-400 font-medium">-{{ (retention.platform_breakdown.platform_isr + retention.platform_breakdown.platform_iva) | currency:'MXN' }}</span>
+                        </div>
+                        <!-- Utilidad Neta -->
+                        <div class="p-4 flex justify-between bg-emerald-500/10">
+                            <span class="text-emerald-400 font-bold flex items-center gap-2">
+                                <i class="fas fa-coins text-emerald-400"></i>
+                                Utilidad Neta
+                            </span>
+                            <span class="text-emerald-400 font-bold text-lg">{{ retention.platform_breakdown.platform_net_profit | currency:'MXN' }}</span>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

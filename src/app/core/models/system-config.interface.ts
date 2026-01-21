@@ -1,7 +1,7 @@
 // Interface para la configuración del sistema
 export interface SystemConfig {
   _id?: string;
-  
+
   // Información Básica
   siteName: string;
   siteDescription: string;
@@ -32,6 +32,11 @@ export interface SystemConfig {
   // Configuración de Sistema
   maintenanceMode: boolean;
   allowRegistrations: boolean;
+
+  // Módulos
+  modules?: {
+    courses: boolean;
+  };
 
   // Auditoría
   updatedBy?: any;

@@ -3,6 +3,7 @@ import {
   CoursePublic,
   Project,
   Enrollment,
+  User,
 } from "../../core/models/home.models";
 import { HomeService } from "../../core/services/home";
 import { AuthService } from "../../core/services/auth";
@@ -23,6 +24,7 @@ import {
   inject,
   signal,
   untracked,
+  ChangeDetectionStrategy
 } from "@angular/core";
 import { Router, RouterLink } from "@angular/router";
 import { ProfileService } from "../../core/services/profile.service";
@@ -47,6 +49,7 @@ import { MxnCurrencyPipe } from '../../shared/pipes/mxn-currency.pipe';
   selector: "app-home",
   imports: [
     CommonModule,
+    RouterLink,
     CourseCardComponent,
     HeaderComponent,
     FooterComponent, // 🔥 NUEVO
@@ -57,6 +60,7 @@ import { MxnCurrencyPipe } from '../../shared/pipes/mxn-currency.pipe';
     MxnCurrencyPipe,
   ],
   templateUrl: "./home.html",
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeComponent implements OnInit {
   api = inject(HomeService);
@@ -99,6 +103,11 @@ export class HomeComponent implements OnInit {
   systemName = computed(() => {
     const config = this.systemConfig();
     return config?.siteName || 'Dev-Sharks';
+  });
+
+  // 🔥 CHECK: Módulo de cursos habilitado
+  coursesEnabled = computed(() => {
+    return this.systemConfigService.config()?.modules?.courses ?? true;
   });
 
   // Computed para filtrar instructores
@@ -185,8 +194,8 @@ export class HomeComponent implements OnInit {
   catalogResults = computed(() => {
     let items: any[] = [];
 
-    // Agregar cursos si está seleccionado
-    if (this.catalogShowCourses()) {
+    // Agregar cursos si está seleccionado Y habilitado
+    if (this.catalogShowCourses() && this.coursesEnabled()) {
       const coursesWithType = (this.api.allCourses() ?? []).map(
         (c: CoursePublic) => ({ ...c, type: "course" })
       );
@@ -328,6 +337,15 @@ export class HomeComponent implements OnInit {
         this.toast.networkError();
       }
     });
+
+    // ✅ Effect: Recargar compras cuando el usuario inicia sesión
+    effect(() => {
+      if (this.authService.isLoggedIn()) {
+        untracked(() => {
+          this.purchasesService.loadPurchasedProducts();
+        });
+      }
+    });
   }
 
   // ✅ Computed helpers - httpResource maneja los errores automáticamente
@@ -338,6 +356,9 @@ export class HomeComponent implements OnInit {
 
   // --- Video Modal State ---
   videoModalUrl = signal<string | null>(null);
+
+  // 🔥 Project Detail Modal State
+  selectedProject = signal<Project | null>(null);
 
   sanitizedVideoUrl = computed<SafeResourceUrl | null>(() => {
     const url = this.videoModalUrl();
@@ -366,8 +387,24 @@ export class HomeComponent implements OnInit {
     if (url) this.videoModalUrl.set(url);
   }
 
+  // 🔥 Abrir modal de detalle de proyecto
+  openProjectModal(project: Project): void {
+    this.selectedProject.set(project);
+    // Bloquear scroll del body
+    document.body.style.overflow = 'hidden';
+  }
+
+  // 🔥 Cerrar modal de detalle de proyecto
+  closeProjectModal(): void {
+    this.selectedProject.set(null);
+    // Restaurar scroll del body
+    document.body.style.overflow = 'auto';
+  }
+
   // 🆕 COMPRA DIRECTA - Sin carrito
   buyCourseDirect(course: CoursePublic): void {
+    if (!this.coursesEnabled()) return; // 🔥 Seguridad extra
+
     if (!this.authService.isLoggedIn()) {
       this.router.navigate(["/login"]);
       return;
@@ -429,9 +466,18 @@ export class HomeComponent implements OnInit {
   searching = signal<boolean>(false);
   isSearchLoading = this.searchService.isLoading;
   isResultsVisible = signal<boolean>(false);
-  searchRows = this.searchService.results;
+  // searchRows = this.searchService.results;
+  searchRows = computed(() => {
+    const results = this.searchService.results();
+    if (this.coursesEnabled()) {
+      return results;
+    }
+    // Filtrar cursos si el módulo está desactivado
+    return results.filter(item => item.item_type !== 'course');
+  });
 
   courses = computed<CoursePublic[]>(() => {
+    if (!this.coursesEnabled()) return []; // 🔥 Ocultar si está deshabilitado
     return this.featuredSafe();
   });
 
@@ -559,6 +605,7 @@ export class HomeComponent implements OnInit {
   navigateToDetail(item: any) {
     this.isResultsVisible.set(false);
     if (item.item_type === 'course') {
+      if (!this.coursesEnabled()) return; // 🔥 Bloqueo extra
       this.router.navigate(['/course-detail', item.slug]);
     } else if (item.item_type === 'project') {
       this.openVideoModal(item.url_video);
@@ -582,12 +629,19 @@ export class HomeComponent implements OnInit {
   navigateToCourse(course: any, event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
+
+    if (!this.coursesEnabled()) return; // 🔥 Bloquear navegación
+
     console.log('Navigate to course:', course);
     if (course.slug) {
       this.router.navigate(["/course-detail", course.slug]);
     } else {
       console.error('Course slug is missing:', course);
     }
+  }
+
+  navigateToProjectDetail(projectId: string): void {
+    this.router.navigate(['/project-detail', projectId]);
   }
 
   // Métodos para el carrusel de cursos destacados
@@ -713,6 +767,14 @@ export class HomeComponent implements OnInit {
     setTimeout(() => {
       this.legalModalType.set(null);
     }, 300); // Delay para animación
+  }
+
+  // 🔥 Helper para obtener usuario de proyecto (Fix TS2339)
+  getProjectUser(project: Project): User | null {
+    if (project.user && typeof project.user === 'object' && 'name' in project.user) {
+      return project.user as User;
+    }
+    return null;
   }
 }
 

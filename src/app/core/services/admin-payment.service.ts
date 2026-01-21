@@ -24,6 +24,10 @@ export interface InstructorWithEarnings {
       paypal: { count: number; total: number };
       mixed_paypal: { count: number; total: number };
     };
+    breakdown: {
+      organic: { count: number; total: number };
+      referral: { count: number; total: number };
+    };
   };
   paymentConfig: {
     preferredMethod: string;
@@ -131,7 +135,7 @@ export class AdminPaymentService {
     startDate?: string;
     endDate?: string;
   } = {}): Observable<any> {
-    console.log('🔄 [AdminPaymentService] Cargando instructores con filtros:', filters);
+    // 🔒 LOG REMOVIDO POR SEGURIDAD
 
     this.isLoadingInstructors.set(true);
     this.instructorsError.set(null);
@@ -179,7 +183,7 @@ export class AdminPaymentService {
     startDate?: string;
     endDate?: string;
   } = {}): Observable<any> {
-    console.log('📊 [AdminPaymentService] Cargando ganancias para instructor:', instructorId, 'con filtros:', filters);
+    // 🔒 LOG REMOVIDO POR SEGURIDAD
 
     this.isLoadingEarnings.set(true);
     this.earningsError.set(null);
@@ -286,8 +290,8 @@ export class AdminPaymentService {
    */
   reloadCommissionSettings(): void {
     this.loadCommissionSettings().subscribe({
-      next: () => {},
-      error: () => {}
+      next: () => { },
+      error: () => { }
     });
   }
 

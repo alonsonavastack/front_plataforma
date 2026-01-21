@@ -362,7 +362,7 @@ export class PaymentDashboardService {
   getMethodName(method: string): string {
     switch (method) {
       case 'wallet': return 'Billetera Digital';
-      case 'transfer': return 'Transferencia Bancaria';
+      case 'transfer': return 'Transferencia';
       case 'paypal': return 'PayPal';
       case 'stripe': return 'Stripe';
       case 'mercadopago': return 'MercadoPago';

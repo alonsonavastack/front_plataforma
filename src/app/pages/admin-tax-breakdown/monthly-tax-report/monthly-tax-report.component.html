@@ -1,0 +1,48 @@
+<div class="p-6 space-y-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-white">Reporte Mensual Fiscal</h2>
+        <div class="text-sm text-slate-400">
+            Vista previa del reporte a generar
+        </div>
+    </div>
+
+    <!-- 📊 Summary Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+            <h3 class="text-slate-400 text-sm mb-2">Total Retenciones (A Pagar SAT)</h3>
+            <p class="text-3xl font-bold text-red-400">$10,460.00</p>
+        </div>
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+            <h3 class="text-slate-400 text-sm mb-2">Total Pagado Instructores</h3>
+            <p class="text-3xl font-bold text-lime-400">$40,340.00</p>
+        </div>
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+            <h3 class="text-slate-400 text-sm mb-2">Total Comisiones PayPal</h3>
+            <p class="text-3xl font-bold text-purple-400">$14,010.00</p>
+        </div>
+    </div>
+
+    <!-- 📄 Minimal Table for Report -->
+    <div class="bg-slate-900 rounded-xl overflow-hidden border border-slate-800">
+        <div class="p-4 bg-slate-800/50 border-b border-slate-700">
+            <h3 class="font-bold text-white">Desglose por Instructor (Top 5)</h3>
+        </div>
+        <table class="w-full text-left text-sm text-slate-400">
+            <thead class="bg-slate-800 text-xs uppercase text-slate-300">
+                <tr>
+                    <th class="px-6 py-4">Instructor</th>
+                    <th class="px-6 py-4 text-right">Retenciones</th>
+                    <th class="px-6 py-4 text-right">Neto Pagado</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+                <tr class="hover:bg-slate-800/50">
+                    <td class="px-6 py-4 text-white">Juan Pérez</td>
+                    <td class="px-6 py-4 text-right text-red-400">$1,046.00</td>
+                    <td class="px-6 py-4 text-right text-lime-400">$4,034.00</td>
+                </tr>
+                <!-- Mock Data Rows -->
+            </tbody>
+        </table>
+    </div>
+</div>

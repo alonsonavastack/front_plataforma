@@ -60,6 +60,12 @@ export class CoursesService {
     return this.http.get<CourseListResponse>(`${this.base}courses/list?state=${val}`);
   }
 
+  // 🔥 NUEVO: Listar cursos de un instructor (para cupones)
+  listCoursesInstructor() {
+    // El endpoint list ya filtra por instructor si el usuario tiene ese rol
+    return this.http.get<CourseListResponse>(`${this.base}courses/list`);
+  }
+
   showResource = (idSignal: () => string) => {
     const state = signal<{ course: CourseAdmin | null, isLoading: boolean, error: any }>({
       course: null,

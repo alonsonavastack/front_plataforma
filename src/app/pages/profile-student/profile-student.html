@@ -54,6 +54,7 @@
 
         <nav class="p-4 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm">
           <ul class="space-y-1">
+            @if (coursesEnabled()) {
             <li>
               <button (click)="setActiveSection('courses')" [class.bg-lime-400/10]="activeSection() === 'courses'"
                 [class.text-lime-300]="activeSection() === 'courses'"
@@ -66,6 +67,7 @@
                 <span>Mis Cursos</span>
               </button>
             </li>
+            }
             <li>
               <button (click)="setActiveSection('projects')" [class.bg-lime-400/10]="activeSection() === 'projects'"
                 [class.text-lime-300]="activeSection() === 'projects'"
@@ -132,6 +134,7 @@
       <main>
         @switch (activeSection()) {
         @case ('courses') {
+        @if (coursesEnabled()) {
         <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm courses-section">
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-2xl font-bold">Mis Cursos</h3>
@@ -261,6 +264,7 @@
           </div>
           }
         </div>
+        }
         }
         @case ('projects') {
         <div class="p-6 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm projects-section">
@@ -627,6 +631,18 @@
 
                 <!-- 2️⃣ Tiene productos reembolsables -->
                 @else if (hasRefundableProducts(sale)) {
+
+                @if (sale.instructor_paid) {
+                <div class="px-4 py-2.5 bg-slate-700/30 rounded-lg border border-slate-600 text-center">
+                  <p class="text-xs text-slate-400 flex items-center justify-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Garantía finalizada (Fondos liberados al instructor)</span>
+                  </p>
+                </div>
+                } @else {
                 <button (click)="openRefundModal(sale)"
                   class="w-full flex items-center justify-center px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors text-sm font-medium text-red-400 border border-red-500/20 hover:border-red-500/40">
                   <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -636,7 +652,6 @@
                   <span>Solicitar Reembolso ({{ getRefundableProducts(sale).length }}/{{ sale.detail.length }}
                     disponibles)</span>
                 </button>
-
                 <!-- Info adicional sobre el tiempo restante -->
                 @if (isWithinRefundPeriod(sale.createdAt)) {
                 <div class="mt-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
@@ -652,6 +667,7 @@
                 </div>
                 }
                 }
+                }
 
                 <!-- 3️⃣ No hay productos reembolsables -->
                 @else {
@@ -663,7 +679,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <span>Período de reembolso expirado (3 días)</span>
+                    <span>Período de reembolso expirado (7 días)</span>
                   </p>
                 </div>
                 } @else {
@@ -1275,8 +1291,8 @@
               </div>
 
               <!-- 🆕 COMPROBANTE DE REEMBOLSO (Opcional - Solo si existe) -->
-              @if (refund.status === 'completed' && (refund.refundDetails?.receiptImage ||
-              refund.refundDetails?.receiptNumber)) {
+              @if (refund.status === 'completed' && (refund.refundDetails.receiptImage ||
+              refund.refundDetails.receiptNumber)) {
               <div class="mt-3 bg-green-500/10 rounded-lg p-4 border border-green-500/30">
                 <div class="flex items-start gap-3">
                   <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
@@ -1290,7 +1306,7 @@
                     <p class="text-sm font-semibold text-green-300 mb-2">Comprobante de Reembolso</p>
                     <div class="space-y-2">
                       <!-- Número de Referencia -->
-                      @if (refund.refundDetails?.receiptNumber) {
+                      @if (refund.refundDetails.receiptNumber) {
                       <div class="bg-slate-900/50 rounded-lg p-2.5">
                         <p class="text-xs text-slate-400 mb-1">Número de Referencia:</p>
                         <p class="text-sm font-mono font-bold text-green-200">{{ refund.refundDetails.receiptNumber }}
@@ -1299,7 +1315,7 @@
                       }
 
                       <!-- Botón para ver comprobante (solo si existe archivo) -->
-                      @if (refund.refundDetails?.receiptImage) {
+                      @if (refund.refundDetails.receiptImage) {
                       <a [href]="buildRefundReceiptUrl(refund.refundDetails.receiptImage)" target="_blank"
                         rel="noopener noreferrer"
                         class="inline-flex items-center gap-2 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-lg transition-colors text-sm font-semibold">
@@ -1676,7 +1692,7 @@
             <div>
               <p class="text-sm text-yellow-200 font-semibold mb-1">Política de Reembolsos</p>
               <ul class="text-xs text-yellow-300/90 space-y-1 list-disc list-inside">
-                <li>Tienes 3 DÍAS para solicitar reembolso</li>
+                <li>Tienes 7 DÍAS para solicitar reembolso</li>
                 <li>No puedes haber visto más del 20% del contenido</li>
                 <li>Máximo 1 reembolso por curso</li>
                 <li>Máximo 3 reembolsos totales en 6 meses</li>

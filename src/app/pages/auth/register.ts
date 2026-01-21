@@ -20,7 +20,7 @@ import { CountryCodeSelectorComponent } from '../../shared/country-code-selector
     ReactiveFormsModule,
     HeaderComponent,
     CountryCodeSelectorComponent
-],
+  ],
   templateUrl: './register.html',
 })
 export class RegisterComponent {
@@ -122,12 +122,28 @@ export class RegisterComponent {
         }
       },
       error: (err) => {
-        this.isLoading.set(false)
-        this.errorMessage.set(
-          err.error?.message_text ||
-          err.error?.message ||
-          'Error al registrarse. Por favor intenta nuevamente.'
-        );
+        this.isLoading.set(false);
+
+        // Manejar errores de duplicados (409)
+        if (err.status === 409) {
+          const msg = err.error?.message_text || 'El usuario ya existe.';
+
+          // Mensaje más amigable si es mayúsculas
+          let friendlyMsg = msg;
+          if (msg.includes('USUARIO INGRESADO YA EXISTE')) {
+            friendlyMsg = 'Ya existe una cuenta registrada con este correo electrónico.';
+          } else if (msg.includes('TELÉFONO YA ESTÁ REGISTRADO')) {
+            friendlyMsg = 'Este número de teléfono ya está registrado en otra cuenta.';
+          }
+
+          this.errorMessage.set(friendlyMsg);
+        } else {
+          this.errorMessage.set(
+            err.error?.message_text ||
+            err.error?.message ||
+            'Error al registrarse. Por favor intenta nuevamente.'
+          );
+        }
       }
     });
   }

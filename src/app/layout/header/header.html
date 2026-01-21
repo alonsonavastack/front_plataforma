@@ -25,7 +25,11 @@
     </a>
 
     <!-- Navegación para Escritorio -->
-    <nav class="hidden lg:flex items-center gap-6 text-sm text-slate-300"></nav>
+    <nav class="hidden lg:flex items-center gap-6 text-sm text-slate-300">
+      <a routerLink="/instructors" routerLinkActive="text-lime-400 font-medium"
+        class="hover:text-white transition-colors">Instructores</a>
+      <!-- Puedes agregar más links aquí -->
+    </nav>
 
     <!-- 🔥 ACCIONES DEL USUARIO -->
     <div class="flex items-center gap-3">
@@ -180,6 +184,11 @@
       <li>
         <a routerLink="/" class="flex items-center p-2 text-slate-200 rounded-lg hover:bg-gray-700 group">
           <span class="ms-3">Inicio</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/instructors" class="flex items-center p-2 text-slate-200 rounded-lg hover:bg-gray-700 group">
+          <span class="ms-3">Instructores</span>
         </a>
       </li>
       @if (authService.user()?.rol === 'admin' || authService.user()?.rol === 'instructor') {

@@ -146,7 +146,8 @@
                       @for (item of searchRows(); track item._id) {
                       <li
                         class="group hover:bg-gradient-to-r hover:from-lime-500/5 hover:to-emerald-500/5 transition-all">
-                        <a (mousedown)="navigateToDetail(item)" class="flex items-start gap-4 px-6 py-4 cursor-pointer">
+                        <div (mousedown)="navigateToDetail(item)"
+                          class="flex items-start gap-4 px-6 py-4 cursor-pointer relative">
                           <!-- Imagen con efecto hover -->
                           <div class="relative flex-shrink-0">
                             <img
@@ -187,15 +188,45 @@
                             </div>
                           </div>
 
-                          <!-- Icono de flecha -->
-                          <div
-                            class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                            <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                            </svg>
+                          <!-- Botones de Acción (Estilo Catálogo) -->
+                          <div class="flex items-center gap-2 z-10">
+                            <!-- PROYECTOS -->
+                            @if (item.item_type === 'project') {
+                            @if(isProjectPurchased(item._id)){
+                            <span
+                              class="bg-sky-600/30 text-sky-400 text-xs font-bold px-2 py-1 rounded">Adquirido</span>
+                            }
+                            @if (item.url_video) {
+                            <button (mousedown)="$event.stopPropagation(); openVideoModal(item.url_video)"
+                              class="p-1.5 rounded-lg border border-white/20 text-white hover:border-cyan-400 hover:text-cyan-300 transition"
+                              title="Ver demo">
+                              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                                  clip-rule="evenodd"></path>
+                              </svg>
+                            </button>
+                            }
+                            <button (mousedown)="$event.stopPropagation(); openProjectModal(item)"
+                              class="px-3 py-1.5 rounded-lg border border-white/20 text-white hover:border-white hover:text-white hover:bg-white/5 transition text-xs font-semibold flex items-center gap-1"
+                              title="Ver detalles">
+                              Ver detalles
+                            </button>
+                            }
+
+                            <!-- CURSOS -->
+                            @if (item.item_type === 'course') {
+                            @if (isCourseEnrolled(item._id)) {
+                            <span
+                              class="bg-sky-600/30 text-sky-400 text-xs font-bold px-2 py-1 rounded">Adquirido</span>
+                            }
+                            <button (mousedown)="$event.stopPropagation(); navigateToDetail(item)"
+                              class="px-3 py-1.5 rounded-lg bg-lime-500/10 border border-lime-500/20 text-lime-400 hover:bg-lime-500/20 transition text-xs font-semibold">
+                              Ver
+                            </button>
+                            }
                           </div>
-                        </a>
+                        </div>
                       </li>
                       }
                     </ul>
@@ -261,8 +292,9 @@
   </div>
 </div>
 } @else {
-<!-- ✅ Solo muestra la sección de cursos si hay una búsqueda o si los destacados están habilitados Y hay cursos -->
-@if ((q().trim() && searchRows().length > 0) || (!q().trim() && featuredCoursesEnabled() && featuredSafe().length > 0))
+<!-- ✅ Solo muestra la sección de cursos si hay una búsqueda o si los destacados están habilitados Y hay cursos Y el módulo está activo -->
+@if (coursesEnabled() && ((q().trim() && searchRows().length > 0) || (!q().trim() && featuredCoursesEnabled() &&
+featuredSafe().length > 0)))
 {
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
   <!-- Encabezado de la sección -->
@@ -342,7 +374,7 @@
       @for (project of featuredProjects(); track project._id) {
       <div class="flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px]" style="scroll-snap-align: start;">
         <app-projects-card [project]="project" (openVideo)="openVideoModal($event)"
-          (buyNowClick)="buyProjectDirect($event)"></app-projects-card>
+          (buyNowClick)="buyProjectDirect($event)" (openDetail)="openProjectModal($event)"></app-projects-card>
       </div>
       }
     </div>
@@ -496,12 +528,16 @@
             Tipo
           </h3>
           <div class="space-y-2">
+            @if (coursesEnabled()) {
             <label class="flex items-center gap-2 cursor-pointer group">
               <input type="checkbox" [checked]="catalogShowCourses()"
                 (change)="catalogShowCourses.set($any($event.target).checked)"
                 class="w-4 h-4 rounded border-white/20 bg-slate-700 text-lime-400 focus:ring-lime-400 focus:ring-offset-slate-900" />
-              <span class="text-sm text-white/80 group-hover:text-white">Cursos</span>
+              <span class="text-sm text-white/80 group-hover:text-white">
+                Cursos
+              </span>
             </label>
+            }
             <label class="flex items-center gap-2 cursor-pointer group">
               <input type="checkbox" [checked]="catalogShowProjects()"
                 (change)="catalogShowProjects.set($any($event.target).checked)"
@@ -554,7 +590,7 @@
         </div>
 
         <!-- Nivel (solo para cursos) -->
-        @if (catalogShowCourses()) {
+        @if (catalogShowCourses() && coursesEnabled()) {
         <div class="rounded-xl border border-white/10 bg-slate-800/50 p-4">
           <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
             <svg class="w-5 h-5 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -742,10 +778,15 @@
                   </button>
                   } @else {
                   @if (isProjectPurchased(item._id)) {
-                  <button
-                    class="px-4 py-2 rounded-lg bg-sky-600/50 text-sky-300 text-sm font-semibold cursor-not-allowed"
-                    disabled>
-                    Ya adquirido
+                  <button (click)="navigateToProjectDetail(item._id)"
+                    class="px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-bold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Ver Proyecto
                   </button>
                   } @else {
                   <button (click)="buyProjectDirect(item)" [disabled]="!authService.isLoggedIn()"
@@ -771,7 +812,21 @@
                     <span class="hidden sm:inline">Ver demo</span>
                   </button>
                   }
+
+                  <!-- Botón Ver Detalles (Nuevo) -->
+                  <button (click)="navigateToProjectDetail(item._id)"
+                    class="px-4 py-2 rounded-lg border border-white/20 text-white hover:border-white hover:text-white hover:bg-white/5 transition text-sm font-semibold flex items-center gap-2"
+                    title="Ver detalles">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span class="hidden sm:inline">Ver detalles</span>
+                  </button>
                   }
+
                 </div>
               </div>
             </div>
@@ -840,7 +895,7 @@
 <!-- VIDEO MODAL -->
 @if (videoModalUrl()) {
 <div
-  class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto overscroll-contain touch-pan-y"
+  class="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto overscroll-contain touch-pan-y"
   (click)="videoModalUrl.set(null)">
   <div class="relative w-full max-w-4xl aspect-video" (click)="$event.stopPropagation()">
     <!-- Close Button -->
@@ -870,3 +925,139 @@
   <app-footer (openLegalModalEvent)="openLegalModal($event)"></app-footer>
 </div>
 </div>
+
+<!-- MODAL DE DETALLE DE PROYECTO -->
+@if (selectedProject(); as project) {
+<div class="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
+  <!-- Backdrop con blur -->
+  <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" (click)="closeProjectModal()"></div>
+
+  <!-- Contenido del modal -->
+  <div
+    class="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900 border border-white/10 rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-300 custom-scrollbar">
+
+    <!-- Header visual (Imagen) -->
+    <div class="relative h-48 sm:h-64 w-full flex-shrink-0">
+      <img [src]="buildProjectImageUrl(project.imagen)" [alt]="project.title" class="w-full h-full object-cover">
+      <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent"></div>
+
+      <!-- Video Play Button -->
+      @if (project.url_video) {
+      <div class="absolute inset-0 flex items-center justify-center z-20 group cursor-pointer"
+        (click)="openVideoModal(project.url_video)">
+        <div
+          class="relative flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-lime-400 rounded-full shadow-lg shadow-lime-500/30 group-hover:scale-110 transition-transform duration-300">
+          <svg class="w-8 h-8 sm:w-10 sm:h-10 text-slate-900 ml-1" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+          </svg>
+          <div class="absolute inset-0 rounded-full border-2 border-white/20 animate-ping opacity-75"></div>
+        </div>
+      </div>
+      }
+
+      <!-- Botón cerrar superior -->
+      <button (click)="closeProjectModal()"
+        class="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white/70 hover:text-white hover:bg-black/70 backdrop-blur-md transition-all z-30">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <!-- Badges sobre la imagen -->
+      <div class="absolute bottom-4 left-4 sm:left-8 flex flex-wrap gap-2">
+        @if (project.categorie?.title) {
+        <span
+          class="px-3 py-1 rounded-lg bg-lime-400/20 text-lime-300 text-xs font-bold border border-lime-400/30 backdrop-blur-md">
+          {{ project.categorie.title }}
+        </span>
+        }
+      </div>
+    </div>
+
+    <!-- Cuerpo del contenido -->
+    <div class="p-6 sm:p-8 space-y-6">
+
+      <!-- Título y Subtítulo -->
+      <div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">{{ project.title }}</h2>
+        @if (project.subtitle) {
+        <p class="text-lg text-slate-400 italic">{{ project.subtitle }}</p>
+        }
+      </div>
+
+      <!-- Métadatos (Instructor, Precio) -->
+      <div class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+
+        @if (getProjectUser(project); as user) {
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 font-bold border border-white/10 overflow-hidden">
+            <!-- Avatar placeholder o inicial -->
+            {{ user.name.charAt(0) || 'D' }}
+          </div>
+          <div>
+            <p class="text-xs text-slate-400 uppercase tracking-wider">Creado por</p>
+            <p class="text-sm font-semibold text-white">
+              {{ user.name }} {{ user.surname }}
+            </p>
+          </div>
+        </div>
+        }
+
+        <div class="text-right ml-auto">
+          <p class="text-xs text-slate-400 uppercase tracking-wider">Precio</p>
+          @if (project['isFree'] || project.price_mxn === 0) {
+          <span class="text-xl font-bold text-green-400">GRATUITO</span>
+          } @else if (project.discount_active) {
+          <div class="flex flex-col items-end">
+            <span class="text-xl font-bold text-lime-300 leading-none">
+              {{ project.final_price_mxn | mxnCurrency:currencyService.selectedCurrencyCode() }}
+            </span>
+            <span class="text-xs text-slate-500 line-through">
+              {{ project.price_mxn | mxnCurrency:currencyService.selectedCurrencyCode() }}
+            </span>
+          </div>
+          } @else {
+          <span class="text-xl font-bold text-lime-300">
+            {{ project.price_mxn | mxnCurrency:currencyService.selectedCurrencyCode() }}
+          </span>
+          }
+        </div>
+      </div>
+
+      <!-- Descripción (HTML) -->
+      <div class="prose prose-invert prose-lime max-w-none text-slate-300">
+        <div [innerHTML]="project.description" class="whitespace-pre-wrap"></div>
+      </div>
+
+    </div>
+
+    <!-- Footer con acciones sticky -->
+    <div
+      class="sticky bottom-0 bg-slate-900/95 backdrop-blur-xl border-t border-white/10 p-4 sm:px-8 sm:py-6 flex justify-end gap-3 z-20">
+      <button (click)="closeProjectModal()"
+        class="px-5 py-2.5 rounded-xl border border-white/10 text-slate-300 font-semibold hover:bg-white/5 hover:text-white transition-colors">
+        Cerrar
+      </button>
+
+      @if (isProjectPurchased(project._id)) {
+      <button disabled
+        class="px-6 py-2.5 rounded-xl bg-slate-700 text-slate-400 font-bold cursor-not-allowed border border-white/5">
+        Ya adquirido
+      </button>
+      <a [routerLink]="['/project-detail', project._id]" (click)="closeProjectModal()"
+        class="px-6 py-2.5 rounded-xl bg-lime-400 text-slate-900 font-bold hover:bg-lime-300 transition-colors shadow-lg shadow-lime-500/20">
+        Ir al Proyecto
+      </a>
+      } @else {
+      <button (click)="buyProjectDirect(project); closeProjectModal()"
+        class="px-8 py-2.5 rounded-xl bg-gradient-to-r from-lime-400 to-emerald-400 text-slate-900 font-bold hover:from-lime-300 hover:to-emerald-300 transition-all shadow-lg shadow-lime-500/20 active:scale-95">
+        Comprar Ahora
+      </button>
+      }
+    </div>
+
+  </div>
+</div>
+}

@@ -7,6 +7,7 @@ import { NotificationsService } from '../../core/services/notifications.service'
 import { ReviewNotificationsService } from '../../core/services/review-notifications.service';
 import { RefundNotificationsService } from '../../core/services/refund-notifications.service';
 import { SystemConfigService } from '../../core/services/system-config.service';
+import { TaxNotificationsService } from '../../core/services/tax-notifications.service'; // Added Import
 import { ClickOutsideDirective } from '../../shared/directives/click-outside.directive';
 import { initFlowbite } from 'flowbite';
 import { ToastService } from '../../core/services/toast.service';
@@ -27,6 +28,8 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
   reviewNotificationsService = inject(ReviewNotificationsService);
   refundNotificationsService = inject(RefundNotificationsService);
   systemConfigService = inject(SystemConfigService);
+  // Servicio de notificaciones fiscales
+  taxNotificationsService = inject(TaxNotificationsService);
 
   isSidebarCollapsed = input.required<boolean>();
   toggleSidebar = output<void>();
@@ -182,6 +185,7 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
     // Admin: Polling de reembolsos
     if (user?.rol === 'admin') {
       this.refundNotificationsService.startPolling();
+      this.taxNotificationsService.startPolling();
     }
   }
 

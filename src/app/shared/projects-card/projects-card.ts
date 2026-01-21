@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, computed, OnInit, inject, output, ChangeDetectionStrategy, Input, signal, input } from '@angular/core';
+import { Component, Output, EventEmitter, computed, inject, output, ChangeDetectionStrategy, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Project } from '../../core/models/home.models';
@@ -18,7 +18,7 @@ import { MxnCurrencyPipe } from '../pipes/mxn-currency.pipe';
   styleUrls: ['./projects-card.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ProjectsCardComponent implements OnInit {
+export class ProjectsCardComponent {
   // ✅ Modern input API
   project = input.required<Project>();
 
@@ -27,14 +27,15 @@ export class ProjectsCardComponent implements OnInit {
   // 🔥 Output para compra directa
   buyNowClick = output<Project>();
 
+  // 🔥 Output para ver detalles
+  openDetail = output<Project>();
+
   private purchasesService = inject(PurchasesService);
   private authService = inject(AuthService);
   private toast = inject(ToastService);
   public currencyService = inject(CurrencyService);
 
-  ngOnInit(): void {
-    // Componente inicializado
-  }
+
 
   // Construye la URL de la imagen del proyecto
   imageUrl = computed(() => {
@@ -92,6 +93,16 @@ export class ProjectsCardComponent implements OnInit {
     const p = this.project();
     if (p?.url_video) {
       this.openVideo.emit(p.url_video);
+    }
+  }
+
+  // Emite evento para ver detalles
+  onOpenDetail(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const p = this.project();
+    if (p) {
+      this.openDetail.emit(p);
     }
   }
 }

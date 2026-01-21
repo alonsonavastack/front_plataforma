@@ -11,7 +11,9 @@ import { catchError, tap } from 'rxjs/operators';
  * Define un elemento de resultado de búsqueda, que puede ser un curso o un proyecto.
  * Se añade la propiedad `item_type` para poder diferenciarlos en el frontend.
  */
-export type SearchResultItem = (CoursePublic | Project) & { item_type: 'course' | 'project' };
+export type SearchResultCourse = CoursePublic & { item_type: 'course' };
+export type SearchResultProject = Project & { item_type: 'project' };
+export type SearchResultItem = SearchResultCourse | SearchResultProject;
 
 /**
  * Define la estructura de la respuesta de la API para la búsqueda general.

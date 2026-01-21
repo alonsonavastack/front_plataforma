@@ -1,4 +1,4 @@
-import { Injectable, signal, computed, inject, resource } from '@angular/core';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 // rxResource removed
@@ -12,21 +12,27 @@ export class PurchasesService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
 
-  // 🔥 Signal para disparar recarga
+  // 🔥 Signals manuales para reemplazar resource
   private reloadTrigger = signal(0);
+  private purchasesData = signal<{ enrolled_courses: any[], projects: any[] }>({ enrolled_courses: [], projects: [] });
+  private loading = signal<boolean>(false);
+  private errorSignal = signal<any>(null);
 
-  // 🔥 rxResource para cargar productos comprados
-  // 🔥 rxResource reemplazado por resource standard
-  private purchasesResource = resource({
-    loader: async () => {
-      this.reloadTrigger(); // Track dependency
-      const isLoggedIn = this.authService.isLoggedIn();
+  constructor() {
+    // ✅ Effect para cargar compras automáticamente cuando cambia el token o el trigger
+    effect(() => {
+      const token = this.authService.token();
+      const trigger = this.reloadTrigger(); // Track dependency
 
-      if (!isLoggedIn) {
-        return { enrolled_courses: [], projects: [] };
+      if (!token) {
+        this.purchasesData.set({ enrolled_courses: [], projects: [] });
+        return;
       }
 
-      const token = this.authService.token();
+      // No setear loading a true si es solo un refresh silencioso?
+      // Mejor sí, para indicar actividad.
+      this.loading.set(true);
+
       const headers = new HttpHeaders({
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -35,13 +41,26 @@ export class PurchasesService {
       const timestamp = Date.now();
       const url = `${environment.url}profile-student/client?_=${timestamp}`;
 
-      return firstValueFrom(this.http.get<any>(url, { headers }));
-    }
-  });
+      this.http.get<any>(url, { headers }).subscribe({
+        next: (data) => {
+          this.purchasesData.set(data);
+          this.loading.set(false);
+          this.errorSignal.set(null);
+        },
+        error: (err) => {
+          console.error('Error loading purchases', err);
+          this.errorSignal.set(err);
+          this.loading.set(false);
+          // No limpiar datos anteriores en error para evitar parpadeos feos,
+          // o sí limpiar si es crítico. En este caso mantenemos lo que había o vacío.
+        }
+      });
+    });
+  }
 
   // 🔥 Computed signal para productos comprados (Set de IDs)
   private purchasedProductsSet = computed(() => {
-    const response = this.purchasesResource.value() as any;
+    const response = this.purchasesData();
     if (!response) return new Set<string>();
 
     const productIds = new Set<string>();
@@ -66,9 +85,9 @@ export class PurchasesService {
   });
 
   // 🔥 Señales públicas
-  public isLoading = computed(() => this.purchasesResource.isLoading());
-  public isLoaded = computed(() => this.purchasesResource.hasValue());
-  public error = computed(() => this.purchasesResource.error());
+  public isLoading = this.loading.asReadonly();
+  public isLoaded = computed(() => !this.loading()); // Simplificado
+  public error = this.errorSignal.asReadonly();
 
   // 🔥 Verificar si un producto ya fue comprado
   isPurchased(productId: string): boolean {
@@ -88,5 +107,6 @@ export class PurchasesService {
   // 🔥 Limpiar al hacer logout
   clearPurchases(): void {
     this.reloadTrigger.set(0);
+    this.purchasesData.set({ enrolled_courses: [], projects: [] });
   }
 }

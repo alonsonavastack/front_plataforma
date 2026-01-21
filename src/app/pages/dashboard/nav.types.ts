@@ -21,7 +21,9 @@ export type NavId =
   | 'instructor-payment-config'
   | 'refunds'
   | 'wallets'
-  | 'review-notifications'; // 🔥 NUEVO
+  | 'review-notifications'
+  | 'admin-tax-breakdown' // 🧮 NUEVO
+  | 'coupons'; // 🎟 NUEVO
 
 export interface NavItem {
   id: NavId;

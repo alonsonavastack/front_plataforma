@@ -120,7 +120,7 @@ export class AdminInstructorPaymentsComponent implements OnInit {
         distinctUntilChanged() // Solo si el valor cambió
       )
       .subscribe(() => {
-        console.log('🔄 [AdminPayments] Filtros cambiados (debounced)');
+        // 🔒 LOG REMOVIDO POR SEGURIDAD
         this.currentPage.set(1);
         this.loadInstructors();
       });
@@ -130,7 +130,7 @@ export class AdminInstructorPaymentsComponent implements OnInit {
     // 🔥 CORRECCIÓN: Suscribirse al observable
     this.adminPaymentService.loadCommissionSettings().subscribe({
       next: () => {
-        console.log('✅ [AdminPayments] Settings cargados');
+        // 🔒 LOG REMOVIDO POR SEGURIDAD
       },
       error: (err) => {
         console.error('❌ [AdminPayments] Error al cargar settings:', err);
@@ -141,7 +141,7 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   loadInstructors() {
     const formValue = this.filterForm.value;
     
-    console.log('📋 [AdminPayments] Form Value:', formValue);
+    // 🔒 LOG REMOVIDO POR SEGURIDAD
     
     const filters: { 
       status?: string; 
@@ -164,8 +164,8 @@ export class AdminInstructorPaymentsComponent implements OnInit {
       }
     });
     
-    console.log('🔍 [AdminPayments] Filtros enviados al backend:', filters);
-    console.log('🔍 [AdminPayments] Número de filtros activos:', Object.keys(filters).length);
+    // 🔒 LOG REMOVIDO POR SEGURIDAD
+    // 🔒 LOG REMOVIDO POR SEGURIDAD
     
     // 🔥 CORRECCIÓN: Llamar al método correcto del servicio
     this.adminPaymentService.loadInstructors(filters).subscribe({

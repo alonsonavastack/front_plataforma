@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ReviewService, Review, ReviewStatistics, CanRateResponse } from '../../core/services/review.service';
 import { AuthService } from '../../core/services/auth';
 import { ReviewNotificationsService } from '../../core/services/review-notifications.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-course-reviews',
@@ -12,7 +13,7 @@ import { ReviewNotificationsService } from '../../core/services/review-notificat
   template: `
     <div class="space-y-6">
       <!-- Estadísticas de calificaciones -->
-      @if (statistics()) {
+      @if (statistics() && showStatistics) {
         <div class="rounded-xl border border-white/10 bg-white/5 p-6">
           <div class="flex items-center gap-4 mb-4">
             <div class="text-center">
@@ -76,6 +77,7 @@ import { ReviewNotificationsService } from '../../core/services/review-notificat
           } @else {
             <form (ngSubmit)="onSubmit()" class="space-y-4">
               <!-- Calificación con estrellas -->
+              @if (enableRating) {
               <div>
                 <label class="block text-sm font-medium text-white/90 mb-2">Tu calificación</label>
                 <div class="flex items-center gap-1">
@@ -101,6 +103,7 @@ import { ReviewNotificationsService } from '../../core/services/review-notificat
                   </p>
                 }
               </div>
+              }
 
               <!-- Comentario -->
               <div>
@@ -120,7 +123,7 @@ import { ReviewNotificationsService } from '../../core/services/review-notificat
               <!-- Botones -->
               <div class="flex gap-3">
                 <button type="submit"
-                        [disabled]="selectedRating() === 0 || !reviewDescription.trim()"
+                        [disabled]="(enableRating && selectedRating() === 0) || !reviewDescription.trim()"
                         class="px-6 py-2 bg-lime-500 text-slate-900 font-semibold rounded-lg hover:bg-lime-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                   Enviar calificación
                 </button>
@@ -148,6 +151,7 @@ import { ReviewNotificationsService } from '../../core/services/review-notificat
           } @else {
             <form (ngSubmit)="onSubmit()" class="space-y-4">
               <!-- Calificación con estrellas -->
+              @if (enableRating) {
               <div>
                 <label class="block text-sm font-medium text-white/90 mb-2">Tu calificación</label>
                 <div class="flex items-center gap-1">
@@ -173,6 +177,7 @@ import { ReviewNotificationsService } from '../../core/services/review-notificat
                   </p>
                 }
               </div>
+              }
 
               <!-- Comentario -->
               <div>
@@ -192,10 +197,11 @@ import { ReviewNotificationsService } from '../../core/services/review-notificat
               <!-- Botones -->
               <div class="flex gap-3">
                 <button type="submit"
-                        [disabled]="selectedRating() === 0 || !reviewDescription.trim()"
+                        [disabled]="(enableRating && selectedRating() === 0) || !reviewDescription.trim()"
                         class="px-6 py-2 bg-lime-500 text-slate-900 font-semibold rounded-lg hover:bg-lime-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                   Actualizar calificación
                 </button>
+
                 <button type="button"
                         (click)="resetForm()"
                         class="px-6 py-2 border border-white/20 text-white/70 rounded-lg hover:border-white/40 hover:text-white transition-colors">
@@ -211,44 +217,54 @@ import { ReviewNotificationsService } from '../../core/services/review-notificat
       @if (shouldShowAlreadyRatedMessage()) {
         <div class="rounded-xl border border-white/10 bg-white/5 p-6">
           <div class="text-center">
+            @if (enableRating) {
             <svg class="w-12 h-12 text-lime-400 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path stroke-width="2" d="M12 17l-5 3 1.5-5.5L4 9l5.5-.5L12 3l2.5 5.5L20 9l-4.5 5.5L17 20z"/>
             </svg>
-            <h3 class="text-lg font-semibold text-white mb-2">Ya calificaste este curso</h3>
-            <p class="text-white/70 mb-4">Gracias por compartir tu opinión</p>
+            } @else {
+            <svg class="w-12 h-12 text-lime-400 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+              </path>
+            </svg>
+            }
+            <h3 class="text-lg font-semibold text-white mb-2">{{ enableRating ? 'Ya calificaste este curso' : 'Ya comentaste este proyecto' }}</h3>
+            <p class="text-white/70">Gracias por compartir tu opinión</p>
 
             <div class="mt-4 p-4 bg-white/5 rounded-lg">
-              <p class="text-sm text-white/70 mb-2">Tu calificación:</p>
-              <div class="flex items-center justify-center gap-2">
-                <div class="flex items-center gap-1">
-                  @for (star of generateStars(canRateResponse()!.existing_review!.rating); track $index) {
-                    @if (star === 'full') {
-                      <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 24 24">
-                        <path d="M12 17l-5 3 1.5-5.5L4 9l5.5-.5L12 3l2.5 5.5L20 9l-4.5 5.5L17 20z"/>
-                      </svg>
-                    } @else if (star === 'half') {
-                      <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 24 24">
-                        <defs>
-                          <linearGradient id="existing-half-{{ $index }}">
-                            <stop offset="50%" stop-color="currentColor"/>
-                            <stop offset="50%" stop-color="transparent"/>
-                          </linearGradient>
-                        </defs>
-                        <path [attr.fill]="'url(#existing-half-' + $index + ')'" d="M12 17l-5 3 1.5-5.5L4 9l5.5-.5L12 3l2.5 5.5L20 9l-4.5 5.5L17 20z"/>
-                      </svg>
-                    } @else {
-                      <svg class="w-5 h-5 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-width="2" d="M12 17l-5 3 1.5-5.5L4 9l5.5-.5L12 3l2.5 5.5L20 9l-4.5 5.5L17 20z"/>
-                      </svg>
-                    }
-                  }
-                </div>
-              </div>
-              <p class="text-white/80 mt-3 text-sm">{{ canRateResponse()!.existing_review!.description }}</p>
+                @if (enableRating) {
+                  <p class="text-sm text-white/70 mb-2">Tu calificación:</p>
+                  <div class="flex items-center justify-center gap-2">
+                    <div class="flex items-center gap-1">
+                      @for (star of generateStars(canRateResponse()!.existing_review!.rating); track $index) {
+                        @if (star === 'full') {
+                          <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 24 24">
+                            <path d="M12 17l-5 3 1.5-5.5L4 9l5.5-.5L12 3l2.5 5.5L20 9l-4.5 5.5L17 20z"/>
+                          </svg>
+                        } @else if (star === 'half') {
+                          <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 24 24">
+                            <defs>
+                              <linearGradient id="existing-half-{{ $index }}">
+                                <stop offset="50%" stop-color="currentColor"/>
+                                <stop offset="50%" stop-color="transparent"/>
+                              </linearGradient>
+                            </defs>
+                            <path [attr.fill]="'url(#existing-half-' + $index + ')'" d="M12 17l-5 3 1.5-5.5L4 9l5.5-.5L12 3l2.5 5.5L20 9l-4.5 5.5L17 20z"/>
+                          </svg>
+                        } @else {
+                          <svg class="w-5 h-5 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-width="2" d="M12 17l-5 3 1.5-5.5L4 9l5.5-.5L12 3l2.5 5.5L20 9l-4.5 5.5L17 20z"/>
+                          </svg>
+                        }
+                      }
+                    </div>
+                  </div>
+                }
+              <p class="text-white/80 mt-3 text-sm whitespace-pre-wrap">{{ canRateResponse()!.existing_review!.description }}</p>
 
               <button (click)="editExistingReview()"
                       class="mt-4 px-4 py-2 bg-lime-500/20 text-lime-300 rounded-lg hover:bg-lime-500/30 transition-colors font-medium">
-                ✏️ Editar mi calificación
+                ✏️ {{ enableRating ? 'Editar mi calificación' : 'Editar mi comentario' }}
               </button>
             </div>
           </div>
@@ -259,18 +275,27 @@ import { ReviewNotificationsService } from '../../core/services/review-notificat
       @if (!canRate() && canRateResponse()) {
         <div class="rounded-xl border border-white/10 bg-white/5 p-6">
           <div class="text-center">
+            @if (enableRating) {
             <svg class="w-12 h-12 text-white/30 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path stroke-width="2" d="M12 17l-5 3 1.5-5.5L4 9l5.5-.5L12 3l2.5 5.5L20 9l-4.5 5.5L17 20z"/>
             </svg>
             <h3 class="text-lg font-semibold text-white mb-2">No puedes calificar este curso</h3>
-            <p class="text-white/70">{{ canRateResponse()!.reason }}</p>
+            } @else {
+            <svg class="w-12 h-12 text-white/30 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+              </path>
+            </svg>
+            <h3 class="text-lg font-semibold text-white mb-2">No puedes comentar este proyecto</h3>
+            }
+            <p class="text-white/70">{{ enableRating ? canRateResponse()!.reason : canRateResponse()!.reason.replace('calificar', 'comentar').replace('este producto', 'este proyecto').replace('este curso', 'este proyecto') }}</p>
           </div>
         </div>
       }
 
       <!-- Lista de calificaciones -->
       <div class="space-y-4">
-        <h3 class="text-lg font-semibold text-white">Calificaciones de estudiantes</h3>
+        <h3 class="text-lg font-semibold text-white">{{ enableRating ? 'Calificaciones de estudiantes' : 'Comentarios' }}</h3>
 
         @if (isLoading()) {
           <div class="space-y-4">
@@ -292,11 +317,21 @@ import { ReviewNotificationsService } from '../../core/services/review-notificat
           </div>
         } @else if (reviews().length === 0) {
           <div class="rounded-xl border border-white/10 bg-white/5 p-8 text-center">
+            @if (enableRating) {
             <svg class="w-12 h-12 text-white/30 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path stroke-width="2" d="M12 17l-5 3 1.5-5.5L4 9l5.5-.5L12 3l2.5 5.5L20 9l-4.5 5.5L17 20z"/>
             </svg>
             <h3 class="text-lg font-semibold text-white mb-2">Sin calificaciones aún</h3>
             <p class="text-white/70">Sé el primero en calificar este curso</p>
+            } @else {
+            <svg class="w-12 h-12 text-white/30 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+              </path>
+            </svg>
+            <h3 class="text-lg font-semibold text-white mb-2">Sin comentarios aún</h3>
+            <p class="text-white/70">Sé el primero en comentar este proyecto</p>
+            }
           </div>
         } @else {
           <div class="space-y-4">
@@ -313,25 +348,27 @@ import { ReviewNotificationsService } from '../../core/services/review-notificat
                     <div class="flex items-center gap-2 mb-2">
                       <span class="font-semibold text-white">{{ review.user_info.full_name }}</span>
                       <div class="flex items-center gap-1">
-                        @for (star of generateStars(review.rating); track $index) {
-                          @if (star === 'full') {
-                            <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 24 24">
-                              <path d="M12 17l-5 3 1.5-5.5L4 9l5.5-.5L12 3l2.5 5.5L20 9l-4.5 5.5L17 20z"/>
-                            </svg>
-                          } @else if (star === 'half') {
-                            <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 24 24">
-                              <defs>
-                                <linearGradient id="review-half-{{ $index }}">
-                                  <stop offset="50%" stop-color="currentColor"/>
-                                  <stop offset="50%" stop-color="transparent"/>
-                                </linearGradient>
-                              </defs>
-                              <path [attr.fill]="'url(#review-half-' + $index + ')'" d="M12 17l-5 3 1.5-5.5L4 9l5.5-.5L12 3l2.5 5.5L20 9l-4.5 5.5L17 20z"/>
-                            </svg>
-                          } @else {
-                            <svg class="w-4 h-4 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                              <path stroke-width="2" d="M12 17l-5 3 1.5-5.5L4 9l5.5-.5L12 3l2.5 5.5L20 9l-4.5 5.5L17 20z"/>
-                            </svg>
+                        @if (enableRating) {
+                          @for (star of generateStars(review.rating); track $index) {
+                            @if (star === 'full') {
+                              <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 24 24">
+                                <path d="M12 17l-5 3 1.5-5.5L4 9l5.5-.5L12 3l2.5 5.5L20 9l-4.5 5.5L17 20z"/>
+                              </svg>
+                            } @else if (star === 'half') {
+                              <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 24 24">
+                                <defs>
+                                  <linearGradient id="review-half-{{ $index }}">
+                                    <stop offset="50%" stop-color="currentColor"/>
+                                    <stop offset="50%" stop-color="transparent"/>
+                                  </linearGradient>
+                                </defs>
+                                <path [attr.fill]="'url(#review-half-' + $index + ')'" d="M12 17l-5 3 1.5-5.5L4 9l5.5-.5L12 3l2.5 5.5L20 9l-4.5 5.5L17 20z"/>
+                              </svg>
+                            } @else {
+                              <svg class="w-4 h-4 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-width="2" d="M12 17l-5 3 1.5-5.5L4 9l5.5-.5L12 3l2.5 5.5L20 9l-4.5 5.5L17 20z"/>
+                              </svg>
+                            }
                           }
                         }
                       </div>
@@ -339,7 +376,7 @@ import { ReviewNotificationsService } from '../../core/services/review-notificat
                     </div>
 
                     <!-- Comentario -->
-                    <p class="text-white/80 leading-relaxed">{{ review.description }}</p>
+                    <p class="text-white/80 leading-relaxed whitespace-pre-wrap">{{ review.description }}</p>
 
                     <!-- ✅ NUEVO: Respuesta del instructor -->
                     @if (review.reply) {
@@ -395,7 +432,7 @@ import { ReviewNotificationsService } from '../../core/services/review-notificat
                               </div>
                             } @else {
                               <!-- Mostrar respuesta -->
-                              <p class="text-white/80 text-sm leading-relaxed">{{ review.reply.description }}</p>
+                              <p class="text-white/80 text-sm leading-relaxed whitespace-pre-wrap">{{ review.reply.description }}</p>
 
                               <!-- Botones de acción (solo si es el instructor que respondió) -->
                               @if (canReplyToReviews()) {
@@ -539,12 +576,16 @@ import { ReviewNotificationsService } from '../../core/services/review-notificat
 export class CourseReviewsComponent implements OnInit, OnChanges {
   @Input() productId!: string;
   @Input() productType: 'course' | 'project' = 'course';
+  @Input() showStatistics: boolean = true;
+  @Input() enableRating: boolean = true;
   @Output() reviewAdded = new EventEmitter<Review>();
   @Output() reviewUpdated = new EventEmitter<Review>();
 
+
   private reviewService = inject(ReviewService);
   public authService = inject(AuthService);
-  private reviewNotificationsService = inject(ReviewNotificationsService); // 🔥 NUEVO
+  private reviewNotificationsService = inject(ReviewNotificationsService);
+  public toastService = inject(ToastService);
 
   // Estado del componente
   reviews = signal<Review[]>([]);
@@ -680,8 +721,13 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
   }
 
   async onSubmit() {
-    if (this.selectedRating() === 0 || !this.reviewDescription.trim() || !this.productId) {
-      alert('Por favor completa todos los campos');
+    // Si la calificación está deshabilitada, asignamos 5 por defecto si es 0
+    if (!this.enableRating && this.selectedRating() === 0) {
+      this.selectedRating.set(5);
+    }
+
+    if ((this.selectedRating() === 0 && this.enableRating) || !this.reviewDescription.trim() || !this.productId) {
+      this.toastService.error('Error', 'Por favor completa todos los campos');
       return;
     }
 
@@ -702,7 +748,9 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
           this.resetForm();
           await this.loadReviews(this.currentPage()); // Recargar reviews
           await this.checkCanRate(); // Actualizar estado
-          alert('Calificación actualizada exitosamente');
+          this.resetForm();
+          await this.loadReviews(this.currentPage()); // Recargar reviews
+          await this.checkCanRate(); // Actualizar estado
         }
       } else {
         // Crear nueva reseña
@@ -720,13 +768,15 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
           this.resetForm();
           await this.loadReviews(1); // Volver a página 1 para ver la nueva review
           await this.checkCanRate(); // Actualizar estado (ahora can_rate será false)
-          alert('Calificación enviada exitosamente');
+          this.resetForm();
+          await this.loadReviews(1); // Volver a página 1 para ver la nueva review
+          await this.checkCanRate(); // Actualizar estado (ahora can_rate será false)
         }
       }
     } catch (error: any) {
 
       const errorMessage = error?.error?.message_text || 'Error al enviar la calificación';
-      alert(errorMessage);
+      this.toastService.error('Error', errorMessage);
     } finally {
       this.isSubmitting.set(false);
     }
@@ -875,15 +925,17 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
    */
   async submitReply(reviewId: string) {
     if (!this.replyText().trim()) {
-      alert('Por favor escribe una respuesta');
+      this.toastService.warning('Atención', 'Por favor escribe una respuesta');
       return;
     }
 
     // ✅ VALIDAR permisos antes de enviar
     if (!this.canReplyToReviews()) {
 
-      alert('No tienes permisos para responder a reviews');
-      return;
+      if (!this.canReplyToReviews()) {
+        this.toastService.error('Error', 'No tienes permisos para responder a reviews');
+        return;
+      }
     }
 
 
@@ -915,13 +967,16 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
       // Limpiar formulario
       this.cancelReply();
 
-      alert(isEditing ? 'Respuesta actualizada exitosamente' : 'Respuesta enviada exitosamente');
+      this.toastService.success(
+        isEditing ? 'Actualizado' : 'Enviado',
+        isEditing ? 'Respuesta actualizada exitosamente' : 'Respuesta enviada exitosamente'
+      );
 
     } catch (error: any) {
 
 
       const errorMessage = error?.error?.message_text || error?.message || 'Error al enviar la respuesta';
-      alert(errorMessage);
+      this.toastService.error('Error', errorMessage);
     } finally {
       this.isSubmittingReply.set(false);
     }
@@ -944,12 +999,12 @@ export class CourseReviewsComponent implements OnInit, OnChanges {
       // Recargar reviews
       await this.loadReviews(this.currentPage());
 
-      alert('Respuesta eliminada exitosamente');
+      this.toastService.success('Eliminado', 'Respuesta eliminada exitosamente');
 
     } catch (error: any) {
 
       const errorMessage = error?.error?.message_text || 'Error al eliminar la respuesta';
-      alert(errorMessage);
+      this.toastService.error('Error', errorMessage);
     } finally {
       this.isSubmittingReply.set(false);
     }

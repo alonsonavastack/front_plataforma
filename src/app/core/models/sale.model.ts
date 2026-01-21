@@ -58,4 +58,7 @@ export interface Sale {
   // ✅ NUEVO: Información de pago mixto
   wallet_amount?: number;
   remaining_amount?: number;
+
+  // ✅ NUEVO: Estado de pago al instructor
+  instructor_paid?: boolean;
 }

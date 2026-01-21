@@ -186,9 +186,15 @@
                 class="text-sm font-medium text-red-400">-{{formatCurrency(selectedPayment()?.platform_deductions)}}</span>
             </div>
             }
-            <div class="flex justify-between pt-2 border-t border-slate-700">
+            <div class="flex justify-between pt-2 border-t border-slate-700 items-center gap-2">
               <span class="text-base font-medium text-slate-200">Monto Final:</span>
-              <span class="text-base font-bold text-lime-400">{{formatCurrency(selectedPayment()?.final_amount)}}</span>
+              <div class="flex items-center gap-2">
+                <span class="text-base font-bold text-lime-400">{{formatCurrency(selectedPayment()?.final_amount)}}</span>
+                <!-- Copiar monto como número (55.00) para pegar en PayPal -->
+                <button title="Copiar monto" (click)="copyAmount(selectedPayment()?.final_amount)" class="inline-flex items-center justify-center p-1 rounded-md bg-slate-700/30 hover:bg-slate-700/50 text-slate-200">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a1 1 0 011-1h8a1 1 0 011 1v8a1 1 0 01-1 1h-4m-6 8H5a2 2 0 01-2-2V9a2 2 0 012-2h6m4 10v2m0-6v2"/></svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -201,14 +207,14 @@
                 d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
               </path>
             </svg>
-            🔓 Datos Bancarios Desencriptados
+            🔓 Detalles de Método de Pago Desencriptados
           </h4>
 
           @if (isLoadingPaymentMethod()) {
           <!-- Loading state -->
           <div class="flex flex-col items-center justify-center py-8 gap-3">
             <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-lime-400"></div>
-            <span class="text-sm text-slate-400">Desencriptando datos bancarios...</span>
+            <span class="text-sm text-slate-400">Desencriptando datos de pago...</span>
           </div>
           } @else if (selectedPaymentMethod()) {
           <!-- DATOS BANCARIOS COMPLETOS -->
@@ -409,11 +415,11 @@
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-slate-300 mb-2">
-              ID de Transacción (Opcional)
+              ID de Transacción / Referencia (Opcional)
             </label>
             <input #transactionId type="text"
               class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-              placeholder="TXN123456 o referencia bancaria" />
+              placeholder="TXN123456 o referencia" />
           </div>
 
           <div>

@@ -36,6 +36,12 @@ export class ProjectService {
     return this.http.get<ProjectListResponse>(`${this.url}/list?state=${val}`);
   }
 
+  // 🔥 NUEVO: Obtener proyectos por instructor (para crear cupones)
+  getProjectsByInstructor(instructorId: string): Observable<ProjectListResponse> {
+    // Como instructor, el endpoint list ya filtra por el usuario logueado.
+    return this.http.get<ProjectListResponse>(`${this.url}/list`);
+  }
+
   getById(id: string): Observable<ProjectSingleResponse> {
     // El backend no requiere token para la vista pública de un proyecto
     return this.http.get<ProjectSingleResponse>(`${this.url}/show/${id}`);
