@@ -303,6 +303,12 @@ export class AuthService {
                 // 🔇 Logs silenciados - solo toasts para usuario
                 this.user.set(response.user as User);
               }
+
+              // 🔥 Cargar billetera cuando se verifica la sesión almacenada
+              import('./wallet.service').then(module => {
+                const walletService = this.injector.get(module.WalletService);
+                walletService.loadWallet();
+              });
             }
           },
           complete: () => {
@@ -381,7 +387,8 @@ export class AuthService {
       purchasesService.clearPurchases();
     });
 
-    // 🔇 Logs silenciados - solo toasts para usuario
+
+    // �🔇 Logs silenciados - solo toasts para usuario
     this.toast.info('Sesión cerrada', 'Has cerrado sesión correctamente');
 
     this.router.navigate(['/']);

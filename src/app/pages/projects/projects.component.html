@@ -115,6 +115,19 @@
         <!-- Actions -->
         <div class="grid grid-cols-2 gap-2">
 
+          <!-- 🔥 Botón de Notas (solo en borrador) -->
+          @if (project.state === 1) {
+          <button (click)="openNotesModal(project)"
+            class="px-4 py-2 rounded-lg font-medium text-sm text-amber-400 hover:bg-slate-900 transition-colors flex items-center justify-center gap-1"
+            [class.ring-1]="project.admin_notes"
+            title="Agregar o ver notas del proyecto">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Notas
+          </button>
+          }
 
           <button (click)="openEditModal(project)"
             class="px-4 py-2 rounded-lg font-medium text-sm text-lime-400 hover:bg-slate-900 transition-colors">
@@ -312,8 +325,8 @@
                 </span>
                 <input type="number" id="price_mxn" formControlName="price_mxn" min="0" step="0.01"
                   [readonly]="projectForm.get('isFree')?.value" [class]="'w-full pl-8 pr-4 py-2.5 border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all ' +
-                      (projectForm.get('isFree')?.value 
-                        ? 'bg-slate-900/50 border-slate-700 opacity-60 cursor-not-allowed' 
+                      (projectForm.get('isFree')?.value
+                        ? 'bg-slate-900/50 border-slate-700 opacity-60 cursor-not-allowed'
                         : 'bg-slate-900 border-slate-700 focus:ring-lime-400 focus:border-transparent')"
                   placeholder="0.00" />
               </div>
@@ -584,6 +597,75 @@
           }
         </div>
       </div>
+    </div>
+  </div>
+</div>
+}
+
+<!-- 🔥 MODAL DE NOTAS -->
+@if (showNotesModal()) {
+<!-- Backdrop -->
+<div (click)="closeNotesModal()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50"></div>
+
+<!-- Modal -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div (click)="$event.stopPropagation()" class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl max-w-md w-full border border-white/10 overflow-hidden">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-amber-500/20 to-amber-600/20 px-6 py-4 border-b border-white/10 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-white flex items-center gap-2">
+        <svg class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+        </svg>
+        Notas del Proyecto
+      </h3>
+      <button (click)="closeNotesModal()" class="text-white/60 hover:text-white transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="px-6 py-4 space-y-4">
+      <!-- Textarea para editar -->
+      @if (isUserAdmin()) {
+      <textarea
+        [ngModel]="currentProjectNotes()"
+        (ngModelChange)="currentProjectNotes.set($event)"
+        placeholder="Escribe una nota para este proyecto..."
+        class="w-full h-32 px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 resize-none"
+      ></textarea>
+      } @else {
+      <div class="w-full h-32 px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white/80 overflow-y-auto whitespace-pre-wrap break-words">
+        {{ currentProjectNotes() || 'Sin notas' }}
+      </div>
+      }
+
+      <!-- Información de fecha (si existe) -->
+      @for (p of projects(); track p._id) {
+        @if (p._id === currentProjectIdNotes() && p.updatedAt) {
+        <p class="text-xs text-slate-500">
+          Última actualización: {{ p.updatedAt | date:'short' }}
+        </p>
+        }
+      }
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 border-t border-white/10 flex gap-3">
+      <button (click)="closeNotesModal()" class="flex-1 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded-lg font-medium transition-colors">
+        Cerrar
+      </button>
+      @if (isUserAdmin()) {
+      <button (click)="saveNote()" [disabled]="isSavingNote()" class="flex-1 px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500/50 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+        {{ isSavingNote() ? 'Guardando...' : 'Guardar Nota' }}
+        @if (!isSavingNote()) {
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        }
+      </button>
+      }
     </div>
   </div>
 </div>

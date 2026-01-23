@@ -1,11 +1,9 @@
-import { Injectable, inject, signal, computed, resource } from '@angular/core';
+import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-// rxResource removed
-import { firstValueFrom } from 'rxjs';
-import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ToastService } from './toast.service';
-import { AuthService } from './auth'; // 🔥 Import AuthService
+import { AuthService } from './auth';
+import { tap } from 'rxjs/operators';
 
 export interface WalletTransaction {
   _id: string;
@@ -32,42 +30,65 @@ export class WalletService {
   private baseUrl = environment.url + 'wallet';
   private http = inject(HttpClient);
   private toastService = inject(ToastService);
-  private authService = inject(AuthService); // 🔥 Inject Auth Service
+  private authService = inject(AuthService);
 
-  // 🔥 Signal para disparar recarga
-  private reloadTrigger = signal(0);
+  // Señales simples
+  private walletData = signal<Wallet | null>(null);
+  private isLoading = signal(false);
+  private errorState = signal<any>(null);
 
-  // 🔥 rxResource reemplazado por resource standard
-  private walletResource = resource({
-    loader: () => {
-      this.reloadTrigger();
-      // 🔥 Prevent fetch if no token (avoid 401 on logout)
-      if (!this.authService.token()) return Promise.resolve(null);
-      return firstValueFrom(this.http.get<Wallet>(`${this.baseUrl}/my-wallet`));
-    }
-  });
+  // Señales públicas
+  balance = computed(() => this.walletData()?.balance ?? 0);
+  currency = computed(() => this.walletData()?.currency ?? 'USD');
+  transactions = computed(() => this.walletData()?.transactions ?? []);
+  loading = computed(() => this.isLoading());
+  error = computed(() => this.errorState());
+  hasError = computed(() => this.errorState() !== null && !this.isLoading());
 
-  // 🔥 Señales públicas derivadas del resource
-  balance = computed(() => (this.walletResource.value() as Wallet | undefined)?.balance ?? 0);
-  currency = computed(() => (this.walletResource.value() as Wallet | undefined)?.currency ?? 'USD');
-  transactions = computed(() => (this.walletResource.value() as Wallet | undefined)?.transactions ?? []);
-  loading = computed(() => this.walletResource.isLoading());
-  error = computed(() => this.walletResource.error());
-  hasError = computed(() => this.walletResource.hasValue() === false && !this.walletResource.isLoading());
-
-  // Legacy compatibility
+  // Compatibilidad legacy
   currentBalance = this.balance;
 
-  // 🔥 Recargar billetera manualmente
+  constructor() {
+    // 🔥 Effect que carga la billetera cuando el token cambia
+    effect(() => {
+      const token = this.authService.token();
+      if (token) {
+        this.loadWallet();
+      } else {
+        // Si no hay token, limpiar la billetera
+        this.walletData.set(null);
+        this.errorState.set(null);
+      }
+    });
+  }
+
+  // Recargar billetera manualmente
   loadWallet(): void {
-    this.reloadTrigger.update(v => v + 1);
+    if (!this.authService.token()) {
+      this.walletData.set(null);
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.errorState.set(null);
+
+    this.http.get<Wallet>(`${this.baseUrl}/my-wallet`).subscribe({
+      next: (wallet) => {
+        this.walletData.set(wallet);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        this.errorState.set(err);
+        this.isLoading.set(false);
+      }
+    });
   }
 
   reloadWallet(): void {
     this.loadWallet();
   }
 
-  // 🔥 Métodos imperativos (para casos donde se necesita Observable)
+  // Métodos imperativos (para casos donde se necesita Observable)
   getMyWallet() {
     return this.http.get<Wallet>(`${this.baseUrl}/my-wallet`);
   }
@@ -82,7 +103,7 @@ export class WalletService {
     );
   }
 
-  // 🔥 Métodos administrativos
+  // Métodos administrativos
   getAllWallets() {
     return this.http.get<any[]>(`${this.baseUrl}/admin/all-wallets`);
   }

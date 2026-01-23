@@ -1,4 +1,5 @@
-import { HttpEventType, HttpEvent } from '@angular/common/http';
+import { HttpEventType, HttpEvent, HttpClient } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal, computed } from "@angular/core";
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { Project } from "../../core/models/home.models";
@@ -6,6 +7,7 @@ import { ProjectService } from "../../core/services/project.service";
 import { CoursesService } from "../../core/services/courses";
 import { environment } from "../../../environments/environment";
 import { AuthService } from "../../core/services/auth";
+import { FormsModule } from "@angular/forms";
 
 import { ToastService } from "../../core/services/toast.service"; // 🆕
 
@@ -22,13 +24,14 @@ import { MxnCurrencyPipe } from '../../shared/pipes/mxn-currency.pipe';
 @Component({
   selector: 'app-projects',
   standalone: true,
-  imports: [ReactiveFormsModule, MxnCurrencyPipe],
+  imports: [CommonModule, ReactiveFormsModule, MxnCurrencyPipe, FormsModule],
   templateUrl: './projects.component.html',
 })
 export class ProjectsComponent implements OnInit {
   projectService = inject(ProjectService);
   coursesService = inject(CoursesService);
   public authService = inject(AuthService);
+  private http = inject(HttpClient);
 
   private toast = inject(ToastService); // 🆕
 
@@ -74,6 +77,13 @@ export class ProjectsComponent implements OnInit {
   fileSuccessMessage = signal<string>('');
   uploadPercentage = signal(0); // 🆕 Progreso de subida
   deletePercentage = signal(0); // 🆕 Progreso de eliminación
+
+  // --- NOTES State ---
+  showNotesModal = signal(false);
+  currentProjectNotes = signal('');
+  isSavingNote = signal(false);
+  currentProjectIdNotes = signal<string | null>(null);
+  isUserAdmin = computed(() => this.authService.hasRole('admin'));
 
   private readonly MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
@@ -705,5 +715,46 @@ export class ProjectsComponent implements OnInit {
     });
   }
 
+  // 🔥 Abrir modal de notas
+  openNotesModal(project: Project): void {
+    this.currentProjectIdNotes.set(project._id);
+    this.currentProjectNotes.set(project.admin_notes || '');
+    this.showNotesModal.set(true);
+  }
 
+  // 🔥 Cerrar modal de notas
+  closeNotesModal(): void {
+    this.showNotesModal.set(false);
+    this.currentProjectNotes.set('');
+    this.currentProjectIdNotes.set(null);
+  }
+
+  // 🔥 Guardar nota
+  saveNote(): void {
+    const projectId = this.currentProjectIdNotes();
+    if (!projectId) return;
+
+    this.isSavingNote.set(true);
+
+    this.http.put(`${environment.url}projects/${projectId}/note`, {
+      admin_notes: this.currentProjectNotes()
+    }).subscribe({
+      next: () => {
+        this.toast.success('Nota guardada correctamente');
+        // Actualizar el proyecto en la lista
+        const projects = this.projectsState().projects;
+        const projectIndex = projects.findIndex(p => p._id === projectId);
+        if (projectIndex >= 0) {
+          projects[projectIndex].admin_notes = this.currentProjectNotes();
+          this.projectsState.set({ ...this.projectsState(), projects });
+        }
+        this.closeNotesModal();
+        this.isSavingNote.set(false);
+      },
+      error: (err: any) => {
+        this.toast.error('Error al guardar la nota');
+        this.isSavingNote.set(false);
+      }
+    });
+  }
 }

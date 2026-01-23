@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, computed, inject, output, ChangeDetectionStrategy, input } from '@angular/core';
+import { Component, Output, EventEmitter, computed, inject, output, ChangeDetectionStrategy, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Project } from '../../core/models/home.models';
@@ -7,13 +7,14 @@ import { PurchasesService } from '../../core/services/purchases.service';
 import { AuthService } from '../../core/services/auth';
 import { ToastService } from '../../core/services/toast.service';
 import { CurrencyService } from '../../services/currency.service';
-
+import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 import { MxnCurrencyPipe } from '../pipes/mxn-currency.pipe';
 
 @Component({
   selector: 'app-projects-card',
   standalone: true,
-  imports: [CommonModule, RouterLink, MxnCurrencyPipe],
+  imports: [CommonModule, RouterLink, MxnCurrencyPipe, FormsModule],
   templateUrl: './projects-card.html',
   styleUrls: ['./projects-card.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -34,8 +35,12 @@ export class ProjectsCardComponent {
   private authService = inject(AuthService);
   private toast = inject(ToastService);
   public currencyService = inject(CurrencyService);
+  private http = inject(HttpClient);
 
-
+  // 🔥 States para el modal de notas
+  showNotesModal = signal(false);
+  noteText = signal('');
+  isSavingNote = signal(false);
 
   // Construye la URL de la imagen del proyecto
   imageUrl = computed(() => {
@@ -69,6 +74,25 @@ export class ProjectsCardComponent {
     }
     return p?.price_mxn || 0;
   });
+
+  // 🔥 Verificar si el proyecto está en borrador
+  isDraft = computed(() => this.project()?.state === 1);
+
+  // 🔥 Verificar si el usuario actual es admin
+  isAdmin = computed(() => this.authService.user()?.rol === 'admin');
+
+  // 🔥 Verificar si el usuario es el propietario del proyecto
+  isOwner = computed(() => {
+    const p = this.project();
+    const user = this.authService.user();
+    if (!p?.user || !user) return false;
+    // Manejar caso donde user puede ser string (ID) u objeto User
+    const projectUserId = typeof p.user === 'string' ? p.user : (p.user as any)?._id;
+    return projectUserId === user._id;
+  });
+
+  // 🔥 Puede ver/agregar notas si es admin o propietario
+  canManageNotes = computed(() => (this.isAdmin() || this.isOwner()) && this.isDraft());
 
   // 🔥 Método actualizado para emitir evento de compra
   buyNow(event: MouseEvent): void {
@@ -105,7 +129,52 @@ export class ProjectsCardComponent {
       this.openDetail.emit(p);
     }
   }
+
+  // 🔥 Abrir modal de notas
+  openNotesModal(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Cargar nota existente si la hay
+    if (this.project()?.admin_notes) {
+      this.noteText.set(this.project().admin_notes || '');
+    } else {
+      this.noteText.set('');
+    }
+
+    this.showNotesModal.set(true);
+  }
+
+  // 🔥 Cerrar modal de notas
+  closeNotesModal(): void {
+    this.showNotesModal.set(false);
+    this.noteText.set('');
+  }
+
+  // 🔥 Guardar nota
+  saveNote(): void {
+    const p = this.project();
+    if (!p?._id) return;
+
+    this.isSavingNote.set(true);
+
+    this.http.put(`${environment.url}projects/${p._id}/note`, {
+      admin_notes: this.noteText()
+    }).subscribe({
+      next: () => {
+        this.toast.success('Nota guardada', 'La nota se actualizó correctamente');
+        this.closeNotesModal();
+        this.isSavingNote.set(false);
+        // Actualizar el proyecto con la nueva nota
+        if (this.project()) {
+          (this.project() as any).admin_notes = this.noteText();
+        }
+      },
+      error: (err) => {
+        this.toast.error('Error', 'No se pudo guardar la nota');
+        this.isSavingNote.set(false);
+      }
+    });
+  }
 }
 
-// 🔥 Export alternativo para compatibilidad
-export { ProjectsCardComponent as ProjectsCard };

@@ -243,7 +243,9 @@ export interface Project {
   files?: ProjectFile[]; // Archivos ZIP adjuntos al proyecto
   featured?: boolean; // Añadido para saber si es destacado
   createdAt?: string; // ✅ Fecha de creación
+  updatedAt?: string; // ✅ Fecha de última actualización
   student_has_project?: boolean; // ✅ Indica si el estudiante ya tiene el proyecto
+  admin_notes?: string; // 🔥 Notas administrativas (solo para proyectos en borrador)
   // Campos de descuento
   discount_active?: {
     _id: string;
