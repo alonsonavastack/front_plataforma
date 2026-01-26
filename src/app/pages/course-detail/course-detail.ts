@@ -270,6 +270,19 @@ export class CourseDetailComponent {
     const c = this.course();
     if (!c || !c._id) return;
 
+    // 🔥 NUEVO: Verificar si el usuario ya tiene el curso
+    if (this.studentHasCourse()) {
+      this.toast.info(
+        'Ya tienes este curso',
+        'Este curso ya está en tu biblioteca. Ve a "Mis Cursos" para acceder.'
+      );
+      // Redirigir a su perfil después de 2 segundos
+      setTimeout(() => {
+        this.router.navigate(['/profile-student']);
+      }, 2000);
+      return;
+    }
+
     // Navegar al checkout pasando el producto en el state
     this.router.navigate(['/checkout'], {
       state: {
@@ -310,6 +323,17 @@ export class CourseDetailComponent {
       if (error && !this.errorToastShown) {
         this.errorToastShown = true;
         this.toast.error('Error al cargar', 'No se pudo cargar el curso. Verifica tu conexión.');
+      }
+    });
+
+    // 🔥 NUEVO: Recargar cuando el usuario cambie (login/logout)
+    effect(() => {
+      const isLoggedIn = this.authService.isLoggedIn();
+      const slug = this.slug();
+      
+      // Si hay un slug y el estado de login cambia, recargar
+      if (slug) {
+        this.detailRes.reload();
       }
     });
   }

@@ -1,19 +1,26 @@
 import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { SystemConfigService } from '../../../../core/services/system-config.service';
 import { WebsocketService } from '../../../../core/services/websocket.service';
+import { AuthService } from '../../../../core/services/auth';
 import { Subscription } from 'rxjs';
-import { HttpEventType, HttpEvent } from '@angular/common/http';
+import { HttpEventType, HttpEvent, HttpClient } from '@angular/common/http';
+import { environment } from '../../../../../environments/environment';
+import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
     selector: 'app-backup-config',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, FormsModule],
     templateUrl: './backup-config.component.html'
 })
 export class BackupConfigComponent implements OnInit, OnDestroy {
     private systemConfigService = inject(SystemConfigService);
     private websocketService = inject(WebsocketService);
+    private authService = inject(AuthService);
+    private http = inject(HttpClient);
+    private toast = inject(ToastService);
     private wsSubscription?: Subscription;
 
     isDownloading = signal(false);
@@ -25,6 +32,13 @@ export class BackupConfigComponent implements OnInit, OnDestroy {
 
     // Progreso de descarga
     downloadPercentage = signal(0);
+
+    // --- NOTES State ---
+    showNotesModal = signal(false);
+    backupNotes = signal('');
+    isSavingNote = signal(false);
+    isLoadingNotes = signal(false);
+    isUserAdmin = signal(false);
 
     ngOnInit() {
         // Escuchar eventos de progreso del socket
@@ -38,6 +52,9 @@ export class BackupConfigComponent implements OnInit, OnDestroy {
                 setTimeout(() => window.location.reload(), 2000);
             }
         });
+
+        // Verificar si es admin
+        this.isUserAdmin.set(this.authService.hasRole('admin'));
     }
 
     ngOnDestroy() {
@@ -152,6 +169,55 @@ export class BackupConfigComponent implements OnInit, OnDestroy {
                 alert('❌ Error al restaurar la base de datos:\n' + errorMsg);
                 this.isRestoring.set(false);
                 this.restorePercentage.set(0);
+            }
+        });
+    }
+
+    // 🔥 Métodos de notas
+    openNotesModal() {
+        this.showNotesModal.set(true);
+        this.loadBackupNotes();
+    }
+
+    closeNotesModal() {
+        this.showNotesModal.set(false);
+        this.backupNotes.set('');
+    }
+
+    loadBackupNotes() {
+        this.isLoadingNotes.set(true);
+        this.http.get<{ success: boolean; notes: string }>(`${environment.url}system-config/backup-notes`)
+            .subscribe({
+                next: (response) => {
+                    this.backupNotes.set(response.notes || '');
+                    this.isLoadingNotes.set(false);
+                },
+                error: (err) => {
+                    console.error('Error cargando notas:', err);
+                    this.backupNotes.set('');
+                    this.isLoadingNotes.set(false);
+                    this.toast.error('Error al cargar las notas');
+                }
+            });
+    }
+
+    saveBackupNotes() {
+        if (!this.isUserAdmin()) return;
+
+        this.isSavingNote.set(true);
+        this.http.put<{ success: boolean; message: string }>(
+            `${environment.url}system-config/backup-notes`,
+            { backup_notes: this.backupNotes() }
+        ).subscribe({
+            next: () => {
+                this.toast.success('Notas guardadas correctamente');
+                this.closeNotesModal();
+                this.isSavingNote.set(false);
+            },
+            error: (err) => {
+                console.error('Error guardando notas:', err);
+                this.toast.error('Error al guardar las notas');
+                this.isSavingNote.set(false);
             }
         });
     }

@@ -57,12 +57,7 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
 
     // DEBUG: Check why wallet might be hidden
     effect(() => {
-      console.log('HEADER DEBUG:', {
-        isLoggedIn: this.authService.isLoggedIn(),
-        isOnAuthPage: this.isOnAuthPage(),
-        user: this.authService.user(),
-        url: this.router.url
-      });
+      // 🔒 LOG REMOVIDO POR SEGURIDAD
     });
   }
 

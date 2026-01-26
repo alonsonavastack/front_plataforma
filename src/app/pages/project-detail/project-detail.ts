@@ -46,7 +46,14 @@ export class ProjectDetailComponent {
     project = computed(() => this.detailRes.value().project);
     reviews = computed(() => this.detailRes.value().reviews);
     relatedProjects = computed(() => this.detailRes.value().project_relateds);
-    studentHasProject = computed(() => this.detailRes.value().student_have_project);
+    studentHasProject = computed(() => {
+        const hasProject = this.detailRes.value().student_have_project;
+        // 🔥 DEBUG: Verificar el valor
+        if (this.authService.isLoggedIn()) {
+            return !!hasProject;
+        }
+        return false;
+    });
 
     // Video URL segura
     videoUrl = computed<SafeResourceUrl | null>(() => {
@@ -90,10 +97,21 @@ export class ProjectDetailComponent {
             if (params) {
                 const couponCode = params.get('coupon');
                 if (couponCode) {
-                    console.log('🎟️ Cupón detectado en URL:', couponCode);
+                    // 🔒 LOG REMOVIDO POR SEGURIDAD
                     localStorage.setItem('pending_coupon', couponCode);
                     this.toast.success('Cupón detectado', 'Se aplicará al finalizar la compra');
                 }
+            }
+        });
+
+        // 🔥 NUEVO: Recargar cuando el usuario cambie (login/logout)
+        effect(() => {
+            const isLoggedIn = this.authService.isLoggedIn();
+            const projectId = this.projectId();
+            
+            // Si hay un ID de proyecto y el estado de login cambia, recargar
+            if (projectId) {
+                this.detailRes.reload();
             }
         });
     }
@@ -116,6 +134,19 @@ export class ProjectDetailComponent {
 
         const p = this.project();
         if (!p || !p._id) return;
+
+        // 🔥 NUEVO: Verificar si el usuario ya tiene el proyecto
+        if (this.studentHasProject()) {
+            this.toast.info(
+                'Ya tienes este proyecto',
+                'Este proyecto ya está en tu biblioteca. Ve a "Mis Proyectos" para acceder.'
+            );
+            // Redirigir a su perfil después de 2 segundos
+            setTimeout(() => {
+                this.router.navigate(['/profile-student']);
+            }, 2000);
+            return;
+        }
 
         this.router.navigate(['/checkout'], {
             state: {

@@ -9,6 +9,7 @@ interface SystemConfigState {
   exchange_rate: number | null; // 🔥 Tasa de cambio
   isLoading: boolean;
   error: string | null;
+  logoPreloaded: boolean; // 🔥 NUEVO: Indica si el logo ya se precargó
 }
 
 @Injectable({
@@ -23,7 +24,8 @@ export class SystemConfigService {
     config: null,
     exchange_rate: null,
     isLoading: false,
-    error: null
+    error: null,
+    logoPreloaded: false // 🔥 NUEVO
   });
 
   // Computed signals para acceso fácil
@@ -36,6 +38,11 @@ export class SystemConfigService {
    * Obtener configuración del sistema (pública)
    */
   getConfig(): void {
+    // 🔥 OPTIMIZACIÓN: Si ya está cargando o ya tenemos config, no hacer otra petición
+    if (this.state().isLoading || this.state().config) {
+      return;
+    }
+
     this.state.set({
       ...this.state(),
       isLoading: true,
@@ -48,8 +55,12 @@ export class SystemConfigService {
           config: response.config,
           exchange_rate: response.exchange_rate,
           isLoading: false,
-          error: null
+          error: null,
+          logoPreloaded: false
         });
+        
+        // 🔥 NUEVO: Precargar el logo en segundo plano
+        this.preloadLogo(response.config);
       }),
       catchError(error => {
         this.state.set({
@@ -112,8 +123,32 @@ export class SystemConfigService {
       config: null,
       exchange_rate: null, // Resetear tasa
       isLoading: false,
-      error: null
+      error: null,
+      logoPreloaded: false // 🔥 NUEVO
     });
+  }
+
+  /**
+   * 🔥 NUEVO: Precargar logo en segundo plano para carga instantánea
+   */
+  private preloadLogo(config: SystemConfig | null): void {
+    if (!config || this.state().logoPreloaded) {
+      return;
+    }
+
+    const logoUrl = config.logo ? this.buildLogoUrl(config.logo) : null;
+    if (!logoUrl) return;
+
+    // Crear imagen en memoria para forzar descarga
+    const img = new Image();
+    img.onload = () => {
+      this.state.update(s => ({ ...s, logoPreloaded: true }));
+    };
+    img.onerror = () => {
+      // Si falla, marcar como precargado para no reintentar
+      this.state.update(s => ({ ...s, logoPreloaded: true }));
+    };
+    img.src = logoUrl;
   }
 
   /**

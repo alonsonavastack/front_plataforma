@@ -49,6 +49,13 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
   private profileStudentService = inject(ProfileStudentService);
 
+  // 🔥 NUEVO: Signal para verificar si el producto ya fue comprado
+  alreadyPurchased = computed(() => {
+    const prod = this.product();
+    if (!prod) return false;
+    return this.purchasesService.isPurchased(prod._id);
+  });
+
   // Producto único en checkout
   product = signal<CheckoutProduct | null>(null);
   productType = signal<'course' | 'project' | null>(null);
@@ -277,6 +284,19 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       this.productType.set(state.productType);
       this.isDirectBuy.set(true);
 
+      // 🔥 NUEVO: Verificar si ya compró el producto después de cargar purchases
+      setTimeout(() => {
+        if (this.alreadyPurchased()) {
+          this.modalService.alert({
+            title: '✅ Ya adquiriste este producto',
+            message: `Ya tienes acceso a "${prod.title}". Puedes verlo en tu perfil.`,
+            icon: 'info'
+          }).then(() => {
+            this.router.navigate(['/profile-student']);
+          });
+        }
+      }, 1000); // Esperar 1 segundo para que purchases se cargue
+
     } else {
       if (this.cartService.count() > 0) {
         this.isDirectBuy.set(false);
@@ -289,6 +309,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     this.walletService.loadWallet();
     this.discountService.loadDiscounts().subscribe();
     this.checkoutService.reloadConfig();
+    
+    // 🔥 NUEVO: Cargar productos comprados
+    this.purchasesService.loadPurchasedProducts();
 
     const currentUser = this.user();
     if (currentUser) {
@@ -306,7 +329,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       // 🔥 VERIFICAR CUPÓN PENDIENTE
       const pendingCoupon = localStorage.getItem('pending_coupon');
       if (pendingCoupon) {
-        console.log('🎟️ Aplicando cupón pendiente:', pendingCoupon);
+        // 🔒 LOG REMOVIDO POR SEGURIDAD
         this.couponCode.set(pendingCoupon);
         this.checkCoupon();
         localStorage.removeItem('pending_coupon');
@@ -392,7 +415,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
   // 🔥 FIX CRÍTICO: Mejorar selección de método de pago
   selectPaymentMethod(methodId: string): void {
-    // 🔥 Método de pago seleccionado (log simplificado)
+    // 🔒 LOG REMOVIDO POR SEGURIDAD
 
     // 🔒 VALIDACIÓN: Si selecciona billetera como método principal (no mixto)
     if (methodId === 'wallet' && !this.useWalletBalance()) {
@@ -455,7 +478,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   async processPayment() {
-    // 🔥 Iniciando proceso de pago
+    // 🔒 LOG REMOVIDO POR SEGURIDAD
 
     if (this.isProcessing() || this.showSuccess()) {
       return;
@@ -562,7 +585,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       }
     }
 
-    console.log('✅ [processPayment] Método final determinado');
+    // 🔒 LOG REMOVIDO POR SEGURIDAD
     // Preparar items del carrito/producto
     let items: any[] = [];
 
@@ -613,7 +636,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       if (finalPaymentMethod === 'wallet') {
         // Pago 100% con wallet
         const resp = await this.checkoutService.processWalletPayment(payload).toPromise();
-        console.log('✅ [processPayment] Wallet payment exitoso');
+        // 🔒 LOG REMOVIDO POR SEGURIDAD
 
         this.showSuccess.set(true);
         this.walletService.loadWallet();
@@ -637,7 +660,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       } else {
         // Otros métodos (stripe, oxxo, etc)
         const resp = await this.checkoutService.processSale(payload).toPromise();
-        console.log('✅ [processPayment] Pago registrado');
+        // 🔒 LOG REMOVIDO POR SEGURIDAD
 
         this.showSuccess.set(true);
 
@@ -657,7 +680,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       }
 
     } catch (error: any) {
-      console.error('❌ [processPayment] Error:', error);
+      // 🔒 LOG REMOVIDO POR SEGURIDAD
       this.errorMessage.set(error?.error?.message || 'Error al procesar el pago');
     } finally {
       if (finalPaymentMethod !== 'paypal') {
@@ -714,7 +737,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   public async renderPayPalButtons(nTransaccion?: string | null) {
-    // 🔥 Renderizando botones de PayPal
+    // 🔒 LOG REMOVIDO POR SEGURIDAD
 
     if (!nTransaccion) {
       nTransaccion = this.transactionNumber() || null;
@@ -757,10 +780,10 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       await paypal.Buttons({
         createOrder: () => orderId,
         onApprove: async (data: any, actions: any) => {
-          console.log('✅ [PayPal] onApprove');
+          // 🔒 LOG REMOVIDO POR SEGURIDAD
           try {
             const captureResult = await this.checkoutService.capturePaypalOrder(nTransaccion, data.orderID || orderId, (this as any).pendingPaymentPayload);
-            console.log('✅ [PayPal] Pago capturado exitosamente');
+            // 🔒 LOG REMOVIDO POR SEGURIDAD
 
             this.paypalButtonsRendered.set(true);
             this.showSuccess.set(true);
@@ -781,19 +804,19 @@ export class CheckoutComponent implements OnInit, OnDestroy {
               this.cartService.clearCart();
             }
           } catch (captureError) {
-            console.error('❌ [PayPal] Error al capturar:', captureError);
+            // 🔒 LOG REMOVIDO POR SEGURIDAD
             this.errorMessage.set('Error al procesar el pago');
             this.renderingPaypal.set(false);
           }
         },
         onError: (err: any) => {
-          console.error('❌ [PayPal] Error:', err);
+          // 🔒 LOG REMOVIDO POR SEGURIDAD
           this.errorMessage.set('Error al cargar PayPal');
           this.renderingPaypal.set(false);
           this.paypalButtonsRendered.set(false);
         },
         onCancel: (data: any) => {
-          console.info('⚠️ [PayPal] Cancelado');
+          // 🔒 LOG REMOVIDO POR SEGURIDAD
           this.renderingPaypal.set(false);
           this.paypalButtonsRendered.set(false);
           // Limpiar payload temporal para evitar reuso accidental
@@ -813,7 +836,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       this.renderingPaypal.set(false);
 
     } catch (err) {
-      console.error('❌ [renderPayPalButtons] Error:', err);
+      // 🔒 LOG REMOVIDO POR SEGURIDAD
       this.errorMessage.set('No se pudo iniciar PayPal');
       this.paypalButtonsRendered.set(false);
     }
@@ -821,7 +844,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
   public debugRenderPayPalNow() {
     const nTrans = this.transactionNumber() || this.checkoutService.generateTransactionNumber();
-    console.info('🧪 [debug] Forcing renderPayPalButtons with', nTrans);
+    // 🔒 LOG REMOVIDO POR SEGURIDAD
     this.renderPayPalButtons(nTrans);
   }
 

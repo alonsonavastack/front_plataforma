@@ -30,10 +30,10 @@ export class App {
 
         if (config.favicon) {
           iconUrl = this.systemConfigService.buildFaviconUrl(config.favicon);
-          console.log('🖼️ [App] Usando Favicon específico:', iconUrl);
+          // 🔒 LOG REMOVIDO POR SEGURIDAD
         } else if (config.logo) {
           iconUrl = this.systemConfigService.buildLogoUrl(config.logo);
-          console.log('🖼️ [App] Usando Logo como Favicon (Fallback):', iconUrl);
+          // 🔒 LOG REMOVIDO POR SEGURIDAD
         }
 
         if (iconUrl) {
@@ -58,9 +58,9 @@ export class App {
 
           // Forzar actualización en algunos navegadores cambiando type o rel
           link.type = 'image/x-icon';
-          console.log('✅ [App] Favicon actualizado exitosamente');
+          // 🔒 LOG REMOVIDO POR SEGURIDAD
         } else {
-          console.log('⚠️ [App] No se encontró ni favicon ni logo para usar.');
+          // 🔒 LOG REMOVIDO POR SEGURIDAD
         }
       }
     });

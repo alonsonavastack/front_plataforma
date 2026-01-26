@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 
 import { Router, RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { catchError, throwError } from 'rxjs';
 import {
   FormControl,
@@ -17,6 +18,7 @@ import { ToastService } from '../../core/services/toast.service';
   selector: 'app-login',
   standalone: true,
   imports: [
+    CommonModule,
     RouterLink,
     ReactiveFormsModule,
     HeaderComponent
@@ -31,6 +33,7 @@ export class LoginComponent {
 
   // Señal para manejar mensajes de error
   errorMessage = signal<string | null>(null);
+  isLoading = signal(false);
 
   loginForm = new FormGroup({
     email: new FormControl('', [Validators.required, Validators.email]),
@@ -45,13 +48,18 @@ export class LoginComponent {
     }
 
     const { email, password } = this.loginForm.value;
+    this.isLoading.set(true);
 
     // 🔇 Logs silenciados - solo toasts para usuario
 
     this.authService.login(email!, password!).subscribe({
       // El 'next' ahora está vacío porque el servicio se encarga de la redirección.
       // El servicio AuthService ya muestra el toast de éxito "¡Bienvenido!"
+      next: () => {
+        this.isLoading.set(false);
+      },
       error: (err) => {
+        this.isLoading.set(false);
         // 🔇 Logs silenciados - solo toasts para usuario
 
         // Verificar si el usuario necesita verificación OTP
