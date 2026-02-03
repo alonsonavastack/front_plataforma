@@ -1,1 +1,0 @@
-import{a}from"./chunk-F6RCD4WP.js";import"./chunk-U4KQPHEN.js";import"./chunk-SDJWNAN2.js";import"./chunk-J56UX4WA.js";import"./chunk-6JS7X5LE.js";import"./chunk-I4MTPUBM.js";export{a as DiscountsComponent};

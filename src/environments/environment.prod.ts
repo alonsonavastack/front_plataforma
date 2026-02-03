@@ -15,23 +15,23 @@ import { Environment } from './environment.interface';
 
 export const environment: Environment = {
   production: true,
-  
+
   // 🔥 REEMPLAZAR con tu dominio de producción
-  url: 'https://api.tudominio.com/api/',
-  
+  url: 'https://devhubsharks.com/api',
   images: {
-    user: 'https://api.tudominio.com/api/users/imagen-usuario/',
-    cat: 'https://api.tudominio.com/api/categories/imagen-categorie/',
-    course: 'https://api.tudominio.com/api/courses/imagen-course/',
-    project: 'https://api.tudominio.com/api/projects/imagen-project/',
+    user: 'https://devhubsharks.com/api/users/imagen-usuario/',
+    cat: 'https://devhubsharks.com/api/categories/imagen-categorie/',
+    course: 'https://devhubsharks.com/api/courses/imagen-course/',
+    project: 'https://devhubsharks.com/api/projects/imagen-project/',
   },
-  
+
   paypal: {
     // 🔥 REEMPLAZAR con tu Client ID de PayPal LIVE (no sandbox)
     // Obtener desde: https://developer.paypal.com/dashboard/applications/live
-    clientId: process.env['NG_APP_PAYPAL_CLIENT_ID'] || 'TU_CLIENT_ID_DE_PRODUCCION_AQUI',
-    
+    clientId: 'AZc1SmomD67615PERyjzwXXf6wO02x7SwjKjPde5J8TycUyhar3nNTePaoR6Mvd-t2tzjnKD9ji7hc1w',
+
     // 🔥 REEMPLAZAR con tu dominio de producción
-    redirectUrl: 'https://tudominio.com'
+    redirectUrl: 'https://devhubsharks.com'
+
   }
 };
