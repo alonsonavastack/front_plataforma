@@ -3,7 +3,7 @@ import { Environment } from './environment.interface';
 
 export const environment: Environment = {
   production: true,
-  url: 'https://devhubsharks.com/api',
+  url: 'https://devhubsharks.com/api/',
   images: {
     user: 'https://devhubsharks.com/api/users/imagen-usuario/',
     cat: 'https://devhubsharks.com/api/categories/imagen-categorie/',

@@ -3,7 +3,7 @@ import { Environment } from './environment.interface';
 
 /**
  * 🚀 CONFIGURACIÓN DE PRODUCCIÓN
- * 
+ *
  * IMPORTANTE: Antes de desplegar, debes:
  * 1. Cambiar todas las URLs a tu dominio real
  * 2. Usar las credenciales de PayPal LIVE (no sandbox)
@@ -17,7 +17,7 @@ export const environment: Environment = {
   production: true,
 
   // 🔥 REEMPLAZAR con tu dominio de producción
-  url: 'https://devhubsharks.com/api',
+  url: 'https://devhubsharks.com/api/',
   images: {
     user: 'https://devhubsharks.com/api/users/imagen-usuario/',
     cat: 'https://devhubsharks.com/api/categories/imagen-categorie/',
