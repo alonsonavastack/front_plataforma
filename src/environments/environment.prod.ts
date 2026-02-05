@@ -17,12 +17,12 @@ export const environment: Environment = {
   production: true,
 
   // 🔥 REEMPLAZAR con tu dominio de producción
-  url: 'https://devhubsharks.com/api/',
+  url: 'https://api.devhubsharks.com/api/',
   images: {
-    user: 'https://devhubsharks.com/api/users/imagen-usuario/',
-    cat: 'https://devhubsharks.com/api/categories/imagen-categorie/',
-    course: 'https://devhubsharks.com/api/courses/imagen-course/',
-    project: 'https://devhubsharks.com/api/projects/imagen-project/',
+    user: 'https://api.devhubsharks.com/api/users/imagen-usuario/',
+    cat: 'https://api.devhubsharks.com/api/categories/imagen-categorie/',
+    course: 'https://api.devhubsharks.com/api/courses/imagen-course/',
+    project: 'https://api.devhubsharks.com/api/projects/imagen-project/',
   },
 
   paypal: {
