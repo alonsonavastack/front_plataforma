@@ -1,12 +1,12 @@
-<div class="min-h-screen bg-slate-900 p-6">
+<div class="min-h-screen bg-slate-900 p-4 md:p-6">
   <div class="max-w-5xl mx-auto">
     <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+    <div class="mb-6 md:mb-8">
+      <h1 class="text-2xl md:text-3xl font-bold text-white mb-2 flex items-center gap-3">
         <span>⚙️</span>
         <span>Configuración del Sistema</span>
       </h1>
-      <p class="text-slate-400">
+      <p class="text-slate-400 text-sm md:text-base">
         Administra la información básica, contacto y redes sociales de tu plataforma
       </p>
     </div>
@@ -24,39 +24,39 @@
 
     <!-- Tabs de Navegación -->
     <div class="mb-6 bg-slate-800 rounded-lg p-1 border border-white/10">
-      <div class="flex gap-1">
+      <div class="flex flex-col md:flex-row gap-2 md:gap-1">
         <button (click)="setActiveTab('basic')" [class.bg-lime-500]="activeTab() === 'basic'"
           [class.text-slate-900]="activeTab() === 'basic'" [class.text-slate-300]="activeTab() !== 'basic'"
           [class.hover:bg-slate-700]="activeTab() !== 'basic'"
-          class="flex-1 px-4 py-3 rounded-lg font-medium transition-all">
+          class="flex-1 px-4 py-3 rounded-lg font-medium transition-all text-left md:text-center block w-full">
           🏢 Información Básica
         </button>
 
         <button (click)="setActiveTab('contact')" [class.bg-lime-500]="activeTab() === 'contact'"
           [class.text-slate-900]="activeTab() === 'contact'" [class.text-slate-300]="activeTab() !== 'contact'"
           [class.hover:bg-slate-700]="activeTab() !== 'contact'"
-          class="flex-1 px-4 py-3 rounded-lg font-medium transition-all">
+          class="flex-1 px-4 py-3 rounded-lg font-medium transition-all text-left md:text-center block w-full">
           📞 Contacto
         </button>
 
         <button (click)="setActiveTab('social')" [class.bg-lime-500]="activeTab() === 'social'"
           [class.text-slate-900]="activeTab() === 'social'" [class.text-slate-300]="activeTab() !== 'social'"
           [class.hover:bg-slate-700]="activeTab() !== 'social'"
-          class="flex-1 px-4 py-3 rounded-lg font-medium transition-all">
+          class="flex-1 px-4 py-3 rounded-lg font-medium transition-all text-left md:text-center block w-full">
           🌐 Redes Sociales
         </button>
 
         <button (click)="setActiveTab('payment')" [class.bg-lime-500]="activeTab() === 'payment'"
           [class.text-slate-900]="activeTab() === 'payment'" [class.text-slate-300]="activeTab() !== 'payment'"
           [class.hover:bg-slate-700]="activeTab() !== 'payment'"
-          class="flex-1 px-4 py-3 rounded-lg font-medium transition-all">
+          class="flex-1 px-4 py-3 rounded-lg font-medium transition-all text-left md:text-center block w-full">
           💳 Métodos de Pago
         </button>
 
         <button (click)="setActiveTab('backup')" [class.bg-lime-500]="activeTab() === 'backup'"
           [class.text-slate-900]="activeTab() === 'backup'" [class.text-slate-300]="activeTab() !== 'backup'"
           [class.hover:bg-slate-700]="activeTab() !== 'backup'"
-          class="flex-1 px-4 py-3 rounded-lg font-medium transition-all">
+          class="flex-1 px-4 py-3 rounded-lg font-medium transition-all text-left md:text-center block w-full">
           💾 Backups
         </button>
       </div>
@@ -98,14 +98,14 @@
       }
 
       <!-- Botones de Acción -->
-      <div class="mt-8 flex justify-end gap-4">
+      <div class="mt-8 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
         <button type="button" (click)="loadConfig()" [disabled]="isSaving()"
-          class="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          class="w-full sm:w-auto px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-center">
           🔄 Recargar
         </button>
 
         <button type="submit" [disabled]="!isFormValid() || isSaving()"
-          class="px-8 py-3 bg-lime-500 hover:bg-lime-600 text-slate-900 font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+          class="w-full sm:w-auto px-8 py-3 bg-lime-500 hover:bg-lime-600 text-slate-900 font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
           @if (isSaving()) {
           <div class="animate-spin rounded-full h-5 w-5 border-2 border-slate-900 border-t-transparent"></div>
           <span>Guardando...</span>

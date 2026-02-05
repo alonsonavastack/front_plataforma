@@ -4,114 +4,81 @@
 @plugin "flowbite/plugin";
 @source "../node_modules/flowbite";
 
-/* ===== FIX SCROLL EN MÓVILES CON TAILWIND CSS V4 ===== */
 @layer base {
   * {
-    -webkit-overflow-scrolling: touch;
+    /* -webkit-overflow-scrolling: touch;  REMOVED: Let browser execute default */
   }
 
   html {
-    /* height: 100%; REMOVED to allow window scroll */
-    overflow-x: hidden;
-    overscroll-behavior: contain;
+    /* Standard scroll behavior */
+    scroll-behavior: smooth;
   }
 
   body {
-    min-height: 100vh; /* Allow body to grow */
+    min-height: 100vh;
     width: 100%;
-    overflow-x: hidden;
-    /* overflow-y: auto; REMOVED to let window scroll handle it */
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    touch-action: pan-y;
+    /* No overflow restrictions - let the window scroll */
     position: relative;
+    background-color: rgb(2 6 23);
+    /* bg-slate-950 default match */
   }
 
   app-root {
     display: block;
-    min-height: 100vh;
-    overflow-x: hidden;
-    overflow-y: visible;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    touch-action: pan-y;
+    width: 100%;
+    /* height: 100%; REMOVED to allow content to dictate height */
   }
 }
 
 @layer utilities {
-  .-webkit-overflow-scrolling-touch {
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .touch-pan-y {
-    touch-action: pan-y;
-  }
-
-  .overscroll-contain {
-    overscroll-behavior: contain;
-  }
 
   /* 🔥 Animaciones para el modal de compartir */
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
   }
-  
+
   @keyframes scaleIn {
-    from { 
+    from {
       opacity: 0;
       transform: scale(0.9);
     }
-    to { 
+
+    to {
       opacity: 1;
       transform: scale(1);
     }
   }
-  
+
   .animate-fadeIn {
     animation: fadeIn 0.2s ease-out;
   }
-  
+
   .animate-scaleIn {
     animation: scaleIn 0.3s ease-out;
   }
 
-  /* Fix específico para móviles */
-  @media (max-width: 768px) {
-    body {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
-
-    app-root {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-  }
-
   /* Ocultar scrollbar pero mantener scroll funcional */
   .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
 
   .scrollbar-hide::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari and Opera */
+    display: none;
+    /* Chrome, Safari and Opera */
   }
 
   /* 🔥 SCROLLBAR MEJORADO PARA SIDEBAR Y DRAWERS */
   app-sidebar nav {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+    /* Native scrolling */
   }
 
   /* Scrollbar visible solo en desktop */
