@@ -140,12 +140,12 @@ export class AdminInstructorPaymentsComponent implements OnInit {
 
   loadInstructors() {
     const formValue = this.filterForm.value;
-    
+
     // 🔒 LOG REMOVIDO POR SEGURIDAD
-    
-    const filters: { 
-      status?: string; 
-      minAmount?: number; 
+
+    const filters: {
+      status?: string;
+      minAmount?: number;
       paymentMethod?: string;
       startDate?: string;
       endDate?: string;
@@ -156,17 +156,17 @@ export class AdminInstructorPaymentsComponent implements OnInit {
       startDate: formValue.startDate || undefined,
       endDate: formValue.endDate || undefined
     };
-    
+
     // ✅ Limpiar propiedades undefined
     Object.keys(filters).forEach(key => {
       if (filters[key as keyof typeof filters] === undefined) {
         delete filters[key as keyof typeof filters];
       }
     });
-    
+
     // 🔒 LOG REMOVIDO POR SEGURIDAD
     // 🔒 LOG REMOVIDO POR SEGURIDAD
-    
+
     // 🔥 CORRECCIÓN: Llamar al método correcto del servicio
     this.adminPaymentService.loadInstructors(filters).subscribe({
       next: () => {
@@ -320,10 +320,17 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   }
 
   getInstructorAvatarUrl(instructor: any): string {
+    const environment = {
+      images: {
+        course: 'https://api.devhubsharks.com/api/courses/imagen-course/',
+        project: 'https://api.devhubsharks.com/api/projects/imagen-project/',
+        user: 'https://api.devhubsharks.com/api/users/imagen-usuario/'
+      }
+    };
     if (!instructor || !instructor.avatar) {
       return `https://ui-avatars.com/api/?name=${encodeURIComponent(instructor?.name || 'User')}&background=667eea&color=fff`;
     }
-    return `http://localhost:3000/api/users/imagen-usuario/${instructor.avatar}`;
+    return `${environment.images.user}${instructor.avatar}`;
   }
 
   hasReachedThreshold(earningsTotal: number): boolean {

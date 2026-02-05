@@ -2,7 +2,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 import { PurchasesService } from '../../core/services/purchases.service';
 import { AuthService } from '../../core/services/auth';
 import { ToastService } from '../../core/services/toast.service';

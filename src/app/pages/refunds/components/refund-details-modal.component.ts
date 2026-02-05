@@ -429,7 +429,7 @@ export class RefundDetailsModalComponent {
 
   getReceiptUrl(filename: string): string {
     // Asumiendo que los comprobantes se guardan en uploads/refunds/
-    return `http://localhost:3000/api/refunds/receipt-image/${filename}`;
+    return `https://api.devhubsharks.com/api/refunds/receipt-image/${filename}`;
   }
 
   openImageInNewTab(filename: string): void {

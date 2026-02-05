@@ -91,7 +91,7 @@ export class WebsocketService {
       return;
     }
 
-    const url = environment.url.replace('/api/', ''); // http://localhost:3000
+    const url = environment.url.replace('/api/', '');
 
 
 

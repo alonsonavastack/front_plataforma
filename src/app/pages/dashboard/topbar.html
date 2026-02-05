@@ -29,7 +29,7 @@
       <a routerLink="/" class="inline-flex items-center gap-3 group" [class.lg:hidden]="!isSidebarCollapsed()">
         <!-- Logo dinámico -->
         @if (systemConfigService.config()?.logo) {
-        <img [src]="'http://localhost:3000/api/system-config/logo/' + systemConfigService.config()?.logo"
+        <img [src]="'https://api.devhubsharks.com/api/system-config/logo/' + systemConfigService.config()?.logo"
           [alt]="(systemConfigService.config()?.siteName || 'Dev-Sharks') + ' logo'"
           class="h-9 w-9 rounded-xl object-cover ring-2 ring-lime-400/30 group-hover:ring-lime-400/60 transition-all duration-200 shadow-lg shadow-lime-500/20"
           (error)="$event.target.style.display='none'" />

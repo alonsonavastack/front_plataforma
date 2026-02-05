@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { tap } from 'rxjs';
 // rxResource removed
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 import { Sale, SaleDetailItem } from '../models/sale.model';
 
 interface SaleListResponse {

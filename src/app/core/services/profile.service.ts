@@ -1,7 +1,7 @@
 // src/app/core/services/profile.service.ts
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 import { AuthService } from './auth';
 import { Enrollment, ProfileResponse } from '../models/home.models';
 

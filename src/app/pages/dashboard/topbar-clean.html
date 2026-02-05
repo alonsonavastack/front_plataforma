@@ -1,26 +1,26 @@
-<header class="sticky top-0 z-20 w-full backdrop-blur-xl supports-[backdrop-filter]:bg-slate-950/90 bg-slate-950/80 border-b border-white/5 shadow-lg shadow-black/10"
-        (animate.enter)="animate.animateFadeInDashboard($event)">
+<header
+  class="sticky top-0 z-20 w-full backdrop-blur-xl supports-[backdrop-filter]:bg-slate-950/90 bg-slate-950/80 border-b border-white/5 shadow-lg shadow-black/10"
+  (animate.enter)="animate.animateFadeInDashboard($event)">
 
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
     <!-- 🔥 LADO IZQUIERDO: Branding + Botón Toggle -->
     <div class="flex items-center gap-3">
       <!-- 🔥 BOTÓN HAMBURGUESA DRAWER (Móvil) -->
-      <button type="button"
-              (click)="toggleSidebar.emit()"
-              class="p-2.5 rounded-xl border border-white/10 hover:border-lime-400/50 hover:bg-lime-400/5 text-slate-400 hover:text-lime-300 transition-all duration-200 lg:hidden"
-              aria-label="Abrir menú lateral">
+      <button type="button" (click)="toggleSidebar.emit()"
+        class="p-2.5 rounded-xl border border-white/10 hover:border-lime-400/50 hover:bg-lime-400/5 text-slate-400 hover:text-lime-300 transition-all duration-200 lg:hidden"
+        aria-label="Abrir menú lateral">
         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h12M4 18h8"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h12M4 18h8" />
         </svg>
         <span class="sr-only">Abrir menú lateral</span>
       </button>
 
       <!-- 🔥 BOTÓN COLLAPSE/EXPANDIR (Desktop) -->
       <button (click)="toggleSidebar.emit()"
-              class="hidden lg:flex items-center justify-center p-2.5 rounded-xl border border-white/10 hover:border-lime-400/50 hover:bg-lime-400/5 text-slate-400 hover:text-lime-300 transition-all duration-200 group">
-        <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 6h16M4 12h16M4 18h16"/>
+        class="hidden lg:flex items-center justify-center p-2.5 rounded-xl border border-white/10 hover:border-lime-400/50 hover:bg-lime-400/5 text-slate-400 hover:text-lime-300 transition-all duration-200 group">
+        <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor"
+          viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
         <span class="sr-only">Alternar menú lateral</span>
       </button>
@@ -29,16 +29,15 @@
       <a routerLink="/" class="inline-flex items-center gap-3 group" [class.lg:hidden]="!isSidebarCollapsed()">
         <!-- Logo dinámico -->
         @if (systemConfigService.config()?.logo) {
-          <img
-            [src]="'http://localhost:3000/api/system-config/logo/' + systemConfigService.config()?.logo"
-            [alt]="(systemConfigService.config()?.siteName || 'Dev-Sharks') + ' logo'"
-            class="h-9 w-9 rounded-xl object-cover ring-2 ring-lime-400/30 group-hover:ring-lime-400/60 transition-all duration-200 shadow-lg shadow-lime-500/20"
-            (error)="$event.target.style.display='none'"
-          />
+        <img [src]="'https://api.devhubsharks.com/api/system-config/logo/' + systemConfigService.config()?.logo"
+          [alt]="(systemConfigService.config()?.siteName || 'Dev-Sharks') + ' logo'"
+          class="h-9 w-9 rounded-xl object-cover ring-2 ring-lime-400/30 group-hover:ring-lime-400/60 transition-all duration-200 shadow-lg shadow-lime-500/20"
+          (error)="$event.target.style.display='none'" />
         } @else {
-          <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-lime-400 via-emerald-400 to-cyan-400 ring-2 ring-lime-400/30 group-hover:ring-lime-400/60 grid place-items-center text-slate-900 font-black transition-all duration-200 shadow-lg shadow-lime-500/30">
-            {{ (systemConfigService.config()?.siteName || 'Dev-Sharks').charAt(0).toUpperCase() }}
-          </div>
+        <div
+          class="h-9 w-9 rounded-xl bg-gradient-to-br from-lime-400 via-emerald-400 to-cyan-400 ring-2 ring-lime-400/30 group-hover:ring-lime-400/60 grid place-items-center text-slate-900 font-black transition-all duration-200 shadow-lg shadow-lime-500/30">
+          {{ (systemConfigService.config()?.siteName || 'Dev-Sharks').charAt(0).toUpperCase() }}
+        </div>
         }
         <!-- Nombre del sitio -->
         <span class="font-bold tracking-tight text-white group-hover:text-lime-300 transition-colors duration-200">
@@ -51,137 +50,151 @@
     <div class="flex items-center gap-2">
       <!-- 🔔 Campana de Notificaciones de Ventas (solo para admin) -->
       @if (authService.user()?.rol === 'admin') {
-        <div class="relative">
-          <button
-            (click)="toggleNotificationsMenu()"
-            class="relative p-2.5 rounded-xl border border-white/10 hover:border-lime-400/50 hover:bg-lime-400/5 text-slate-400 hover:text-lime-300 transition-all duration-200 group">
-            <!-- Icono de campana -->
-            <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-            </svg>
+      <div class="relative">
+        <button (click)="toggleNotificationsMenu()"
+          class="relative p-2.5 rounded-xl border border-white/10 hover:border-lime-400/50 hover:bg-lime-400/5 text-slate-400 hover:text-lime-300 transition-all duration-200 group">
+          <!-- Icono de campana -->
+          <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+            </path>
+          </svg>
 
-            <!-- Badge con el número de notificaciones -->
-            @if (notificationsService.count() > 0) {
-              <span class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold animate-pulse ring-2 ring-slate-950">
-                {{ notificationsService.count() > 9 ? '9+' : notificationsService.count() }}
-              </span>
-            }
-          </button>
+          <!-- Badge con el número de notificaciones -->
+          @if (notificationsService.count() > 0) {
+          <span
+            class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold animate-pulse ring-2 ring-slate-950">
+            {{ notificationsService.count() > 9 ? '9+' : notificationsService.count() }}
+          </span>
+          }
+        </button>
 
-          <!-- Dropdown de notificaciones -->
-          @if (isNotificationsMenuOpen()) {
-            <div
-              class="fixed sm:absolute top-16 sm:top-full left-0 right-0 sm:left-auto sm:right-0 sm:mt-3 w-full sm:w-96 max-h-[calc(100vh-5rem)] sm:max-h-[32rem] overflow-y-auto bg-slate-800/95 backdrop-blur rounded-none sm:rounded-xl shadow-2xl ring-1 ring-white/10 z-50"
-              (clickOutside)="isNotificationsMenuOpen.set(false)">
+        <!-- Dropdown de notificaciones -->
+        @if (isNotificationsMenuOpen()) {
+        <div
+          class="fixed sm:absolute top-16 sm:top-full left-0 right-0 sm:left-auto sm:right-0 sm:mt-3 w-full sm:w-96 max-h-[calc(100vh-5rem)] sm:max-h-[32rem] overflow-y-auto bg-slate-800/95 backdrop-blur rounded-none sm:rounded-xl shadow-2xl ring-1 ring-white/10 z-50"
+          (clickOutside)="isNotificationsMenuOpen.set(false)">
 
-              <!-- Header -->
-              <div class="sticky top-0 bg-slate-800 px-4 py-3 border-b border-white/10">
-                <div class="flex items-center justify-between">
-                  <h3 class="text-sm font-semibold text-white">Notificaciones</h3>
-                  <div class="flex items-center gap-2">
-                    <!-- Botón de recarga manual -->
-                    <button
-                      (click)="reloadNotifications()"
-                      class="p-1.5 rounded-md hover:bg-slate-700 text-slate-400 hover:text-lime-400 transition"
-                      title="Recargar notificaciones">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                      </svg>
-                    </button>
-                    @if (notificationsService.sales().length > 0) {
-                      <button
-                        (click)="router.navigate(['/dashboard']); toggleNotificationsMenu();"
-                        class="text-xs text-lime-400 hover:text-lime-300 font-medium">
-                        Ver todas
-                      </button>
-                    }
-                  </div>
-                </div>
-              </div>
-
-              <!-- Lista de notificaciones -->
-              <div class="py-2">
-                @if (notificationsService.sales().length === 0) {
-                  <div class="px-4 py-8 text-center">
-                    <svg class="w-12 h-12 text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                    </svg>
-                    <p class="text-sm text-slate-400">No hay nuevas notificaciones</p>
-                  </div>
-                } @else {
-                  @for (sale of notificationsService.sales(); track sale._id) {
-                    <div
-                      (click)="goToSalesWithStatus(sale.status, sale._id)"
-                      class="px-4 py-3 hover:bg-slate-700/50 transition-colors cursor-pointer border-b border-slate-700/50 last:border-0">
-                      <div class="flex items-start gap-3">
-                        <!-- Icono -->
-                        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-lime-400/10 flex items-center justify-center">
-                          <svg class="w-5 h-5 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                          </svg>
-                        </div>
-
-                        <!-- Contenido -->
-                        <div class="flex-1 min-w-0">
-                          <p class="text-sm font-medium text-white">
-                            Nueva compra de <span class="text-lime-400">{{ sale.user.name }} {{ sale.user.surname }}</span>
-                          </p>
-                          <p class="text-xs text-slate-400 mt-1">
-                            Total: <span class="font-semibold text-lime-300">{{ sale.total | currency:sale.currency_total:'symbol':'1.2-2' }}</span>
-                          </p>
-                          <p class="text-xs text-slate-500 mt-1">
-                            {{ sale.createdAt | date:'dd/MM/yyyy HH:mm' }}
-                          </p>
-                        </div>
-
-                        <!-- Estado -->
-                        <div class="flex-shrink-0">
-                          <span [ngClass]="{
-                            'bg-green-500/10 text-green-400 border-green-500/30': sale.status === 'Pagado',
-                            'bg-yellow-500/10 text-yellow-400 border-yellow-500/30': sale.status === 'Pendiente'
-                          }" class="inline-block px-2 py-1 text-xs font-semibold rounded-full border">
-                            {{ sale.status }}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  }
+          <!-- Header -->
+          <div class="sticky top-0 bg-slate-800 px-4 py-3 border-b border-white/10">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-semibold text-white">Notificaciones</h3>
+              <div class="flex items-center gap-2">
+                <!-- Botón de recarga manual -->
+                <button (click)="reloadNotifications()"
+                  class="p-1.5 rounded-md hover:bg-slate-700 text-slate-400 hover:text-lime-400 transition"
+                  title="Recargar notificaciones">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                    </path>
+                  </svg>
+                </button>
+                @if (notificationsService.sales().length > 0) {
+                <button (click)="router.navigate(['/dashboard']); toggleNotificationsMenu();"
+                  class="text-xs text-lime-400 hover:text-lime-300 font-medium">
+                  Ver todas
+                </button>
                 }
               </div>
             </div>
-          }
+          </div>
+
+          <!-- Lista de notificaciones -->
+          <div class="py-2">
+            @if (notificationsService.sales().length === 0) {
+            <div class="px-4 py-8 text-center">
+              <svg class="w-12 h-12 text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                </path>
+              </svg>
+              <p class="text-sm text-slate-400">No hay nuevas notificaciones</p>
+            </div>
+            } @else {
+            @for (sale of notificationsService.sales(); track sale._id) {
+            <div (click)="goToSalesWithStatus(sale.status, sale._id)"
+              class="px-4 py-3 hover:bg-slate-700/50 transition-colors cursor-pointer border-b border-slate-700/50 last:border-0">
+              <div class="flex items-start gap-3">
+                <!-- Icono -->
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-lime-400/10 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                    </path>
+                  </svg>
+                </div>
+
+                <!-- Contenido -->
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-white">
+                    Nueva compra de <span class="text-lime-400">{{ sale.user.name }} {{ sale.user.surname }}</span>
+                  </p>
+                  <p class="text-xs text-slate-400 mt-1">
+                    Total: <span class="font-semibold text-lime-300">{{ sale.total |
+                      currency:sale.currency_total:'symbol':'1.2-2' }}</span>
+                  </p>
+                  <p class="text-xs text-slate-500 mt-1">
+                    {{ sale.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                  </p>
+                </div>
+
+                <!-- Estado -->
+                <div class="flex-shrink-0">
+                  <span [ngClass]="{
+                            'bg-green-500/10 text-green-400 border-green-500/30': sale.status === 'Pagado',
+                            'bg-yellow-500/10 text-yellow-400 border-yellow-500/30': sale.status === 'Pendiente'
+                          }" class="inline-block px-2 py-1 text-xs font-semibold rounded-full border">
+                    {{ sale.status }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            }
+            }
+          </div>
         </div>
+        }
+      </div>
       }
 
       <!-- 💬 Campana de Notificaciones de Reviews (solo para instructores) -->
       @if (authService.user()?.rol === 'instructor') {
-        <!-- ... resto del código de reviews sin cambios ... -->
+      <!-- ... resto del código de reviews sin cambios ... -->
       }
 
       <!-- 💵 Campana de Notificaciones de Reembolsos (admin e instructor) -->
       @if (authService.user()?.rol === 'admin' || authService.user()?.rol === 'instructor') {
-        <!-- ... resto del código de reembolsos sin cambios ... -->
+      <!-- ... resto del código de reembolsos sin cambios ... -->
       }
 
       <!-- Menú de usuario -->
       <div class="relative">
         <button (click)="toggleProfileMenu()" class="flex items-center gap-3">
           <span class="text-sm font-medium hidden sm:inline text-slate-200">Hola, {{ authService.user()?.name }}</span>
-          <img class="w-9 h-9 rounded-full object-cover border-2 border-lime-400/50" [src]="authService.currentUserAvatar()" alt="Avatar">
+          <img class="w-9 h-9 rounded-full object-cover border-2 border-lime-400/50"
+            [src]="authService.currentUserAvatar()" alt="Avatar">
         </button>
         @if (isProfileMenuOpen()) {
-          <div class="fixed sm:absolute top-16 sm:top-full right-0 sm:mt-3 w-full sm:w-64 bg-slate-800/95 backdrop-blur rounded-none sm:rounded-md shadow-lg ring-1 ring-white/10 py-1 z-50"
-               (clickOutside)="isProfileMenuOpen.set(false)">
-            <div class="px-4 py-3 border-b border-white/10">
-              <span class="block text-sm text-white">{{ authService.user()?.name }} {{ authService.user()?.surname }}</span>
-              <span class="block text-xs text-white/60 truncate">{{ authService.user()?.email }}</span>
-            </div>
-            <a [routerLink]="getProfileLink()" (click)="toggleProfileMenu()" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/80 hover:text-lime-300">Mi Panel</a>
-            <a routerLink="/" (click)="toggleProfileMenu()" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/80 hover:text-lime-300">Ver Sitio</a>
-
-            <div class="border-t border-white/10 my-1"></div>
-            <button (click)="logout()" class="w-full text-left block px-4 py-2 text-sm text-red-400 font-medium hover:bg-slate-700/80">Cerrar Sesión</button>
+        <div
+          class="fixed sm:absolute top-16 sm:top-full right-0 sm:mt-3 w-full sm:w-64 bg-slate-800/95 backdrop-blur rounded-none sm:rounded-md shadow-lg ring-1 ring-white/10 py-1 z-50"
+          (clickOutside)="isProfileMenuOpen.set(false)">
+          <div class="px-4 py-3 border-b border-white/10">
+            <span class="block text-sm text-white">{{ authService.user()?.name }} {{ authService.user()?.surname
+              }}</span>
+            <span class="block text-xs text-white/60 truncate">{{ authService.user()?.email }}</span>
           </div>
+          <a [routerLink]="getProfileLink()" (click)="toggleProfileMenu()"
+            class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/80 hover:text-lime-300">Mi Panel</a>
+          <a routerLink="/" (click)="toggleProfileMenu()"
+            class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/80 hover:text-lime-300">Ver Sitio</a>
+
+          <div class="border-t border-white/10 my-1"></div>
+          <button (click)="logout()"
+            class="w-full text-left block px-4 py-2 text-sm text-red-400 font-medium hover:bg-slate-700/80">Cerrar
+            Sesión</button>
+        </div>
         }
       </div>
     </div>

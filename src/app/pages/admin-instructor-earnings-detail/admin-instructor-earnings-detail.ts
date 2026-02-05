@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { AdminPaymentService } from '../../core/services/admin-payment.service';
 import { Earning } from '../../core/models/instructor-earning.model';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-admin-instructor-earnings-detail',
@@ -228,20 +229,20 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
     // Solo seleccionar ganancias con estado 'available'
     const availableEarnings = this.validEarnings()
       .filter((e: Earning) => e.status === 'available');
-    
+
     const availableEarningIds = availableEarnings.map((e: Earning) => e._id);
-    
+
     console.log('✅ [selectAll] Seleccionando ganancias disponibles:', {
       total_validEarnings: this.validEarnings().length,
       available_count: availableEarnings.length,
       selected_ids: availableEarningIds
     });
-    
+
     if (availableEarnings.length === 0) {
       alert('⚠️ No hay ganancias "disponibles" para seleccionar.\n\nLas ganancias deben estar en estado "available" para ser seleccionadas.');
       return;
     }
-    
+
     this.selectedEarnings.set(availableEarningIds);
   }
 
@@ -345,10 +346,10 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
     // Construir URL basada en el tipo de producto
     if (productType === 'project') {
       // URL para proyectos
-      return `http://localhost:3000/api/projects/imagen-project/${imageName}`;
+      return `${environment.images.project}${imageName}`;
     } else {
       // URL para cursos (por defecto)
-      return `http://localhost:3000/api/courses/imagen-course/${imageName}`;
+      return `${environment.images.course}${imageName}`;
     }
   }
 
@@ -359,7 +360,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
     if (!instructor || !instructor.avatar) {
       return `https://ui-avatars.com/api/?name=${encodeURIComponent(instructor?.name || 'User')}&background=667eea&color=fff`;
     }
-    return `http://localhost:3000/api/users/imagen-usuario/${instructor.avatar}`;
+    return `${environment.images.user}${instructor.avatar}`;
   }
 
   /**

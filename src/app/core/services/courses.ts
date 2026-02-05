@@ -1,7 +1,7 @@
 // src/app/core/services/courses.service.ts
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { computed, inject, Injectable, signal, effect } from '@angular/core';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 import { toQuery } from '../utils/resource-helpers'; // Asegúrate de que este helper exista y funcione
 import { catchError, throwError } from 'rxjs';
 import { moveItemInArray } from '@angular/cdk/drag-drop';

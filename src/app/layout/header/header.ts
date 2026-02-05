@@ -9,7 +9,7 @@ import { WalletService } from '../../core/services/wallet.service'; // 🔥 Para
 import { CoursesService } from '../../core/services/courses';
 import { ProjectService } from '../../core/services/project.service';
 import { initFlowbite } from 'flowbite';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 
 
 @Component({

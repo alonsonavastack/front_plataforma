@@ -215,9 +215,9 @@ export class AdminPaymentDashboardComponent implements OnInit {
     // Construir URL según el tipo de producto
     const environment = {
       images: {
-        course: 'http://localhost:3000/api/course/imagen/',
-        project: 'http://localhost:3000/api/project/imagen/',
-        user: 'http://localhost:3000/api/user/imagen/'
+        course: 'https://api.devhubsharks.com/api/courses/imagen-course/',
+        project: 'https://api.devhubsharks.com/api/projects/imagen-project/',
+        user: 'https://api.devhubsharks.com/api/users/imagen-usuario/'
       }
     };
 
