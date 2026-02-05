@@ -62,7 +62,7 @@ import { MxnCurrencyPipe } from '../../shared/pipes/mxn-currency.pipe';
   templateUrl: "./home.html",
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   api = inject(HomeService);
   private sanitizer = inject(DomSanitizer);
   private router = inject(Router);
@@ -775,6 +775,10 @@ export class HomeComponent implements OnInit {
       return project.user as User;
     }
     return null;
+  }
+  // 🔥 CLEANUP: Asegurar que el scroll se restaura al salir
+  ngOnDestroy(): void {
+    document.body.style.overflow = 'auto';
   }
 }
 
