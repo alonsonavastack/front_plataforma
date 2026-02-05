@@ -1,11 +1,13 @@
-<div class="bg-slate-950 text-white min-h-screen flex flex-col lg:flex-row">
+<div class="bg-slate-950 text-white h-screen flex flex-col lg:flex-row overflow-hidden">
   <!-- 🔥 SIDEBAR LATERAL MEJORADO -->
-  <aside id="dashboard-drawer" class="fixed top-0 left-0 z-40 h-screen transition-all duration-300 -translate-x-full
+  <aside id="dashboard-drawer" class="fixed top-0 left-0 z-40 h-full transition-all duration-300 -translate-x-full
                 lg:translate-x-0 lg:relative lg:flex-shrink-0
                 bg-slate-900/95 backdrop-blur-xl border-r border-white/5
                 shadow-2xl shadow-black/50" [class.w-72]="!isSidebarCollapsed()" [class.w-20]="isSidebarCollapsed()"
     [class.lg:w-72]="!isSidebarCollapsed()" [class.lg:w-20]="isSidebarCollapsed()" tabindex="-1"
     aria-labelledby="drawer-label" (animate.enter)="animate.animateFadeInDashboard($event)">
+
+    <!-- .. content matches original .. -->
 
     <div class="h-full flex flex-col overflow-hidden">
       <!-- 🔥 HEADER DEL SIDEBAR -->
@@ -82,7 +84,7 @@
     class="bg-slate-950/80 backdrop-blur-sm fixed inset-0 z-30 lg:hidden hidden transition-opacity duration-300"></div>
 
   <!-- CONTENIDO PRINCIPAL -->
-  <main class="flex-1 relative min-h-screen overflow-y-auto touch-pan-y overscroll-contain" tabindex="-1">
+  <main class="flex-1 relative h-full overflow-y-auto touch-pan-y overscroll-contain" tabindex="-1">
     <!-- TOPBAR (Ahora dentro del main) -->
     <app-topbar [isSidebarCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()">
     </app-topbar>
