@@ -43,11 +43,46 @@ export class SystemConfigService {
       return;
     }
 
-    this.state.set({
-      ...this.state(),
-      isLoading: true,
-      error: null
-    });
+    // 🔥 CACHÉ: Verificar si el usuario aceptó cookies y hay datos guardados
+    const consent = localStorage.getItem('cookie_consent');
+    if (consent === 'true') {
+      const cachedData = localStorage.getItem('system_config_cache');
+      if (cachedData) {
+        try {
+          const parsed = JSON.parse(cachedData);
+          // Verificar caducidad (opcional, aquí asumimos válido siempre hasta que se actualice)
+          this.state.set({
+            config: parsed.config,
+            exchange_rate: parsed.exchange_rate,
+            isLoading: false,
+            error: null,
+            logoPreloaded: false
+          });
+          // Precargar logo
+          this.preloadLogo(parsed.config);
+
+          // 🔥 Actualizar en segundo plano (stale-while-revalidate) para asegurar datos frescos
+          this.fetchFromApi(true);
+          return;
+        } catch (e) {
+          console.warn('Error al leer caché de configuración', e);
+          localStorage.removeItem('system_config_cache');
+        }
+      }
+    }
+
+    // Fetch normal
+    this.fetchFromApi();
+  }
+
+  /**
+   * Fetch privado desde la API
+   * @param background Si es true, no activa loading state
+   */
+  private fetchFromApi(background = false): void {
+    if (!background) {
+      this.state.update(s => ({ ...s, isLoading: true, error: null }));
+    }
 
     this.http.get<{ config: SystemConfig, exchange_rate: number }>(`${this.API_URL}/get-public`).pipe(
       tap(response => {
@@ -58,19 +93,44 @@ export class SystemConfigService {
           error: null,
           logoPreloaded: false
         });
-        
-        // 🔥 NUEVO: Precargar el logo en segundo plano
+
         this.preloadLogo(response.config);
+
+        // 🔥 ACTUALIZAR CACHÉ SI HAY CONSENTIMIENTO
+        if (localStorage.getItem('cookie_consent') === 'true') {
+          localStorage.setItem('system_config_cache', JSON.stringify({
+            config: response.config,
+            exchange_rate: response.exchange_rate,
+            timestamp: Date.now()
+          }));
+        }
       }),
       catchError(error => {
-        this.state.set({
-          ...this.state(),
-          isLoading: false,
-          error: error.error?.message || 'Error al cargar configuración'
-        });
+        if (!background) {
+          this.state.update(s => ({
+            ...s,
+            isLoading: false,
+            error: error.error?.message || 'Error al cargar configuración'
+          }));
+        }
         return of(null);
       })
     ).subscribe();
+  }
+
+  /**
+   * Activar caché (al aceptar cookies)
+   */
+  enableCache(): void {
+    // Forzar actualización inmediata para guardar en caché
+    this.fetchFromApi(true);
+  }
+
+  /**
+   * Limpiar caché (al rechazar cookies)
+   */
+  clearCache(): void {
+    localStorage.removeItem('system_config_cache');
   }
 
   /**
@@ -86,6 +146,20 @@ export class SystemConfigService {
           isLoading: false,
           error: null
         });
+
+        // 🔥 Actualizar caché si aplica
+        if (localStorage.getItem('cookie_consent') === 'true') {
+          // Necesitamos el exchange rate actual para guardar todo junto, o solo actualizar config
+          // Por simplicidad, refrescamos todo o mergeamos
+          const currentCache = localStorage.getItem('system_config_cache');
+          let newCache: any = { config: response.config };
+          if (currentCache) {
+            const parsed = JSON.parse(currentCache);
+            newCache.exchange_rate = parsed.exchange_rate;
+          }
+          newCache.timestamp = Date.now();
+          localStorage.setItem('system_config_cache', JSON.stringify(newCache));
+        }
       }),
       catchError(error => {
         throw error;

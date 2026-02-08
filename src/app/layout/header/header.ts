@@ -37,7 +37,7 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   @ViewChild('headerElement') headerEl!: ElementRef<AnimationCallbackEvent>;
 
   // 🔥 NUEVO: Computed signals para configuración del sistema
-  siteName = computed(() => this.systemConfigService.config()?.siteName || 'Dev-Sharks');
+  siteName = computed(() => this.systemConfigService.config()?.siteName || 'Dev Hub Sharks');
   siteLogo = computed(() => {
     const logo = this.systemConfigService.config()?.logo;
     return logo ? `${environment.url}system-config/logo/${logo}` : null;

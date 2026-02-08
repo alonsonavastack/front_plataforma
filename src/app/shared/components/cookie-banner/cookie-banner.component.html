@@ -1,0 +1,50 @@
+<div class="fixed bottom-0 left-0 right-0 z-[100] p-4 md:p-6" *ngIf="showBanner()">
+    <div class="max-w-4xl mx-auto">
+        <div
+            class="bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 md:flex items-center gap-6 relative overflow-hidden group">
+
+            <!-- Decoración de fondo -->
+            <div
+                class="absolute -left-10 -top-10 w-32 h-32 bg-lime-500/10 rounded-full blur-3xl group-hover:bg-lime-500/20 transition-all duration-1000">
+            </div>
+            <div
+                class="absolute -right-10 -bottom-10 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all duration-1000">
+            </div>
+
+            <!-- Icono -->
+            <div
+                class="hidden md:flex shrink-0 w-12 h-12 bg-lime-500/20 rounded-xl items-center justify-center border border-lime-500/30">
+                <i class="fas fa-cookie-bite text-2xl text-lime-400"></i>
+            </div>
+
+            <!-- Contenido -->
+            <div class="flex-1 space-y-2 relative">
+                <h3 class="text-white font-bold text-lg flex items-center gap-2">
+                    <span class="md:hidden text-lime-400"><i class="fas fa-cookie-bite"></i></span>
+                    🍪 Usamos Cookies para mejorar tu experiencia
+                </h3>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    Utilizamos cookies para almacenar temporalmente la configuración del sitio en tu dispositivo.
+                    Esto hace que la web cargue <strong>mucho más rápido</strong> en tus próximas visitas.
+                    No rastrearemos tu actividad personal.
+                </p>
+                <div class="flex items-center gap-2 mt-2">
+                    <a routerLink="/privacy-policy"
+                        class="text-xs text-lime-400 hover:text-lime-300 hover:underline">Política de Privacidad</a>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex flex-col sm:flex-row gap-3 mt-4 md:mt-0 relative">
+                <button (click)="decline()"
+                    class="px-6 py-2.5 rounded-xl border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white transition-all text-sm font-medium">
+                    Rechazar
+                </button>
+                <button (click)="accept()"
+                    class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-lime-500 to-green-500 text-slate-900 hover:from-lime-400 hover:to-green-400 font-bold shadow-lg shadow-lime-500/20 transition-all transform hover:scale-105 active:scale-95 text-sm whitespace-nowrap">
+                    Aceptar y Acelerar 🚀
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

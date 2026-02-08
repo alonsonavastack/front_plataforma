@@ -18,7 +18,7 @@ export class FooterComponent implements OnInit {
   openLegalModalEvent = output<'privacy' | 'terms'>();
 
   // Computed signals para datos del sistema
-  siteName = computed(() => this.systemConfigService.config()?.siteName || 'Dev-Sharks');
+  siteName = computed(() => this.systemConfigService.config()?.siteName || 'Dev Hub Sharks');
   siteDescription = computed(() => this.systemConfigService.config()?.siteDescription || 'Plataforma de cursos online');
   siteLogo = computed(() => {
     const logo = this.systemConfigService.config()?.logo;

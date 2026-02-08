@@ -12,6 +12,8 @@
   html {
     /* Standard scroll behavior */
     scroll-behavior: smooth;
+    height: 100%; /* Ensure full height */
+    overflow-y: auto; /* 🔥 Force scrollbar availability */
   }
 
   body {
@@ -21,6 +23,8 @@
     position: relative;
     background-color: rgb(2 6 23);
     /* bg-slate-950 default match */
+    overflow-y: auto; /* 🔥 Ensure body scrolls */
+    overflow-x: hidden; /* Prevent horizontal scroll */
   }
 
   app-root {

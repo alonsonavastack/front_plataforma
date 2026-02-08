@@ -9,9 +9,11 @@ import { ModalComponent } from './shared/components/modal/modal.component';
 import { SystemConfigService } from './core/services/system-config.service';
 
 
+import { CookieBannerComponent } from './shared/components/cookie-banner/cookie-banner.component';
+
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToastContainerComponent, ModalComponent],
+  imports: [RouterOutlet, ToastContainerComponent, ModalComponent, CookieBannerComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -67,7 +69,7 @@ export class App {
   }
 
   ngOnInit(): void {
-    initFlowbite();
+    // initFlowbite handled in HeaderComponent/Layout
 
     // 🔥 Cargar configuración una sola vez al inicio de la app
     this.systemConfigService.getConfig();
