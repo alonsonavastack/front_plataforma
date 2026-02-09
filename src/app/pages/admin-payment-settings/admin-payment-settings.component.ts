@@ -25,11 +25,17 @@ export class AdminPaymentSettingsComponent implements OnInit {
     constructor() {
         this.settingsForm = this.fb.group({
             paypal: this.fb.group({
-                clientId: [''],
-                clientSecret: [''],
                 mode: ['sandbox'],
                 active: [false],
-                instructorPayoutsActive: [false] // 🆕
+                instructorPayoutsActive: [false],
+                sandbox: this.fb.group({
+                    clientId: [''],
+                    clientSecret: ['']
+                }),
+                live: this.fb.group({
+                    clientId: [''],
+                    clientSecret: ['']
+                })
             }),
         });
     }
@@ -45,7 +51,35 @@ export class AdminPaymentSettingsComponent implements OnInit {
             .subscribe({
                 next: (response) => {
                     if (response.settings) {
-                        this.settingsForm.patchValue(response.settings);
+                        const settings = response.settings;
+
+                        // Patch valores principales
+                        this.settingsForm.patchValue({
+                            paypal: {
+                                mode: settings.paypal.mode || 'sandbox',
+                                active: settings.paypal.active || false,
+                                instructorPayoutsActive: settings.paypal.instructorPayoutsActive || false
+                            }
+                        });
+
+                        // Patch Sandbox
+                        if (settings.paypal.sandbox) {
+                            this.settingsForm.get('paypal.sandbox')?.patchValue(settings.paypal.sandbox);
+                        } else {
+                            // Migración visual: si no hay sandbox object, usar los viejos values si existen
+                            // (Solo si estamos en transición, opcional)
+                            if (settings.paypal.clientId && settings.paypal.mode === 'sandbox') {
+                                this.settingsForm.get('paypal.sandbox')?.patchValue({
+                                    clientId: settings.paypal.clientId,
+                                    clientSecret: settings.paypal.clientSecret
+                                });
+                            }
+                        }
+
+                        // Patch Live
+                        if (settings.paypal.live) {
+                            this.settingsForm.get('paypal.live')?.patchValue(settings.paypal.live);
+                        }
                     }
                 },
                 error: (error) => {

@@ -59,6 +59,13 @@
           class="flex-1 px-4 py-3 rounded-lg font-medium transition-all text-left md:text-center block w-full">
           💾 Backups
         </button>
+
+        <button (click)="setActiveTab('developer')" [class.bg-lime-500]="activeTab() === 'developer'"
+          [class.text-slate-900]="activeTab() === 'developer'" [class.text-slate-300]="activeTab() !== 'developer'"
+          [class.hover:bg-slate-700]="activeTab() !== 'developer'"
+          class="flex-1 px-4 py-3 rounded-lg font-medium transition-all text-left md:text-center block w-full">
+          👨‍💻 Developer
+        </button>
       </div>
     </div>
 
@@ -78,6 +85,10 @@
     <!-- Tab: Backups (Fuera del form principal) -->
     @else if (activeTab() === 'backup') {
     <app-backup-config />
+    }
+    <!-- Tab: Developer (Fuera del form principal) -->
+    @else if (activeTab() === 'developer') {
+    <app-developer-config />
     }
     @else {
     <!-- Formulario para otras configuraciones -->

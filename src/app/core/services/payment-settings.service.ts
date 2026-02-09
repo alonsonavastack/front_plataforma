@@ -6,11 +6,19 @@ import { environment } from '../../../environments/environment';
 
 export interface PaymentSettings {
   paypal: {
-    clientId: string;
-    clientSecret: string;
     mode: 'sandbox' | 'live';
     active: boolean;
     instructorPayoutsActive: boolean;
+    sandbox?: {
+      clientId: string;
+      clientSecret: string;
+    };
+    live?: {
+      clientId: string;
+      clientSecret: string;
+    };
+    clientId?: string; // Legacy support
+    clientSecret?: string; // Legacy support
   };
 
 }

@@ -11,6 +11,7 @@ import { SocialMediaComponent } from './components/social-media/social-media.com
 import { AuthService } from '../../core/services/auth';
 import { AdminPaymentSettingsComponent } from '../admin-payment-settings/admin-payment-settings.component'; // 🆕
 import { BackupConfigComponent } from './components/backup-config/backup-config.component';
+import { DeveloperConfigComponent } from './components/developer-config/developer-config.component';
 
 @Component({
   selector: 'app-system-settings',
@@ -20,8 +21,9 @@ import { BackupConfigComponent } from './components/backup-config/backup-config.
     BasicInfoComponent,
     ContactInfoComponent,
     SocialMediaComponent,
-    AdminPaymentSettingsComponent, // 🆕
-    BackupConfigComponent
+    AdminPaymentSettingsComponent,
+    BackupConfigComponent,
+    DeveloperConfigComponent
   ],
   templateUrl: './system-settings.component.html'
 })
@@ -39,7 +41,7 @@ export class SystemSettingsComponent implements OnInit {
 
   // Signals para UI
   isSaving = signal(false);
-  activeTab = signal<'basic' | 'contact' | 'social' | 'payment' | 'backup'>('basic');
+  activeTab = signal<'basic' | 'contact' | 'social' | 'payment' | 'backup' | 'developer'>('basic');
   showSuccess = signal(false);
   formIsValid = signal(false); // 🔥 Signal reactivo para estado del formulario
 
@@ -165,7 +167,7 @@ export class SystemSettingsComponent implements OnInit {
   /**
    * Cambiar tab activo
    */
-  setActiveTab(tab: 'basic' | 'contact' | 'social' | 'payment' | 'backup'): void {
+  setActiveTab(tab: 'basic' | 'contact' | 'social' | 'payment' | 'backup' | 'developer'): void {
     this.activeTab.set(tab);
   }
 

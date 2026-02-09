@@ -45,22 +45,56 @@
 
             <div class="grid gap-6 mb-6 md:grid-cols-2">
                 <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Client ID</label>
-                    <input type="text" formControlName="clientId"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Client Secret</label>
-                    <input type="password" formControlName="clientSecret"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                </div>
-                <div>
                     <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Modo</label>
-                    <select formControlName="mode"
+                    <select formControlName="mode" #modeSelect
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         <option value="sandbox">Sandbox (Pruebas)</option>
                         <option value="live">Live (Producción)</option>
                     </select>
+                </div>
+            </div>
+
+            <!-- SANDBOX CONSTROLS -->
+            <div formGroupName="sandbox" *ngIf="settingsForm.get('paypal.mode')?.value === 'sandbox'"
+                class="p-4 border border-yellow-500/30 bg-yellow-500/5 rounded-lg mb-6">
+                <h4 class="text-yellow-600 dark:text-yellow-400 font-bold mb-4 flex items-center gap-2">
+                    <span>🧪</span> Credenciales de Sandbox (Pruebas)
+                </h4>
+                <div class="grid gap-6 md:grid-cols-2">
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Sandbox Client
+                            ID</label>
+                        <input type="text" formControlName="clientId"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Sandbox Client
+                            Secret</label>
+                        <input type="password" formControlName="clientSecret"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- LIVE CONSTROLS -->
+            <div formGroupName="live" *ngIf="settingsForm.get('paypal.mode')?.value === 'live'"
+                class="p-4 border border-red-500/30 bg-red-500/5 rounded-lg mb-6">
+                <h4 class="text-red-600 dark:text-red-400 font-bold mb-4 flex items-center gap-2">
+                    <span>🚀</span> Credenciales Live (Producción)
+                </h4>
+                <div class="grid gap-6 md:grid-cols-2">
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Live Client
+                            ID</label>
+                        <input type="text" formControlName="clientId"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Live Client
+                            Secret</label>
+                        <input type="password" formControlName="clientSecret"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    </div>
                 </div>
             </div>
         </div>
