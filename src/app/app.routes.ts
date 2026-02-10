@@ -77,6 +77,11 @@ export const routes: Routes = [
       import("./pages/auth/forgot-password").then((m) => m.ForgotPasswordComponent),
   },
   {
+    path: "recover-code",
+    loadComponent: () =>
+      import("./pages/auth/recover-code/recover-code.component").then((m) => m.RecoverCodeComponent),
+  },
+  {
     path: "course-detail/:slug",
     loadComponent: () =>
       import("./pages/course-detail/course-detail").then(

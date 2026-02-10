@@ -126,6 +126,34 @@ export class RegisterComponent {
 
         // Manejar errores de duplicados (409)
         if (err.status === 409) {
+          // 🔥 SMART ERROR HANDLING: Usuario existe pero no verificado
+          if (err.error?.requiresVerification) {
+            this.errorMessage.set(null); // Limpiar error genérico
+            // Mostrar mensaje CON enlace de acción
+            // Usamos un signal o propiedad especial para esto, o manipulamos el HTML
+            // Para mantenerlo simple, usaremos el successMessage con un formato especial o un nuevo signal
+
+            // Opción rápida: Usar successMessage para mostrar la alerta amarilla/verde con acción
+            this.successMessage.set('warning:Este correo ya está registrado pero no ha sido verificado.');
+
+            // Redirigir automáticamente o mostrar botón?
+            // Mejor mostrar botón en el HTML (requiere update HTML)
+            // Por ahora, redirigimos automáticamente tras 2s con toast informativo? 
+            // El usuario pidió "opción de volver a insertar número" o similar.
+
+            // Vamos a redirigir a la nueva pantalla de recuperación o verify directamente
+            setTimeout(() => {
+              this.router.navigate(['/verify-otp'], {
+                queryParams: {
+                  userId: err.error.userId,
+                  phone: this.registerForm.value.phone, // Intentamos pasar el teléfono si lo tenemos
+                  error: 'unverified_exists'
+                }
+              });
+            }, 2000);
+            return;
+          }
+
           const msg = err.error?.message_text || 'El usuario ya existe.';
 
           // Mensaje más amigable si es mayúsculas
