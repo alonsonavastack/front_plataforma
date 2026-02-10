@@ -1,313 +1,317 @@
 <!-- Modal -->
 @if (isOpen()) {
-  <div 
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm modal-backdrop"
-    (click)="closeModal()"
-  >
-    <div 
-      class="relative w-full max-w-4xl max-h-[90vh] bg-slate-900 rounded-2xl shadow-2xl border border-white/10 flex flex-col modal-content"
-      (click)="stopPropagation($event)"
-    >
-      
-      <!-- Header -->
-      <div class="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-slate-800 to-slate-900">
-        <div class="flex items-center gap-3">
-          <div [ngClass]="modalType() === 'privacy' ? 'bg-lime-500/20' : 'bg-cyan-500/20'" class="p-2 rounded-lg">
-            @if (modalType() === 'privacy') {
-              <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            } @else {
-              <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            }
-          </div>
-          <div>
-            <h2 class="text-xl font-bold text-white">
-              {{ modalType() === 'privacy' ? 'Política de Privacidad' : 'Términos y Condiciones' }}
-            </h2>
-            <p class="text-sm text-slate-400">Dev-Sharks • Actualizado: 4 de Noviembre, 2025</p>
-          </div>
-        </div>
-        
-        <button
-          (click)="closeModal()"
-          class="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-          aria-label="Cerrar modal"
-        >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm modal-backdrop"
+  (click)="closeModal()">
+  <div
+    class="relative w-full max-w-4xl max-h-[90vh] bg-slate-900 rounded-2xl shadow-2xl border border-white/10 flex flex-col modal-content"
+    (click)="stopPropagation($event)">
+
+    <!-- Header -->
+    <div
+      class="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-slate-800 to-slate-900">
+      <div class="flex items-center gap-3">
+        <div [ngClass]="modalType() === 'privacy' ? 'bg-lime-500/20' : 'bg-cyan-500/20'" class="p-2 rounded-lg">
+          @if (modalType() === 'privacy') {
+          <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
-        </button>
-      </div>
-
-      <!-- Content -->
-      <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
-        @if (modalType() === 'privacy') {
-          <!-- CONTENIDO DE PRIVACIDAD -->
-          <div class="space-y-6 text-slate-300">
-            
-            <section>
-              <h3 class="text-2xl font-bold text-white mb-4">1. INTRODUCCIÓN</h3>
-              <p class="leading-relaxed">
-                Bienvenido a <strong class="text-lime-400">Dev-Sharks</strong>. Nos comprometemos a proteger tu privacidad y los datos personales que compartes con nosotros. Esta Política de Privacidad describe cómo recopilamos, usamos, almacenamos y protegemos tu información personal cuando utilizas nuestra plataforma de cursos online.
-              </p>
-            </section>
-
-            <section>
-              <h3 class="text-2xl font-bold text-white mb-4">2. INFORMACIÓN QUE RECOPILAMOS</h3>
-              
-              <h4 class="text-lg font-semibold text-lime-400 mt-4 mb-2">2.1 Información que nos proporcionas:</h4>
-              <ul class="list-disc list-inside space-y-2 ml-4">
-                <li>Nombre completo y apellidos</li>
-                <li>Correo electrónico</li>
-                <li>Contraseña (encriptada con bcrypt)</li>
-                <li>Número de teléfono (para verificación OTP vía Telegram)</li>
-                <li>País de residencia</li>
-                <li>Avatar/foto de perfil (opcional)</li>
-              </ul>
-
-              <h4 class="text-lg font-semibold text-lime-400 mt-4 mb-2">2.2 Si eres Instructor:</h4>
-              <ul class="list-disc list-inside space-y-2 ml-4">
-                <li>Profesión y biografía</li>
-                <li>Redes sociales (Facebook, Instagram, YouTube, TikTok, Twitch, etc.)</li>
-                <li>Información bancaria para pagos</li>
-              </ul>
-
-              <h4 class="text-lg font-semibold text-lime-400 mt-4 mb-2">2.3 Información automática:</h4>
-              <ul class="list-disc list-inside space-y-2 ml-4">
-                <li>Dirección IP y tipo de navegador</li>
-                <li>Cookies y datos de sesión</li>
-                <li>Historial de navegación en la plataforma</li>
-                <li>Progreso de cursos y actividad</li>
-              </ul>
-            </section>
-
-            <section>
-              <h3 class="text-2xl font-bold text-white mb-4">3. CÓMO USAMOS TU INFORMACIÓN</h3>
-              <ul class="list-disc list-inside space-y-2 ml-4">
-                <li>Crear y gestionar tu cuenta</li>
-                <li>Procesar compras de cursos y proyectos</li>
-                <li>Enviar códigos OTP de verificación vía Telegram</li>
-                <li>Personalizar tu experiencia de aprendizaje</li>
-                <li>Enviar notificaciones importantes</li>
-                <li>Mejorar nuestros servicios</li>
-                <li>Prevenir fraudes y garantizar seguridad</li>
-              </ul>
-            </section>
-
-            <section>
-              <h3 class="text-2xl font-bold text-white mb-4">4. SEGURIDAD DE TUS DATOS</h3>
-              <div class="bg-lime-500/10 border border-lime-500/30 rounded-lg p-4">
-                <h4 class="text-lime-400 font-semibold mb-2">Medidas implementadas:</h4>
-                <ul class="list-disc list-inside space-y-2 ml-4">
-                  <li>✅ Encriptación de contraseñas con bcrypt (10 rondas)</li>
-                  <li>✅ Autenticación JWT (JSON Web Tokens)</li>
-                  <li>✅ Verificación de dos factores (OTP por Telegram)</li>
-                  <li>✅ Conexiones HTTPS encriptadas</li>
-                  <li>✅ Respaldos regulares de base de datos</li>
-                  <li>✅ Protección contra inyecciones SQL y XSS</li>
-                </ul>
-              </div>
-            </section>
-
-            <section>
-              <h3 class="text-2xl font-bold text-white mb-4">5. TUS DERECHOS</h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-slate-800 rounded-lg p-4">
-                  <h4 class="text-lime-400 font-semibold mb-2">✓ Acceso</h4>
-                  <p class="text-sm">Solicitar copia de tus datos personales</p>
-                </div>
-                <div class="bg-slate-800 rounded-lg p-4">
-                  <h4 class="text-lime-400 font-semibold mb-2">✓ Rectificación</h4>
-                  <p class="text-sm">Corregir información inexacta</p>
-                </div>
-                <div class="bg-slate-800 rounded-lg p-4">
-                  <h4 class="text-lime-400 font-semibold mb-2">✓ Eliminación</h4>
-                  <p class="text-sm">Solicitar borrado de tu cuenta</p>
-                </div>
-                <div class="bg-slate-800 rounded-lg p-4">
-                  <h4 class="text-lime-400 font-semibold mb-2">✓ Portabilidad</h4>
-                  <p class="text-sm">Recibir tus datos en formato exportable</p>
-                </div>
-              </div>
-            </section>
-
-            <section>
-              <h3 class="text-2xl font-bold text-white mb-4">6. CONTACTO</h3>
-              <div class="bg-slate-800 rounded-lg p-6 border border-lime-400/30">
-                <p class="text-lg font-semibold text-lime-400 mb-4">Departamento de Privacidad - Dev-Sharks</p>
-                <div class="space-y-2 text-sm">
-                  <p>📧 <strong>Email:</strong> privacy&#64;dev-sharks.com</p>
-                  <p>📱 <strong>Telegram:</strong> &#64;DevSharksSupport</p>
-                  <p>🌐 <strong>Web:</strong> www.dev-sharks.com</p>
-                  <p>📍 <strong>Ubicación:</strong> San Nicolás Guadalupe, México, MX</p>
-                </div>
-              </div>
-            </section>
-
-            <div class="mt-8 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-              <p class="text-sm text-yellow-200">
-                ⚠️ <strong>Importante:</strong> Al usar Dev-Sharks, aceptas esta Política de Privacidad. Si no estás de acuerdo, por favor no uses nuestros servicios.
-              </p>
-            </div>
-          </div>
-        } @else {
-          <!-- CONTENIDO DE TÉRMINOS -->
-          <div class="space-y-6 text-slate-300">
-            
-            <section>
-              <h3 class="text-2xl font-bold text-white mb-4">1. ACEPTACIÓN DE LOS TÉRMINOS</h3>
-              <p class="leading-relaxed">
-                Al acceder, registrarte o usar <strong class="text-cyan-400">Dev-Sharks</strong>, aceptas estar legalmente vinculado por estos Términos y Condiciones. Si no estás de acuerdo, no uses nuestros servicios.
-              </p>
-            </section>
-
-            <section>
-              <h3 class="text-2xl font-bold text-white mb-4">2. DESCRIPCIÓN DEL SERVICIO</h3>
-              <p class="leading-relaxed mb-4">
-                Dev-Sharks es una plataforma educativa online que conecta:
-              </p>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-slate-800 rounded-lg p-4 border border-cyan-400/30">
-                  <h4 class="text-cyan-400 font-semibold mb-2">👨‍🎓 Estudiantes</h4>
-                  <p class="text-sm">Acceden a cursos y proyectos educativos</p>
-                </div>
-                <div class="bg-slate-800 rounded-lg p-4 border border-lime-400/30">
-                  <h4 class="text-lime-400 font-semibold mb-2">👨‍🏫 Instructores</h4>
-                  <p class="text-sm">Crean y publican contenido educativo</p>
-                </div>
-                <div class="bg-slate-800 rounded-lg p-4 border border-purple-400/30">
-                  <h4 class="text-purple-400 font-semibold mb-2">👨‍💼 Administradores</h4>
-                  <p class="text-sm">Gestionan la plataforma completa</p>
-                </div>
-              </div>
-            </section>
-
-            <section>
-              <h3 class="text-2xl font-bold text-white mb-4">3. ELEGIBILIDAD</h3>
-              <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-                <p class="text-red-200">
-                  <strong>⚠️ Requisito de edad:</strong> Debes tener <strong>18 años o más</strong> para usar Dev-Sharks. Si eres menor, necesitas consentimiento parental.
-                </p>
-              </div>
-            </section>
-
-            <section>
-              <h3 class="text-2xl font-bold text-white mb-4">4. PAGOS Y COMISIONES</h3>
-              <div class="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
-                <h4 class="text-cyan-400 font-semibold mb-3">Estructura de pagos:</h4>
-                <ul class="space-y-2">
-                  <li>💵 <strong>Moneda:</strong> Todas las transacciones en USD</li>
-                  <li>💳 <strong>Métodos:</strong> Tarjetas, PayPal, Stripe</li>
-                  <li>📊 <strong>Comisión plataforma:</strong> 20% por venta (configurable)</li>
-                  <li>💰 <strong>Pago a instructores:</strong> Mensual (mínimo $50 USD)</li>
-                </ul>
-              </div>
-            </section>
-
-            <section>
-              <h3 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                <span>⚠️</span> 5. POLÍTICA DE REEMBOLSOS
-              </h3>
-              
-              <div class="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg p-6 mb-4">
-                <h4 class="text-yellow-300 font-bold text-xl mb-3">IMPORTANTE - LEE CUIDADOSAMENTE</h4>
-                <p class="text-yellow-100 text-lg font-semibold mb-2">
-                  ⚠️ Actualmente, NO ofrecemos reembolsos automáticos por compras realizadas.
-                </p>
-                <p class="text-sm text-yellow-200">
-                  Los cursos y proyectos son contenido digital entregado instantáneamente, por lo que las ventas son finales.
-                </p>
-              </div>
-
-              <h4 class="text-lg font-semibold text-cyan-400 mt-6 mb-3">Excepciones - Casos donde SÍ se otorga reembolso:</h4>
-              
-              <div class="space-y-3">
-                <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                  <h5 class="text-green-400 font-semibold mb-2">✅ 1. Producto no corresponde</h5>
-                  <p class="text-sm">Si el curso es significativamente diferente a lo descrito (7 días)</p>
-                </div>
-                
-                <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                  <h5 class="text-green-400 font-semibold mb-2">✅ 2. Problemas técnicos</h5>
-                  <p class="text-sm">Si no puedes acceder al contenido y soporte no resuelve en 72 horas</p>
-                </div>
-                
-                <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                  <h5 class="text-green-400 font-semibold mb-2">✅ 3. Compra duplicada</h5>
-                  <p class="text-sm">Si compraste el mismo curso dos veces por error</p>
-                </div>
-                
-                <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                  <h5 class="text-green-400 font-semibold mb-2">✅ 4. Fraude / Cargo no autorizado</h5>
-                  <p class="text-sm">Si tu tarjeta fue usada sin tu autorización</p>
-                </div>
-              </div>
-
-              <h4 class="text-lg font-semibold text-red-400 mt-6 mb-3">NO se otorgan reembolsos si:</h4>
-              <ul class="list-disc list-inside space-y-2 ml-4 text-red-200">
-                <li>Simplemente "no te gustó" el curso</li>
-                <li>Ya no tienes tiempo</li>
-                <li>Encontraste otro curso más barato</li>
-                <li>Pasaron más de 7 días</li>
-                <li>Completaste el 50% o más del curso</li>
-              </ul>
-            </section>
-
-            <section>
-              <h3 class="text-2xl font-bold text-white mb-4">6. SISTEMA DE RESEÑAS</h3>
-              <div class="bg-slate-800 rounded-lg p-4">
-                <ul class="space-y-2">
-                  <li>⭐ Calificación de 1 a 5 estrellas</li>
-                  <li>📝 <strong>Una reseña por usuario por curso</strong></li>
-                  <li>✅ Solo puedes reseñar cursos inscritos</li>
-                  <li>💬 Los instructores pueden responder</li>
-                </ul>
-              </div>
-            </section>
-
-            <section>
-              <h3 class="text-2xl font-bold text-white mb-4">7. CONTACTO</h3>
-              <div class="bg-slate-800 rounded-lg p-6 border border-cyan-400/30">
-                <p class="text-lg font-semibold text-cyan-400 mb-4">Soporte Legal - Dev-Sharks</p>
-                <div class="space-y-2 text-sm">
-                  <p>📧 <strong>Email:</strong> legal&#64;dev-sharks.com</p>
-                  <p>💵 <strong>Reembolsos:</strong> refunds&#64;dev-sharks.com</p>
-                  <p>📱 <strong>Telegram:</strong> &#64;DevSharksSupport</p>
-                  <p>🌐 <strong>Web:</strong> www.dev-sharks.com</p>
-                </div>
-              </div>
-            </section>
-
-            <div class="mt-8 p-6 bg-gradient-to-r from-cyan-500/20 to-lime-500/20 border-2 border-cyan-400/50 rounded-lg">
-              <h4 class="text-xl font-bold text-white mb-3">✅ Al usar Dev-Sharks, confirmas que:</h4>
-              <ul class="space-y-2 text-sm">
-                <li>✓ Has leído y aceptas estos Términos</li>
-                <li>✓ Eres mayor de 18 años</li>
-                <li>✓ Entiendes que las ventas son finales</li>
-                <li>✓ Solo se otorgan reembolsos en casos excepcionales</li>
-              </ul>
-            </div>
-          </div>
-        }
-      </div>
-
-      <!-- Footer -->
-      <div class="p-6 border-t border-white/10 bg-slate-800/50">
-        <div class="flex items-center justify-between">
-          <p class="text-sm text-slate-400">
-            © 2025 Dev-Sharks. Todos los derechos reservados.
-          </p>
-          <button
-            (click)="closeModal()"
-            class="px-6 py-2 bg-lime-400 text-slate-900 font-semibold rounded-lg hover:bg-lime-300 transition-colors"
-          >
-            Entendido
-          </button>
+          } @else {
+          <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          }
         </div>
+        <div>
+          <h2 class="text-xl font-bold text-white">
+            {{ modalType() === 'privacy' ? 'Política de Privacidad' : 'Términos y Condiciones' }}
+          </h2>
+          <p class="text-sm text-slate-400">Dev-Sharks • Actualizado: 4 de Noviembre, 2025</p>
+        </div>
+      </div>
+
+      <button (click)="closeModal()"
+        class="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+        aria-label="Cerrar modal">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+      @if (modalType() === 'privacy') {
+      <!-- CONTENIDO DE PRIVACIDAD -->
+      <div class="space-y-6 text-slate-300">
+
+        <section>
+          <h3 class="text-2xl font-bold text-white mb-4">1. INTRODUCCIÓN</h3>
+          <p class="leading-relaxed">
+            Bienvenido a <strong class="text-lime-400">Dev-Sharks</strong>. Nos comprometemos a proteger tu privacidad y
+            los datos personales que compartes con nosotros. Esta Política de Privacidad describe cómo recopilamos,
+            usamos, almacenamos y protegemos tu información personal cuando utilizas nuestra plataforma de cursos
+            online.
+          </p>
+        </section>
+
+        <section>
+          <h3 class="text-2xl font-bold text-white mb-4">2. INFORMACIÓN QUE RECOPILAMOS</h3>
+
+          <h4 class="text-lg font-semibold text-lime-400 mt-4 mb-2">2.1 Información que nos proporcionas:</h4>
+          <ul class="list-disc list-inside space-y-2 ml-4">
+            <li>Nombre completo y apellidos</li>
+            <li>Correo electrónico</li>
+            <li>Contraseña (encriptada con bcrypt)</li>
+            <li>Número de teléfono (para verificación OTP vía Telegram)</li>
+            <li>País de residencia</li>
+            <li>Avatar/foto de perfil (opcional)</li>
+          </ul>
+
+          <h4 class="text-lg font-semibold text-lime-400 mt-4 mb-2">2.2 Si eres Instructor:</h4>
+          <ul class="list-disc list-inside space-y-2 ml-4">
+            <li>Profesión y biografía</li>
+            <li>Redes sociales (Facebook, Instagram, YouTube, TikTok, Twitch, etc.)</li>
+            <li>Información bancaria para pagos</li>
+          </ul>
+
+          <h4 class="text-lg font-semibold text-lime-400 mt-4 mb-2">2.3 Información automática:</h4>
+          <ul class="list-disc list-inside space-y-2 ml-4">
+            <li>Dirección IP y tipo de navegador</li>
+            <li>Cookies y datos de sesión</li>
+            <li>Historial de navegación en la plataforma</li>
+            <li>Progreso de cursos y actividad</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3 class="text-2xl font-bold text-white mb-4">3. CÓMO USAMOS TU INFORMACIÓN</h3>
+          <ul class="list-disc list-inside space-y-2 ml-4">
+            <li>Crear y gestionar tu cuenta</li>
+            <li>Procesar compras de cursos y proyectos</li>
+            <li>Enviar códigos OTP de verificación vía Telegram</li>
+            <li>Personalizar tu experiencia de aprendizaje</li>
+            <li>Enviar notificaciones importantes</li>
+            <li>Mejorar nuestros servicios</li>
+            <li>Prevenir fraudes y garantizar seguridad</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3 class="text-2xl font-bold text-white mb-4">4. SEGURIDAD DE TUS DATOS</h3>
+          <div class="bg-lime-500/10 border border-lime-500/30 rounded-lg p-4">
+            <h4 class="text-lime-400 font-semibold mb-2">Medidas implementadas:</h4>
+            <ul class="list-disc list-inside space-y-2 ml-4">
+              <li>✅ Encriptación de contraseñas con bcrypt (10 rondas)</li>
+              <li>✅ Autenticación JWT (JSON Web Tokens)</li>
+              <li>✅ Verificación de dos factores (OTP por Telegram)</li>
+              <li>✅ Conexiones HTTPS encriptadas</li>
+              <li>✅ Respaldos regulares de base de datos</li>
+              <li>✅ Protección contra inyecciones SQL y XSS</li>
+            </ul>
+          </div>
+        </section>
+
+        <section>
+          <h3 class="text-2xl font-bold text-white mb-4">5. TUS DERECHOS</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-slate-800 rounded-lg p-4">
+              <h4 class="text-lime-400 font-semibold mb-2">✓ Acceso</h4>
+              <p class="text-sm">Solicitar copia de tus datos personales</p>
+            </div>
+            <div class="bg-slate-800 rounded-lg p-4">
+              <h4 class="text-lime-400 font-semibold mb-2">✓ Rectificación</h4>
+              <p class="text-sm">Corregir información inexacta</p>
+            </div>
+            <div class="bg-slate-800 rounded-lg p-4">
+              <h4 class="text-lime-400 font-semibold mb-2">✓ Eliminación</h4>
+              <p class="text-sm">Solicitar borrado de tu cuenta</p>
+            </div>
+            <div class="bg-slate-800 rounded-lg p-4">
+              <h4 class="text-lime-400 font-semibold mb-2">✓ Portabilidad</h4>
+              <p class="text-sm">Recibir tus datos en formato exportable</p>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3 class="text-2xl font-bold text-white mb-4">6. CONTACTO</h3>
+          <div class="bg-slate-800 rounded-lg p-6 border border-lime-400/30">
+            <p class="text-lg font-semibold text-lime-400 mb-4">Departamento de Privacidad - Dev-Sharks</p>
+            <div class="space-y-2 text-sm">
+              <p>📧 <strong>Email:</strong> privacy&#64;dev-sharks.com</p>
+              <p>📱 <strong>Telegram:</strong> &#64;DevSharksSupport</p>
+              <p>🌐 <strong>Web:</strong> www.dev-sharks.com</p>
+              <p>📍 <strong>Ubicación:</strong> San Nicolás Guadalupe, México, MX</p>
+            </div>
+          </div>
+        </section>
+
+        <div class="mt-8 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+          <p class="text-sm text-yellow-200">
+            ⚠️ <strong>Importante:</strong> Al usar Dev-Sharks, aceptas esta Política de Privacidad. Si no estás de
+            acuerdo, por favor no uses nuestros servicios.
+          </p>
+        </div>
+      </div>
+      } @else {
+      <!-- CONTENIDO DE TÉRMINOS -->
+      <div class="space-y-6 text-slate-300">
+
+        <section>
+          <h3 class="text-2xl font-bold text-white mb-4">1. ACEPTACIÓN DE LOS TÉRMINOS</h3>
+          <p class="leading-relaxed">
+            Al acceder, registrarte o usar <strong class="text-cyan-400">Dev-Sharks</strong>, aceptas estar legalmente
+            vinculado por estos Términos y Condiciones. Si no estás de acuerdo, no uses nuestros servicios.
+          </p>
+        </section>
+
+        <section>
+          <h3 class="text-2xl font-bold text-white mb-4">2. DESCRIPCIÓN DEL SERVICIO</h3>
+          <p class="leading-relaxed mb-4">
+            Dev-Sharks es una plataforma educativa online que conecta:
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-slate-800 rounded-lg p-4 border border-cyan-400/30">
+              <h4 class="text-cyan-400 font-semibold mb-2">👨‍🎓 Estudiantes</h4>
+              <p class="text-sm">Acceden a cursos y proyectos educativos</p>
+            </div>
+            <div class="bg-slate-800 rounded-lg p-4 border border-lime-400/30">
+              <h4 class="text-lime-400 font-semibold mb-2">👨‍🏫 Instructores</h4>
+              <p class="text-sm">Crean y publican contenido educativo</p>
+            </div>
+            <div class="bg-slate-800 rounded-lg p-4 border border-purple-400/30">
+              <h4 class="text-purple-400 font-semibold mb-2">👨‍💼 Administradores</h4>
+              <p class="text-sm">Gestionan la plataforma completa</p>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3 class="text-2xl font-bold text-white mb-4">3. ELEGIBILIDAD</h3>
+          <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+            <p class="text-red-200">
+              <strong>⚠️ Requisito de edad:</strong> Debes tener <strong>18 años o más</strong> para usar Dev-Sharks. Si
+              eres menor, necesitas consentimiento parental.
+            </p>
+          </div>
+        </section>
+
+        <section>
+          <h3 class="text-2xl font-bold text-white mb-4">4. PAGOS Y COMISIONES</h3>
+          <div class="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
+            <h4 class="text-cyan-400 font-semibold mb-3">Estructura de pagos:</h4>
+            <ul class="space-y-2">
+              <li>💵 <strong>Moneda:</strong> Todas las transacciones en MXN</li>
+              <li>💳 <strong>Métodos:</strong> Tarjetas, PayPal, Stripe</li>
+              <li>📊 <strong>Comisión plataforma:</strong> 20% por venta (configurable)</li>
+              <li>💰 <strong>Pago a instructores:</strong> Mensual (mínimo $1000 MXN)</li>
+            </ul>
+          </div>
+        </section>
+
+        <section>
+          <h3 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+            <span>⚠️</span> 5. POLÍTICA DE REEMBOLSOS
+          </h3>
+
+          <div class="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg p-6 mb-4">
+            <h4 class="text-yellow-300 font-bold text-xl mb-3">IMPORTANTE - LEE CUIDADOSAMENTE</h4>
+            <p class="text-yellow-100 text-lg font-semibold mb-2">
+              ⚠️ Actualmente, NO ofrecemos reembolsos automáticos por compras realizadas.
+            </p>
+            <p class="text-sm text-yellow-200">
+              Los cursos y proyectos son contenido digital entregado instantáneamente, por lo que las ventas son
+              finales.
+            </p>
+          </div>
+
+          <h4 class="text-lg font-semibold text-cyan-400 mt-6 mb-3">Excepciones - Casos donde SÍ se otorga reembolso:
+          </h4>
+
+          <div class="space-y-3">
+            <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+              <h5 class="text-green-400 font-semibold mb-2">✅ 1. Producto no corresponde</h5>
+              <p class="text-sm">Si el curso es significativamente diferente a lo descrito (7 días)</p>
+            </div>
+
+            <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+              <h5 class="text-green-400 font-semibold mb-2">✅ 2. Problemas técnicos</h5>
+              <p class="text-sm">Si no puedes acceder al contenido y soporte no resuelve en 72 horas</p>
+            </div>
+
+            <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+              <h5 class="text-green-400 font-semibold mb-2">✅ 3. Compra duplicada</h5>
+              <p class="text-sm">Si compraste el mismo curso dos veces por error</p>
+            </div>
+
+            <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+              <h5 class="text-green-400 font-semibold mb-2">✅ 4. Fraude / Cargo no autorizado</h5>
+              <p class="text-sm">Si tu tarjeta fue usada sin tu autorización</p>
+            </div>
+          </div>
+
+          <h4 class="text-lg font-semibold text-red-400 mt-6 mb-3">NO se otorgan reembolsos si:</h4>
+          <ul class="list-disc list-inside space-y-2 ml-4 text-red-200">
+            <li>Simplemente "no te gustó" el curso</li>
+            <li>Ya no tienes tiempo</li>
+            <li>Encontraste otro curso más barato</li>
+            <li>Pasaron más de 7 días</li>
+            <li>Completaste el 50% o más del curso</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3 class="text-2xl font-bold text-white mb-4">6. SISTEMA DE RESEÑAS</h3>
+          <div class="bg-slate-800 rounded-lg p-4">
+            <ul class="space-y-2">
+              <li>⭐ Calificación de 1 a 5 estrellas</li>
+              <li>📝 <strong>Una reseña por usuario por curso</strong></li>
+              <li>✅ Solo puedes reseñar cursos inscritos</li>
+              <li>💬 Los instructores pueden responder</li>
+            </ul>
+          </div>
+        </section>
+
+        <section>
+          <h3 class="text-2xl font-bold text-white mb-4">7. CONTACTO</h3>
+          <div class="bg-slate-800 rounded-lg p-6 border border-cyan-400/30">
+            <p class="text-lg font-semibold text-cyan-400 mb-4">Soporte Legal - Dev-Sharks</p>
+            <div class="space-y-2 text-sm">
+              <p>📧 <strong>Email:</strong> legal&#64;dev-sharks.com</p>
+              <p>💵 <strong>Reembolsos:</strong> refunds&#64;dev-sharks.com</p>
+              <p>📱 <strong>Telegram:</strong> &#64;DevSharksSupport</p>
+              <p>🌐 <strong>Web:</strong> www.dev-sharks.com</p>
+            </div>
+          </div>
+        </section>
+
+        <div class="mt-8 p-6 bg-gradient-to-r from-cyan-500/20 to-lime-500/20 border-2 border-cyan-400/50 rounded-lg">
+          <h4 class="text-xl font-bold text-white mb-3">✅ Al usar Dev-Sharks, confirmas que:</h4>
+          <ul class="space-y-2 text-sm">
+            <li>✓ Has leído y aceptas estos Términos</li>
+            <li>✓ Eres mayor de 18 años</li>
+            <li>✓ Entiendes que las ventas son finales</li>
+            <li>✓ Solo se otorgan reembolsos en casos excepcionales</li>
+          </ul>
+        </div>
+      </div>
+      }
+    </div>
+
+    <!-- Footer -->
+    <div class="p-6 border-t border-white/10 bg-slate-800/50">
+      <div class="flex items-center justify-between">
+        <p class="text-sm text-slate-400">
+          © 2025 Dev-Sharks. Todos los derechos reservados.
+        </p>
+        <button (click)="closeModal()"
+          class="px-6 py-2 bg-lime-400 text-slate-900 font-semibold rounded-lg hover:bg-lime-300 transition-colors">
+          Entendido
+        </button>
       </div>
     </div>
   </div>
+</div>
 }

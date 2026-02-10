@@ -39,7 +39,7 @@ export class WalletService {
 
   // Señales públicas
   balance = computed(() => this.walletData()?.balance ?? 0);
-  currency = computed(() => this.walletData()?.currency ?? 'USD');
+  currency = computed(() => this.walletData()?.currency ?? 'MXN');
   transactions = computed(() => this.walletData()?.transactions ?? []);
   loading = computed(() => this.isLoading());
   error = computed(() => this.errorState());
