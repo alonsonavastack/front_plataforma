@@ -19,5 +19,6 @@ export const environment: Environment = {
   paypal: {
     clientId: 'AZc1SmomD67615PERyjzwXXf6wO02x7SwjKjPde5J8TycUyhar3nNTePaoR6Mvd-t2tzjnKD9ji7hc1w',
     redirectUrl: 'https://devhubsharks.com/'
-  }
+  },
+  telegramBot: 'ProyectosDevSharksBot'
 };

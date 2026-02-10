@@ -1,9 +1,9 @@
-// pages/auth/verify-otp.ts
-import { Component, OnInit, signal, computed, effect, OnDestroy } from '@angular/core';
+import { Component, OnInit, signal, computed, effect, OnDestroy, inject } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-verify-otp',
@@ -33,7 +33,7 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute
-  ) {}
+  ) { }
 
   // Computed
   timeRemaining = computed(() => {
@@ -65,6 +65,21 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     const code = this.otpCode();
     return code.length === 6 && /^\d+$/.test(code);
   });
+
+  // Enlace para vincular Telegram
+  telegramLink = computed(() => {
+    const botUser = environment.telegramBot;
+    const uid = this.userId();
+    if (!botUser || !uid) return null;
+    return `https://t.me/${botUser}?start=${uid}`;
+  });
+
+  openTelegram() {
+    const link = this.telegramLink();
+    if (link) {
+      window.open(link, '_blank');
+    }
+  }
 
   ngOnInit(): void {
     // Obtener parámetros de la URL

@@ -17,4 +17,5 @@ export interface Environment {
     clientId: string;
     redirectUrl: string;
   };
+  telegramBot?: string; // Nombre del bot (opcional)
 }
