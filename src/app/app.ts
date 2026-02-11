@@ -11,6 +11,8 @@ import { SystemConfigService } from './core/services/system-config.service';
 
 import { CookieBannerComponent } from './shared/components/cookie-banner/cookie-banner.component';
 
+import { Meta, Title } from '@angular/platform-browser';
+
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, ToastContainerComponent, ModalComponent, CookieBannerComponent],
@@ -20,22 +22,24 @@ import { CookieBannerComponent } from './shared/components/cookie-banner/cookie-
 export class App {
   systemConfigService = inject(SystemConfigService);
   private document = inject(DOCUMENT);
+  private meta = inject(Meta);
+  private title = inject(Title);
 
   constructor() {
-    // 🔥 Efecto para actualizar el Favicon dinámicamente
+    // 🔥 Efecto para actualizar el Favicon y Meta Tags dinámicamente
     effect(() => {
       const config = this.systemConfigService.config();
 
       // 🔥 Lógica mejorada: Usar favicon específico O el logo del header
       if (config) {
         let iconUrl = '';
+        let logoUrl = '';
 
+        // 1. Configurar Favicon
         if (config.favicon) {
           iconUrl = this.systemConfigService.buildFaviconUrl(config.favicon);
-          // 🔒 LOG REMOVIDO POR SEGURIDAD
         } else if (config.logo) {
           iconUrl = this.systemConfigService.buildLogoUrl(config.logo);
-          // 🔒 LOG REMOVIDO POR SEGURIDAD
         }
 
         if (iconUrl) {
@@ -57,12 +61,19 @@ export class App {
 
           // Actualizar href
           link.href = iconUrl;
-
-          // Forzar actualización en algunos navegadores cambiando type o rel
           link.type = 'image/x-icon';
-          // 🔒 LOG REMOVIDO POR SEGURIDAD
-        } else {
-          // 🔒 LOG REMOVIDO POR SEGURIDAD
+        }
+
+        // 2. Configurar Meta Tags Dinámicos (SEO)
+        const siteName = config.siteName || 'Dev-Hub-Sharks - Plataforma de Proyectos Digitales';
+        this.title.setTitle(siteName);
+        this.meta.updateTag({ property: 'og:title', content: siteName });
+        this.meta.updateTag({ property: 'twitter:title', content: siteName });
+
+        if (config.logo) {
+          logoUrl = this.systemConfigService.buildLogoUrl(config.logo);
+          this.meta.updateTag({ property: 'og:image', content: logoUrl });
+          this.meta.updateTag({ property: 'twitter:image', content: logoUrl });
         }
       }
     });

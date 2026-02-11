@@ -52,139 +52,142 @@
       </div>
       }
 
-      <!-- Input del Código OTP -->
-      <div class="mb-6">
-        <label class="block text-slate-300 text-sm font-medium mb-3">
-          Código de Verificación
-        </label>
-
-        <input type="text" inputmode="numeric" maxlength="6" [value]="otpCode()" (input)="onOtpInput($event)"
-          placeholder="000000" class="w-full px-4 py-3 bg-slate-900/50 border rounded-lg text-white text-center text-2xl font-mono tracking-widest
-                 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent
-                 transition-all" [class.border-slate-700]="!errorMessage()" [class.border-red-500]="errorMessage()"
-          [disabled]="isVerifying() || countdown() === 0" autofocus />
-
-        <!-- Indicador de intentos restantes -->
-        @if (attemptsRemaining() < 3 && attemptsRemaining()> 0) {
-          <p class="text-yellow-400 text-xs mt-2 text-center">
-            ⚠️ Te quedan {{ attemptsRemaining() }} {{ attemptsRemaining() === 1 ? 'intento' : 'intentos' }}
-          </p>
-          }
-      </div>
-
-      <!-- Timer de Expiración -->
-      @if (countdown() > 0) {
-      <div class="mb-6 text-center">
-        <p class="text-slate-400 text-sm flex items-center justify-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>Expira en: <strong class="text-white font-mono">{{ timeRemaining() }}</strong></span>
-        </p>
-      </div>
-      } @else {
-      <div class="mb-6 text-center">
-        <p class="text-red-400 text-sm font-medium">
-          ⏰ El código ha expirado
-        </p>
-      </div>
-      }
-
-      <!-- Botón Vincular Telegram (Si no llega el código) -->
-      @if (telegramLink()) {
-      <div class="mb-6 pt-4 border-t border-slate-700">
-        <p class="text-slate-400 text-sm text-center mb-3">
-          ¿No recibiste el código?
-        </p>
-        <button (click)="openTelegram()"
-          class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#229ED9]/10 hover:bg-[#229ED9]/20 border border-[#229ED9]/30 rounded-lg transition-colors group">
-          <svg class="w-5 h-5 text-[#229ED9]" viewBox="0 0 24 24" fill="currentColor">
+      <!-- 1️⃣ PASO 1: VINCULAR TELEGRAM (Prioritario si no se ha enviado código) -->
+      @if (!showInput() && telegramLink()) {
+      <div class="mb-8 text-center animate-pulse">
+        <div
+          class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#229ED9]/20 text-[#229ED9] mb-4 ring-4 ring-[#229ED9]/10">
+          <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
             <path
               d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
           </svg>
-          <span class="text-[#229ED9] font-medium">1. Vincular Telegram</span>
-        </button>
-        <p class="text-xs text-slate-500 mt-2 text-center">
-          Haz clic, da "Iniciar" al bot y luego pide reenvío.
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Paso 1: Vincula tu cuenta</h3>
+        <p class="text-slate-400 mb-6">
+          Para recibir tu código de verificación, primero debes iniciar el bot de Telegram de la plataforma.
         </p>
+
+        <button (click)="openTelegram()"
+          class="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[#229ED9] hover:bg-[#1f8ub8] text-white rounded-xl shadow-lg shadow-[#229ED9]/30 transition-all group">
+          <span class="font-bold text-lg">Iniciar Bot de Telegram</span>
+          <svg class="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+          </svg>
+        </button>
+
+        <p class="text-xs text-slate-500 mt-4">
+          Al hacer clic, se abrirá Telegram. Presiona "Iniciar" y recibirás tu código.
+        </p>
+
+        <div class="mt-4 pt-4 border-t border-white/5">
+          <button (click)="showInput.set(true)" class="text-xs text-slate-400 hover:text-white underline">
+            Ya tengo un código, ingresarlo manualmente
+          </button>
+        </div>
       </div>
       }
 
-      <!-- Botón Verificar -->
-      <button type="button" (click)="verifyCode()" [disabled]="!isCodeValid() || isVerifying() || countdown() === 0"
-        class="w-full py-3 px-4 rounded-lg font-medium transition-all
-               focus:outline-none focus:ring-2 focus:ring-lime-400 focus:ring-offset-2 focus:ring-offset-slate-800
-               disabled:opacity-50 disabled:cursor-not-allowed"
-        [class.bg-lime-500]="isCodeValid() && !isVerifying() && countdown() > 0"
-        [class.hover:bg-lime-600]="isCodeValid() && !isVerifying() && countdown() > 0"
-        [class.text-slate-900]="isCodeValid() && !isVerifying() && countdown() > 0"
-        [class.bg-slate-700]="!isCodeValid() || isVerifying() || countdown() === 0"
-        [class.text-slate-400]="!isCodeValid() || isVerifying() || countdown() === 0">
-        @if (isVerifying()) {
-        <span class="flex items-center justify-center gap-2">
-          <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-            </path>
-          </svg>
-          <span>Verificando...</span>
-        </span>
+      <!-- 2️⃣ PASO 2: INGRESAR CÓDIGO (Solo si showInput es true) -->
+      @if (showInput()) {
+      <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <!-- Input del Código OTP -->
+        <div class="mb-6">
+          <label class="block text-slate-300 text-sm font-medium mb-3">
+            Código de Verificación
+          </label>
+
+          <input type="text" inputmode="numeric" maxlength="6" [value]="otpCode()" (input)="onOtpInput($event)"
+            placeholder="000000" class="w-full px-4 py-3 bg-slate-900/50 border rounded-lg text-white text-center text-2xl font-mono tracking-widest
+                 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent
+                 transition-all" [class.border-slate-700]="!errorMessage()" [class.border-red-500]="errorMessage()"
+            [disabled]="isVerifying() || countdown() === 0" autofocus />
+
+          <!-- Indicador de intentos restantes -->
+          @if (attemptsRemaining() < 3 && attemptsRemaining()> 0) {
+            <p class="text-yellow-400 text-xs mt-2 text-center">
+              ⚠️ Te quedan {{ attemptsRemaining() }} {{ attemptsRemaining() === 1 ? 'intento' : 'intentos' }}
+            </p>
+            }
+        </div>
+
+        <!-- Timer de Expiración -->
+        @if (countdown() > 0) {
+        <div class="mb-6 text-center">
+          <p class="text-slate-400 text-sm flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Expira en: <strong class="text-white font-mono">{{ timeRemaining() }}</strong></span>
+          </p>
+        </div>
         } @else {
-        <span>Verificar Código</span>
+        <div class="mb-6 text-center">
+          <p class="text-red-400 text-sm font-medium">
+            ⏰ El código ha expirado
+          </p>
+        </div>
         }
-      </button>
 
-      <!-- Divider -->
-      <div class="relative my-6">
-        <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-slate-700"></div>
-        </div>
-        <div class="relative flex justify-center text-sm">
-          <span class="px-2 bg-slate-800 text-slate-400">¿No recibiste el código?</span>
-        </div>
-      </div>
+        <!-- Botón Verificar -->
+        <button type="button" (click)="verifyCode()" [disabled]="!isCodeValid() || isVerifying() || countdown() === 0"
+          class="w-full py-3 px-4 rounded-lg font-medium transition-all
+               focus:outline-none focus:ring-2 focus:ring-lime-400 focus:ring-offset-2 focus:ring-offset-slate-800
+               disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+          [class.bg-lime-500]="isCodeValid() && !isVerifying() && countdown() > 0"
+          [class.hover:bg-lime-600]="isCodeValid() && !isVerifying() && countdown() > 0"
+          [class.text-slate-900]="isCodeValid() && !isVerifying() && countdown() > 0"
+          [class.bg-slate-700]="!isCodeValid() || isVerifying() || countdown() === 0"
+          [class.text-slate-400]="!isCodeValid() || isVerifying() || countdown() === 0">
+          @if (isVerifying()) {
+          <span class="flex items-center justify-center gap-2">
+            <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+              </path>
+            </svg>
+            <span>Verificando...</span>
+          </span>
+          } @else {
+          <span>Verificar Código</span>
+          }
+        </button>
 
-      <!-- Botón Reenviar Código -->
-      <!-- Botón destacado cuando hay error inicial de envío -->
-      <button type="button" (click)="resendCode()" [disabled]="isResending() || (!canResend() && resendCountdown() > 0)"
-        class="w-full py-3 px-4 rounded-lg font-medium transition-all border-2
+        <!-- Botón Reenviar Código -->
+        <button type="button" (click)="resendCode()"
+          [disabled]="isResending() || (!canResend() && resendCountdown() > 0)" class="w-full py-3 px-4 rounded-lg font-medium transition-all border-2
                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800
                disabled:opacity-50 disabled:cursor-not-allowed"
-        [class.border-cyan-500]="canResend() || resendCountdown() === 0"
-        [class.text-cyan-400]="canResend() || resendCountdown() === 0"
-        [class.hover:bg-cyan-500/10]="canResend() || resendCountdown() === 0"
-        [class.focus:ring-cyan-400]="canResend() || resendCountdown() === 0"
-        [class.border-slate-700]="!canResend() && resendCountdown() > 0"
-        [class.text-slate-500]="!canResend() && resendCountdown() > 0"
-        [class.focus:ring-slate-400]="!canResend() && resendCountdown() > 0"
-        [class.animate-pulse]="canResend() && errorMessage()?.includes('inicial')">
-        @if (isResending()) {
-        <span class="flex items-center justify-center gap-2">
-          <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-            </path>
-          </svg>
-          <span>Reenviando...</span>
-        </span>
-        } @else if (!canResend() && resendCountdown() > 0) {
-        <span>Reenviar en {{ resendTimeRemaining() }}</span>
-        } @else {
-        <span class="flex items-center justify-center gap-2">
-          @if (canResend() && errorMessage()?.includes('inicial')) {
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd"
-              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-              clip-rule="evenodd" />
-          </svg>
+          [class.border-cyan-500]="canResend() || resendCountdown() === 0"
+          [class.text-cyan-400]="canResend() || resendCountdown() === 0"
+          [class.hover:bg-cyan-500/10]="canResend() || resendCountdown() === 0"
+          [class.focus:ring-cyan-400]="canResend() || resendCountdown() === 0"
+          [class.border-slate-700]="!canResend() && resendCountdown() > 0"
+          [class.text-slate-500]="!canResend() && resendCountdown() > 0"
+          [class.focus:ring-slate-400]="!canResend() && resendCountdown() > 0"
+          [class.animate-pulse]="canResend() && errorMessage()?.includes('inicial')">
+          @if (isResending()) {
+          <span class="flex items-center justify-center gap-2">
+            <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+              </path>
+            </svg>
+            <span>Reenviando...</span>
+          </span>
+          } @else if (!canResend() && resendCountdown() > 0) {
+          <span>Reenviar en {{ resendTimeRemaining() }}</span>
+          } @else {
+          <span class="flex items-center justify-center gap-2">
+            <span>Reenviar Código</span>
+          </span>
           }
-          <span>Reenviar Código</span>
-        </span>
-        }
-      </button>
+        </button>
+      </div>
+      }
 
       <!-- Volver al Registro -->
       <div class="mt-6 text-center">

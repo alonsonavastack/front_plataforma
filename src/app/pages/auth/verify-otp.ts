@@ -78,6 +78,8 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     const link = this.telegramLink();
     if (link) {
       window.open(link, '_blank');
+      // Mostrar el input después de abrir Telegram
+      this.showInput.set(true);
     }
   }
 
@@ -99,14 +101,25 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
 
       // Detectar si hubo error al enviar OTP inicial
       if (error === 'otp_not_sent') {
-        this.errorMessage.set('⚠️ No se pudo enviar el código inicial. Por favor, haz clic en "Reenviar Código".');
+        this.errorMessage.set('⚠️ Paso 1: Vincula tu cuenta con Telegram para recibir el código.');
         this.canResend.set(true); // Permitir reenvío inmediato
-
       }
     });
 
     // Iniciar countdown de expiración
     this.startExpirationCountdown();
+  }
+
+  // Señal para controlar la visibilidad del input
+  // 🔥 CAMBIO: Por defecto en FALSE para obligar a ver el botón de vincular primero
+  showInput = signal(false);
+
+  openTelegramInput() {
+    this.showInput.set(true);
+    // Reiniciar timer si estaba expirado
+    if (this.countdown() === 0) {
+      this.resendCode();
+    }
   }
 
   ngOnDestroy(): void {
@@ -261,6 +274,7 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
           // Resetear intentos
           this.attemptsRemaining.set(3);
           this.otpCode.set('');
+          this.showInput.set(true); // Asegurar que el input se muestre al reenviar
         },
         error: (error) => {
 

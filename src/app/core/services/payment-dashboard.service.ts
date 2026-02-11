@@ -309,7 +309,7 @@ export class PaymentDashboardService {
   /**
    * 💰 FORMATEAR MONEDA
    */
-  formatCurrency(amount: number, currency: string = 'USD'): string {
+  formatCurrency(amount: number, currency: string = 'MXN'): string {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency
