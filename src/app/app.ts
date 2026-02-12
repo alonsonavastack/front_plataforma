@@ -84,5 +84,25 @@ export class App {
 
     // 🔥 Cargar configuración una sola vez al inicio de la app
     this.systemConfigService.getConfig();
+
+    // 🆕 Detectar callback de PayPal (si la URL tiene ?code=... redirigir al dashboard)
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+
+    if (code && state) {
+      // Estamos volviendo de PayPal, redirigir al componente que procesa el pago
+      // Manteniendo los query params
+      // Usamos window.location.hash para redirigir correctamente si usamos HashLocationStrategy
+      // O router.navigate si ya estamos en contexto angular
+      // Dado que HashStrategy ignora search params fuera del hash, los movemos ADENTRO
+      console.log('🔄 PayPal Callback detectado, redirigiendo al dashboard...');
+
+      // Construir nueva URL: /#/dashboard?section=instructor-payment-config&code=...&state=...
+      const newUrl = `#/dashboard?section=instructor-payment-config&code=${code}&state=${state}`;
+
+      // Forzar redirección limpia
+      window.location.href = newUrl;
+    }
   }
 }
