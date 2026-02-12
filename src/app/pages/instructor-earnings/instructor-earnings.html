@@ -224,7 +224,10 @@
               Precio Venta
             </th>
             <th class="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
-              Comisión
+              Comisión Pasarela
+            </th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
+              Comisión Plat.
             </th>
             <th class="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
               Tu Ganancia
@@ -278,7 +281,17 @@
               </p>
             </td>
 
-            <!-- Commission -->
+            <!-- PayPal Fee -->
+            <td class="px-6 py-4 text-right whitespace-nowrap">
+              <p class="text-sm text-amber-400">
+                -{{ formatCurrency(earning.payment_fee_amount || ((earning.sale_price * 0.07) + 4)) }}
+              </p>
+              <p class="text-xs text-slate-500">
+                (7% + $4)
+              </p>
+            </td>
+
+            <!-- Platform Commission -->
             <td class="px-6 py-4 text-right whitespace-nowrap">
               <p class="text-sm text-red-400">
                 -{{ formatCurrency(earning.platform_commission_amount) }}

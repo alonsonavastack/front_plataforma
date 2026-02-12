@@ -39,6 +39,7 @@ export interface Earning {
   isRefunded?: boolean;
   status_display?: 'pending' | 'available' | 'paid' | 'disputed' | 'refunded';
   instructor_earning_original?: number;
+  payment_fee_amount?: number;
 }
 
 export interface EarningsStats {
@@ -138,7 +139,7 @@ export class InstructorPaymentService {
     loader: () => {
       // El trigger se evalúa aquí para forzar recarga
       this.statsReloadTrigger();
-      
+
       return firstValueFrom(this.http.get<{ success: boolean; stats: any }>(
         `${this.apiUrl}/earnings/stats`
       ));

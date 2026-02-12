@@ -88,28 +88,12 @@
                     <p class="text-2xl font-bold text-white mb-1">{{ retention.gross_earning | currency:'MXN' }}</p>
                 </div>
 
-                <!-- 5. Retenciones SAT -->
-                <div class="bg-slate-800/50 p-4 rounded-xl border border-red-500/30 relative overflow-hidden group">
-                    <p class="text-xs font-semibold text-red-400 uppercase tracking-wider mb-2">5. Retenciones SAT</p>
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-slate-400 text-xs">ISR (10%)</span>
-                        <span class="text-red-300 font-mono text-sm">-{{ retention.isr_retention | currency:'MXN'
-                            }}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-slate-400 text-xs">IVA (10.6%)</span>
-                        <span class="text-red-300 font-mono text-sm">-{{ retention.iva_retention | currency:'MXN'
-                            }}</span>
-                    </div>
-                    <div class="mt-2 pt-2 border-t border-slate-700 flex justify-between">
-                        <span class="text-white text-xs font-bold">Total</span>
-                        <span class="text-red-400 font-bold">-{{ retention.total_retention | currency:'MXN' }}</span>
-                    </div>
-                </div>
+                <!-- 5. Retenciones SAT (ELIMINADO A PETICIÓN) -->
+                <!-- Se ocultó la tarjeta de retenciones fiscales -->
 
                 <!-- 6. PayPal Enviar -->
                 <div class="bg-slate-800/50 p-4 rounded-xl border border-orange-500/30 relative overflow-hidden group">
-                    <p class="text-xs font-semibold text-orange-400 uppercase tracking-wider mb-2">6. Comisión PayPal
+                    <p class="text-xs font-semibold text-orange-400 uppercase tracking-wider mb-2">5. Comisión PayPal
                         (Out)</p>
                     <p class="text-2xl font-bold text-white mb-1">-{{ retention.paypal_send_commission | currency:'MXN'
                         }}</p>
@@ -131,9 +115,10 @@
                     </div>
                 </div>
                 <div class="text-right">
-                    <p class="text-4xl font-bold text-white tracking-tight">{{ retention.net_pay | currency:'MXN' }}</p>
+                    <p class="text-4xl font-bold text-white tracking-tight">{{ retention.gross_earning | currency:'MXN'
+                        }}</p>
                     <p class="text-xs text-lime-500 font-medium bg-lime-500/10 px-2 py-1 rounded inline-block mt-1">
-                        Ya descontado impuestos y comisiones
+                        Monto íntegro a transferir
                     </p>
                 </div>
             </div>

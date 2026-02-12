@@ -1,0 +1,1 @@
+import{a}from"./chunk-CH7252T5.js";import"./chunk-NOVASSOE.js";import"./chunk-VM3MHBTU.js";import"./chunk-RUVEF2SD.js";import"./chunk-QA5A7GBQ.js";import"./chunk-F4KIANN2.js";import"./chunk-6JS7X5LE.js";import"./chunk-I4MTPUBM.js";export{a as AdminInstructorPaymentsComponent};

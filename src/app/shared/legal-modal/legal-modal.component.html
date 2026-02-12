@@ -200,14 +200,46 @@
 
         <section>
           <h3 class="text-2xl font-bold text-white mb-4">4. PAGOS Y COMISIONES</h3>
-          <div class="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
-            <h4 class="text-cyan-400 font-semibold mb-3">Estructura de pagos:</h4>
-            <ul class="space-y-2">
-              <li>💵 <strong>Moneda:</strong> Todas las transacciones en MXN</li>
-              <li>💳 <strong>Métodos:</strong> Tarjetas, PayPal, Stripe</li>
-              <li>📊 <strong>Comisión plataforma:</strong> 20% por venta (configurable)</li>
-              <li>💰 <strong>Pago a instructores:</strong> Mensual (mínimo $1000 MXN)</li>
-            </ul>
+          <div class="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4 space-y-4">
+            <div>
+              <h4 class="text-cyan-400 font-semibold mb-3">Estructura de pagos:</h4>
+              <ul class="space-y-2">
+                <li>💵 <strong>Moneda:</strong> Todas las transacciones en MXN</li>
+                <li>💳 <strong>Métodos:</strong> Tarjetas, PayPal, Stripe</li>
+                <li>📊 <strong>Comisión:</strong> 30% Plataforma / 70% Instructor (Venta directa)</li>
+                <li>💰 <strong>Pago a instructores:</strong> Mensual (mínimo $1000 MXN)</li>
+              </ul>
+            </div>
+
+            <div class="pt-4 border-t border-cyan-500/30">
+              <h4 class="text-cyan-400 font-semibold mb-2">Cálculo de Ganancias y Deducciones:</h4>
+              <p class="text-sm text-slate-300 mb-2">
+                Las ganancias del instructor se calculan sobre el <strong>Monto Neto</strong>. Esto significa que
+                primero se descuentan las comisiones de la pasarela de pago (ej. PayPal) y luego se aplica el porcentaje
+                de reparto.
+              </p>
+              <div class="bg-slate-900/50 p-3 rounded border border-cyan-500/20">
+                <p class="text-sm font-semibold text-cyan-200 mb-1">Ejemplo Práctico ($100 MXN):</p>
+                <ul class="list-disc list-inside space-y-1 text-xs text-slate-400">
+                  <li>Precio de Venta: <strong>$100.00</strong></li>
+                  <li>Comisión Pasarela (Est.): <strong>-$11.00</strong> (absorbida antes del reparto)</li>
+                  <li>Monto Neto Repartible: <strong>$89.00</strong></li>
+                  <li>Tu Ganancia (70%): <strong>~$62.30</strong></li>
+                  <li>Comisión Plataforma (30%): <strong>~$26.70</strong></li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-cyan-500/30">
+              <h4 class="text-red-400 font-semibold mb-2">⚠️ Responsabilidad Fiscal:</h4>
+              <p class="text-sm text-slate-300">
+                <strong>Dev-Sharks NO realiza retenciones de impuestos</strong> ni declaraciones fiscales a nombre del
+                instructor.
+                Es responsabilidad única y exclusiva del instructor declarar sus ingresos y cumplir con las obligaciones
+                fiscales de su país de residencia.
+                La plataforma solo transfiere las ganancias netas acordadas.
+              </p>
+            </div>
           </div>
         </section>
 

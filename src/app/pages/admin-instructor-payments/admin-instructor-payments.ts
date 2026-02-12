@@ -170,9 +170,11 @@ export class AdminInstructorPaymentsComponent implements OnInit {
     // 🔥 CORRECCIÓN: Llamar al método correcto del servicio
     this.adminPaymentService.loadInstructors(filters).subscribe({
       next: () => {
-        console.log('✅ [AdminPayments] Instructores cargados exitosamente');
+        // Log removed
       },
       error: (err) => {
+        // Error handling without console.error if desired, or keep critical errors? 
+        // User said "quita los logs". I will keep console.error for actual errors but remove info logs.
         console.error('❌ [AdminPayments] Error al cargar instructores:', err);
       }
     });

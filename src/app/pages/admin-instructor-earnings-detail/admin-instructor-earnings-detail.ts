@@ -48,7 +48,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
   selectedEarnings = signal<string[]>([]);
 
   filterForm = new FormGroup({
-    status: new FormControl('all'), // ✅ CORRECCIÓN: Mostrar todas las ganancias pendientes de pago
+    status: new FormControl('available'), // ✅ CORRECCIÓN: Mostrar solo disponibles por defecto
     startDate: new FormControl(''),
     endDate: new FormControl(''),
   });
@@ -121,9 +121,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
   ngOnInit() {
     this.instructorId = this.route.snapshot.paramMap.get('id')!;
     if (this.instructorId) {
-      console.log('📊 [EarningsDetail] Cargando TODAS las ganancias (pending + available)');
-      console.log('   ➜ Instructor ID:', this.instructorId);
-      // 🔒 LOG REMOVIDO POR SEGURIDAD
+
       this.loadEarnings();
     }
   }
@@ -142,17 +140,12 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
       filters.endDate = formValue.endDate;
     }
 
-    // 🔥 Logs de debugging
-    console.log('📊 [EarningsDetail] Cargando ganancias con filtros:', {
-      instructorId: this.instructorId,
-      filters: filters,
-      formValue: formValue
-    });
+
 
     // 🔥 CORRECCIÓN: Suscribirse al observable
     this.adminPaymentService.loadInstructorEarnings(this.instructorId, filters).subscribe({
       next: () => {
-        console.log('✅ [EarningsDetail] Ganancias cargadas exitosamente');
+
       },
       error: (err) => {
         console.error('❌ [EarningsDetail] Error al cargar ganancias:', err);
@@ -167,7 +160,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
 
   clearFilters() {
     this.filterForm.reset({
-      status: 'all', // ✅ CORRECCIÓN: Volver a mostrar todas
+      status: 'available', // ✅ CORRECCIÓN: Resetear a disponible
       startDate: '',
       endDate: ''
     });
@@ -232,11 +225,7 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
 
     const availableEarningIds = availableEarnings.map((e: Earning) => e._id);
 
-    console.log('✅ [selectAll] Seleccionando ganancias disponibles:', {
-      total_validEarnings: this.validEarnings().length,
-      available_count: availableEarnings.length,
-      selected_ids: availableEarningIds
-    });
+
 
     if (availableEarnings.length === 0) {
       alert('⚠️ No hay ganancias "disponibles" para seleccionar.\n\nLas ganancias deben estar en estado "available" para ser seleccionadas.');
@@ -378,5 +367,19 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
   getMinimumThreshold(): number {
     // TODO: Obtener de settings reales del servicio
     return 50.00;
+  }
+
+  calculatePlatformCommissionAmount(earning: Earning): number {
+    return earning.platform_commission_amount || (earning.sale_price * earning.platform_commission_rate);
+  }
+
+  calculateGatewayFee(earning: Earning): number {
+    const commission = this.calculatePlatformCommissionAmount(earning);
+    // Fee = Precio Venta - (Ganancia Instructor + Comisión Plataforma)
+    let fee = earning.sale_price - (earning.instructor_earning + commission);
+    // Redondear a 2 decimales para evitar problemas de punto flotante
+    fee = Math.round(fee * 100) / 100;
+    // Si es negativo (por error de redondeo menor), devolver 0
+    return fee > 0 ? fee : 0;
   }
 }

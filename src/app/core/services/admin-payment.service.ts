@@ -161,7 +161,6 @@ export class AdminPaymentService {
     }>(`${this.apiUrl}/instructors/payments`, { params }).pipe(
       tap({
         next: (response) => {
-          console.log('✅ [AdminPaymentService] Instructores cargados:', response.instructors.length);
           this.instructors.set(response.instructors);
           this.instructorsSummary.set(response.summary);
           this.isLoadingInstructors.set(false);
@@ -202,10 +201,6 @@ export class AdminPaymentService {
     }>(`${this.apiUrl}/instructors/${instructorId}/earnings`, { params }).pipe(
       tap({
         next: (response) => {
-          console.log('✅ [AdminPaymentService] Ganancias cargadas:', {
-            count: response.earnings.length,
-            totals: response.totals
-          });
           this.earnings.set(response.earnings);
           this.instructor.set(response.instructor);
           this.paymentConfig.set(response.paymentConfig);

@@ -200,7 +200,12 @@
               </th>
               <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Precio Final
               </th>
+              <!-- 🔥 NUEVO: Columnas de Comisiones -->
               <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Comisión
+                Pasarela
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Comisión
+                Plat.
               </th>
               <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Ganancia
               </th>
@@ -274,8 +279,17 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-white">
                 {{formatCurrency(earning.sale_price, earning.currency)}}
               </td>
+              <!-- 🔥 NUEVO: Comisión Pasarela -->
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-amber-400">
+                -{{formatCurrency(calculateGatewayFee(earning), earning.currency)}}
+              </td>
+              <!-- 🔥 NUEVO: Comisión Plataforma -->
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-400">
-                -{{(earning.platform_commission_rate * 100).toFixed(0)}}%
+                <div class="flex flex-col">
+                  <span>-{{formatCurrency(calculatePlatformCommissionAmount(earning), earning.currency)}}</span>
+                  <span class="text-xs text-slate-500">({{ (earning.platform_commission_rate * 100).toFixed(0)
+                    }}%)</span>
+                </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-lime-400">
                 {{formatCurrency(earning.instructor_earning, earning.currency)}}
@@ -353,51 +367,53 @@
     @if (!isLoading() && validEarnings().length === 0) {
     <div class="bg-slate-800/30 rounded-lg border border-white/10 p-12">
       @if (filterForm.get('status')?.value === 'available') {
-        <!-- Mensaje específico cuando filtra por "disponibles" -->
-        <div class="max-w-md mx-auto text-center">
-          <svg class="w-20 h-20 mx-auto mb-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
-              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 class="text-xl font-bold text-white mb-2">Sin Ganancias Disponibles</h3>
-          <p class="text-slate-400 mb-4">
-            Este instructor no tiene ganancias listas para pago en este momento.
-          </p>
-          <div class="text-left bg-slate-900/50 p-4 rounded-lg border border-white/10 space-y-2 text-sm">
-            <p class="text-slate-300 font-medium">Posibles razones:</p>
-            <ul class="list-disc list-inside text-slate-400 space-y-1">
-              <li>Las ganancias están en estado "pendiente" (esperando días de disponibilidad)</li>
-              <li>No ha alcanzado el umbral mínimo de pago ({{formatCurrency(getMinimumThreshold())}})</li>
-              <li>Ya se pagaron todas las ganancias recientes</li>
-            </ul>
-          </div>
-          <button (click)="clearFilters()" 
-            class="mt-6 px-6 py-2.5 bg-lime-500/10 text-lime-400 rounded-lg hover:bg-lime-500/20 border border-lime-500/30 transition-all inline-flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            Ver Todas las Ganancias
-          </button>
+      <!-- Mensaje específico cuando filtra por "disponibles" -->
+      <div class="max-w-md mx-auto text-center">
+        <svg class="w-20 h-20 mx-auto mb-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h3 class="text-xl font-bold text-white mb-2">Sin Ganancias Disponibles</h3>
+        <p class="text-slate-400 mb-4">
+          Este instructor no tiene ganancias listas para pago en este momento.
+        </p>
+        <div class="text-left bg-slate-900/50 p-4 rounded-lg border border-white/10 space-y-2 text-sm">
+          <p class="text-slate-300 font-medium">Posibles razones:</p>
+          <ul class="list-disc list-inside text-slate-400 space-y-1">
+            <li>Las ganancias están en estado "pendiente" (esperando días de disponibilidad)</li>
+            <li>No ha alcanzado el umbral mínimo de pago ({{formatCurrency(getMinimumThreshold())}})</li>
+            <li>Ya se pagaron todas las ganancias recientes</li>
+          </ul>
         </div>
+        <button (click)="clearFilters()"
+          class="mt-6 px-6 py-2.5 bg-lime-500/10 text-lime-400 rounded-lg hover:bg-lime-500/20 border border-lime-500/30 transition-all inline-flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          Ver Todas las Ganancias
+        </button>
+      </div>
       } @else {
-        <!-- Mensaje genérico para otros filtros -->
-        <div class="text-center max-w-md mx-auto">
-          <svg class="w-16 h-16 mx-auto mb-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      <!-- Mensaje genérico para otros filtros -->
+      <div class="text-center max-w-md mx-auto">
+        <svg class="w-16 h-16 mx-auto mb-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="text-xl font-bold text-white mb-2">No se encontraron resultados</h3>
+        <p class="text-slate-400 mb-4">
+          No hay ganancias que coincidan con los filtros aplicados.
+        </p>
+        <button (click)="clearFilters()"
+          class="px-6 py-2.5 bg-lime-500/10 text-lime-400 rounded-lg hover:bg-lime-500/20 border border-lime-500/30 transition-all inline-flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-          <h3 class="text-xl font-bold text-white mb-2">No se encontraron resultados</h3>
-          <p class="text-slate-400 mb-4">
-            No hay ganancias que coincidan con los filtros aplicados.
-          </p>
-          <button (click)="clearFilters()" 
-            class="px-6 py-2.5 bg-lime-500/10 text-lime-400 rounded-lg hover:bg-lime-500/20 border border-lime-500/30 transition-all inline-flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Limpiar Filtros
-          </button>
-        </div>
+          Limpiar Filtros
+        </button>
+      </div>
       }
     </div>
     }

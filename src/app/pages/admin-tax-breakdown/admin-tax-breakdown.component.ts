@@ -48,13 +48,7 @@ export class AdminTaxBreakdownComponent implements OnInit, OnDestroy {
     }
 
     loadData() {
-        console.log('🔄 [TaxBreakdown] Cargando datos...', {
-            month: this.selectedMonth(),
-            year: this.selectedYear(),
-            status: this.selectedStatus(),
-            search: this.searchQuery(),
-            page: this.currentPage()
-        });
+        // Log removed
 
         this.taxService.getSalesBreakdown(
             this.selectedMonth(),
@@ -67,10 +61,23 @@ export class AdminTaxBreakdownComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (resp: any) => {
                     if (resp.success) {
-                        this.sales.set(resp.data);
+                        // 🔥 DEDUPLICAR VENTAS: Para la vista de plataforma, solo nos interesa una fila por venta.
+                        // La paginación del backend es por retención, pero visualmente agrupamos.
+                        const uniqueSalesMap = new Map();
+                        const uniqueSales = [];
+
+                        for (const item of resp.data) {
+                            const saleId = item.sale?._id || item.sale; // Handle populated or raw ID
+                            if (saleId && !uniqueSalesMap.has(saleId)) {
+                                uniqueSalesMap.set(saleId, true);
+                                uniqueSales.push(item);
+                            }
+                        }
+
+                        this.sales.set(uniqueSales);
                         this.totals.set(resp.totals);
                         this.pagination.set(resp.pagination);
-                        console.log('✅ [TaxBreakdown] Datos cargados:', resp.data.length, 'registros');
+                        // Log removed
                     }
                 },
                 error: (err) => {
@@ -81,7 +88,7 @@ export class AdminTaxBreakdownComponent implements OnInit, OnDestroy {
 
     // ✅ Método para cambios en filtros (mes, año, estado) - SIN debounce
     onFilterChange() {
-        console.log('🔍 [TaxBreakdown] Filtro cambiado');
+        // Log removed
         this.currentPage.set(1); // Reset a primera página
         this.loadData();
     }
@@ -89,7 +96,7 @@ export class AdminTaxBreakdownComponent implements OnInit, OnDestroy {
     // ✅ Búsqueda con debounce (ya existía, solo agregamos logs)
     onSearch(event: any) {
         const query = event.target.value;
-        
+
         // Cancelar búsqueda anterior si existe
         if (this.searchTimeout) {
             clearTimeout(this.searchTimeout);
@@ -97,7 +104,7 @@ export class AdminTaxBreakdownComponent implements OnInit, OnDestroy {
 
         // Esperar 500ms después de que el usuario deje de escribir
         this.searchTimeout = setTimeout(() => {
-            console.log('🔍 [TaxBreakdown] Búsqueda:', query);
+            // Log removed
             this.searchQuery.set(query);
             this.currentPage.set(1); // Reset a primera página
             this.loadData();
@@ -106,18 +113,18 @@ export class AdminTaxBreakdownComponent implements OnInit, OnDestroy {
 
     changePage(page: number) {
         if (page < 1 || (this.pagination() && page > this.pagination().totalPages)) return;
-        console.log('📄 [TaxBreakdown] Cambio de página:', page);
+        // Log removed
         this.currentPage.set(page);
         this.loadData();
     }
 
     openDetail(sale: any) {
-        console.log('👁️ [TaxBreakdown] Abriendo detalle:', sale);
+        // Log removed
         this.selectedSale.set(sale);
     }
 
     exportToExcel() {
-        console.log('📊 [TaxBreakdown] Exportando...');
+        // Log removed
         this.taxService.exportRetentions(
             this.selectedMonth(),
             this.selectedYear(),
@@ -131,7 +138,7 @@ export class AdminTaxBreakdownComponent implements OnInit, OnDestroy {
                 link.download = `reporte_fiscal_${this.selectedMonth()}_${this.selectedYear()}.csv`;
                 link.click();
                 window.URL.revokeObjectURL(url);
-                console.log('✅ [TaxBreakdown] Exportado exitosamente');
+                // Log removed
             },
             error: (err) => {
                 console.error('❌ [TaxBreakdown] Error en exportación:', err);
