@@ -30,18 +30,18 @@
         <!-- Logo dinámico -->
         @if (systemConfigService.config()?.logo) {
         <img [src]="'https://api.devhubsharks.com/api/system-config/logo/' + systemConfigService.config()?.logo"
-          [alt]="(systemConfigService.config()?.siteName || 'Dev-Sharks') + ' logo'"
+          [alt]="(systemConfigService.config()?.siteName || 'Dev Hub Sharks') + ' logo'"
           class="h-9 w-9 rounded-xl object-cover ring-2 ring-lime-400/30 group-hover:ring-lime-400/60 transition-all duration-200 shadow-lg shadow-lime-500/20"
           (error)="$event.target.style.display='none'" />
         } @else {
         <div
           class="h-9 w-9 rounded-xl bg-gradient-to-br from-lime-400 via-emerald-400 to-cyan-400 ring-2 ring-lime-400/30 group-hover:ring-lime-400/60 grid place-items-center text-slate-900 font-black transition-all duration-200 shadow-lg shadow-lime-500/30">
-          {{ (systemConfigService.config()?.siteName || 'Dev-Sharks').charAt(0).toUpperCase() }}
+          {{ (systemConfigService.config()?.siteName || 'Dev Hub Sharks').charAt(0).toUpperCase() }}
         </div>
         }
         <!-- Nombre del sitio -->
         <span class="font-bold tracking-tight text-white group-hover:text-lime-300 transition-colors duration-200">
-          {{ systemConfigService.config()?.siteName || 'Dev-Sharks' }}
+          {{ systemConfigService.config()?.siteName || 'Dev Hub Sharks' }}
         </span>
       </a>
     </div>

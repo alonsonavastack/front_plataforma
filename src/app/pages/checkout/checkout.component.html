@@ -553,10 +553,10 @@
               <input type="checkbox" formControlName="acceptTerms"
                 class="mt-1 h-4 w-4 text-lime-400 focus:ring-lime-400 border-gray-600 rounded bg-slate-700" />
               <label class="ml-2 text-sm text-gray-300">
-                Acepto los <a routerLink="/terms-conditions" target="_blank"
+                Acepto los <a href="/terms-conditions" target="_blank"
                   class="text-lime-400 hover:text-lime-300 underline">términos y condiciones</a> y la <a
-                  routerLink="/privacy-policy" target="_blank"
-                  class="text-lime-400 hover:text-lime-300 underline">política de privacidad</a>
+                  href="/privacy-policy" target="_blank" class="text-lime-400 hover:text-lime-300 underline">política de
+                  privacidad</a>
               </label>
             </div>
             @if (checkoutForm.get('acceptTerms')?.invalid && checkoutForm.get('acceptTerms')?.touched) {

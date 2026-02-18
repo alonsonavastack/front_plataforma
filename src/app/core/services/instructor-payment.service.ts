@@ -280,4 +280,13 @@ export class InstructorPaymentService {
       `${this.apiUrl}/payment-config/paypal`
     );
   }
+
+  // 🆕 Obtener configuración pública de pagos (PayPal Client ID, Mode, etc.)
+  // Usamos una URL directa para evitar depender de PaymentSettingsService que tiene lógica de Admin
+  getPublicPaymentConfig() {
+    // Nota: La URL es /api/payment-settings/public, no /api/instructor/...
+    // Ajustamos la URL base temporalmente o usamos la ruta absoluta
+    const publicApiUrl = `${environment.url}payment-settings/public`;
+    return this.http.get<{ settings: any }>(publicApiUrl);
+  }
 }

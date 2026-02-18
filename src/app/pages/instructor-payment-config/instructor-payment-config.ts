@@ -14,6 +14,7 @@ import {
   InstructorPaymentService,
   PaymentConfig,
 } from '../../core/services/instructor-payment.service';
+// import { PaymentSettingsService } from '../../core/services/payment-settings.service';
 import { environment } from '../../../environments/environment';
 
 
@@ -25,6 +26,7 @@ import { environment } from '../../../environments/environment';
 })
 export class InstructorPaymentConfigComponent implements OnInit {
   private instructorPaymentService = inject(InstructorPaymentService);
+  // private paymentSettingsService = inject(PaymentSettingsService); // 🗑️ REMOVED to avoid 403 error
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -35,7 +37,9 @@ export class InstructorPaymentConfigComponent implements OnInit {
   isSaving = signal('');
   error = signal<{ section: string; message: string } | null>(null);
   success = signal<{ section: string; message: string } | null>(null);
-  // editingPaypal = signal(false); // 🗑️ ELIMINADO
+
+  // 🆕 Signals for Public Payment Settings (PayPal Client ID & Mode)
+  publicSettings = signal<any>(null); // Local signal instead of service computed
 
 
   // 🆕 Formulario de PayPal
@@ -55,34 +59,35 @@ export class InstructorPaymentConfigComponent implements OnInit {
       if (config && (config.paypal_email || config.paypal_connected)) {
         // Tiene configuración de PayPal
         this.populateForms(config);
-        // 🔒 LOG REMOVIDO POR SEGURIDAD
       } else {
         // 🔥 No tiene config o fue eliminada, limpiar formularios
         this.paypalForm.reset();
         this.editingPaypal.set(false);
-        // 🔒 LOG REMOVIDO POR SEGURIDAD
       }
     });
   }
 
   ngOnInit() {
-    // 🔒 LOG REMOVIDO POR SEGURIDAD
-    // Si accedemos directamente a /instructor-payment-config (fuera del dashboard),
-    // redirigir a /dashboard?section=instructor-payment-config para mantener
-    // la barra superior / sidebar dentro del layout del dashboard.
-    // Conservamos los query params (por ejemplo `code` y `state` del callback de PayPal).
     const currentUrl = this.router.url || '';
     const isDirectRoute = currentUrl.includes('/instructor-payment-config') && !currentUrl.includes('/dashboard');
     if (isDirectRoute) {
       const qp = { ...this.route.snapshot.queryParams } as any;
       qp.section = 'instructor-payment-config';
-      // Reemplazamos la entrada en el historial para no crear bucles
       this.router.navigate(['/dashboard'], { queryParams: qp, replaceUrl: true });
-      // No continuar la inicialización en esta instancia, la carga y el manejo
-      // del callback (si aplica) ocurrirán en la instancia embebida dentro del dashboard.
       return;
     }
+
     this.instructorPaymentService.reloadPaymentConfig();
+
+    // 🆕 Load public settings locally
+    this.instructorPaymentService.getPublicPaymentConfig().subscribe({
+      next: (res) => {
+        this.publicSettings.set(res.settings);
+      },
+      error: (err) => {
+        console.error('Error loading public settings:', err);
+      }
+    });
 
     // 🆕 Verificar si venimos de PayPal con un código
     this.route.queryParams.subscribe(params => {
@@ -97,19 +102,37 @@ export class InstructorPaymentConfigComponent implements OnInit {
 
   // 🆕 Iniciar flujo de conexión con PayPal
   initiatePaypalConnect() {
+    const settings = this.publicSettings();
+
+    if (!settings || !settings.paypal?.active) {
+      this.error.set({
+        section: 'paypal',
+        message: 'La conexión con PayPal no está disponible en este momento. Contacta al administrador.'
+      });
+      return;
+    }
+
     this.isSaving.set('paypal');
 
-    // Credenciales desde environment
-    const CLIENT_ID = environment.paypal.clientId;
-    const REDIRECT_URI = window.location.origin + '/dashboard?section=instructor-payment-config';
-    // Nota: El usuario accede via #/dashboard?section=... angular hash routing puede complicar el callback directo.
-    // PayPal no soporta fragmentos (#) en redirect_uri.
-    // Workaround: Redirigir a una ruta limpia y luego volver.
-    // OJO: Si usas HashLocationStrategy, PayPal enviará el code antes del hash: localhost:4200/?code=...#/dashboard
+    // 🆕 Usar credenciales dinámicas desde el backend
+    const CLIENT_ID = settings.paypal.clientId;
+    const MODE = settings.paypal.mode; // 'sandbox' | 'live'
 
-    // ✅ PayPal NO acepta localhost, usamos ngrok configurado en environment
+    if (!CLIENT_ID) {
+      this.error.set({
+        section: 'paypal',
+        message: 'Error de configuración: No se encontró el Client ID de PayPal.'
+      });
+      this.isSaving.set('');
+      return;
+    }
+
+    const REDIRECT_URI = window.location.origin + '/dashboard?section=instructor-payment-config';
+
+    // ✅ PayPal NO acepta localhost, usamos ngrok configurado en environment o window.location
     // En producción, esto debe ser tu dominio real
-    const returnUrl = environment.paypal.redirectUrl; // https://...ngrok-free.dev
+    // Usamos environment.paypal.redirectUrl como fallback, pero idealmente debería venir del backend o construirse dinámicamente si es seguro
+    const returnUrl = environment.paypal.redirectUrl || window.location.origin;
 
     const scope = 'openid profile email';
     const state = Math.random().toString(36).substring(7);
@@ -118,7 +141,12 @@ export class InstructorPaymentConfigComponent implements OnInit {
     // Guardar estado para verificar después (opcional)
     localStorage.setItem('paypal_oauth_state', state);
 
-    const authUrl = `https://www.sandbox.paypal.com/connect?response_type=code&client_id=${CLIENT_ID}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(returnUrl)}&state=${state}&nonce=${nonce}`;
+    // 🆕 Determinar URL base según el modo
+    const PAYPAL_BASE_URL = MODE === 'live'
+      ? 'https://www.paypal.com'
+      : 'https://www.sandbox.paypal.com';
+
+    const authUrl = `${PAYPAL_BASE_URL}/connect?response_type=code&client_id=${CLIENT_ID}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(returnUrl)}&state=${state}&nonce=${nonce}`;
 
     window.location.href = authUrl;
   }

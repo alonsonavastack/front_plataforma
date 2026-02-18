@@ -112,16 +112,24 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   // Computed para filtrar instructores
   filteredInstructors = computed(() => {
-    const search = this.searchInstructorTerm().toLowerCase().trim();
+    // Normalizar término de búsqueda (minúsculas y sin acentos)
+    const rawSearch = this.searchInstructorTerm().toLowerCase().trim();
+    const search = rawSearch.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
     const all = this.instructors();
 
     if (!search) return all;
 
     return all.filter(instructor => {
-      const name = `${instructor.name} ${instructor.surname}`.toLowerCase();
-      const profession = (instructor.profession || '').toLowerCase();
+      // Normalizar nombre y apellido
+      const fullNameRaw = `${instructor.name} ${instructor.surname}`.toLowerCase();
+      const fullName = fullNameRaw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-      return name.includes(search) || profession.includes(search);
+      // Normalizar profesión
+      const professionRaw = (instructor.profession || '').toLowerCase();
+      const profession = professionRaw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      return fullName.includes(search) || profession.includes(search);
     });
   });
 
