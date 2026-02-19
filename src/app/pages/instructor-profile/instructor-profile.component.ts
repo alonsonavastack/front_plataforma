@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, effect } from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -9,6 +9,7 @@ import { CourseCardComponent } from '../../shared/course-card/course-card';
 import { ProjectsCardComponent } from '../../shared/projects-card/projects-card';
 import { Project as CoreProject, CoursePublic } from '../../core/models/home.models';
 import { SystemConfigService } from '../../core/services/system-config.service';
+import { SeoService } from '../../core/services/seo.service'; // 🆕
 
 interface InstructorProfile {
   _id: string;
@@ -63,6 +64,28 @@ export class InstructorProfileComponent implements OnInit {
   private http = inject(HttpClient);
   private sanitizer = inject(DomSanitizer);
   private systemConfigService = inject(SystemConfigService); // 🆕
+  private seoService = inject(SeoService); // 🆕
+
+  constructor() {
+    effect(() => {
+      const instr = this.instructor();
+      if (instr) {
+        // 🔥 SEO Optimizado: Nombre + Profesión
+        const title = instr.profession
+          ? `${instr.name} ${instr.surname} | ${instr.profession} | Dev Hub Sharks`
+          : `${instr.name} ${instr.surname} | Instructor | Dev Hub Sharks`;
+
+        this.seoService.setSeo({
+          title: title,
+          description: instr.description || `Conoce a ${instr.name} ${instr.surname}, instructor experto en Dev Hub Sharks.`,
+          image: this.getAvatarUrl(),
+          // Singular y plural para mejor alcance
+          keywords: `instructor, ${instr.name} ${instr.surname}, dev hub shark, cursos online, aprender programación, ${instr.profession || 'desarrollo web'}`,
+          type: 'profile'
+        });
+      }
+    });
+  }
 
   // Signals
   instructor = signal<InstructorProfile | null>(null);
@@ -87,9 +110,9 @@ export class InstructorProfileComponent implements OnInit {
     const instructor = this.instructor();
     if (!instructor) return '';
 
-    // URL limpia sin hash
+    // URL con hash para compatibilidad
     const baseUrl = window.location.origin;
-    return `${baseUrl}/instructor/${instructor.slug}`;
+    return `${baseUrl}/#/instructor/${instructor.slug}`;
   });
 
   // 🆕 FILTROS

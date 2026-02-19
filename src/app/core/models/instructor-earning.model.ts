@@ -29,7 +29,8 @@ export interface Earning { // Renombrado para coincidir con el uso en el compone
   platform_commission_rate: number;
   platform_commission_amount: number;
   instructor_earning: number;
-  
+  payment_fee_amount?: number; // 🔥 Fee real cobrado por la pasarela
+
   // 🔥 NUEVO: Información de descuentos
   discount_info?: {
     original_price: number;        // Precio sin descuento

@@ -43,6 +43,7 @@ import { LegalModalComponent, LegalModalType } from '../../shared/legal-modal/le
 import { RefundsService } from '../../core/services/refunds.service'; // 🔥 NUEVO
 import { WalletService } from '../../core/services/wallet.service'; // 💰 Para billetera
 import { MxnCurrencyPipe } from '../../shared/pipes/mxn-currency.pipe';
+import { SeoService } from '../../core/services/seo.service'; // 🆕
 
 @Component({
   standalone: true,
@@ -79,6 +80,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   refundsService = inject(RefundsService); // 🔥 NUEVO
   walletService = inject(WalletService); // 💰 Para billetera
   currencyService = inject(CurrencyService); // 💱 Conversor de moneda
+  private seoService = inject(SeoService); // 🆕
 
   // 🚨 Control de errores
   private errorToastShown = false;
@@ -498,6 +500,14 @@ export class HomeComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    // 🆕 SEO para Home
+    this.seoService.setSeo({
+      title: 'Dev Hub Sharks - Cursos y Proyectos Reales',
+      description: 'Aprende desarrollo web con cursos y proyectos reales. Angular, Node.js, y más. Únete a Dev Hub Sharks.',
+      keywords: 'dev hub shark, dev hub sharks, cursos programación, proyectos, angular, fullstack',
+      type: 'website'
+    });
+
     // 🔥 Cargar configuración del sistema PRIMERO
 
 

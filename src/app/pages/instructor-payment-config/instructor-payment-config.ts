@@ -48,6 +48,7 @@ export class InstructorPaymentConfigComponent implements OnInit {
   });
 
   editingPaypal = signal(false);
+  manualEntryMode = signal(false); // 🆕 Modo de entrada manual
   showDeleteModal = signal(false);
   deleteTarget = signal<'paypal' | null>(null);
 
@@ -127,12 +128,13 @@ export class InstructorPaymentConfigComponent implements OnInit {
       return;
     }
 
-    const REDIRECT_URI = window.location.origin + '/dashboard?section=instructor-payment-config';
+    // ✅ Construir URL de retorno con soporte para Hash Routing (#)
+    // Obtenemos la base (ej: https://dominio.com/#/dashboard) sin query params
+    const baseUrl = window.location.href.split('?')[0];
 
-    // ✅ PayPal NO acepta localhost, usamos ngrok configurado en environment o window.location
-    // En producción, esto debe ser tu dominio real
-    // Usamos environment.paypal.redirectUrl como fallback, pero idealmente debería venir del backend o construirse dinámicamente si es seguro
-    const returnUrl = environment.paypal.redirectUrl || window.location.origin;
+    // 🔥 Asegurar que usamos el hash si estamos en modo hash (Angular default)
+    // Si baseUrl no tiene '#', y estamos en Angular, probablemente deberíamos, pero confiamos en window.location
+    const returnUrl = `${baseUrl}?section=instructor-payment-config`;
 
     const scope = 'openid profile email';
     const state = Math.random().toString(36).substring(7);
@@ -170,7 +172,11 @@ export class InstructorPaymentConfigComponent implements OnInit {
       replaceUrl: true
     });
 
-    this.instructorPaymentService.connectPaypal(code).subscribe({
+    // Reconstruir la misma redirect_uri usada en initiate (con Hash si existe)
+    const baseUrl = window.location.href.split('?')[0];
+    const returnUrl = `${baseUrl}?section=instructor-payment-config`;
+
+    this.instructorPaymentService.connectPaypal(code, returnUrl).subscribe({
       next: (res) => {
         if (res.success) {
           this.instructorPaymentService.reloadPaymentConfig();
@@ -225,6 +231,11 @@ export class InstructorPaymentConfigComponent implements OnInit {
     this.clearMessages();
   }
 
+  toggleManualEntry() {
+    this.manualEntryMode.update(v => !v);
+    this.clearMessages();
+  }
+
   cancelEditPaypal() {
     this.editingPaypal.set(false);
     if (this.config()?.paypal_email) {
@@ -253,6 +264,7 @@ export class InstructorPaymentConfigComponent implements OnInit {
             message: 'Cuenta de PayPal actualizada correctamente.'
           });
           this.editingPaypal.set(false);
+          this.manualEntryMode.set(false); // 🆕 Salir del modo manual
           setTimeout(() => this.clearMessages(), 3000);
         } else {
           this.error.set({

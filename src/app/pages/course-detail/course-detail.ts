@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ToastService } from '../../core/services/toast.service';
+import { SeoService } from '../../core/services/seo.service'; // 🆕
 
 import { environment } from '../../../environments/environment';
 import { HeaderComponent } from '../../layout/header/header';
@@ -33,6 +34,7 @@ export class CourseDetailComponent {
   private router = inject(Router);
   private sanitizer = inject(DomSanitizer);
   private toast = inject(ToastService);
+  private seoService = inject(SeoService); // 🆕
 
 
   // ✅ Router signals
@@ -326,11 +328,25 @@ export class CourseDetailComponent {
       }
     });
 
+    // 🔥 NUEVO: Actualizar SEO cuando carga el curso
+    effect(() => {
+      const course = this.course();
+      if (course) {
+        this.seoService.setSeo({
+          title: course.title,
+          description: course.subtitle || course.description || 'Aprende con este curso en Dev Hub Sharks',
+          image: this.coverUrl(),
+          keywords: `curso, ${course.title}, ${this.categoryTitle()}, ${this.instructorName()}, aprender`,
+          type: 'article'
+        });
+      }
+    });
+
     // 🔥 NUEVO: Recargar cuando el usuario cambie (login/logout)
     effect(() => {
       const isLoggedIn = this.authService.isLoggedIn();
       const slug = this.slug();
-      
+
       // Si hay un slug y el estado de login cambia, recargar
       if (slug) {
         this.detailRes.reload();

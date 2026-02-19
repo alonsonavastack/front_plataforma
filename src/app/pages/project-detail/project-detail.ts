@@ -12,6 +12,7 @@ import { Review } from '../../core/services/review.service';
 
 import { HeaderComponent } from '../../layout/header/header';
 import { RouterLink } from '@angular/router';
+import { SeoService } from '../../core/services/seo.service'; // 🆕
 
 @Component({
     standalone: true,
@@ -26,6 +27,7 @@ export class ProjectDetailComponent {
     private router = inject(Router);
     private sanitizer = inject(DomSanitizer);
     private toast = inject(ToastService);
+    private seoService = inject(SeoService); // 🆕
 
     private params = toSignal(this.route.paramMap, { initialValue: null });
     private errorToastShown = false;
@@ -91,6 +93,20 @@ export class ProjectDetailComponent {
             }
         });
 
+        // 🔥 SEO Dynamic
+        effect(() => {
+            const p = this.project();
+            if (p) {
+                this.seoService.setSeo({
+                    title: p.title,
+                    description: p.subtitle || p.description || 'Proyecto práctico en Dev Hub Sharks',
+                    image: this.imageUrl,
+                    keywords: `proyecto, ${p.title}, react, angular, nodejs, desarrollo web`,
+                    type: 'article'
+                });
+            }
+        });
+
         // 🔥 EFECTO para capturar cupón de la URL
         effect(() => {
             const params = this.queryParams();
@@ -108,7 +124,7 @@ export class ProjectDetailComponent {
         effect(() => {
             const isLoggedIn = this.authService.isLoggedIn();
             const projectId = this.projectId();
-            
+
             // Si hay un ID de proyecto y el estado de login cambia, recargar
             if (projectId) {
                 this.detailRes.reload();

@@ -7,6 +7,7 @@ import {
   EarningsStats,
 } from '../../core/services/instructor-payment.service';
 import { CurrencyService } from '../../services/currency.service';
+import { PaymentSplitService } from '../../core/services/payment-split.service';
 
 @Component({
   selector: 'app-instructor-earnings',
@@ -135,9 +136,30 @@ export class InstructorEarningsComponent implements OnInit {
   }
 
   private currencyService = inject(CurrencyService);
+  private paymentSplitService = inject(PaymentSplitService);
 
   formatCurrency(amount: number): string {
     return this.currencyService.format(amount);
+  }
+
+  calculateFee(earning: Earning): number {
+    if (earning.payment_fee_amount) {
+      console.log(`[Fee] Usando valor guardado para ${earning.course?.title}:`, earning.payment_fee_amount);
+      return earning.payment_fee_amount;
+    }
+    const split = this.paymentSplitService.calculateSplit(earning.sale_price);
+    console.log(`[Fee] Calculado dinámicamente para ${earning.sale_price}:`, split.paypalFee);
+    return split.paypalFee;
+  }
+
+  calculatePlatformCommission(earning: Earning): number {
+    if (earning.platform_commission_amount) {
+      console.log(`[Commission] Usando valor guardado:`, earning.platform_commission_amount);
+      return earning.platform_commission_amount;
+    }
+    const split = this.paymentSplitService.calculateSplit(earning.sale_price);
+    console.log(`[Commission] Calculado dinámicamente:`, split.platformShare);
+    return split.platformShare;
   }
 
   getPageNumbers(): number[] {

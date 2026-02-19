@@ -5,6 +5,7 @@ import { FooterComponent } from '../../layout/footer/footer';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Instructor, InstructorCardComponent } from '../../shared/instructor-card/instructor-card.component';
+import { SeoService } from '../../core/services/seo.service'; // 🆕
 
 @Component({
     standalone: true,
@@ -14,6 +15,7 @@ import { Instructor, InstructorCardComponent } from '../../shared/instructor-car
 })
 export class InstructorsComponent implements OnInit {
     private http = inject(HttpClient);
+    private seoService = inject(SeoService); // 🆕
 
     // Signals
     instructors = signal<Instructor[]>([]);
@@ -35,6 +37,14 @@ export class InstructorsComponent implements OnInit {
     });
 
     ngOnInit(): void {
+        // 🔥 SEO Config
+        this.seoService.setSeo({
+            title: 'Instructores Expertos - Dev Hub Sharks',
+            description: 'Conoce a nuestro equipo de instructores expertos en desarrollo web, Angular, Node.js y más. Aprende con profesionales en Dev Hub Sharks.',
+            keywords: 'instructores, profesores, mentores, desarrollo web, angular, nodejs, dev hub sharks',
+            type: 'website'
+        });
+
         this.loadInstructors();
     }
 

@@ -5,7 +5,7 @@ export const environment: Environment = {
   production: true,
   // 🔥 DYNAMIC GETTERS FOR RUNTIME SWITCHING
   get url() {
-    return localStorage.getItem('API_URL_OVERRIDE') || 'https://api.devhubsharks.com/';
+    return localStorage.getItem('API_URL_OVERRIDE') || 'https://api.devhubsharks.com/api/';
   },
   get images() {
     const baseUrl = this.url;

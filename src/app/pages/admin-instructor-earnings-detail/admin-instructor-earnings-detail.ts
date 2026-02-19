@@ -3,6 +3,7 @@ import { Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { AdminPaymentService } from '../../core/services/admin-payment.service';
+import { PaymentSplitService } from '../../core/services/payment-split.service';
 import { Earning } from '../../core/models/instructor-earning.model';
 import { environment } from '../../../environments/environment';
 
@@ -369,17 +370,23 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
     return 50.00;
   }
 
+  private paymentSplitService = inject(PaymentSplitService);
+
   calculatePlatformCommissionAmount(earning: Earning): number {
-    return earning.platform_commission_amount || (earning.sale_price * earning.platform_commission_rate);
+    // Si ya viene pre-calculado, usarlo
+    if (earning.platform_commission_amount) return earning.platform_commission_amount;
+
+    // Si no, calcular usando el servicio centralizado (Progressive Rounding)
+    const split = this.paymentSplitService.calculateSplit(earning.sale_price);
+    return split.platformShare;
   }
 
   calculateGatewayFee(earning: Earning): number {
-    const commission = this.calculatePlatformCommissionAmount(earning);
-    // Fee = Precio Venta - (Ganancia Instructor + Comisión Plataforma)
-    let fee = earning.sale_price - (earning.instructor_earning + commission);
-    // Redondear a 2 decimales para evitar problemas de punto flotante
-    fee = Math.round(fee * 100) / 100;
-    // Si es negativo (por error de redondeo menor), devolver 0
-    return fee > 0 ? fee : 0;
+    // Si ya viene pre-calculado, usarlo
+    if (earning.payment_fee_amount) return earning.payment_fee_amount;
+
+    // Si no, calcular usando el servicio centralizado
+    const split = this.paymentSplitService.calculateSplit(earning.sale_price);
+    return split.paypalFee;
   }
 }

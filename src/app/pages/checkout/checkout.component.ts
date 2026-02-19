@@ -309,7 +309,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     this.walletService.loadWallet();
     this.discountService.loadDiscounts().subscribe();
     this.checkoutService.reloadConfig();
-    
+
     // 🔥 NUEVO: Cargar productos comprados
     this.purchasesService.loadPurchasedProducts();
 
@@ -702,10 +702,16 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     }
 
     return new Promise((resolve, reject) => {
-      const clientId = environment.paypal?.clientId || '';
+      // 🔥 FIX: Usar configuración dinámica del backend
+      const config = this.checkoutService.paymentConfig();
+      const clientId = config?.paypal?.clientId || environment.paypal?.clientId || '';
+
       if (!clientId) {
-        return reject(new Error('No PayPal clientId'));
+        console.error('❌ PayPal Client ID no encontrado en configuración ni environment');
+        return reject(new Error('No PayPal clientId configured'));
       }
+
+      console.log('✅ Inicializando PayPal con Client ID:', clientId.substring(0, 10) + '...');
 
       const script = document.createElement('script');
       script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=MXN&intent=capture&disable-funding=credit,card&components=buttons&enable-funding=venmo`;
@@ -716,7 +722,10 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         setTimeout(() => resolve(), 100);
       };
 
-      script.onerror = (err) => reject(err);
+      script.onerror = (err) => {
+        console.error('❌ Error cargando SDK de PayPal:', err);
+        reject(err);
+      };
 
       document.head.appendChild(script);
     });
@@ -749,6 +758,13 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     this.paypalButtonsRendered.set(false);
 
     try {
+      // 🔥 ASEGURAR QUE TENEMOS CONFIG ANTES DE CARGAR SDK
+      if (this.checkoutService.isLoadingConfig()) {
+        console.log('⏳ Esperando configuración de pagos...');
+        // Pequeña espera si la config aún carga
+        await new Promise(r => setTimeout(r, 1000));
+      }
+
       await this.loadPayPalSdk();
       this.renderingPaypal.set(true);
 
@@ -756,7 +772,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       const res = await this.checkoutService.createPaypalOrder(nTransaccion, payload);
 
       if (!res || !res.orderId) {
-        this.errorMessage.set('No se pudo crear la orden de PayPal');
+        this.errorMessage.set('No se pudo crear la orden de PayPal. Intenta de nuevo.');
         return;
       }
 

@@ -84,8 +84,49 @@
             autorizar la conexión.
           </p>
 
+          <!-- 🔥 Error de PayPal -->
+          @if (error()?.section === 'paypal') {
+          <div class="mb-4 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
+            <div class="flex gap-2">
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" class="w-5 h-5" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>{{ error()?.message }}</span>
+            </div>
+          </div>
+          }
+
+          <!-- 🔥 Modo Conexión Manual -->
+          @if (manualEntryMode()) {
+          <form [formGroup]="paypalForm" (ngSubmit)="savePaypal()" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-1">Correo de PayPal</label>
+              <input type="email" formControlName="paypal_email" placeholder="ejemplo@correo.com"
+                class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all">
+            </div>
+
+            <div class="flex gap-3">
+              <button type="button" (click)="toggleManualEntry()"
+                class="flex-1 px-4 py-2.5 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 font-medium transition-colors">
+                Cancelar
+              </button>
+              <button type="submit" [disabled]="paypalForm.invalid || isSaving() === 'paypal'"
+                class="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                @if (isSaving() === 'paypal') {
+                <span
+                  class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                } @else {
+                Guardar
+                }
+              </button>
+            </div>
+          </form>
+          } @else {
+          <!-- Botón Conexión Automática -->
           <button type="button" (click)="initiatePaypalConnect()" [disabled]="isSaving() === 'paypal'"
-            class="w-full bg-[#0070BA] hover:bg-[#005EA6] text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            class="w-full bg-[#0070BA] hover:bg-[#005EA6] text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mb-3">
             @if (isSaving() === 'paypal') {
             <span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
             <span>Conectando...</span>
@@ -93,6 +134,14 @@
             <span>Conectar mi cuenta PayPal</span>
             }
           </button>
+
+          <div class="text-center">
+            <button type="button" (click)="toggleManualEntry()"
+              class="text-xs text-slate-400 hover:text-blue-400 underline transition-colors">
+              ¿Problemas para conectar? Ingrésalo manualmente
+            </button>
+          </div>
+          }
         </div>
 
         @if (hasPaypal()) {

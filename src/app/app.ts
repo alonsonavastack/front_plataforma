@@ -12,6 +12,7 @@ import { SystemConfigService } from './core/services/system-config.service';
 import { CookieBannerComponent } from './shared/components/cookie-banner/cookie-banner.component';
 
 import { Meta, Title } from '@angular/platform-browser';
+import { SeoService } from './core/services/seo.service'; // 🆕
 
 @Component({
   selector: 'app-root',
@@ -22,8 +23,9 @@ import { Meta, Title } from '@angular/platform-browser';
 export class App {
   systemConfigService = inject(SystemConfigService);
   private document = inject(DOCUMENT);
-  private meta = inject(Meta);
-  private title = inject(Title);
+  private seoService = inject(SeoService); // 🆕
+  // private meta = inject(Meta); // Usado internamente por SeoService
+  // private title = inject(Title); // Usado internamente por SeoService
 
   constructor() {
     // 🔥 Efecto para actualizar el Favicon y Meta Tags dinámicamente
@@ -65,16 +67,18 @@ export class App {
         }
 
         // 2. Configurar Meta Tags Dinámicos (SEO)
-        const siteName = config.siteName || 'Dev-Hub-Sharks - Plataforma de Proyectos Digitales';
-        this.title.setTitle(siteName);
-        this.meta.updateTag({ property: 'og:title', content: siteName });
-        this.meta.updateTag({ property: 'twitter:title', content: siteName });
+        // 🔥 Usar SeoService para configurar defaults
+        const siteName = config.siteName || 'Dev Hub Sharks'; // Singular para SEO
 
+        // Si hay logo urls, usarlas
         if (config.logo) {
           logoUrl = this.systemConfigService.buildLogoUrl(config.logo);
-          this.meta.updateTag({ property: 'og:image', content: logoUrl });
-          this.meta.updateTag({ property: 'twitter:image', content: logoUrl });
         }
+
+        this.seoService.setSeo({
+          title: siteName,
+          image: logoUrl // Si es vacío, el servicio usará el default
+        });
       }
     });
   }

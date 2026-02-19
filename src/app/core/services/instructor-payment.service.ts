@@ -253,10 +253,10 @@ export class InstructorPaymentService {
   }
 
   // 🆕 Conectar PayPal (OAuth)
-  connectPaypal(code: string) {
+  connectPaypal(code: string, redirect_uri?: string) {
     return this.http.post<{ success: boolean; message: string; config: PaymentConfig }>(
       `${this.apiUrl}/payment-config/paypal/connect`,
-      { code }
+      { code, redirect_uri }
     );
   }
 
