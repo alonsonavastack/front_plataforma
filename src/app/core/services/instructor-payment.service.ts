@@ -9,7 +9,12 @@ export interface PaymentConfig {
   paypal_merchant_id?: string;
   paypal_connected?: boolean;
   paypal_verified?: boolean;
-  preferred_payment_method?: 'paypal';
+  preferred_payment_method?: 'paypal' | 'stripe' | 'wallet' | '';
+  // Stripe Connect
+  stripe_account_id?: string;
+  stripe_onboarding_complete?: boolean;
+  stripe_charges_enabled?: boolean;
+  stripe_payouts_enabled?: boolean;
 }
 
 export interface Earning {
@@ -257,6 +262,25 @@ export class InstructorPaymentService {
     return this.http.post<{ success: boolean; message: string; config: PaymentConfig }>(
       `${this.apiUrl}/payment-config/paypal/connect`,
       { code, redirect_uri }
+    );
+  }
+
+  // 💳 STRIPE CONNECT
+  startStripeOnboarding() {
+    return this.http.post<{ success: boolean; onboarding_url: string }>(
+      `${environment.url}stripe/connect/onboard`, {}
+    );
+  }
+
+  getStripeStatus() {
+    return this.http.get<{ success: boolean; connected: boolean; charges_enabled: boolean; payouts_enabled: boolean }>(
+      `${environment.url}stripe/connect/status`
+    );
+  }
+
+  getStripeDashboardLink() {
+    return this.http.get<{ success: boolean; dashboard_url: string }>(
+      `${environment.url}stripe/connect/dashboard`
     );
   }
 

@@ -395,10 +395,46 @@ export class InstructorPaymentConfigComponent implements OnInit {
     this.success.set(null);
   }
 
+  // ========================================
+  // STRIPE CONNECT
+  // ========================================
+
+  connectStripe() {
+    this.isSaving.set('stripe');
+    this.clearMessages();
+
+    this.instructorPaymentService.startStripeOnboarding().subscribe({
+      next: (res) => {
+        if (res.success && res.onboarding_url) {
+          window.location.href = res.onboarding_url;
+        } else {
+          this.error.set({ section: 'stripe', message: 'No se pudo iniciar la conexión con Stripe.' });
+          this.isSaving.set('');
+        }
+      },
+      error: (err) => {
+        this.error.set({ section: 'stripe', message: err.error?.message || 'Error al conectar con Stripe.' });
+        this.isSaving.set('');
+      }
+    });
+  }
+
+  openStripeDashboard() {
+    this.instructorPaymentService.getStripeDashboardLink().subscribe({
+      next: (res) => {
+        if (res.success && res.dashboard_url) {
+          window.open(res.dashboard_url, '_blank');
+        }
+      },
+      error: () => {
+        this.error.set({ section: 'stripe', message: 'No se pudo abrir el dashboard de Stripe.' });
+      }
+    });
+  }
+
   // 🔥 CONVERTIR A COMPUTED para reactividad
   hasPaypal = computed(() => {
     const config = this.config();
-    const has = !!(config?.paypal_email || config?.paypal_connected);
-    return has;
+    return !!(config?.paypal_email || config?.paypal_connected);
   });
 }
