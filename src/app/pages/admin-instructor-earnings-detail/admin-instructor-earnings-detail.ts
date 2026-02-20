@@ -387,6 +387,6 @@ export class AdminInstructorEarningsDetailComponent implements OnInit {
 
     // Si no, calcular usando el servicio centralizado
     const split = this.paymentSplitService.calculateSplit(earning.sale_price);
-    return split.paypalFee;
+    return split.stripeFee;
   }
 }

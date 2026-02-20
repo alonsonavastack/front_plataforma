@@ -1,105 +1,61 @@
 <div class="p-6">
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Configuración de Pasarelas de Pago</h1>
-        <p class="text-gray-600 dark:text-gray-400">Gestiona las credenciales y estado de PayPal y Mercado Pago</p>
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-white">💳 Configuración de Stripe</h1>
+        <p class="text-gray-600 dark:text-gray-400">Gestiona las credenciales de Stripe. Se usa para cobros en el checkout y para pagar a instructores.</p>
     </div>
-
-    <!-- Tabs -->
-
 
     <div *ngIf="isLoading()" class="flex justify-center py-10">
-        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-violet-600"></div>
     </div>
 
-    <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" *ngIf="!isLoading()">
+    <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" *ngIf="!isLoading()" autocomplete="off">
 
-        <!-- PayPal Settings -->
-        <div formGroupName="paypal" class="space-y-6">
-            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Activar PayPal</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Habilita o deshabilita PayPal en el checkout</p>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" formControlName="active" class="sr-only peer">
-                    <div
-                        class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
-                    </div>
-                </label>
-            </div>
+        <!-- Stripe Settings -->
+        <div formGroupName="stripe" class="space-y-6">
 
-            <!-- 🆕 Switch para Instructores -->
-            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Pagos a Instructores</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Permitir que los instructores registren cuentas
-                        de PayPal</p>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" formControlName="instructorPayoutsActive" class="sr-only peer">
-                    <div
-                        class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
-                    </div>
-                </label>
-            </div>
-
+            <!-- Modo -->
             <div class="grid gap-6 mb-6 md:grid-cols-2">
                 <div>
                     <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Modo</label>
-                    <select formControlName="mode" #modeSelect
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="sandbox">Sandbox (Pruebas)</option>
+                    <select formControlName="mode"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-violet-500 focus:border-violet-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
+                        <option value="test">Test (Pruebas)</option>
                         <option value="live">Live (Producción)</option>
                     </select>
                 </div>
             </div>
 
-            <!-- SANDBOX CONSTROLS -->
-            <div formGroupName="sandbox" *ngIf="settingsForm.get('paypal.mode')?.value === 'sandbox'"
-                class="p-4 border border-yellow-500/30 bg-yellow-500/5 rounded-lg mb-6">
-                <h4 class="text-yellow-600 dark:text-yellow-400 font-bold mb-4 flex items-center gap-2">
-                    <span>🧪</span> Credenciales de Sandbox (Pruebas)
+            <!-- Credenciales -->
+            <div class="p-4 border border-violet-500/30 bg-violet-500/5 rounded-lg mb-6">
+                <h4 class="text-violet-400 font-bold mb-4 flex items-center gap-2">
+                    <span>💳</span> Claves de API de Stripe
                 </h4>
                 <div class="grid gap-6 md:grid-cols-2">
                     <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Sandbox Client
-                            ID</label>
-                        <input type="text" formControlName="clientId"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Secret Key (sk_...)</label>
+                        <input type="password" formControlName="secretKey"
+                            placeholder="sk_test_... o sk_live_..."
+                            autocomplete="new-password"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-violet-500 focus:border-violet-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
                     </div>
                     <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Sandbox Client
-                            Secret</label>
-                        <input type="password" formControlName="clientSecret"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Publishable Key (pk_...)</label>
+                        <input type="text" formControlName="publishableKey"
+                            placeholder="pk_test_... o pk_live_..."
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-violet-500 focus:border-violet-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
                     </div>
-                </div>
-            </div>
-
-            <!-- LIVE CONSTROLS -->
-            <div formGroupName="live" *ngIf="settingsForm.get('paypal.mode')?.value === 'live'"
-                class="p-4 border border-red-500/30 bg-red-500/5 rounded-lg mb-6">
-                <h4 class="text-red-600 dark:text-red-400 font-bold mb-4 flex items-center gap-2">
-                    <span>🚀</span> Credenciales Live (Producción)
-                </h4>
-                <div class="grid gap-6 md:grid-cols-2">
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Live Client
-                            ID</label>
-                        <input type="text" formControlName="clientId"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Live Client
-                            Secret</label>
-                        <input type="password" formControlName="clientSecret"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    <div class="md:col-span-2">
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Webhook Secret (whsec_...)</label>
+                        <input type="password" formControlName="webhookSecret"
+                            placeholder="whsec_..."
+                            autocomplete="new-password"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-violet-500 focus:border-violet-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Mercado Pago Settings -->
+        <!-- Mercado Pago eliminado -->
 
 
         <!-- Messages -->

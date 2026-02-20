@@ -13,6 +13,7 @@ import { CountryCodeSelectorComponent, CountryCode } from '../../shared/country-
 
 import { ProfileStudentService } from '../../core/services/profile-student.service';
 import { SystemConfigService } from '../../core/services/system-config.service';
+import { WebsocketService } from '../../core/services/websocket.service';
 import type { EnrolledCourse, Project, ProjectFile, ProfileData } from '../../core/services/profile-student.service';
 import { Sale } from '../../core/models/sale.model';
 import { ProjectService } from '../../core/services/project.service';
@@ -47,6 +48,7 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
   authService = inject(AuthService);
   systemConfigService = inject(SystemConfigService);
   walletService: WalletService = inject(WalletService);
+  websocketService = inject(WebsocketService);
   private toast = inject(ToastService);
   private modalService = inject(ModalService);
   private sanitizer = inject(DomSanitizer);
@@ -619,6 +621,9 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
     validators: passwordsMatchValidator
   });
 
+  // Suscripción a eventos de websocket
+  private websocketSub: any;
+
   constructor() {
     // Usamos un effect para reaccionar cuando los datos del perfil se cargan.
     // Esto llenará el formulario automáticamente.
@@ -712,6 +717,21 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
     // 💼 Cargar billetera siempre que el usuario esté logueado
     if (this.authService.isLoggedIn()) {
       this.walletService.loadWallet();
+
+      // Conectar a WebSocket
+      const user = this.authService.user();
+      if (user) {
+        this.websocketService.connect(user._id, user.rol);
+
+        // Escuchar actualizaciones de ventas
+        this.websocketSub = this.websocketService.saleStatusUpdate$.subscribe(sale => {
+          if (sale.status === 'Pagado') {
+            console.log(`✅ [WebSocket] Venta ${sale._id} pagada. Recargando perfil...`);
+            this.profileStudentService.reloadProfile();
+            this.toast.success('¡Compra Exitosa!', 'Tu pago ha sido procesado y el contenido ya está disponible.');
+          }
+        });
+      }
     }
   }
 
@@ -721,6 +741,9 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.websocketSub) {
+      this.websocketSub.unsubscribe();
+    }
     // 🔥 Asegurar que el scroll se restaure al salir del componente
     document.body.style.overflow = '';
   }

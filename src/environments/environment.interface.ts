@@ -13,9 +13,12 @@ export interface Environment {
     course: string;
     project: string;
   };
-  paypal: {
+  paypal?: {
     clientId: string;
     redirectUrl: string;
   };
-  telegramBot?: string; // Nombre del bot (opcional)
+  stripe?: {
+    publishableKey: string;
+  };
+  telegramBot?: string;
 }

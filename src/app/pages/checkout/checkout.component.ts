@@ -78,11 +78,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   couponError = signal('');
   isCheckingCoupon = signal(false);
 
-  // PayPal state
-  public paypalOrderId = signal<string | null>(null);
-  public paypalButtonsRendered = signal<boolean>(false);
-  public pendingSaleTx = signal<string | null>(null);
-  public renderingPaypal = signal<boolean>(false);
+  // Stripe state
+  public stripeLoading = signal<boolean>(false);
+  public renderingPaypal = signal<boolean>(false); // kept for template compat — always false
 
   // Multi-country support
   countries = this.checkoutService.supportedCountries;
@@ -256,14 +254,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       }
     });
 
-    effect(() => {
-      if (this.selectedPaymentMethod() !== 'paypal') {
-        this.paypalButtonsRendered.set(false);
-        this.paypalOrderId.set(null);
-        const container = document.getElementById('paypal-button-container');
-        if (container) container.innerHTML = '';
-      }
-    });
+
   }
 
   ngOnInit(): void {
@@ -438,12 +429,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     this.selectedPaymentMethod.set(methodId);
     this.errorMessage.set('');
 
-    // 🔥 Si selecciona PayPal, procesar automáticamente
-    if (methodId === 'paypal' && this.checkoutForm.valid) {
-      setTimeout(() => {
-        this.processPayment();
-      }, 300);
-    }
+
   }
 
   // 🔥 FIX: Mejorar toggle de billetera
@@ -651,16 +637,15 @@ export class CheckoutComponent implements OnInit, OnDestroy {
           this.cartService.clearCart();
         }
 
-      } else if (finalPaymentMethod === 'paypal') {
-        // PayPal (mixto o 100%)
-        // No registrar venta aún: la venta solo se creará en el servidor al capturar el pago
-        // 🔥 NO guardar pendingSaleTx - no es necesario mostrar número antes del pago
-        await this.renderPayPalButtons(nTransaccion);
-
       } else {
         // Otros métodos (stripe, oxxo, etc)
         const resp = await this.checkoutService.processSale(payload).toPromise();
         // 🔒 LOG REMOVIDO POR SEGURIDAD
+
+        if (resp && resp.session_url) {
+          window.location.href = resp.session_url;
+          return;
+        }
 
         this.showSuccess.set(true);
 
@@ -683,185 +668,13 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       // 🔒 LOG REMOVIDO POR SEGURIDAD
       this.errorMessage.set(error?.error?.message || 'Error al procesar el pago');
     } finally {
-      if (finalPaymentMethod !== 'paypal') {
-        this.isProcessing.set(false);
-      }
+      this.isProcessing.set(false);
     }
   }
 
   closeSuccessModalAndRedirect(): void {
     this.showSuccess.set(false);
     this.router.navigate(['/profile-student']);
-  }
-
-  // ====== PAYPAL METHODS ======
-
-  private async loadPayPalSdk(): Promise<void> {
-    if ((window as any).paypal) {
-      return Promise.resolve();
-    }
-
-    return new Promise((resolve, reject) => {
-      // 🔥 FIX: Usar configuración dinámica del backend
-      const config = this.checkoutService.paymentConfig();
-      const clientId = config?.paypal?.clientId || environment.paypal?.clientId || '';
-
-      if (!clientId) {
-        console.error('❌ PayPal Client ID no encontrado en configuración ni environment');
-        return reject(new Error('No PayPal clientId configured'));
-      }
-
-      console.log('✅ Inicializando PayPal con Client ID:', clientId.substring(0, 10) + '...');
-
-      const script = document.createElement('script');
-      script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=MXN&intent=capture&disable-funding=credit,card&components=buttons&enable-funding=venmo`;
-      script.async = true;
-      script.defer = true;
-
-      script.onload = () => {
-        setTimeout(() => resolve(), 100);
-      };
-
-      script.onerror = (err) => {
-        console.error('❌ Error cargando SDK de PayPal:', err);
-        reject(err);
-      };
-
-      document.head.appendChild(script);
-    });
-  }
-
-  private async waitForContainer(selector: string, timeout = 3000): Promise<HTMLElement | null> {
-    const interval = 50;
-    let waited = 0;
-
-    while (waited < timeout) {
-      const el = document.querySelector(selector) as HTMLElement | null;
-      if (el) return el;
-      await new Promise(r => setTimeout(r, interval));
-      waited += interval;
-    }
-
-    return null;
-  }
-
-  public async renderPayPalButtons(nTransaccion?: string | null) {
-    // 🔒 LOG REMOVIDO POR SEGURIDAD
-
-    if (!nTransaccion) {
-      nTransaccion = this.transactionNumber() || null;
-    }
-    if (!nTransaccion) {
-      throw new Error('renderPayPalButtons: nTransaccion is required');
-    }
-
-    this.paypalButtonsRendered.set(false);
-
-    try {
-      // 🔥 ASEGURAR QUE TENEMOS CONFIG ANTES DE CARGAR SDK
-      if (this.checkoutService.isLoadingConfig()) {
-        console.log('⏳ Esperando configuración de pagos...');
-        // Pequeña espera si la config aún carga
-        await new Promise(r => setTimeout(r, 1000));
-      }
-
-      await this.loadPayPalSdk();
-      this.renderingPaypal.set(true);
-
-      const payload = (this as any).pendingPaymentPayload || { n_transaccion: nTransaccion };
-      const res = await this.checkoutService.createPaypalOrder(nTransaccion, payload);
-
-      if (!res || !res.orderId) {
-        this.errorMessage.set('No se pudo crear la orden de PayPal. Intenta de nuevo.');
-        return;
-      }
-
-      const orderId = res.orderId;
-      this.paypalOrderId.set(orderId);
-
-      const paypal = (window as any).paypal;
-      if (!paypal) {
-        throw new Error('PayPal SDK not present');
-      }
-
-      const container = await this.waitForContainer('#paypal-button-container', 5000);
-      if (!container) {
-        this.errorMessage.set('No se pudo inicializar PayPal');
-        this.renderingPaypal.set(false);
-        return;
-      }
-
-      container.innerHTML = '';
-
-      await paypal.Buttons({
-        createOrder: () => orderId,
-        onApprove: async (data: any, actions: any) => {
-          // 🔒 LOG REMOVIDO POR SEGURIDAD
-          try {
-            const captureResult = await this.checkoutService.capturePaypalOrder(nTransaccion, data.orderID || orderId, (this as any).pendingPaymentPayload);
-            // 🔒 LOG REMOVIDO POR SEGURIDAD
-
-            this.paypalButtonsRendered.set(true);
-            this.showSuccess.set(true);
-            // 🔥 Limpiar payload temporal
-            (this as any).pendingPaymentPayload = undefined;
-
-            if (this.useWalletBalance() && this.walletAmount() > 0) {
-              this.walletService.loadWallet();
-            }
-
-            setTimeout(() => {
-              this.profileStudentService.reloadProfile();
-              this.purchasesService.loadPurchasedProducts();
-              this.profileService.reloadProfile();
-            }, 1500);
-
-            if (!this.isDirectBuy()) {
-              this.cartService.clearCart();
-            }
-          } catch (captureError) {
-            // 🔒 LOG REMOVIDO POR SEGURIDAD
-            this.errorMessage.set('Error al procesar el pago');
-            this.renderingPaypal.set(false);
-          }
-        },
-        onError: (err: any) => {
-          // 🔒 LOG REMOVIDO POR SEGURIDAD
-          this.errorMessage.set('Error al cargar PayPal');
-          this.renderingPaypal.set(false);
-          this.paypalButtonsRendered.set(false);
-        },
-        onCancel: (data: any) => {
-          // 🔒 LOG REMOVIDO POR SEGURIDAD
-          this.renderingPaypal.set(false);
-          this.paypalButtonsRendered.set(false);
-          // Limpiar payload temporal para evitar reuso accidental
-          (this as any).pendingPaymentPayload = undefined;
-        },
-        style: {
-          layout: 'vertical',
-          color: 'gold',
-          shape: 'rect',
-          label: 'paypal',
-          height: 45
-        }
-      }).render('#paypal-button-container');
-
-      // 🔥 NO usar pendingSaleTx
-      this.paypalButtonsRendered.set(true);
-      this.renderingPaypal.set(false);
-
-    } catch (err) {
-      // 🔒 LOG REMOVIDO POR SEGURIDAD
-      this.errorMessage.set('No se pudo iniciar PayPal');
-      this.paypalButtonsRendered.set(false);
-    }
-  }
-
-  public debugRenderPayPalNow() {
-    const nTrans = this.transactionNumber() || this.checkoutService.generateTransactionNumber();
-    // 🔒 LOG REMOVIDO POR SEGURIDAD
-    this.renderPayPalButtons(nTrans);
   }
 
   // 🔥 MÉTODOS DE CUPÓN

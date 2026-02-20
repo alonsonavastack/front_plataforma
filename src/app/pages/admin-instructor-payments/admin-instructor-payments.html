@@ -72,7 +72,7 @@
     }
 
     <!-- Estadísticas por Método de Pago -->
-    <div class="grid grid-cols-4 gap-5 mb-8">
+    <div class="grid grid-cols-5 gap-5 mb-8">
       <!-- Total -->
       <div
         class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-5 border border-slate-700/50 hover:border-lime-500/50 transition-colors">
@@ -106,15 +106,37 @@
         <p class="text-xs text-slate-500 mt-2">{{paymentMethodStats().paypal.count}} operaciones</p>
       </div>
 
-      <!-- Mixto -->
+      <!-- Stripe -->
+      <div
+        class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-5 border border-slate-700/50 hover:border-indigo-500/50 transition-colors">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-medium text-slate-400">Stripe</span>
+          <span class="text-2xl">💳</span>
+        </div>
+        <p class="text-3xl font-bold text-indigo-400">{{formatCurrency(paymentMethodStats().stripe.total)}}</p>
+        <p class="text-xs text-slate-500 mt-2">{{paymentMethodStats().stripe.count}} operaciones</p>
+      </div>
+
+      <!-- Mixto (PayPal) -->
       <div
         class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-5 border border-slate-700/50 hover:border-cyan-500/50 transition-colors">
         <div class="flex items-center justify-between mb-3">
-          <span class="text-sm font-medium text-slate-400">Mixto</span>
+          <span class="text-sm font-medium text-slate-400">Mixto (PayPal)</span>
           <span class="text-2xl">🔀</span>
         </div>
         <p class="text-3xl font-bold text-cyan-400">{{formatCurrency(paymentMethodStats().mixed_paypal.total)}}</p>
         <p class="text-xs text-slate-500 mt-2">{{paymentMethodStats().mixed_paypal.count}} operaciones</p>
+      </div>
+
+      <!-- Mixto (Stripe) -->
+      <div
+        class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-5 border border-slate-700/50 hover:border-cyan-400/50 transition-colors">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-medium text-slate-400">Mixto (Stripe)</span>
+          <span class="text-2xl">🔀</span>
+        </div>
+        <p class="text-3xl font-bold text-cyan-300">{{formatCurrency(paymentMethodStats().mixed_stripe.total)}}</p>
+        <p class="text-xs text-slate-500 mt-2">{{paymentMethodStats().mixed_stripe.count}} operaciones</p>
       </div>
     </div>
     }
@@ -143,7 +165,9 @@
               <option value="all">Todos</option>
               <option value="wallet">💰 Wallet</option>
               <option value="paypal">💳 PayPal</option>
-              <option value="mixed_paypal">🔀 Mixto</option>
+              <option value="stripe">💳 Stripe</option>
+              <option value="mixed_paypal">🔀 Mixto (PayPal)</option>
+              <option value="mixed_stripe">🔀 Mixto (Stripe)</option>
             </select>
           </div>
 
@@ -280,16 +304,44 @@
                       </div>
                     </div>
                     }
+                    @if ($any(item.earnings.paymentMethods).stripe?.count > 0) {
+                    <div class="flex items-center justify-between gap-2">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-indigo-400">💳</span>
+                        <span class="text-slate-400">Stripe</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span
+                          class="text-white font-medium">{{formatCurrency($any(item.earnings.paymentMethods).stripe.total)}}</span>
+                        <span class="text-slate-600">({{$any(item.earnings.paymentMethods).stripe.count}})</span>
+                      </div>
+                    </div>
+                    }
                     @if (item.earnings.paymentMethods.mixed_paypal.count > 0) {
                     <div class="flex items-center justify-between gap-2">
                       <div class="flex items-center gap-1.5">
                         <span class="text-cyan-400">🔀</span>
-                        <span class="text-slate-400">Mixto</span>
+                        <span class="text-slate-400">Mixto (PayPal)</span>
                       </div>
                       <div class="flex items-center gap-1">
                         <span
                           class="text-white font-medium">{{formatCurrency(item.earnings.paymentMethods.mixed_paypal.total)}}</span>
                         <span class="text-slate-600">({{item.earnings.paymentMethods.mixed_paypal.count}})</span>
+                      </div>
+                    </div>
+                    }
+                    @if ($any(item.earnings.paymentMethods).mixed_stripe &&
+                    $any(item.earnings.paymentMethods).mixed_stripe?.count >
+                    0) {
+                    <div class="flex items-center justify-between gap-2">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-cyan-400">🔀</span>
+                        <span class="text-slate-400">Mixto (Stripe)</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span
+                          class="text-white font-medium">{{formatCurrency($any(item.earnings.paymentMethods).mixed_stripe.total)}}</span>
+                        <span class="text-slate-600">({{$any(item.earnings.paymentMethods).mixed_stripe.count}})</span>
                       </div>
                     </div>
                     }

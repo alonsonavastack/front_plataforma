@@ -194,10 +194,13 @@ export class TransactionHistoryComponent {
 
   getPaymentMethodLabel(method: string): string {
     const labels: Record<string, string> = {
+      'transfer': 'Transferencia Bancaria',
       'transferencia': 'Transferencia Bancaria',
-      'tarjeta': 'Tarjeta de Crédito/Débito',
-      'paypal': 'PayPal',
-      'stripe': 'Stripe'
+      'card': 'Tarjeta de Crédito/Débito',
+      'stripe': 'Stripe (Tarjeta)',
+      'mixed_stripe': 'Stripe + Billetera',
+      'wallet': 'Billetera Digital',
+      'other': 'Otro'
     };
     return labels[method] || method;
   }

@@ -9,7 +9,7 @@ export interface PaymentConfig {
   paypal_merchant_id?: string;
   paypal_connected?: boolean;
   paypal_verified?: boolean;
-  preferred_payment_method?: 'paypal' | 'stripe' | 'wallet' | '';
+  preferred_payment_method?: 'stripe' | 'wallet' | '';
   // Stripe Connect
   stripe_account_id?: string;
   stripe_onboarding_complete?: boolean;
@@ -292,7 +292,7 @@ export class InstructorPaymentService {
     );
   }
 
-  updatePreferredMethod(method: 'paypal') {
+  updatePreferredMethod(method: 'stripe' | 'wallet' | '') {
     return this.http.put<{ success: boolean; message: string; config: PaymentConfig }>(
       `${this.apiUrl}/payment-config`,
       { preferred_payment_method: method }

@@ -21,6 +21,8 @@ export interface InstructorWithEarnings {
     newestDate: string;
     paymentMethods?: {
       wallet: { count: number; total: number };
+      stripe: { count: number; total: number };
+      mixed_stripe: { count: number; total: number };
       paypal: { count: number; total: number };
       mixed_paypal: { count: number; total: number };
     };
@@ -32,6 +34,7 @@ export interface InstructorWithEarnings {
   paymentConfig: {
     preferredMethod: string;
     paypalConnected: boolean;
+    stripeConnected?: boolean;
     country?: string;
   };
 }

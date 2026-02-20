@@ -38,6 +38,7 @@ export interface CheckoutResponse {
   message: string;
   sale?: any;
   init_point?: string;
+  session_url?: string;
 }
 
 @Injectable({
@@ -79,13 +80,10 @@ export class CheckoutService {
     const config = this.paymentConfig();
     // Si no hay config yet, retornar métodos por defecto (wallet y PayPal si clientId está presente)
     if (!config) {
-      const fallback: PaymentMethod[] = [
-        { id: 'wallet', name: 'Billetera Digital', icon: '💰', description: 'Usa tu saldo disponible de forma instantánea' }
+      return [
+        { id: 'wallet', name: 'Billetera Digital', icon: '💰', description: 'Usa tu saldo disponible de forma instantánea' },
+        { id: 'stripe', name: 'Tarjeta de Crédito / Débito', icon: '💳', description: 'Visa, Mastercard, AMEX — procesado por Stripe' }
       ];
-      if ((environment.paypal && environment.paypal.clientId)) {
-        fallback.push({ id: 'paypal', name: 'PayPal', icon: '🅿️', description: 'Paga de forma segura con PayPal' });
-      }
-      return fallback;
     }
 
     const allMethods: PaymentMethod[] = [
@@ -96,17 +94,17 @@ export class CheckoutService {
         description: 'Usa tu saldo disponible de forma instantánea'
       },
       {
-        id: 'paypal',
-        name: 'PayPal',
-        icon: '🅿️',
-        description: 'Paga de forma segura con PayPal'
+        id: 'stripe',
+        name: 'Tarjeta de Crédito / Débito',
+        icon: '💳',
+        description: 'Visa, Mastercard, AMEX — procesado por Stripe'
       }
     ];
 
     // Filtrar métodos según configuración activa
     return allMethods.filter(method => {
       if (method.id === 'wallet') return true; // Siempre disponible
-      if (method.id === 'paypal') return (config.paypal?.active === true) || (!!(environment.paypal && environment.paypal.clientId));
+      if (method.id === 'stripe') return config.stripe?.active !== false; // Activo por defecto
       return false;
     });
   });
@@ -139,16 +137,5 @@ export class CheckoutService {
     this.configReloadTrigger.update(v => v + 1);
   }
 
-  // 🔥 PayPal helpers: create order and capture order (server-side)
-  async createPaypalOrder(n_transaccion: string, payload?: any): Promise<{ orderId: string, links?: any }> {
-    const body = payload || { n_transaccion };
-    const res = await firstValueFrom(this.http.post<any>(`${this.API_URL}/paypal/create`, body));
-    return { orderId: res.orderId, links: res.links };
-  }
-
-  async capturePaypalOrder(n_transaccion: string, orderId: string, payload?: any): Promise<any> {
-    const body = Object.assign({ n_transaccion, orderId }, payload || {});
-    const res = await firstValueFrom(this.http.post<any>(`${this.API_URL}/paypal/capture`, body));
-    return res;
-  }
+  // PayPal eliminado — usar Stripe
 }

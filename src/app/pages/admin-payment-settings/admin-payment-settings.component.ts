@@ -24,18 +24,12 @@ export class AdminPaymentSettingsComponent implements OnInit {
 
     constructor() {
         this.settingsForm = this.fb.group({
-            paypal: this.fb.group({
-                mode: ['sandbox'],
-                active: [false],
-                instructorPayoutsActive: [false],
-                sandbox: this.fb.group({
-                    clientId: [''],
-                    clientSecret: ['']
-                }),
-                live: this.fb.group({
-                    clientId: [''],
-                    clientSecret: ['']
-                })
+            stripe: this.fb.group({
+                mode: ['test'],
+                active: [true],
+                secretKey: [''],
+                publishableKey: [''],
+                webhookSecret: ['']
             }),
         });
     }
@@ -50,36 +44,17 @@ export class AdminPaymentSettingsComponent implements OnInit {
             .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
                 next: (response) => {
-                    if (response.settings) {
-                        const settings = response.settings;
-
-                        // Patch valores principales
-                        this.settingsForm.patchValue({
-                            paypal: {
-                                mode: settings.paypal.mode || 'sandbox',
-                                active: settings.paypal.active || false,
-                                instructorPayoutsActive: settings.paypal.instructorPayoutsActive || false
-                            }
+                    const settings = response.settings as any;
+                    console.log('📥 [loadSettings] Datos recibidos del backend:', JSON.stringify(settings?.stripe, null, 2));
+                    if (settings?.stripe) {
+                        this.settingsForm.get('stripe')?.patchValue({
+                            mode: settings.stripe.mode || 'test',
+                            active: settings.stripe.active ?? true,
+                            secretKey: settings.stripe.secretKey || '',
+                            publishableKey: settings.stripe.publishableKey || '',
+                            webhookSecret: settings.stripe.webhookSecret || ''
                         });
-
-                        // Patch Sandbox
-                        if (settings.paypal.sandbox) {
-                            this.settingsForm.get('paypal.sandbox')?.patchValue(settings.paypal.sandbox);
-                        } else {
-                            // Migración visual: si no hay sandbox object, usar los viejos values si existen
-                            // (Solo si estamos en transición, opcional)
-                            if (settings.paypal.clientId && settings.paypal.mode === 'sandbox') {
-                                this.settingsForm.get('paypal.sandbox')?.patchValue({
-                                    clientId: settings.paypal.clientId,
-                                    clientSecret: settings.paypal.clientSecret
-                                });
-                            }
-                        }
-
-                        // Patch Live
-                        if (settings.paypal.live) {
-                            this.settingsForm.get('paypal.live')?.patchValue(settings.paypal.live);
-                        }
+                        console.log('📝 [loadSettings] Form luego del patchValue:', JSON.stringify(this.settingsForm.value, null, 2));
                     }
                 },
                 error: (error) => {
@@ -91,6 +66,8 @@ export class AdminPaymentSettingsComponent implements OnInit {
 
     saveSettings() {
         if (this.settingsForm.invalid) return;
+
+        console.log('📤 [PaymentSettings] Enviando al backend:', JSON.stringify(this.settingsForm.value, null, 2));
 
         this.isSaving.set(true);
         this.successMessage.set('');

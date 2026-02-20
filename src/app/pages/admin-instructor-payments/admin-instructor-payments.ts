@@ -30,7 +30,7 @@ export class AdminInstructorPaymentsComponent implements OnInit {
     status: new FormControl('all'),
     minAmount: new FormControl<number | null>(0),
     country: new FormControl('all'),
-    paymentMethod: new FormControl('all'), // ✅ Actualizado: solo wallet, paypal, mixed_paypal
+    paymentMethod: new FormControl('all'), // ✅ Actualizado: wallet, stripe, mixed_stripe
     startDate: new FormControl<string | null>(null),
     endDate: new FormControl<string | null>(null),
   });
@@ -39,10 +39,20 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   totalEarnings = computed(() => Number(this.summary()?.totalEarnings) || 0);
 
   // 🆕 Estadísticas por método de pago
-  paymentMethodStats = computed(() => (this.summary() as any)?.paymentMethodStats || {
-    wallet: { count: 0, total: 0 },
-    paypal: { count: 0, total: 0 },
-    mixed_paypal: { count: 0, total: 0, wallet_part: 0, paypal_part: 0 }
+  paymentMethodStats = computed(() => {
+    const defaultStats = {
+      wallet: { count: 0, total: 0 },
+      stripe: { count: 0, total: 0 },
+      mixed_stripe: { count: 0, total: 0, wallet_part: 0, stripe_part: 0 },
+      paypal: { count: 0, total: 0 },
+      mixed_paypal: { count: 0, total: 0, wallet_part: 0, paypal_part: 0 }
+    };
+
+    const summary = this.summary() as any;
+    if (!summary || !summary.paymentMethodStats) return defaultStats;
+
+    // Merge to ensure all keys exist
+    return { ...defaultStats, ...summary.paymentMethodStats };
   });
 
   // Filtros de país
@@ -203,6 +213,8 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   getPaymentMethodIcon(method: string): string {
     const icons: Record<string, string> = {
       wallet: '💰',
+      stripe: '💳',
+      mixed_stripe: '🔀',
       paypal: '💳',
       mixed_paypal: '🔀'
     };
@@ -212,8 +224,10 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   getPaymentMethodName(method: string): string {
     const names: Record<string, string> = {
       wallet: 'Billetera',
+      stripe: 'Stripe',
+      mixed_stripe: 'Mixto (Billetera + Stripe)',
       paypal: 'PayPal',
-      mixed_paypal: 'Mixto (Wallet + PayPal)'
+      mixed_paypal: 'Mixto (Billetera + PayPal)'
     };
     return names[method] || method;
   }
@@ -221,6 +235,8 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   getPaymentMethodBadgeClass(method: string): string {
     const classes: Record<string, string> = {
       wallet: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+      stripe: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
+      mixed_stripe: 'bg-gradient-to-r from-purple-500/20 to-indigo-500/20 text-cyan-400 border-cyan-500/30',
       paypal: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
       mixed_paypal: 'bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-cyan-400 border-cyan-500/30'
     };
@@ -265,6 +281,10 @@ export class AdminInstructorPaymentsComponent implements OnInit {
 
   getPaymentMethodTooltip(config: InstructorWithEarnings['paymentConfig']): string {
     if (!config || !config.preferredMethod) return 'Sin método de pago configurado';
+    if (config.preferredMethod === 'stripe') {
+      // NOTE: Using as any for stripeConnected as it might not be typed in the interface yet
+      return `Stripe: ${(config as any).stripeConnected ? 'Conectado' : 'No Conectado'}`;
+    }
     if (config.preferredMethod === 'paypal') {
       return `PayPal: ${config.paypalConnected ? 'Conectado' : 'No Conectado'}`;
     }
@@ -273,6 +293,7 @@ export class AdminInstructorPaymentsComponent implements OnInit {
 
   getMethodBadgeClass(method: string): string {
     const colors = {
+      stripe: 'text-indigo-600 bg-indigo-100',
       paypal: 'text-blue-600 bg-blue-100',
       wallet: 'text-purple-600 bg-purple-100',
       none: 'text-gray-600 bg-gray-100'
@@ -282,8 +303,11 @@ export class AdminInstructorPaymentsComponent implements OnInit {
 
   getMethodText(method: string): string {
     const texts = {
+      stripe: 'Stripe',
       paypal: 'PayPal',
       wallet: 'Billetera',
+      mixed_stripe: 'Mixto (Stripe)',
+      mixed_paypal: 'Mixto (PayPal)',
       none: 'No configurado'
     };
     return texts[method as keyof typeof texts] || method.charAt(0).toUpperCase() + method.slice(1);

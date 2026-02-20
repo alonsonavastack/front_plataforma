@@ -148,8 +148,8 @@ export class InstructorEarningsComponent implements OnInit {
       return earning.payment_fee_amount;
     }
     const split = this.paymentSplitService.calculateSplit(earning.sale_price);
-    console.log(`[Fee] Calculado dinámicamente para ${earning.sale_price}:`, split.paypalFee);
-    return split.paypalFee;
+    console.log(`[Fee] Calculado dinámicamente para ${earning.sale_price}:`, split.stripeFee);
+    return split.stripeFee;
   }
 
   calculatePlatformCommission(earning: Earning): number {

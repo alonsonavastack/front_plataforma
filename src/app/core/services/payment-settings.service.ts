@@ -5,22 +5,14 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface PaymentSettings {
-  paypal: {
-    mode: 'sandbox' | 'live';
+  stripe: {
+    mode: 'test' | 'live';
     active: boolean;
-    instructorPayoutsActive: boolean;
-    sandbox?: {
-      clientId: string;
-      clientSecret: string;
-    };
-    live?: {
-      clientId: string;
-      clientSecret: string;
-    };
-    clientId?: string; // Legacy support
-    clientSecret?: string; // Legacy support
+    secretKey?: string;
+    publishableKey?: string;
+    webhookSecret?: string;
   };
-
+  paypal?: any; // Legacy — ya no se usa
 }
 
 @Injectable({
@@ -73,7 +65,7 @@ export class PaymentSettingsService {
   }
 
   // 🔥 Métodos imperativos para actualizar
-  updateSettings(settings: Partial<PaymentSettings>) {
+  updateSettings(settings: any) {
     return this.http.put(`${this.apiUrl}/admin`, settings);
   }
 
