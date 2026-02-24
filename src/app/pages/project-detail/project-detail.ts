@@ -107,14 +107,14 @@ export class ProjectDetailComponent {
             }
         });
 
-        // 🔥 EFECTO para capturar cupón de la URL
+        // 🔥 Capturar cupón de referido de la URL (?ref= o ?coupon=)
         effect(() => {
             const params = this.queryParams();
             if (params) {
-                const couponCode = params.get('coupon');
+                const couponCode = params.get('ref') || params.get('coupon');
                 if (couponCode) {
-                    // 🔒 LOG REMOVIDO POR SEGURIDAD
-                    localStorage.setItem('pending_coupon', couponCode);
+                    const normalized = couponCode.trim().toUpperCase();
+                    localStorage.setItem('pending_coupon', normalized);
                     this.toast.success('Cupón detectado', 'Se aplicará al finalizar la compra');
                 }
             }

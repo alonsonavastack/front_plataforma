@@ -170,8 +170,7 @@
                             <h3 class="text-lg font-bold text-orange-400 mb-2">Responsabilidad Fiscal</h3>
                             <p class="text-sm text-slate-300 leading-relaxed">
                                 El instructor es responsable de sus propios impuestos y declara recibir el monto íntegro
-                                sin
-                                retenciones por tratarse de un pago vía procesador externo (PayPal/Wallet).
+                                sin retenciones por tratarse de un pago vía procesador externo (Stripe/Wallet).
                             </p>
                         </div>
                     </div>
@@ -205,11 +204,77 @@
                 </p>
             </section>
 
+            <!-- Reembolsos y Fee de Procesamiento -->
+            <section class="bg-slate-900/60 border border-slate-700 rounded-2xl p-8">
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span
+                        class="w-8 h-8 rounded-lg bg-lime-400/10 flex items-center justify-center text-lime-400 text-sm">05</span>
+                    Reembolsos y Cargo de Procesamiento Bancario
+                </h2>
+                <div class="space-y-4">
+                    <p class="leading-relaxed">
+                        Al realizar una compra en Dev Hub Sharks, el procesador de pagos <strong>Stripe</strong> cobra
+                        un fee de procesamiento bancario por cada transacción. Este cargo corresponde a
+                        <strong>3.6% del monto + $3.00 MXN fijo + 16% IVA</strong> sobre el fee.
+                    </p>
+                    <p class="leading-relaxed">
+                        En caso de reembolso, <strong>el fee de procesamiento bancario no es reembolsable</strong>,
+                        ya que Stripe no lo devuelve a la plataforma. Por tanto, el monto acreditado a tu billetera
+                        interna será el precio del producto menos dicho cargo proporcional.
+                    </p>
+
+                    <div class="bg-slate-800 rounded-xl p-5 border border-slate-600">
+                        <p class="text-lime-400 font-semibold mb-3">Fórmula aplicada:</p>
+                        <p class="font-mono text-sm text-slate-300">Fee Stripe = (Precio &times; 3.6% + $3.00 MXN) &times; 1.16</p>
+                        <p class="font-mono text-sm text-lime-400 mt-1">Reembolso = Precio pagado &minus; Fee Stripe</p>
+                        <div class="mt-4 overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-slate-400 border-b border-slate-700">
+                                    <tr>
+                                        <th class="py-2 pr-6">Precio pagado</th>
+                                        <th class="py-2 pr-6 text-red-400">Fee Stripe</th>
+                                        <th class="py-2 text-lime-400">Reembolso recibido</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-800 text-slate-300">
+                                    <tr><td class="py-2 pr-6">$300.00 MXN</td><td class="py-2 pr-6 text-red-400">−$16.01</td><td class="py-2 text-lime-400 font-semibold">$283.99 MXN</td></tr>
+                                    <tr><td class="py-2 pr-6">$200.00 MXN</td><td class="py-2 pr-6 text-red-400">−$11.83</td><td class="py-2 text-lime-400 font-semibold">$188.17 MXN</td></tr>
+                                    <tr><td class="py-2 pr-6">$100.00 MXN</td><td class="py-2 pr-6 text-red-400">−$7.66</td><td class="py-2 text-lime-400 font-semibold">$92.34 MXN</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Billetera y pago mixto -->
+                    <div class="bg-slate-800 rounded-xl p-5 border border-lime-500/20">
+                        <p class="text-lime-400 font-semibold mb-3">💰 Reembolso con Billetera Digital</p>
+                        <p class="text-sm text-slate-300 mb-3">
+                            Si realizaste tu compra <strong>íntegramente con saldo de tu Billetera Digital</strong>,
+                            el reembolso aprobado se acredita al <strong>100% del monto pagado</strong>,
+                            sin ningún descuento, ya que no intervino ningún procesador bancario externo.
+                        </p>
+                        <p class="text-lime-400 font-semibold mb-2">Pago Mixto (Billetera + Tarjeta)</p>
+                        <p class="text-sm text-slate-300">
+                            Si combinaste saldo de billetera con tarjeta de crédito/débito, el fee de Stripe
+                            se descuenta <strong>únicamente sobre la parte que se procesó con tarjeta</strong>.
+                            La parte pagada con billetera se reembolsa al 100%.
+                        </p>
+                    </div>
+
+                    <p class="text-slate-400 text-sm">
+                        Dev Hub Sharks no retiene ni se beneficia del fee de Stripe. El cargo es cobrado
+                        directamente por el procesador de pagos al momento de la transacción original.
+                        Para más detalles, consulta nuestra
+                        <a routerLink="/refund-policy" class="text-lime-400 underline">Política de Reembolso</a>.
+                    </p>
+                </div>
+            </section>
+
             <!-- Modificaciones -->
             <section>
                 <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
                     <span
-                        class="w-8 h-8 rounded-lg bg-lime-400/10 flex items-center justify-center text-lime-400 text-sm">05</span>
+                        class="w-8 h-8 rounded-lg bg-lime-400/10 flex items-center justify-center text-lime-400 text-sm">06</span>
                     Modificaciones a los Términos
                 </h2>
                 <p class="leading-relaxed">

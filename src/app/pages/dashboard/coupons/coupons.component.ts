@@ -330,22 +330,22 @@ export class CouponsComponent implements OnInit {
     }
 
     copyLink(coupon: any) {
-        const project = coupon.projects[0];
-        if (!project) return;
+        const product = coupon.projects[0];
+        if (!product) {
+            this.toastService.error('Error', 'No se encontró el producto asociado a este cupón');
+            return;
+        }
 
-        const projectId = project._id;
-        // Construir URL: base/project-detail/ID?coupon=CODE
-        // O course-detail si es curso... Para simplificar, asumimos project-detail ya que el usuario dijo "proyecto"
-        // TODO: Manejar rutas correctas si es curso
+        // Usar slug si está disponible, de lo contrario usar _id
+        const productIdentifier = product.slug || product._id;
 
-        // 🔥 FIX: Detectar si es curso o proyecto para la URL correcta
-        // Desafortunadamente el populate solo trae title/imagen, no type.
-        // Pero podemos inferirlo o guardarlo en el cupón.
-        // Por ahora, usaremos una lógica genérica o link al checkout directo si es posible
-        // El usuario pidió "seleccionar el proyecto con el instructor", probablemente project-detail
+        // Construir ruta según tipo de producto
+        const route = coupon.product_type === 'course'
+            ? `course-detail/${productIdentifier}`
+            : `project-detail/${productIdentifier}`;
 
         const baseUrl = window.location.origin;
-        const link = `${baseUrl}/#/project-detail/${projectId}?coupon=${coupon.code}`;
+        const link = `${baseUrl}/#/${route}?coupon=${coupon.code}`;
 
         navigator.clipboard.writeText(link).then(() => {
             this.toastService.success('Enlace Copiado', 'Compártelo para ganar 80% de comisión');

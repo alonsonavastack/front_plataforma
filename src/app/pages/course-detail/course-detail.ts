@@ -262,9 +262,20 @@ export class CourseDetailComponent {
     }
     return `${m}m`;
   }
+  // 🔥 Capturar cupón de referido del query param ?ref=
+  private captureReferralCoupon(): void {
+    const ref = this.route.snapshot.queryParamMap.get('ref');
+    if (ref) {
+      localStorage.setItem('pending_coupon', ref.trim().toUpperCase());
+      console.log(`🎟️ Cupón de referido capturado: ${ref}`);
+    }
+  }
+
   // Compra directa: Navega al checkout con el producto
   buyNow() {
     if (!this.authService.isLoggedIn()) {
+      // Guardar cupón antes de redirigir al login
+      this.captureReferralCoupon();
       this.router.navigate(['/login']);
       return;
     }
@@ -278,12 +289,14 @@ export class CourseDetailComponent {
         'Ya tienes este curso',
         'Este curso ya está en tu biblioteca. Ve a "Mis Cursos" para acceder.'
       );
-      // Redirigir a su perfil después de 2 segundos
       setTimeout(() => {
         this.router.navigate(['/profile-student']);
       }, 2000);
       return;
     }
+
+    // 🔥 Capturar cupón de referido si existe en la URL
+    this.captureReferralCoupon();
 
     // Navegar al checkout pasando el producto en el state
     this.router.navigate(['/checkout'], {

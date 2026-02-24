@@ -206,6 +206,30 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return this.useWalletBalance() && this.walletAmount() > 0 && this.remainingAmount() > 0;
   });
 
+  // Mínimo que Stripe acepta en MXN
+  readonly STRIPE_MIN_MXN = 10;
+
+  // Avisa si el restante es tan pequeño que Stripe tendrá que ajustar el wallet
+  walletWillBeAdjusted = computed(() => {
+    if (!this.isMixedPayment()) return false;
+    const remaining = this.remainingAmount();
+    return remaining > 0 && remaining < this.STRIPE_MIN_MXN;
+  });
+
+  // Monto real que se descontará del wallet (considerando ajuste por mínimo Stripe)
+  effectiveWalletAmount = computed(() => {
+    if (!this.useWalletBalance()) return 0;
+    const total = this.subtotal();
+    const balance = this.walletBalance();
+    let desiredWallet = Math.min(balance, total);
+    const remaining = total - desiredWallet;
+    if (remaining > 0 && remaining < this.STRIPE_MIN_MXN) {
+      // El backend ajustará: el wallet pagará menos para que Stripe tenga mínimo $10
+      desiredWallet = desiredWallet - (this.STRIPE_MIN_MXN - remaining);
+    }
+    return Math.max(0, parseFloat(desiredWallet.toFixed(2)));
+  });
+
   needsAdditionalPaymentMethod = computed(() => {
     return this.useWalletBalance() && this.remainingAmount() > 0 && !this.selectedPaymentMethod();
   });
@@ -464,11 +488,11 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   async processPayment() {
-    // 🔒 LOG REMOVIDO POR SEGURIDAD
-
+    // ⚡ Bloqueo INMEDIATO antes de cualquier await — evita doble submit por doble clic
     if (this.isProcessing() || this.showSuccess()) {
       return;
     }
+    this.isProcessing.set(true);
 
     // ⚠️ POLÍTICA DE REEMBOLSOS
     const confirmed = await this.modalService.confirm({
@@ -485,6 +509,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     });
 
     if (!confirmed) {
+      this.isProcessing.set(false); // Liberar si cancela
       return;
     }
 
@@ -509,9 +534,10 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
       if (balance < requestedAmount) {
         this.errorMessage.set(
-          `❌ Error crítico: Saldo insuficiente. Tienes $${balance.toFixed(2)} MXN ` +
-          `pero intentas usar $${requestedAmount.toFixed(2)} MXN. Por favor, recarga la página.`
+          `❌ Error crítico: Saldo insuficiente. Tienes ${balance.toFixed(2)} MXN ` +
+          `pero intentas usar ${requestedAmount.toFixed(2)} MXN. Por favor, recarga la página.`
         );
+        this.isProcessing.set(false);
         return;
       }
     }
@@ -521,10 +547,11 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         this.checkoutForm.get(key)?.markAsTouched();
       });
       this.errorMessage.set('Por favor completa todos los campos requeridos');
+      this.isProcessing.set(false);
       return;
     }
 
-    this.isProcessing.set(true);
+    // isProcessing ya fue activado al inicio del método
     this.errorMessage.set('');
 
     // 🔥 CORRECCIÓN CRÍTICA: Determinar método de pago correctamente
@@ -547,14 +574,16 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       if (!this.selectedPaymentMethod()) {
         this.errorMessage.set(
           `⚠️ Pago Mixto Requerido\n\n` +
-          `Tu billetera cubre $${walletAmountUsed.toFixed(2)} MXN de los $${this.subtotal().toFixed(2)} MXN totales.\n\n` +
-          `Por favor, selecciona un método de pago para completar los $${remaining.toFixed(2)} MXN restantes.`
+          `Tu billetera cubre ${walletAmountUsed.toFixed(2)} MXN de los ${this.subtotal().toFixed(2)} MXN totales.\n\n` +
+          `Por favor, selecciona un método de pago para completar los ${remaining.toFixed(2)} MXN restantes.`
         );
         this.isProcessing.set(false);
         return;
       }
 
-      finalPaymentMethod = this.selectedPaymentMethod();
+      // 🔥 FIX: convertir a 'mixed_stripe' para que el backend descuente la billetera
+      const baseMethod = this.selectedPaymentMethod();
+      finalPaymentMethod = baseMethod === 'stripe' ? 'mixed_stripe' : baseMethod;
       finalWalletAmount = walletAmountUsed;
       finalRemainingAmount = remaining;
     }
@@ -576,12 +605,22 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     let items: any[] = [];
 
     if (isDirect && prod) {
+      const coupon = this.appliedCoupon();
+      const originalPrice = prod.price_mxn;
+      const finalPrice = this.subtotal(); // Ya incluye descuento de campáña y cupón
+      const couponDiscountAmount = coupon && coupon.discount_percentage > 0
+        ? originalPrice * (coupon.discount_percentage / 100)
+        : 0;
+
       items = [{
         product: prod._id,
         product_type: this.productType(),
         title: prod.title,
-        price_unit: this.subtotal(),
-        imagen: prod.imagen
+        price_unit: finalPrice,
+        imagen: prod.imagen,
+        // Si hay cupón con descuento de precio, informarlo al backend
+        discount: coupon && coupon.discount_percentage > 0 ? coupon.discount_percentage : 0,
+        type_discount: coupon && coupon.discount_percentage > 0 ? 1 : 0,
       }];
     } else {
       items = cartItems.map(item => ({

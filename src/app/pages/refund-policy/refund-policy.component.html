@@ -1,44 +1,134 @@
 <app-header></app-header>
 
-<main class="max-w-4xl mx-auto p-6">
-  <h1 class="text-3xl font-bold mb-4">Política de Reembolso</h1>
+<main class="max-w-4xl mx-auto p-6 pb-16">
+  <h1 class="text-3xl font-bold mb-2">Política de Reembolso</h1>
+  <p class="text-slate-400 mb-8">Última actualización: {{ currentDate | date:'dd/MM/yyyy' }}</p>
 
-  <p class="text-slate-400 mb-4">Última actualización: {{ currentDate | date:'dd/MM/yyyy' }}</p>
+  <section class="space-y-8 text-slate-200">
 
-  <section class="space-y-4 text-slate-200">
+    <!-- Intro -->
     <p>
-      En Dev Hub Sharks nos esforzamos por ofrecer productos y servicios de alta calidad. Si no quedas satisfecho
-      con una compra, puedes solicitar un reembolso de acuerdo con las condiciones descritas a continuación.
+      En <strong>Dev Hub Sharks</strong> nos esforzamos por ofrecer contenido de alta calidad. Si no quedas
+      satisfecho con una compra, puedes solicitar un reembolso de acuerdo con las condiciones descritas a
+      continuación.
     </p>
 
-    <h2 class="text-xl font-semibold">Métodos de reembolso</h2>
-    <p>
-      Los reembolsos se procesan únicamente a través de los métodos de pago soportados por la plataforma:
-      <strong>PayPal</strong>
-      o <strong>Billetera interna (Wallet)</strong>. No se procesarán transferencias bancarias directas para reembolsos.
-    </p>
+    <!-- 1. Plazo -->
+    <div>
+      <h2 class="text-xl font-semibold mb-2">1. Plazo para solicitar reembolso</h2>
+      <p>
+        Tienes <strong>7 días naturales</strong> contados a partir de la fecha de compra para solicitar un
+        reembolso. Transcurrido ese plazo, la solicitud no podrá ser procesada.
+      </p>
+    </div>
 
-    <h2 class="text-xl font-semibold">Plazos</h2>
-    <p>
-      Las solicitudes de reembolso serán revisadas y procesadas en un plazo de 3 a 7 días hábiles desde la aprobación.
-      El tiempo efectivo para que los fondos se reflejen en la cuenta del cliente depende del proveedor de pago (PayPal
-      o la plataforma de Wallet).
-    </p>
+    <!-- 2. Condiciones de elegibilidad -->
+    <div>
+      <h2 class="text-xl font-semibold mb-2">2. Condiciones de elegibilidad</h2>
+      <ul class="list-disc list-inside space-y-1">
+        <li>No haber visto más del <strong>20%</strong> del contenido del curso o proyecto.</li>
+        <li>Máximo <strong>1 reembolso por producto</strong> comprado.</li>
+        <li>Máximo <strong>3 reembolsos totales</strong> en un período de 6 meses.</li>
+        <li>El pago al instructor no debe haberse procesado aún.</li>
+        <li>La venta debe estar en estado <strong>Pagado</strong>.</li>
+      </ul>
+    </div>
 
-    <h2 class="text-xl font-semibold">Condiciones</h2>
-    <ul class="list-disc list-inside">
-      <li>Los reembolsos se aplican a compras que cumplan con nuestras condiciones de devolución.</li>
-      <li>Si la compra fue pagada parcialmente con Wallet y/o PayPal, el reembolso seguirá el orden y las proporciones
-        originales, priorizando la devolución a la Wallet cuando aplique.</li>
-      <li>Los cargos por servicios externos (comisiones de PayPal, cargos por transacción) pueden afectar la cantidad
-        final recibida por el cliente.</li>
-    </ul>
+    <!-- 3. Monto reembolsado — sección clave -->
+    <div class="border border-yellow-500/40 bg-yellow-500/5 rounded-xl p-5">
+      <h2 class="text-xl font-semibold mb-3 text-yellow-400">3. Monto que recibes en el reembolso</h2>
+      <p class="mb-3">
+        El reembolso <strong>no incluye el cargo de procesamiento bancario</strong> cobrado por Stripe
+        al momento de realizar el pago original. Este cargo no nos es devuelto por el procesador de pagos
+        cuando se emite un reembolso, por lo que no podemos incluirlo en la devolución.
+      </p>
 
-    <h2 class="text-xl font-semibold">Contacto</h2>
-    <p>
-      Para solicitar un reembolso o si tienes dudas, por favor contacta al equipo de soporte a través de
-      <a class="text-lime-400 underline" href="mailto:soporte@devhubsharks.com">soporte@devhubsharks.com</a>.
-    </p>
+      <p class="mb-4">
+        La fórmula que aplicamos es la siguiente:
+      </p>
+
+      <div class="bg-slate-800 rounded-lg p-4 font-mono text-sm mb-4">
+        <p class="text-slate-400 mb-1">// Fee de Stripe México (3.6% + $3.00 MXN + IVA)</p>
+        <p>Fee Stripe = (Precio × 3.6% + $3.00) × 1.16</p>
+        <p class="text-lime-400 mt-2">Reembolso = Precio pagado − Fee Stripe</p>
+      </div>
+
+      <p class="text-slate-400 text-sm mb-3">Ejemplos ilustrativos:</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left border border-slate-700 rounded-lg overflow-hidden">
+          <thead class="bg-slate-800 text-slate-300">
+            <tr>
+              <th class="px-4 py-2">Precio pagado</th>
+              <th class="px-4 py-2">Fee Stripe (no reembolsable)</th>
+              <th class="px-4 py-2 text-lime-400">Recibes en tu billetera</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-700">
+            <tr class="bg-slate-900/50">
+              <td class="px-4 py-2">$300.00 MXN</td>
+              <td class="px-4 py-2 text-red-400">−$16.01 MXN</td>
+              <td class="px-4 py-2 text-lime-400 font-semibold">$283.99 MXN</td>
+            </tr>
+            <tr class="bg-slate-900/30">
+              <td class="px-4 py-2">$200.00 MXN</td>
+              <td class="px-4 py-2 text-red-400">−$11.83 MXN</td>
+              <td class="px-4 py-2 text-lime-400 font-semibold">$188.17 MXN</td>
+            </tr>
+            <tr class="bg-slate-900/50">
+              <td class="px-4 py-2">$100.00 MXN</td>
+              <td class="px-4 py-2 text-red-400">−$7.66 MXN</td>
+              <td class="px-4 py-2 text-lime-400 font-semibold">$92.34 MXN</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="text-slate-400 text-xs mt-3">
+        * El fee de Stripe corresponde al cargo de procesamiento bancario y es cobrado directamente por
+        el proveedor de pagos. Dev Hub Sharks no retiene ni se beneficia de este monto.
+      </p>
+    </div>
+
+    <!-- 4. Método de devolución -->
+    <div>
+      <h2 class="text-xl font-semibold mb-2">4. Método de devolución</h2>
+      <p>
+        Todos los reembolsos se acreditan directamente a tu <strong>Billetera interna (Wallet)</strong>
+        dentro de la plataforma. No se realizan transferencias bancarias directas ni devoluciones a
+        tarjeta de crédito/débito. El saldo acreditado puede usarse para futuras compras dentro de
+        Dev Hub Sharks.
+      </p>
+    </div>
+
+    <!-- 5. Pagos mixtos -->
+    <div>
+      <h2 class="text-xl font-semibold mb-2">5. Pagos mixtos (Billetera + Stripe)</h2>
+      <p>
+        Si realizaste un pago combinando saldo de tu billetera y tarjeta de crédito/débito vía Stripe,
+        el reembolso se calcula únicamente sobre el monto cargado a Stripe (el cual sí tiene fee de
+        procesamiento). La parte pagada con billetera se reembolsa al 100%, sin deducción alguna.
+      </p>
+    </div>
+
+    <!-- 6. Tiempos de procesamiento -->
+    <div>
+      <h2 class="text-xl font-semibold mb-2">6. Tiempos de procesamiento</h2>
+      <p>
+        Las solicitudes se revisan en un plazo de <strong>1 a 3 días hábiles</strong>. Una vez aprobado
+        el reembolso, el saldo se refleja de forma inmediata en tu billetera interna.
+      </p>
+    </div>
+
+    <!-- 7. Contacto -->
+    <div>
+      <h2 class="text-xl font-semibold mb-2">7. Contacto</h2>
+      <p>
+        Si tienes dudas sobre tu reembolso, contáctanos en
+        <a class="text-lime-400 underline" href="mailto:soporte@devhubsharks.com">soporte&#64;devhubsharks.com</a>.
+        Incluye tu número de transacción para agilizar el proceso.
+      </p>
+    </div>
+
   </section>
 </main>
 
