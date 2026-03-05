@@ -98,7 +98,7 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
    * 🆕 Navegar a reembolsos con filtro
    */
   goToRefunds(refundId?: string) {
-    console.log('📍 [Topbar] Navegando a reembolsos:', refundId);
+
 
     // Cerrar el menú
     this.isRefundNotificationsMenuOpen.set(false);

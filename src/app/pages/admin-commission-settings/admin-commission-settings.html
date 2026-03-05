@@ -21,16 +21,16 @@
     <div class="bg-blue-900/30 border border-blue-500/30 rounded-lg p-4 flex gap-3">
       <div class="text-blue-400 text-xl flex-shrink-0">🛡️</div>
       <div>
-        <p class="text-sm font-semibold text-blue-300 mb-1">Ventana de reembolso: 7 días fijos (no editable)</p>
+        <p class="text-sm font-semibold text-blue-300 mb-1">Ventana de espera para pagos</p>
         <p class="text-xs text-blue-400 leading-relaxed">
           Toda ganancia nace en estado <span class="font-mono bg-blue-900/50 px-1 rounded">pending</span> y permanece
-          bloqueada durante <strong>7 días</strong> desde la venta (política de reembolso). Solo después de ese período
+          bloqueada durante los <strong>días de espera</strong> configurados desde la venta. Solo después de ese período
           pasa a <span class="font-mono bg-lime-900/50 px-1 rounded text-lime-400">available</span> y puede pagarse al
-          instructor. Los "Días adicionales de espera" se suman <em>encima</em> de esos 7 días.
+          instructor. Si se configura en 0, el pago estará disponible inmediatamente.
         </p>
         <p class="text-xs text-blue-400 mt-1">
-          Ejemplo: Si configuras <strong>8 días adicionales</strong> → el instructor cobra a partir del <strong>día
-            15</strong> desde la venta.
+          Ejemplo: Si configuras <strong>8 días</strong> → el instructor cobra a partir del <strong>día
+            8</strong> desde la venta.
         </p>
       </div>
     </div>
@@ -46,12 +46,7 @@
         <span class="text-slate-600">→</span>
         <div class="flex items-center gap-1 bg-yellow-900/30 border border-yellow-700/40 rounded px-2 py-1">
           <span class="w-2 h-2 rounded-full bg-yellow-400 flex-shrink-0"></span>
-          <span class="text-yellow-300">pending (7 días reembolso)</span>
-        </div>
-        <span class="text-slate-600">→</span>
-        <div class="flex items-center gap-1 bg-orange-900/30 border border-orange-700/40 rounded px-2 py-1">
-          <span class="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0"></span>
-          <span class="text-orange-300">pending (+{{ settingsForm.get('days_until_available')?.value ?? 0 }} días espera)</span>
+          <span class="text-yellow-300">pending ({{ settingsForm.get('days_until_available')?.value ?? 0 }} días espera)</span>
         </div>
         <span class="text-slate-600">→</span>
         <div class="flex items-center gap-1 bg-lime-900/30 border border-lime-700/40 rounded px-2 py-1">
@@ -99,16 +94,16 @@
         <!-- Días adicionales de espera -->
         <div>
           <label for="days_until_available" class="block text-sm font-medium text-slate-300 mb-1">
-            Días Adicionales de Espera para Pago
+            Días de Espera para Pago
           </label>
           <p class="text-xs text-slate-500 mb-2">
-            Se suman a los 7 días fijos de reembolso. Con <strong>0</strong> el instructor cobra al día 7.
+            Tiempo total en días hasta que la ganancia esté disponible. Con <strong>0</strong> el instructor cobra inmediatamente.
           </p>
           <input id="days_until_available" type="number" formControlName="days_until_available" min="0"
             class="w-full px-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-lime-400">
           <p class="text-xs text-slate-500 mt-1">
             Total hasta pago:
-            <strong class="text-amber-400">{{ 7 + (settingsForm.get('days_until_available')?.value ?? 0) }} días</strong>
+            <strong class="text-amber-400">{{ settingsForm.get('days_until_available')?.value ?? 0 }} días</strong>
             desde la venta
           </p>
         </div>
@@ -128,10 +123,9 @@
       <!-- Resumen para pruebas -->
       <div class="bg-slate-900/50 rounded-lg p-4 border border-slate-700 text-xs text-slate-400 space-y-1">
         <p class="font-semibold text-slate-300 mb-2">📋 Resumen de configuración actual</p>
-        <p>• Ventana de reembolso (fija): <span class="text-white font-medium">7 días</span></p>
-        <p>• Espera adicional para pago: <span class="text-white font-medium">{{ settingsForm.get('days_until_available')?.value ?? 0 }} días</span></p>
-        <p>• El instructor puede cobrar a partir del día: <span class="text-amber-400 font-bold">{{ 7 + (settingsForm.get('days_until_available')?.value ?? 0) }}</span> desde la venta</p>
-        <p>• Si hay reembolso antes del día 7: <span class="text-lime-400 font-medium">earning se marca como 'refunded', instructor NO cobra ✅</span></p>
+        <p>• Espera total para pago: <span class="text-white font-medium">{{ settingsForm.get('days_until_available')?.value ?? 0 }} días</span></p>
+        <p>• El instructor puede cobrar a partir del día: <span class="text-amber-400 font-bold">{{ settingsForm.get('days_until_available')?.value ?? 0 }}</span> desde la venta</p>
+        <p>• Si hay reembolso en ese periodo: <span class="text-lime-400 font-medium">earning se marca como 'refunded', instructor NO cobra ✅</span></p>
         <p>• Comisión referido (cupón instructor): <span class="text-white font-medium">plataforma 20% / instructor 80%</span> (fija)</p>
       </div>
 

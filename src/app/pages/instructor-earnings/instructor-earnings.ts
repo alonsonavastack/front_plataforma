@@ -144,21 +144,21 @@ export class InstructorEarningsComponent implements OnInit {
 
   calculateFee(earning: Earning): number {
     if (earning.payment_fee_amount) {
-      console.log(`[Fee] Usando valor guardado para ${earning.course?.title}:`, earning.payment_fee_amount);
+
       return earning.payment_fee_amount;
     }
     const split = this.paymentSplitService.calculateSplit(earning.sale_price);
-    console.log(`[Fee] Calculado dinámicamente para ${earning.sale_price}:`, split.stripeFee);
+
     return split.stripeFee;
   }
 
   calculatePlatformCommission(earning: Earning): number {
     if (earning.platform_commission_amount) {
-      console.log(`[Commission] Usando valor guardado:`, earning.platform_commission_amount);
+
       return earning.platform_commission_amount;
     }
     const split = this.paymentSplitService.calculateSplit(earning.sale_price);
-    console.log(`[Commission] Calculado dinámicamente:`, split.platformShare);
+
     return split.platformShare;
   }
 

@@ -1,32 +1,40 @@
 import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaxBreakdownService } from '../../core/services/tax-breakdown.service';
-import { SaleDetailModalComponent } from './sale-detail-modal/sale-detail-modal.component';
 
 @Component({
     selector: 'app-admin-tax-breakdown',
     standalone: true,
-    imports: [CommonModule, FormsModule, SaleDetailModalComponent],
+    imports: [CommonModule, FormsModule, DatePipe],
     templateUrl: './admin-tax-breakdown.component.html',
 })
 export class AdminTaxBreakdownComponent implements OnInit, OnDestroy {
     private taxService = inject(TaxBreakdownService);
 
-    // Signals
+    // ── Filtros ──
     selectedMonth = signal<number>(new Date().getMonth() + 1);
     selectedYear = signal<number>(new Date().getFullYear());
     selectedStatus = signal<string>('all');
-    sales = signal<any[]>([]);
-    totals = signal<any>(null);
-    pagination = signal<any>(null);
-    selectedSale = signal<any>(null);
-
-    // Pagination & Search
+    selectedType = signal<string>('all'); // all | organic | referral
+    startDate = signal<string>('');
+    endDate = signal<string>('');
     searchQuery = signal<string>('');
+
+    // ── Datos ──
+    rows = signal<any[]>([]);
+    totals = signal<any>(null);
+    summary = signal<any>(null);
+    pagination = signal<any>(null);
+    loading = signal<boolean>(false);
+    expandedRow = signal<string | null>(null);
+
+    // ── Vista ──
+    activeTab = signal<'platform' | 'instructor' | 'detail'>('platform');
     currentPage = signal<number>(1);
-    itemsPerPage = signal<number>(20);
-    searchTimeout: any;
+    itemsPerPage = 20;
+
+    private searchTimeout: any;
 
     months = [
         { value: 1, label: 'Enero' }, { value: 2, label: 'Febrero' }, { value: 3, label: 'Marzo' },
@@ -36,113 +44,133 @@ export class AdminTaxBreakdownComponent implements OnInit, OnDestroy {
     ];
 
     ngOnInit() {
-        // ✅ Cargar datos iniciales UNA VEZ al inicio
+        this.loadSummary();
         this.loadData();
     }
 
     ngOnDestroy() {
-        // Limpiar timeout si existe
-        if (this.searchTimeout) {
-            clearTimeout(this.searchTimeout);
-        }
+        if (this.searchTimeout) clearTimeout(this.searchTimeout);
+    }
+
+    loadSummary() {
+        this.taxService.getSummary().subscribe({
+            next: (r: any) => { if (r.success) this.summary.set(r.summary); },
+            error: () => { }
+        });
     }
 
     loadData() {
-        // Log removed
-
+        this.loading.set(true);
         this.taxService.getSalesBreakdown(
             this.selectedMonth(),
             this.selectedYear(),
             this.searchQuery(),
             this.currentPage(),
-            this.itemsPerPage(),
-            this.selectedStatus()
-        )
-            .subscribe({
-                next: (resp: any) => {
-                    if (resp.success) {
-                        // 🔥 DEDUPLICAR VENTAS: Para la vista de plataforma, solo nos interesa una fila por venta.
-                        // La paginación del backend es por retención, pero visualmente agrupamos.
-                        const uniqueSalesMap = new Map();
-                        const uniqueSales = [];
-
-                        for (const item of resp.data) {
-                            const saleId = item.sale?._id || item.sale; // Handle populated or raw ID
-                            if (saleId && !uniqueSalesMap.has(saleId)) {
-                                uniqueSalesMap.set(saleId, true);
-                                uniqueSales.push(item);
-                            }
-                        }
-
-                        this.sales.set(uniqueSales);
-                        this.totals.set(resp.totals);
-                        this.pagination.set(resp.pagination);
-                        // Log removed
+            this.itemsPerPage,
+            this.selectedStatus(),
+            this.startDate(),
+            this.endDate()
+        ).subscribe({
+            next: (resp: any) => {
+                if (resp.success) {
+                    let data = resp.data;
+                    // Filtro local por tipo (orgánico/referido)
+                    if (this.selectedType() !== 'all') {
+                        data = data.filter((r: any) =>
+                            this.selectedType() === 'referral' ? r.is_referral : !r.is_referral
+                        );
                     }
-                },
-                error: (err) => {
-                    console.error('❌ [TaxBreakdown] Error:', err);
+                    this.rows.set(data);
+                    this.totals.set(resp.totals);
+                    this.pagination.set(resp.pagination);
                 }
-            });
+                this.loading.set(false);
+            },
+            error: () => this.loading.set(false)
+        });
     }
 
-    // ✅ Método para cambios en filtros (mes, año, estado) - SIN debounce
     onFilterChange() {
-        // Log removed
-        this.currentPage.set(1); // Reset a primera página
+        this.currentPage.set(1);
         this.loadData();
     }
 
-    // ✅ Búsqueda con debounce (ya existía, solo agregamos logs)
     onSearch(event: any) {
-        const query = event.target.value;
-
-        // Cancelar búsqueda anterior si existe
-        if (this.searchTimeout) {
-            clearTimeout(this.searchTimeout);
-        }
-
-        // Esperar 500ms después de que el usuario deje de escribir
+        if (this.searchTimeout) clearTimeout(this.searchTimeout);
         this.searchTimeout = setTimeout(() => {
-            // Log removed
-            this.searchQuery.set(query);
-            this.currentPage.set(1); // Reset a primera página
+            this.searchQuery.set(event.target.value);
+            this.currentPage.set(1);
             this.loadData();
         }, 500);
     }
 
-    changePage(page: number) {
-        if (page < 1 || (this.pagination() && page > this.pagination().totalPages)) return;
-        // Log removed
-        this.currentPage.set(page);
+    clearFilters() {
+        this.selectedMonth.set(new Date().getMonth() + 1);
+        this.selectedYear.set(new Date().getFullYear());
+        this.selectedStatus.set('all');
+        this.selectedType.set('all');
+        this.startDate.set('');
+        this.endDate.set('');
+        this.searchQuery.set('');
+        this.currentPage.set(1);
         this.loadData();
     }
 
-    openDetail(sale: any) {
-        // Log removed
-        this.selectedSale.set(sale);
+    changePage(p: number) {
+        if (!this.pagination()) return;
+        if (p < 1 || p > this.pagination().totalPages) return;
+        this.currentPage.set(p);
+        this.loadData();
     }
 
-    exportToExcel() {
-        // Log removed
+    toggleRow(id: string) {
+        this.expandedRow.set(this.expandedRow() === id ? null : id);
+    }
+
+    exportToCSV() {
         this.taxService.exportRetentions(
-            this.selectedMonth(),
-            this.selectedYear(),
-            this.searchQuery(),
-            this.selectedStatus()
+            this.selectedMonth(), this.selectedYear(),
+            this.searchQuery(), this.selectedStatus(),
+            this.startDate(), this.endDate()
         ).subscribe({
             next: (blob: Blob) => {
                 const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `reporte_fiscal_${this.selectedMonth()}_${this.selectedYear()}.csv`;
-                link.click();
+                const a = document.createElement('a');
+                a.href = url;
+                const period = `${this.selectedMonth()}_${this.selectedYear()}`;
+                a.download = `desglose_fiscal_${period}.csv`;
+                a.click();
                 window.URL.revokeObjectURL(url);
-                // Log removed
             },
-            error: (err) => {
-                console.error('❌ [TaxBreakdown] Error en exportación:', err);
-            }
+            error: (err) => console.error('Error exportando:', err)
         });
+    }
+
+    getMonthLabel(v: number): string {
+        return this.months.find(m => m.value === v)?.label || '';
+    }
+
+    getStatusBadge(status: string): string {
+        const map: any = {
+            pending: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
+            declared: 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
+            paid: 'bg-lime-500/20 text-lime-400 border border-lime-500/30',
+            cancelled: 'bg-red-500/20 text-red-400 border border-red-500/30'
+        };
+        return map[status] || 'bg-slate-500/20 text-slate-400';
+    }
+
+    getStatusLabel(status: string): string {
+        const map: any = { pending: 'Pendiente', declared: 'Declarado', paid: 'Pagado', cancelled: 'Cancelado' };
+        return map[status] || status;
+    }
+
+    formatCurrency(v: number): string {
+        if (!v && v !== 0) return 'MX$0.00';
+        return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(v);
+    }
+
+    get monthYearLabel(): string {
+        return `${this.getMonthLabel(this.selectedMonth())} ${this.selectedYear()}`;
     }
 }

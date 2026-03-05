@@ -650,7 +650,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     if (!this.coursesEnabled()) return; // 🔥 Bloquear navegación
 
-    console.log('Navigate to course:', course);
+
     if (course.slug) {
       this.router.navigate(["/course-detail", course.slug]);
     } else {

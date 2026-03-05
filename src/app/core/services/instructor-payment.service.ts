@@ -278,6 +278,12 @@ export class InstructorPaymentService {
     );
   }
 
+  disconnectStripe() {
+    return this.http.delete<{ success: boolean; message: string }>(
+      `${environment.url}stripe/connect/disconnect`
+    );
+  }
+
   getStripeDashboardLink() {
     return this.http.get<{ success: boolean; dashboard_url: string }>(
       `${environment.url}stripe/connect/dashboard`

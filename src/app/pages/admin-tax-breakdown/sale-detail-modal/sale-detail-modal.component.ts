@@ -25,16 +25,16 @@ export class SaleDetailModalComponent {
             return this.retention.sale.total_amount;
         }
         const netoRepartir = this.retention.gross_earning * 2;
-        const paypalIn = this.getPayPalInCommission();
-        return netoRepartir + paypalIn;
+        const stripeIn = this.getStripeInCommission();
+        return netoRepartir + stripeIn;
     }
 
     /**
-     * Calcula la comisión de PayPal al recibir el pago
+     * Calcula la comisión de Stripe al recibir el pago
      */
-    getPayPalInCommission(): number {
-        if (this.retention?.platform_breakdown?.paypal_receive_commission) {
-            return this.retention.platform_breakdown.paypal_receive_commission;
+    getStripeInCommission(): number {
+        if (this.retention?.platform_breakdown?.stripe_receive_commission) {
+            return this.retention.platform_breakdown.stripe_receive_commission;
         }
         const clientTotal = this.retention?.sale?.total_amount || (this.retention.gross_earning * 2 + 8.40);
         return (clientTotal * 0.04) + 4.00;
@@ -49,7 +49,7 @@ export class SaleDetailModalComponent {
         this.isDeclaring.set(true);
         this.taxService.generateCFDI(this.retention._id).subscribe({
             next: (res: any) => {
-                console.log('✅ Declaración exitosa', res);
+
                 // Actualizar el status localmente para que el botón cambie
                 this.retention.status = 'declared';
                 // Si el backend devolvió URLs de CFDI, guardarlas para mostrar botones de descarga

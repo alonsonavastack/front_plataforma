@@ -154,6 +154,7 @@ export class AdminPaymentHistoryComponent implements OnInit {
       next: (response) => {
         if (response.success) {
           this.success.set('Pago marcado como "En Proceso" exitosamente');
+          this.toast.success('Actualizado', 'Pago marcado como "En Proceso" exitosamente');
           this.loadPayments(this.currentPage());
           this.closeModals();
           setTimeout(() => this.success.set(null), 3000);
@@ -178,6 +179,7 @@ export class AdminPaymentHistoryComponent implements OnInit {
       next: (response) => {
         if (response.success) {
           this.success.set('Pago completado exitosamente');
+          this.toast.success('Pago completado', 'El pago se ha marcado como completado exitosamente');
           this.loadPayments(this.currentPage());
           this.closeModals();
           setTimeout(() => this.success.set(null), 3000);

@@ -3,50 +3,51 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-@Injectable({
-    providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class TaxBreakdownService {
     private http = inject(HttpClient);
     private apiUrl = `${environment.url}admin/tax-breakdown`;
 
-    // Obtener reporte de retenciones
-    getSalesBreakdown(month?: number, year?: number, instructorSearch?: string, page: number = 1, limit: number = 20, status?: string): Observable<any> {
-        let params = new HttpParams();
-        if (month) params = params.set('month', month);
-        if (year) params = params.set('year', year);
-        // ✅ Cambio: enviar como instructor_search (texto) en lugar de instructor_id (ObjectId)
-        if (instructorSearch) params = params.set('instructor_search', instructorSearch);
-        params = params.set('page', page);
-        params = params.set('limit', limit);
-        if (status && status !== 'all') params = params.set('status', status);
-
-        return this.http.get(`${this.apiUrl}/sales`, { params });
+    getSalesBreakdown(
+        month?: number, year?: number, instructorSearch?: string,
+        page = 1, limit = 20, status?: string,
+        startDate?: string, endDate?: string
+    ): Observable<any> {
+        let p = new HttpParams();
+        if (month) p = p.set('month', month);
+        if (year) p = p.set('year', year);
+        if (instructorSearch) p = p.set('instructor_search', instructorSearch);
+        p = p.set('page', page).set('limit', limit);
+        if (status && status !== 'all') p = p.set('status', status);
+        if (startDate) p = p.set('start_date', startDate);
+        if (endDate) p = p.set('end_date', endDate);
+        return this.http.get(`${this.apiUrl}/sales`, { params: p });
     }
 
-    // Generar CFDI (Mock)
+    getSummary(): Observable<any> {
+        return this.http.get(`${this.apiUrl}/summary`);
+    }
+
+    exportRetentions(
+        month: number, year: number, instructorSearch?: string,
+        status?: string, startDate?: string, endDate?: string
+    ): Observable<Blob> {
+        let p = new HttpParams().set('month', month).set('year', year);
+        if (instructorSearch) p = p.set('instructor_search', instructorSearch);
+        if (status && status !== 'all') p = p.set('status', status);
+        if (startDate) p = p.set('start_date', startDate);
+        if (endDate) p = p.set('end_date', endDate);
+        return this.http.get(`${this.apiUrl}/export`, { params: p, responseType: 'blob' });
+    }
+
     generateCFDI(retentionId: string): Observable<any> {
         return this.http.post(`${this.apiUrl}/generate-cfdi`, { retention_id: retentionId });
     }
 
-    // Reenviar CFDI a Telegram
     resendCFDIToTelegram(retentionId: string): Observable<any> {
         return this.http.post(`${this.apiUrl}/resend-cfdi`, { retention_id: retentionId });
     }
 
-    // Exportar a Excel/CSV
-    exportRetentions(month: number, year: number, instructorSearch?: string, status?: string): Observable<Blob> {
-        let params = new HttpParams()
-            .set('month', month)
-            .set('year', year);
-
-        if (instructorSearch) params = params.set('instructor_search', instructorSearch);
-        if (status && status !== 'all') params = params.set('status', status);
-
-        return this.http.get(`${this.apiUrl}/export`, { params, responseType: 'blob' });
-    }
-
-    // Obtener conteo de declaraciones pendientes
     getPendingCount(): Observable<any> {
         return this.http.get(`${this.apiUrl}/pending-count`);
     }

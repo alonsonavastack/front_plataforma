@@ -43,9 +43,7 @@ export class AdminInstructorPaymentsComponent implements OnInit {
     const defaultStats = {
       wallet: { count: 0, total: 0 },
       stripe: { count: 0, total: 0 },
-      mixed_stripe: { count: 0, total: 0, wallet_part: 0, stripe_part: 0 },
-      paypal: { count: 0, total: 0 },
-      mixed_paypal: { count: 0, total: 0, wallet_part: 0, paypal_part: 0 }
+      mixed_stripe: { count: 0, total: 0, wallet_part: 0, stripe_part: 0 }
     };
 
     const summary = this.summary() as any;
@@ -280,25 +278,35 @@ export class AdminInstructorPaymentsComponent implements OnInit {
   }
 
   getPaymentMethodTooltip(config: InstructorWithEarnings['paymentConfig']): string {
-    if (!config || !config.preferredMethod) return 'Sin método de pago configurado';
-    if (config.preferredMethod === 'stripe') {
-      // NOTE: Using as any for stripeConnected as it might not be typed in the interface yet
-      return `Stripe: ${(config as any).stripeConnected ? 'Conectado' : 'No Conectado'}`;
+    const method = this.getDisplayMethod(config);
+    if (method === 'none') return 'Sin método de pago configurado';
+    if (method === 'stripe') {
+      return `Stripe: ${config.stripeConnected ? 'Activo' : 'No Conectado'}`;
     }
-    if (config.preferredMethod === 'paypal') {
-      return `PayPal: ${config.paypalConnected ? 'Conectado' : 'No Conectado'}`;
+    if (method === 'paypal') {
+      return `PayPal: ${config.paypalConnected ? 'Activo' : 'No Conectado'}`;
     }
-    return 'Método de pago no especificado';
+    return 'Método de pago especificado';
+  }
+
+  getDisplayMethod(config: InstructorWithEarnings['paymentConfig']): string {
+    if (!config) return 'none';
+    if (config.preferredMethod && config.preferredMethod !== 'none') {
+      return config.preferredMethod;
+    }
+    if (config.stripeConnected) return 'stripe';
+    if (config.paypalConnected) return 'paypal';
+    return 'none';
   }
 
   getMethodBadgeClass(method: string): string {
     const colors = {
-      stripe: 'text-indigo-600 bg-indigo-100',
-      paypal: 'text-blue-600 bg-blue-100',
-      wallet: 'text-purple-600 bg-purple-100',
-      none: 'text-gray-600 bg-gray-100'
+      stripe: 'text-indigo-400 bg-indigo-500/20 border-indigo-500/30',
+      paypal: 'text-blue-400 bg-blue-500/20 border-blue-500/30',
+      wallet: 'text-purple-400 bg-purple-500/20 border-purple-500/30',
+      none: 'text-red-400 bg-red-500/20 border-red-500/30'
     };
-    return colors[method as keyof typeof colors] || 'text-orange-600 bg-orange-100';
+    return colors[method as keyof typeof colors] || 'text-orange-400 bg-orange-500/20 border-orange-500/30';
   }
 
   getMethodText(method: string): string {

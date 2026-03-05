@@ -43,7 +43,7 @@ export class BackupConfigComponent implements OnInit, OnDestroy {
     ngOnInit() {
         // Escuchar eventos de progreso del socket
         this.wsSubscription = this.websocketService.restoreProgress$.subscribe(data => {
-            console.log('📡 Progreso recibido:', data);
+
             this.restorePercentage.set(data.percentage);
             this.restoreMessage.set(data.message);
 
@@ -82,10 +82,17 @@ export class BackupConfigComponent implements OnInit, OnDestroy {
             next: (event: HttpEvent<any>) => {
                 switch (event.type) {
                     case HttpEventType.DownloadProgress:
-                        clearInterval(interval); // Detener simulación
+                        // Si el backend envía Content-Length, usamos progreso real
                         if (event.total) {
+                            clearInterval(interval); // Detener simulación
                             const realProgress = Math.round((100 * event.loaded) / event.total);
                             this.downloadPercentage.set(Math.max(realProgress, progress)); // No retroceder
+                        } else {
+                            // Si no hay total (stream), continuamos la simulación pero limitando a 99%
+                            if (progress >= 90 && progress < 99) {
+                                progress += 1;
+                                this.downloadPercentage.set(progress);
+                            }
                         }
                         break;
                     case HttpEventType.Response:

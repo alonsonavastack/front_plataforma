@@ -267,7 +267,7 @@ export class CourseDetailComponent {
     const ref = this.route.snapshot.queryParamMap.get('ref');
     if (ref) {
       localStorage.setItem('pending_coupon', ref.trim().toUpperCase());
-      console.log(`🎟️ Cupón de referido capturado: ${ref}`);
+
     }
   }
 

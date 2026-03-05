@@ -726,7 +726,7 @@ export class ProfileStudentComponent implements OnInit, OnDestroy {
         // Escuchar actualizaciones de ventas
         this.websocketSub = this.websocketService.saleStatusUpdate$.subscribe(sale => {
           if (sale.status === 'Pagado') {
-            console.log(`✅ [WebSocket] Venta ${sale._id} pagada. Recargando perfil...`);
+
             this.profileStudentService.reloadProfile();
             this.toast.success('¡Compra Exitosa!', 'Tu pago ha sido procesado y el contenido ya está disponible.');
           }

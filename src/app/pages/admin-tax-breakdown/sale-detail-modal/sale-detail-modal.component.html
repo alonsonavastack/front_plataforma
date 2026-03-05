@@ -66,18 +66,20 @@
 
                 <!-- 2. PayPal Recibir -->
                 <div class="bg-slate-800/50 p-4 rounded-xl border border-yellow-500/30 relative overflow-hidden group">
-                    <p class="text-xs font-semibold text-yellow-500 uppercase tracking-wider mb-2">2. Comisión PayPal
+                    <p class="text-xs font-semibold text-yellow-500 uppercase tracking-wider mb-2">2. Comisión Stripe
                         (In)</p>
-                    <p class="text-2xl font-bold text-white mb-1">-{{ getPayPalInCommission() | currency:'MXN' }}</p>
-                    <p class="text-xs text-slate-500">4% + $4.00 MXN</p>
+                    <p class="text-2xl font-bold text-white mb-1">-{{ getStripeInCommission() | currency:'MXN' }}</p>
+                    <p class="text-xs text-slate-500">Comisión Variable</p>
                 </div>
 
                 <!-- 3. Neto Disponible -->
                 <div class="bg-slate-800/50 p-4 rounded-xl border border-white/20 relative overflow-hidden group">
                     <p class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">3. Neto a Repartir</p>
-                    <p class="text-2xl font-bold text-white mb-1">{{
-                        retention.platform_breakdown?.net_after_paypal_receive || (retention.gross_earning / 0.7) |
-                        currency:'MXN' }}</p>
+                    <p class="text-2xl font-bold text-white mb-1">
+                        {{ (retention.platform_breakdown?.net_after_stripe_receive || (retention.gross_earning / 0.70))
+                        |
+                        currency:'MXN' }}
+                    </p>
                     <p class="text-xs text-slate-500">Base 100%</p>
                 </div>
 
@@ -93,9 +95,10 @@
 
                 <!-- 6. PayPal Enviar -->
                 <div class="bg-slate-800/50 p-4 rounded-xl border border-orange-500/30 relative overflow-hidden group">
-                    <p class="text-xs font-semibold text-orange-400 uppercase tracking-wider mb-2">5. Comisión PayPal
-                        (Out)</p>
-                    <p class="text-2xl font-bold text-white mb-1">-{{ retention.paypal_send_commission | currency:'MXN'
+                    <p class="text-xs font-semibold text-orange-400 uppercase tracking-wider mb-2">5. Comisión Stripe
+                        (Out)
+                    </p>
+                    <p class="text-2xl font-bold text-white mb-1">-{{ retention.stripe_send_commission | currency:'MXN'
                         }}</p>
                     <p class="text-xs text-slate-500">Al transferir al instructor</p>
                 </div>
@@ -191,14 +194,14 @@
                             <span class="text-white font-bold">{{ retention.platform_breakdown.platform_share |
                                 currency:'MXN' }}</span>
                         </div>
-                        <!-- Costos PayPal -->
+                        <!-- Costos Stripe -->
                         <div class="p-4 flex justify-between border-b border-slate-700/50 bg-red-500/5">
                             <span class="text-slate-400 text-sm flex items-center gap-2">
                                 <i class="fas fa-credit-card text-red-400 text-xs"></i>
-                                Costos PayPal
+                                Costos Stripe (Payouts)
                             </span>
                             <span class="text-red-400 font-medium">-{{
-                                retention.platform_breakdown.total_paypal_commissions | currency:'MXN' }}</span>
+                                retention.platform_breakdown.total_stripe_commissions | currency:'MXN' }}</span>
                         </div>
                         <!-- Impuestos -->
                         <div class="p-4 flex justify-between border-b border-slate-700/50 bg-red-500/5">
@@ -206,7 +209,8 @@
                                 <i class="fas fa-receipt text-red-400 text-xs"></i>
                                 Impuestos (ISR+IVA)
                             </span>
-                            <span class="text-red-400 font-medium">-{{ (retention.platform_breakdown.platform_isr +
+                            <span class="text-red-400 font-medium">-{{
+                                (retention.platform_breakdown.platform_isr +
                                 retention.platform_breakdown.platform_iva) | currency:'MXN' }}</span>
                         </div>
                         <!-- Utilidad Neta -->

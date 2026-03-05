@@ -32,7 +32,15 @@ export class InstructorPaymentConfigComponent implements OnInit {
       return;
     }
 
-    this.instructorPaymentService.reloadPaymentConfig();
+    // Sincronizar estado con Stripe antes de cargar la configuración
+    this.instructorPaymentService.getStripeStatus().subscribe({
+      next: () => {
+        this.instructorPaymentService.reloadPaymentConfig();
+      },
+      error: () => {
+        this.instructorPaymentService.reloadPaymentConfig();
+      }
+    });
   }
 
   // ─── Stripe ───────────────────────────────────────────────────────────────
@@ -72,8 +80,34 @@ export class InstructorPaymentConfigComponent implements OnInit {
 
   // ─── Modal ────────────────────────────────────────────────────────────────
 
-  cancelDelete() { this.showDeleteModal.set(false); }
-  executeDelete() { this.showDeleteModal.set(false); }
+  confirmDisconnectStripe() {
+    this.showDeleteModal.set(true);
+  }
+
+  cancelDelete() {
+    this.showDeleteModal.set(false);
+  }
+
+  executeDelete() {
+    this.showDeleteModal.set(false);
+    this.isSaving.set('disconnect');
+    this.clearMessages();
+
+    this.instructorPaymentService.disconnectStripe().subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.success.set({ section: 'stripe', message: res.message });
+          // Recargar para limpiar la vista
+          this.instructorPaymentService.reloadPaymentConfig();
+        }
+        this.isSaving.set('');
+      },
+      error: (err) => {
+        this.error.set({ section: 'stripe', message: err.error?.message || 'Error al desvincular la cuenta.' });
+        this.isSaving.set('');
+      }
+    });
+  }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 

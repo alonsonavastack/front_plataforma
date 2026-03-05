@@ -226,6 +226,23 @@ export const routes: Routes = [
       ),
     canActivate: [roleGuard(["instructor"])],
   },
+  // ─── RUTAS DE RETORNO STRIPE CONNECT ─────────────────────────────────────
+  {
+    path: "instructor/stripe/success",
+    loadComponent: () =>
+      import("./pages/stripe-onboarding-callback/stripe-onboarding-callback.component").then(
+        (m) => m.StripeOnboardingCallbackComponent
+      ),
+    canActivate: [roleGuard(["instructor"])],
+  },
+  {
+    path: "instructor/stripe/reauth",
+    loadComponent: () =>
+      import("./pages/stripe-onboarding-callback/stripe-onboarding-callback.component").then(
+        (m) => m.StripeOnboardingCallbackComponent
+      ),
+    canActivate: [roleGuard(["instructor"])],
+  },
   // PERFIL PÚBLICO DEL INSTRUCTOR POR SLUG 🆕
   {
     path: "instructor/:slug", // 🆕 Cambiar de ':id' a ':slug'

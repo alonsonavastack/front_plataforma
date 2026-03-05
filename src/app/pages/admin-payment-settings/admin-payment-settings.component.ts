@@ -45,7 +45,7 @@ export class AdminPaymentSettingsComponent implements OnInit {
             .subscribe({
                 next: (response) => {
                     const settings = response.settings as any;
-                    console.log('📥 [loadSettings] Datos recibidos del backend:', JSON.stringify(settings?.stripe, null, 2));
+
                     if (settings?.stripe) {
                         this.settingsForm.get('stripe')?.patchValue({
                             mode: settings.stripe.mode || 'test',
@@ -54,7 +54,7 @@ export class AdminPaymentSettingsComponent implements OnInit {
                             publishableKey: settings.stripe.publishableKey || '',
                             webhookSecret: settings.stripe.webhookSecret || ''
                         });
-                        console.log('📝 [loadSettings] Form luego del patchValue:', JSON.stringify(this.settingsForm.value, null, 2));
+
                     }
                 },
                 error: (error) => {
@@ -67,7 +67,7 @@ export class AdminPaymentSettingsComponent implements OnInit {
     saveSettings() {
         if (this.settingsForm.invalid) return;
 
-        console.log('📤 [PaymentSettings] Enviando al backend:', JSON.stringify(this.settingsForm.value, null, 2));
+
 
         this.isSaving.set(true);
         this.successMessage.set('');
