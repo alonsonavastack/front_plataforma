@@ -3,7 +3,9 @@ import { Component, OnInit, signal, computed, effect, OnDestroy, inject } from '
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
+import { WebsocketService } from '../../core/services/websocket.service';
 import { environment } from '../../../environments/environment';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-verify-otp',
@@ -29,8 +31,12 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   private countdownInterval: any;
   private resendInterval: any;
 
+  // Subscriptions
+  private socketSubscription?: Subscription;
+
   constructor(
     private authService: AuthService,
+    private websocketService: WebsocketService,
     private router: Router,
     private route: ActivatedRoute
   ) { }
@@ -104,6 +110,28 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
         this.errorMessage.set('⚠️ Paso 1: Vincula tu cuenta con Telegram para recibir el código.');
         this.canResend.set(true); // Permitir reenvío inmediato
       }
+
+      // 🔌 CONECTAR SOCKET PARA RECIBIR OTP AUTOMÁTICAMENTE
+      this.websocketService.connect(userId, 'registering');
+
+      this.socketSubscription = this.websocketService.newOtpCode$.subscribe(
+        (data) => {
+          if (data && data.code) {
+            console.log('📡 Código OTP recibido por WebSocket:', data.code);
+            // Autocompletar el código
+            this.otpCode.set(data.code);
+            this.successMessage.set('✨ Código recibido automáticamente');
+            this.showInput.set(true);
+
+            // Opcional: Auto-verificar después de un segundo
+            setTimeout(() => {
+              if (this.isCodeValid()) {
+                this.verifyCode();
+              }
+            }, 1000);
+          }
+        }
+      );
     });
 
     // Iniciar countdown de expiración
@@ -124,6 +152,9 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.clearTimers();
+    if (this.socketSubscription) {
+      this.socketSubscription.unsubscribe();
+    }
   }
 
   private startExpirationCountdown(): void {

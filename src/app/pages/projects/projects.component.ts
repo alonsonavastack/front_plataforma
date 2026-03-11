@@ -112,9 +112,9 @@ export class ProjectsComponent implements OnInit {
     // Si es gratuito, no mostrar error
     if (isFree) return null;
 
-    // Si el precio está entre 0.01 y 9.99, mostrar error
-    if (price > 0 && price < 10) {
-      return 'El precio mínimo debe ser $10.00 MXN';
+    // Si el precio está entre 0.01 y 99.99, mostrar error
+    if (price > 0 && price < 100) {
+      return 'El precio mínimo debe ser $100.00 MXN';
     }
 
     return null;
@@ -312,9 +312,9 @@ export class ProjectsComponent implements OnInit {
     const isFree = this.projectForm.get('isFree')?.value;
     const price = this.projectForm.get('price_mxn')?.value || 0;
 
-    // Si NO es gratuito y el precio es menor a $10, mostrar error
-    if (!isFree && price > 0 && price < 10) {
-      alert('⚠️ El precio mínimo debe ser $10.00 MXN o puedes marcarlo como gratuito');
+    // Si NO es gratuito y el precio es menor a $100, mostrar error
+    if (!isFree && price > 0 && price < 100) {
+      alert('⚠️ El precio mínimo debe ser $100.00 MXN o puedes marcarlo como gratuito');
       return;
     }
 

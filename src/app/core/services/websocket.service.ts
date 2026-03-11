@@ -57,6 +57,10 @@ export interface RestoreProgressNotification {
   message: string;
 }
 
+export interface OtpCodeNotification {
+  code: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -69,6 +73,7 @@ export class WebsocketService {
   private saleStatusUpdateSubject = new Subject<SaleNotification>();
   private newRefundRequestSubject = new Subject<RefundNotification>(); // 🆕
   private restoreProgressSubject = new Subject<RestoreProgressNotification>(); // 🆕 Backup Progress
+  private newOtpCodeSubject = new Subject<OtpCodeNotification>(); // 🆕 OTP Code
   private connectionSubject = new Subject<boolean>();
 
   // Observables públicos
@@ -76,6 +81,7 @@ export class WebsocketService {
   public saleStatusUpdate$ = this.saleStatusUpdateSubject.asObservable();
   public newRefundRequest$ = this.newRefundRequestSubject.asObservable(); // 🆕
   public restoreProgress$ = this.restoreProgressSubject.asObservable(); // 🆕
+  public newOtpCode$ = this.newOtpCodeSubject.asObservable(); // 🆕 OTP Code
   public connection$ = this.connectionSubject.asObservable();
 
   constructor() { }
@@ -148,6 +154,11 @@ export class WebsocketService {
     // 🆕 Evento: Progreso de Restauración
     this.socket.on('restore_progress', (data: RestoreProgressNotification) => {
       this.restoreProgressSubject.next(data);
+    });
+
+    // 🆕 Evento: Nuevo código OTP
+    this.socket.on('new_otp_code', (data: OtpCodeNotification) => {
+      this.newOtpCodeSubject.next(data);
     });
 
     // Evento: Desconexión

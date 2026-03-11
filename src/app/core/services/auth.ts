@@ -150,6 +150,29 @@ export class AuthService {
     setTimeout(() => {
       this.verifyStoredSession();
     }, 0);
+
+    // 🔥 Escuchar cuando el usuario regresa a la pestaña (por si el token expiró o se cerró sesión en otra)
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          // Verificar localStorage nuevamente de forma silenciosa
+          const currentToken = this.getFromStorage('token');
+          const currentUserJson = this.getFromStorage('user', true);
+
+          if (!currentToken || !currentUserJson) {
+            // Si ya no hay token (cerró sesión en otra pestaña) o se borró
+            if (this.token() || this.user()) {
+              this.token.set(null);
+              this.user.set(null);
+              this.router.navigate(['/login'], { queryParams: { sessionExpired: 'true' } });
+            }
+          } else {
+            // Si el token aún existe, revalidar su expiración sin golpear la API
+            this.checkTokenOnLoad();
+          }
+        }
+      });
+    }
   }
 
   // 🔥 MÉTODOS DE GESTIÓN AUTOMÁTICA DE SESIÓN
@@ -193,23 +216,28 @@ export class AuthService {
     }
   }
 
-  /**
-   * Programa un timer para hacer logout cuando expire el token
-   * @param expiresIn Milisegundos hasta la expiración
-   */
   private scheduleLogoutOnExpiration(expiresIn: number): void {
     // Limpiar timer anterior si existe
     if (this.logoutTimer) {
       clearTimeout(this.logoutTimer);
     }
 
-    // Programar logout para cuando expire el token
-    this.logoutTimer = setTimeout(() => {
+    // El límite máximo para setTimeout es un entero de 32 bits (aprox 24.8 días).
+    // Si expiresIn es mayor, setTimeout fallará silenciosamente y se ejecutará de inmediato.
+    const MAX_TIMEOUT = 2147483647;
 
-      this.forceLogout('Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
-    }, expiresIn);
-
-
+    if (expiresIn > MAX_TIMEOUT) {
+      // Si el tiempo excede el máximo, programamos el timer para el máximo.
+      // Cuando despierte, volverá a evaluar cuánto falta.
+      this.logoutTimer = setTimeout(() => {
+        this.checkTokenOnLoad();
+      }, MAX_TIMEOUT);
+    } else {
+      // Programar logout para cuando expire el token
+      this.logoutTimer = setTimeout(() => {
+        this.forceLogout('Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
+      }, expiresIn);
+    }
   }
 
   /**
