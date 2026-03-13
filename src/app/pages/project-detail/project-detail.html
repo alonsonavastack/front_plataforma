@@ -89,6 +89,12 @@
                             }
                         </div>
 
+                        <!-- 🚀 NUEVO: Botones de Compartir -->
+                        <div class="pt-6">
+                            <app-share-buttons [url]="currentUrl()" [title]="project()?.title || ''"
+                                [description]="project()?.subtitle || ''" [image]="imageUrl" />
+                        </div>
+
                         <!-- Description Block -->
                         <div class="prose prose-invert max-w-none pt-8 border-t border-white/10">
                             <h3 class="text-white font-bold text-lg mb-4">Descripción del proyecto</h3>

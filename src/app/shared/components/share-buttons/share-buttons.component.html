@@ -1,0 +1,160 @@
+<div>
+    <!-- Botón Trigger -->
+    <button (click)="openModal()"
+        class="px-6 py-3 bg-slate-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 border border-slate-700 hover:bg-slate-700 transition w-full sm:w-auto">
+        <svg class="w-5 h-5 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z">
+            </path>
+        </svg>
+        Compartir
+    </button>
+
+    <!-- Modal Overlay -->
+    @if (isModalOpen()) {
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 min-h-screen bg-black/80 backdrop-blur-sm"
+        (click)="closeModal()">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl relative"
+            style="animation: fade-in-up 0.3s ease-out;" (click)="$event.stopPropagation()">
+
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-5 border-b border-white/5">
+                <h3 class="text-white font-bold text-lg">Compartir en...</h3>
+                <button (click)="closeModal()"
+                    class="text-slate-400 hover:text-white transition-colors bg-slate-800 hover:bg-slate-700 p-2 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6">
+                <p class="text-slate-400 leading-relaxed text-sm mb-6 text-center">Selecciona una plataforma para
+                    compartir este proyecto con tu red o amigos.</p>
+
+                <div class="grid grid-cols-4 gap-4 justify-items-center">
+
+                    <!-- WhatsApp -->
+                    <a [href]="whatsappUrl()" target="_blank" rel="noopener noreferrer" (click)="closeModal()"
+                        class="group flex flex-col items-center gap-1 cursor-pointer" title="WhatsApp">
+                        <div
+                            class="w-12 h-12 rounded-full flex items-center justify-center bg-[#25D366]/10 text-[#25D366] group-hover:bg-[#25D366] group-hover:text-white transition-all border border-[#25D366]/20 group-hover:scale-110">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.126.554 4.168 1.603 5.975L.034 24l6.16-1.616c1.748.964 3.712 1.472 5.837 1.472 6.646 0 12.031-5.385 12.031-12.031S18.677 0 12.031 0zm3.87 17.202c-.58.336-1.392.518-2.227.525-1.076.01-2.261-.25-3.69-.974-1.67-.845-3.136-2.125-4.225-3.692-.619-.89-.968-1.875-1.01-2.915-.043-1.033.256-1.996.883-2.733.308-.363.697-.57 1.133-.588.163-.008.324.032.483.09.28.106.52.276.71.5.176.21.576" />
+                                <path
+                                    d="M14.77 15.65c-.443.342-.924.526-1.428.529-.687.004-1.444-.26-2.355-.83-1.066-.667-2.001-1.676-2.696-2.913C7.57 11.166 7.21 10.15 7.182 9.155c-.027-.98.24-1.892.833-2.583.472-.55.932-.61 1.25-.615.158-.003.313.024.462.072.13.042.868.188 1.127.817.288.702.663 1.673.722 1.8.06.126.1.274.041.439-.06.165-.177.306-.318.435-.166.155-.355.334-.51.49-.168.168-.35.348-.152.688.197.34 1.054 1.731 2.316 2.859 1.624 1.45 3.016 1.905 3.354 2.07.338.165.534.148.729-.074.195-.221.841-.98 1.067-1.316.225-.335.45-.279.754-.165.304.113 1.921.907 2.25 1.072.33.165.55.247.632.385.083.137.083.797-.248 1.545z" />
+                            </svg>
+                        </div>
+                        <span
+                            class="text-xs text-slate-500 group-hover:text-slate-300 font-medium transition-colors">WhatsApp</span>
+                    </a>
+
+                    <!-- Facebook -->
+                    <a [href]="facebookUrl()" target="_blank" rel="noopener noreferrer" (click)="closeModal()"
+                        class="group flex flex-col items-center gap-1 cursor-pointer" title="Facebook">
+                        <div
+                            class="w-12 h-12 rounded-full flex items-center justify-center bg-[#1877F2]/10 text-[#1877F2] group-hover:bg-[#1877F2] group-hover:text-white transition-all border border-[#1877F2]/20 group-hover:scale-110">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                            </svg>
+                        </div>
+                        <span
+                            class="text-xs text-slate-500 group-hover:text-slate-300 font-medium transition-colors">Facebook</span>
+                    </a>
+
+                    <!-- Twitter/X -->
+                    <a [href]="twitterUrl()" target="_blank" rel="noopener noreferrer" (click)="closeModal()"
+                        class="group flex flex-col items-center gap-1 cursor-pointer" title="X (Twitter)">
+                        <div
+                            class="w-12 h-12 rounded-full flex items-center justify-center bg-black/30 text-white group-hover:bg-black group-hover:text-white transition-all border border-white/20 group-hover:scale-110">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                            </svg>
+                        </div>
+                        <span
+                            class="text-xs text-slate-500 group-hover:text-slate-300 font-medium transition-colors">X</span>
+                    </a>
+
+                    <!-- LinkedIn -->
+                    <a [href]="linkedinUrl()" target="_blank" rel="noopener noreferrer" (click)="closeModal()"
+                        class="group flex flex-col items-center gap-1 cursor-pointer" title="LinkedIn">
+                        <div
+                            class="w-12 h-12 rounded-full flex items-center justify-center bg-[#0077b5]/10 text-[#0077b5] group-hover:bg-[#0077b5] group-hover:text-white transition-all border border-[#0077b5]/20 group-hover:scale-110">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                            </svg>
+                        </div>
+                        <span
+                            class="text-xs text-slate-500 group-hover:text-slate-300 font-medium transition-colors">LinkedIn</span>
+                    </a>
+
+                    <!-- Telegram -->
+                    <a [href]="telegramUrl()" target="_blank" rel="noopener noreferrer" (click)="closeModal()"
+                        class="group flex flex-col items-center gap-1 cursor-pointer" title="Telegram">
+                        <div
+                            class="w-12 h-12 rounded-full flex items-center justify-center bg-[#0088cc]/10 text-[#0088cc] group-hover:bg-[#0088cc] group-hover:text-white transition-all border border-[#0088cc]/20 group-hover:scale-110">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+                            </svg>
+                        </div>
+                        <span
+                            class="text-xs text-slate-500 group-hover:text-slate-300 font-medium transition-colors">Telegram</span>
+                    </a>
+
+                    <!-- Reddit -->
+                    <a [href]="redditUrl()" target="_blank" rel="noopener noreferrer" (click)="closeModal()"
+                        class="group flex flex-col items-center gap-1 cursor-pointer" title="Reddit">
+                        <div
+                            class="w-12 h-12 rounded-full flex items-center justify-center bg-[#FF4500]/10 text-[#FF4500] group-hover:bg-[#FF4500] group-hover:text-white transition-all border border-[#FF4500]/20 group-hover:scale-110">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M24 11.779c0-1.459-1.192-2.645-2.657-2.645-.715 0-1.363.286-1.84.746-1.81-1.191-4.259-1.949-6.971-2.046l1.483-4.669 4.016.941-.006.058c0 1.193.975 2.163 2.174 2.163 1.198 0 2.172-.97 2.172-2.163s-.975-2.164-2.172-2.164c-.92 0-1.704.574-2.021 1.379l-4.329-1.015c-.189-.046-.381.063-.44.249l-1.654 5.207c-2.838.034-5.409.798-7.3 2.025-.474-.438-1.103-.712-1.799-.712-1.465 0-2.656 1.187-2.656 2.646 0 .97.533 1.811 1.317 2.271-.052.282-.086.567-.086.857 0 3.911 4.808 7.093 10.719 7.093s10.72-3.182 10.72-7.093c0-.274-.029-.544-.075-.81.832-.447 1.405-1.312 1.405-2.318zm-17.224 1.816c0-.868.71-1.575 1.582-1.575.872 0 1.581.707 1.581 1.575s-.709 1.574-1.581 1.574-1.582-.706-1.582-1.574zm9.061 4.669c-1.797 1.797-4.707 1.802-4.722 1.802h-.005c-.015 0-2.925-.005-4.722-1.802-.213-.213-.213-.56 0-.773.214-.214.56-.214.773 0 1.411 1.411 3.633 1.432 3.949 1.432.324 0 2.547-.021 3.948-1.432.214-.214.56-.214.774 0 .213.213.213.56 0 .773zm-3.566-3.095c-.872 0-1.581-.706-1.581-1.574 0-.868.709-1.575 1.581-1.575s1.581.707 1.581 1.575c0 .868-.709 1.574-1.581 1.574z" />
+                            </svg>
+                        </div>
+                        <span
+                            class="text-xs text-slate-500 group-hover:text-slate-300 font-medium transition-colors">Reddit</span>
+                    </a>
+
+                    <!-- Email -->
+                    <a [href]="emailUrl()" target="_blank" rel="noopener noreferrer" (click)="closeModal()"
+                        class="group flex flex-col items-center gap-1 cursor-pointer" title="Email">
+                        <div
+                            class="w-12 h-12 rounded-full flex items-center justify-center bg-slate-400/10 text-slate-400 group-hover:bg-slate-500 group-hover:text-white transition-all border border-slate-400/20 group-hover:scale-110">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                        </div>
+                        <span
+                            class="text-xs text-slate-500 group-hover:text-slate-300 font-medium transition-colors">Email</span>
+                    </a>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+    }
+
+    <style>
+        @keyframes fade-in-up {
+            0% {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+    </style>
+</div>

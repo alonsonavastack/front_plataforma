@@ -13,11 +13,12 @@ import { Review } from '../../core/services/review.service';
 import { HeaderComponent } from '../../layout/header/header';
 import { RouterLink } from '@angular/router';
 import { SeoService } from '../../core/services/seo.service'; // 🆕
+import { ShareButtonsComponent } from '../../shared/components/share-buttons/share-buttons.component';
 
 @Component({
     standalone: true,
     selector: 'app-project-detail',
-    imports: [CommonModule, MxnCurrencyPipe, CourseReviewsComponent, HeaderComponent, RouterLink],
+    imports: [CommonModule, MxnCurrencyPipe, CourseReviewsComponent, HeaderComponent, RouterLink, ShareButtonsComponent],
     templateUrl: './project-detail.html',
 })
 export class ProjectDetailComponent {
@@ -58,6 +59,13 @@ export class ProjectDetailComponent {
     });
 
     // Video URL segura
+    currentUrl = computed(() => {
+        // En SSR window isn't available
+        if (typeof window !== 'undefined') {
+            return window.location.href;
+        }
+        return '';
+    });
     videoUrl = computed<SafeResourceUrl | null>(() => {
         const p = this.project();
         if (!p?.url_video) return null;
