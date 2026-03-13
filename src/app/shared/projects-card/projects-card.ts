@@ -10,11 +10,12 @@ import { CurrencyService } from '../../services/currency.service';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { MxnCurrencyPipe } from '../pipes/mxn-currency.pipe';
+import { ShareButtonsComponent } from '../components/share-buttons/share-buttons.component';
 
 @Component({
   selector: 'app-projects-card',
   standalone: true,
-  imports: [CommonModule, RouterLink, MxnCurrencyPipe, FormsModule],
+  imports: [CommonModule, RouterLink, MxnCurrencyPipe, FormsModule, ShareButtonsComponent],
   templateUrl: './projects-card.html',
   styleUrls: ['./projects-card.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -49,6 +50,14 @@ export class ProjectsCardComponent {
       return 'https://via.placeholder.com/400x250.png?text=Proyecto';
     }
     return `${environment.images.project}${p.imagen}`;
+  });
+
+  // URL for share button
+  projectUrl = computed(() => {
+    const p = this.project();
+    if (!p?._id) return '';
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/project-detail/${p._id}`;
   });
 
   // Obtener nombre del instructor

@@ -44,6 +44,7 @@ import { RefundsService } from '../../core/services/refunds.service'; // 🔥 NU
 import { WalletService } from '../../core/services/wallet.service'; // 💰 Para billetera
 import { MxnCurrencyPipe } from '../../shared/pipes/mxn-currency.pipe';
 import { SeoService } from '../../core/services/seo.service'; // 🆕
+import { ShareButtonsComponent } from '../../shared/components/share-buttons/share-buttons.component';
 
 @Component({
   standalone: true,
@@ -59,6 +60,7 @@ import { SeoService } from '../../core/services/seo.service'; // 🆕
     InstructorCardComponent,
     LegalModalComponent,
     MxnCurrencyPipe,
+    ShareButtonsComponent,
   ],
   templateUrl: "./home.html",
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -765,6 +767,17 @@ export class HomeComponent implements OnInit, OnDestroy {
       ? environment.images.course
       : environment.images.course + '/';
     return base + encodeURIComponent(img);
+  }
+
+  /**
+   * Construir URL para el botón de compartir
+   */
+  buildShareUrl(item: any): string {
+    const baseUrl = window.location.origin;
+    if (item.type === 'course') {
+      return `${baseUrl}/course-detail/${item.slug}`;
+    }
+    return `${baseUrl}/project-detail/${item._id}`;
   }
 
   // ========== MÉTODOS PARA LEGAL MODAL ==========

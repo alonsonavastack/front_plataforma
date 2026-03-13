@@ -9,10 +9,10 @@ import { AuthService } from '../../../core/services/auth';
 import { environment } from '../../../../environments/environment';
 
 @Component({
-    selector: 'app-coupons',
-    standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule],
-    template: `
+  selector: 'app-coupons',
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  template: `
     <div class="space-y-8">
       <!-- Header Moderno con Gradiente -->
       <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700/50 p-6 sm:p-10">
@@ -245,110 +245,110 @@ import { environment } from '../../../../environments/environment';
   `
 })
 export class CouponsComponent implements OnInit {
-    couponService = inject(CouponService);
-    projectService = inject(ProjectService);
-    courseService = inject(CoursesService); // Añadir servicio de cursos
-    authService = inject(AuthService);
-    toastService = inject(ToastService);
-    fb = inject(FormBuilder);
+  couponService = inject(CouponService);
+  projectService = inject(ProjectService);
+  courseService = inject(CoursesService); // Añadir servicio de cursos
+  authService = inject(AuthService);
+  toastService = inject(ToastService);
+  fb = inject(FormBuilder);
 
-    coupons = signal<any[]>([]);
-    projects = signal<any[]>([]);
-    courses = signal<any[]>([]);
-    loading = signal(true);
-    creating = signal(false);
-    showCreateModal = signal(false);
+  coupons = signal<any[]>([]);
+  projects = signal<any[]>([]);
+  courses = signal<any[]>([]);
+  loading = signal(true);
+  creating = signal(false);
+  showCreateModal = signal(false);
 
-    createForm: FormGroup = this.fb.group({
-        project_id: ['', Validators.required],
-        days_duration: [3, Validators.required]
+  createForm: FormGroup = this.fb.group({
+    project_id: ['', Validators.required],
+    days_duration: [3, Validators.required]
+  });
+
+  ngOnInit() {
+    this.loadData();
+  }
+
+  loadData() {
+    this.loading.set(true);
+    // Cargar cupones
+    this.couponService.getCoupons().subscribe({
+      next: (res) => {
+        this.coupons.set(res.coupons);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
     });
 
-    ngOnInit() {
-        this.loadData();
-    }
-
-    loadData() {
-        this.loading.set(true);
-        // Cargar cupones
-        this.couponService.getCoupons().subscribe({
-            next: (res) => {
-                this.coupons.set(res.coupons);
-                this.loading.set(false);
-            },
-            error: () => this.loading.set(false)
-        });
-
-        // Cargar proyectos y cursos del instructor para el select
-        const user = this.authService.user();
-        if (user) {
-            // Cargar proyectos
-            this.projectService.getProjectsByInstructor(user._id).subscribe({
-                next: (res: any) => {
-                    // Ajustar según la respuesta de la API (asumiendo formato estándar)
-                    this.projects.set(res.projects || res.data || []);
-                }
-            });
-            // Cargar cursos
-            this.courseService.listCoursesInstructor().subscribe({
-                next: (res: any) => {
-                    this.courses.set(res.courses || []);
-                }
-            });
+    // Cargar proyectos y cursos del instructor para el select
+    const user = this.authService.user();
+    if (user) {
+      // Cargar proyectos
+      this.projectService.getProjectsByInstructor(user._id).subscribe({
+        next: (res: any) => {
+          // Ajustar según la respuesta de la API (asumiendo formato estándar)
+          this.projects.set(res.projects || res.data || []);
         }
-    }
-
-    createCoupon() {
-        if (this.createForm.invalid) return;
-
-        this.creating.set(true);
-        const { project_id, days_duration } = this.createForm.value;
-
-        // Determinar si es curso o proyecto basándose en las listas cargadas
-        let product_type = 'project';
-        if (this.courses().some(c => c._id === project_id)) {
-            product_type = 'course';
+      });
+      // Cargar cursos
+      this.courseService.listCoursesInstructor().subscribe({
+        next: (res: any) => {
+          this.courses.set(res.courses || []);
         }
+      });
+    }
+  }
 
-        this.couponService.createCoupon({
-            project_id,
-            product_type,
-            days_duration
-        }).subscribe({
-            next: (res) => {
-                this.toastService.success('Cupón Creado', 'Tu enlace de referido está listo.');
-                this.coupons.update(list => [res.coupon, ...list]); // Agregar al inicio localmente
-                this.showCreateModal.set(false);
-                this.createForm.reset({ days_duration: 3, project_id: '' });
-                this.loadData(); // Recargar para asegurar populate
-            },
-            error: (err) => {
-                this.toastService.error('Error', err.error?.message || 'No se pudo crear el cupón');
-            },
-            complete: () => this.creating.set(false)
-        });
+  createCoupon() {
+    if (this.createForm.invalid) return;
+
+    this.creating.set(true);
+    const { project_id, days_duration } = this.createForm.value;
+
+    // Determinar si es curso o proyecto basándose en las listas cargadas
+    let product_type = 'project';
+    if (this.courses().some(c => c._id === project_id)) {
+      product_type = 'course';
     }
 
-    copyLink(coupon: any) {
-        const product = coupon.projects[0];
-        if (!product) {
-            this.toastService.error('Error', 'No se encontró el producto asociado a este cupón');
-            return;
-        }
+    this.couponService.createCoupon({
+      project_id,
+      product_type,
+      days_duration
+    }).subscribe({
+      next: (res) => {
+        this.toastService.success('Cupón Creado', 'Tu enlace de referido está listo.');
+        this.coupons.update(list => [res.coupon, ...list]); // Agregar al inicio localmente
+        this.showCreateModal.set(false);
+        this.createForm.reset({ days_duration: 3, project_id: '' });
+        this.loadData(); // Recargar para asegurar populate
+      },
+      error: (err) => {
+        this.toastService.error('Error', err.error?.message || 'No se pudo crear el cupón');
+      },
+      complete: () => this.creating.set(false)
+    });
+  }
 
-        // Usar slug si está disponible, de lo contrario usar _id
-        const productIdentifier = product.slug || product._id;
-
-        // Construir ruta según tipo de producto
-        const route = coupon.product_type === 'course'
-            ? `course-detail/${productIdentifier}`
-            : `project-detail/${productIdentifier}`;
-
-        const baseUrl = window.location.origin;
-        const link = `${baseUrl}/#/${route}?coupon=${coupon.code}`;
-
-        navigator.clipboard.writeText(link).then(() => {
-            this.toastService.success('Enlace Copiado', 'Compártelo para ganar 80% de comisión');
-        });
+  copyLink(coupon: any) {
+    const product = coupon.projects[0];
+    if (!product) {
+      this.toastService.error('Error', 'No se encontró el producto asociado a este cupón');
+      return;
     }
+
+    // Usar slug si está disponible, de lo contrario usar _id
+    const productIdentifier = product.slug || product._id;
+
+    // Construir ruta según tipo de producto
+    const route = coupon.product_type === 'course'
+      ? `course-detail/${productIdentifier}`
+      : `project-detail/${productIdentifier}`;
+
+    const baseUrl = window.location.origin;
+    const link = `${baseUrl}/${route}?coupon=${coupon.code}`;
+
+    navigator.clipboard.writeText(link).then(() => {
+      this.toastService.success('Enlace Copiado', 'Compártelo para ganar 80% de comisión');
+    });
+  }
 }

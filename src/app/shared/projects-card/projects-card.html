@@ -140,6 +140,11 @@
       </div>
 
       }
+
+      <!-- 🔥 Botón Compartir  -->
+      <app-share-buttons [url]="projectUrl()" [title]="project().title" [description]="project().subtitle || ''"
+        [image]="imageUrl()" design="icon">
+      </app-share-buttons>
     </div>
 
     <!-- Botón de acción con estados -->
@@ -211,7 +216,8 @@
         <button (click)="openNotesModal($event)" class="group/btn relative px-3 py-3 rounded-xl font-bold text-sm
          bg-amber-500/20 border border-amber-500/40 text-amber-400
          hover:bg-amber-500/30 hover:border-amber-400/60
-           transition-all duration-300 flex items-center justify-center" [title]="isAdmin() ? 'Agregar nota' : 'Ver notas'" [class.ring-1]="project().admin_notes">
+           transition-all duration-300 flex items-center justify-center"
+          [title]="isAdmin() ? 'Agregar nota' : 'Ver notas'" [class.ring-1]="project().admin_notes">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -297,12 +303,16 @@
 
 <!-- Modal -->
 <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-  <div (click)="$event.stopPropagation()" class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl max-w-md w-full border border-white/10 overflow-hidden">
+  <div (click)="$event.stopPropagation()"
+    class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl max-w-md w-full border border-white/10 overflow-hidden">
     <!-- Header -->
-    <div class="bg-gradient-to-r from-amber-500/20 to-amber-600/20 px-6 py-4 border-b border-white/10 flex items-center justify-between">
+    <div
+      class="bg-gradient-to-r from-amber-500/20 to-amber-600/20 px-6 py-4 border-b border-white/10 flex items-center justify-between">
       <h3 class="text-lg font-bold text-white flex items-center gap-2">
         <svg class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+          <path
+            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+          </path>
         </svg>
         {{ isAdmin() ? 'Nota de Administrador' : 'Notas del Proyecto' }}
       </h3>
@@ -317,19 +327,18 @@
     <div class="px-6 py-4 space-y-4">
       <!-- Información -->
       <div class="text-sm text-slate-300">
-        <p class="mb-2">{{ isAdmin() ? 'Agregar una nota privada para este proyecto en estado borrador.' : 'Nota del administrador sobre este proyecto.' }}</p>
+        <p class="mb-2">{{ isAdmin() ? 'Agregar una nota privada para este proyecto en estado borrador.' : 'Nota del
+          administrador sobre este proyecto.' }}</p>
       </div>
 
       <!-- Textarea -->
       @if (isAdmin()) {
-      <textarea
-        [(ngModel)]="noteText"
-        placeholder="Escribe tu nota aquí..."
-        class="w-full h-32 px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 resize-none"
-      ></textarea>
+      <textarea [(ngModel)]="noteText" placeholder="Escribe tu nota aquí..."
+        class="w-full h-32 px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 resize-none"></textarea>
       } @else {
       <!-- Solo lectura para instructor -->
-      <div class="w-full h-32 px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white/80 overflow-y-auto">
+      <div
+        class="w-full h-32 px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white/80 overflow-y-auto">
         {{ project().admin_notes || 'Sin notas' }}
       </div>
       }
@@ -342,11 +351,13 @@
 
     <!-- Footer -->
     <div class="px-6 py-4 border-t border-white/10 flex gap-3">
-      <button (click)="closeNotesModal()" class="flex-1 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded-lg font-medium transition-colors">
+      <button (click)="closeNotesModal()"
+        class="flex-1 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded-lg font-medium transition-colors">
         {{ isAdmin() ? 'Cancelar' : 'Cerrar' }}
       </button>
       @if (isAdmin()) {
-      <button (click)="saveNote()" [disabled]="isSavingNote()" class="flex-1 px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500/50 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+      <button (click)="saveNote()" [disabled]="isSavingNote()"
+        class="flex-1 px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500/50 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
         {{ isSavingNote() ? 'Guardando...' : 'Guardar Nota' }}
         @if (!isSavingNote()) {
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -12,11 +12,12 @@ import { CoursePublic } from '../../core/models/home.models';
 type AnyObj = Record<string, any>;
 
 import { MxnCurrencyPipe } from '../pipes/mxn-currency.pipe';
+import { ShareButtonsComponent } from '../components/share-buttons/share-buttons.component';
 
 @Component({
   standalone: true,
   selector: 'course-card',
-  imports: [CommonModule, RouterLink, MxnCurrencyPipe],
+  imports: [CommonModule, RouterLink, MxnCurrencyPipe, ShareButtonsComponent],
   templateUrl: './course-card.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -55,6 +56,14 @@ export class CourseCardComponent {
     const c = this.course();
     const img = c.imagen || null;
     return this.buildImage(img);
+  });
+
+  // 🔥 URL para compartir
+  courseUrl = computed(() => {
+    const s = this.slug();
+    if (!s) return '';
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/course-detail/${s}`;
   });
 
   category = computed(() => {

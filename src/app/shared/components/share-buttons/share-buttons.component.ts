@@ -1,4 +1,4 @@
-import { Component, input, computed, signal } from '@angular/core';
+import { Component, input, computed, signal, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -7,22 +7,42 @@ import { CommonModule } from '@angular/common';
     imports: [CommonModule],
     templateUrl: './share-buttons.component.html',
 })
-export class ShareButtonsComponent {
+export class ShareButtonsComponent implements AfterViewInit, OnDestroy {
     // Inputs requeridos y opcionales usando Signals (Angular 17+)
     url = input.required<string>();
     title = input.required<string>();
     description = input<string>('');
     image = input<string>('');
+    design = input<'full' | 'icon'>('full');
 
     // Modal State
     isModalOpen = signal<boolean>(false);
 
+    @ViewChild('modalOverlay') modalOverlay?: ElementRef<HTMLDivElement>;
+
+    ngAfterViewInit() {
+        // Move the modal overlay to the body to prevent clipping from parent CSS `overflow-hidden`, `transform` or `backdrop-filter`
+        if (this.modalOverlay && this.modalOverlay.nativeElement) {
+            document.body.appendChild(this.modalOverlay.nativeElement);
+        }
+    }
+
+    ngOnDestroy() {
+        // Clean up: remove the modal overlay from the body when the component is destroyed
+        if (this.modalOverlay && this.modalOverlay.nativeElement && this.modalOverlay.nativeElement.parentNode) {
+            this.modalOverlay.nativeElement.parentNode.removeChild(this.modalOverlay.nativeElement);
+        }
+        document.body.style.overflow = '';
+    }
+
     openModal() {
         this.isModalOpen.set(true);
+        document.body.style.overflow = 'hidden';
     }
 
     closeModal() {
         this.isModalOpen.set(false);
+        document.body.style.overflow = '';
     }
 
     /**
@@ -31,8 +51,8 @@ export class ShareButtonsComponent {
      * El usuario humano es redirigido automáticamente al frontend Angular.
      *
      * Ejemplos:
-     *   https://devhubsharks.com/#/project-detail/ABC  →  https://api.devhubsharks.com/api/share/project/ABC
-     *   https://devhubsharks.com/#/course-detail/XYZ   →  https://api.devhubsharks.com/api/share/course/XYZ
+     *   https://devhubsharks.com/project-detail/ABC  →  https://api.devhubsharks.com/api/share/project/ABC
+     *   https://devhubsharks.com/course-detail/XYZ   →  https://api.devhubsharks.com/api/share/course/XYZ
      */
     cleanUrl = computed(() => {
         const current = this.url();

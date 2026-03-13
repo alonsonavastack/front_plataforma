@@ -112,7 +112,7 @@ export class InstructorProfileComponent implements OnInit {
 
     // URL con hash para compatibilidad
     const baseUrl = window.location.origin;
-    return `${baseUrl}/#/instructor/${instructor.slug}`;
+    return `${baseUrl}/instructor/${instructor.slug}`;
   });
 
   // 🆕 FILTROS

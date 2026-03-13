@@ -158,6 +158,9 @@
       </div>
 
       }
+      <!-- 🔥 Botón Compartir -->
+      <app-share-buttons [url]="courseUrl()" [title]="title()" [image]="coverUrl()" design="icon" class="flex-shrink-0">
+      </app-share-buttons>
     </div>
 
     <!-- Botón de acción con estados -->
@@ -184,6 +187,7 @@
                       bg-gradient-to-r from-transparent via-white/10 to-transparent 
                       transition-transform duration-700 ease-out"></div>
       </a>
+
       } @else {
       <button (click)="buyNow()" class="group/btn relative w-full px-4 py-3 rounded-xl font-bold text-sm
                  bg-gradient-to-r from-lime-400 to-emerald-400
@@ -207,6 +211,7 @@
                       bg-gradient-to-r from-transparent via-white/30 to-transparent 
                       transition-transform duration-500 ease-out"></div>
       </button>
+
       }
     </div>
   </div>

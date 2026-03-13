@@ -776,6 +776,10 @@ featuredSafe().length > 0)))
                     class="px-4 py-2 rounded-lg border border-white/20 text-white hover:border-lime-400 hover:text-lime-300 transition text-sm font-semibold">
                     Ver detalles
                   </button>
+                  <!-- 🔥 Botón Compartir Curso -->
+                  <app-share-buttons [url]="buildShareUrl(item)" [title]="item.title"
+                    [description]="item.subtitle || ''" [image]="getCourseImageUrl(item.imagen)" design="icon">
+                  </app-share-buttons>
                   } @else {
                   @if (isProjectPurchased(item._id)) {
                   <button (click)="navigateToProjectDetail(item._id)"
@@ -825,6 +829,10 @@ featuredSafe().length > 0)))
                     </svg>
                     <span class="hidden sm:inline">Ver detalles</span>
                   </button>
+                  <!-- 🔥 Botón Compartir Proyecto -->
+                  <app-share-buttons [url]="buildShareUrl(item)" [title]="item.title"
+                    [description]="item.subtitle || ''" [image]="buildProjectImageUrl(item.imagen)" design="icon">
+                  </app-share-buttons>
                   }
 
                 </div>
