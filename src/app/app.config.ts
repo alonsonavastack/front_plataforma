@@ -4,7 +4,7 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from "@angular/core";
-import { provideRouter, withHashLocation } from "@angular/router";
+import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from "@angular/router";
 
 
 import { routes } from "./app.routes";
@@ -18,7 +18,11 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
 
-    provideRouter(routes, withHashLocation()),
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })
+    ),
     // ✅ Interceptores HTTP (errorInterceptor primero)
     provideHttpClient(withInterceptors([errorInterceptor, authTokenInterceptor])),
     // ✅ Manejador global de errores (captura TODO)

@@ -25,24 +25,35 @@ export class ShareButtonsComponent {
         this.isModalOpen.set(false);
     }
 
-    // Remueve el hash de la URL para que los bots (Facebook, X) puedan leer la ruta correcta en el backend
-    // AHORA: Apuntamos DIRECTO al endpoint de nuestra API que devuelve los meta tags y luego redirige.
+    /**
+     * Transforma la URL del frontend (con #) en la URL del backend que sirve las meta OG tags.
+     * Facebook/WhatsApp leen esa URL y obtienen imagen, título y descripción.
+     * El usuario humano es redirigido automáticamente al frontend Angular.
+     *
+     * Ejemplos:
+     *   https://devhubsharks.com/#/project-detail/ABC  →  https://api.devhubsharks.com/api/share/project/ABC
+     *   https://devhubsharks.com/#/course-detail/XYZ   →  https://api.devhubsharks.com/api/share/course/XYZ
+     */
     cleanUrl = computed(() => {
-        let current = this.url(); // Ej: https://devhubsharks.com/#/project-detail/699...
+        const current = this.url();
 
-        // Extraemos solo el ID del proyecto de la URL final
-        const parts = current.split('/project-detail/');
-        if (parts.length > 1) {
-            const id = parts[1].split('?')[0].split('#')[0]; // Limpiar cualquier query param o sub-hash
-            // Devolvemos la URL directa a la API para que Facebook la lea
-            return `https://api.devhubsharks.com/api/seo/project/${id}`;
+        // Proyecto
+        const projectMatch = current.match(/project-detail\/([a-f0-9]{24})/i);
+        if (projectMatch) {
+            return `https://api.devhubsharks.com/api/share/project/${projectMatch[1]}`;
         }
 
-        // Fallback si no tiene formato esperado
+        // Curso
+        const courseMatch = current.match(/course-detail\/([a-f0-9]{24})/i);
+        if (courseMatch) {
+            return `https://api.devhubsharks.com/api/share/course/${courseMatch[1]}`;
+        }
+
+        // Fallback: devolver URL original
         return current;
     });
 
-    // URLs Computadas con codificación segura
+    // URLs computadas para cada red social
     whatsappUrl = computed(() => {
         const text = `¡Mira este proyecto: ${this.title()}! 🚀\n${this.description() ? this.description() + '\n' : ''}`;
         return `https://api.whatsapp.com/send?text=${encodeURIComponent(text + this.cleanUrl())}`;
@@ -58,9 +69,6 @@ export class ShareButtonsComponent {
     });
 
     linkedinUrl = computed(() => {
-        // LinkedIn ahora solo recomienda pasar la URL en su endpoint offsite
-        // Ellos extraerán el OpenGraph (og:title, og:image) de tu página.
-        // Aún así, podemos enviarlo por compatibilidad
         return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(this.cleanUrl())}`;
     });
 
