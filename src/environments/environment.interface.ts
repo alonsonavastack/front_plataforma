@@ -21,4 +21,5 @@ export interface Environment {
     publishableKey: string;
   };
   telegramBot?: string;
+  googleClientId?: string;
 }

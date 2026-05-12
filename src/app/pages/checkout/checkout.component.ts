@@ -256,7 +256,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     acceptTerms: new FormControl(false, [Validators.requiredTrue]),
     billingName: new FormControl('', [Validators.required]),
     billingEmail: new FormControl('', [Validators.required, Validators.email]),
-    billingPhone: new FormControl('', []),
+    billingPhone: new FormControl('', [Validators.pattern(/^\+?[\d\s\-]{7,15}$/)]),
   });
 
   constructor() {

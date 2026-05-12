@@ -72,6 +72,12 @@ export const routes: Routes = [
       import("./pages/auth/verify-otp").then((m) => m.VerifyOtpComponent),
   },
   {
+    path: "become-instructor",
+    loadComponent: () =>
+      import("./pages/become-instructor/become-instructor").then((m) => m.BecomeInstructorComponent),
+    canActivate: [roleGuard(["cliente"])],
+  },
+  {
     path: "forgot-password",
     loadComponent: () =>
       import("./pages/auth/forgot-password").then((m) => m.ForgotPasswordComponent),

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
 import { WebsocketService } from '../../core/services/websocket.service';
+import { ToastService } from '../../core/services/toast.service';
 import { environment } from '../../../environments/environment';
 import { Subscription } from 'rxjs';
 
@@ -14,6 +15,8 @@ import { Subscription } from 'rxjs';
   templateUrl: './verify-otp.html'
 })
 export class VerifyOtpComponent implements OnInit, OnDestroy {
+  private toast = inject(ToastService);
+
   // Signals
   otpCode = signal('');
   userId = signal<string | null>(null);
@@ -54,25 +57,20 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     return `${seconds}s`;
   });
 
-  // Formatear teléfono para mostrar (ocultar dígitos del medio)
   maskedPhone = computed(() => {
     const phone = this.phone();
     if (!phone || phone.length < 10) return phone;
-
-    // Formato: +52 155 XXXX 1234
     const countryCode = phone.substring(0, 2);
     const areaCode = phone.substring(2, 5);
     const lastDigits = phone.substring(phone.length - 4);
     return `+${countryCode} ${areaCode} XXXX ${lastDigits}`;
   });
 
-  // Validación del código
   isCodeValid = computed(() => {
     const code = this.otpCode();
     return code.length === 6 && /^\d+$/.test(code);
   });
 
-  // Enlace para vincular Telegram
   telegramLink = computed(() => {
     const botUser = environment.telegramBot;
     const uid = this.userId();
@@ -84,20 +82,17 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     const link = this.telegramLink();
     if (link) {
       window.open(link, '_blank');
-      // Mostrar el input después de abrir Telegram
       this.showInput.set(true);
     }
   }
 
   ngOnInit(): void {
-    // Obtener parámetros de la URL
     this.route.queryParams.subscribe(params => {
       const userId = params['userId'];
       const phone = params['phone'];
       const error = params['error'];
 
       if (!userId) {
-
         this.router.navigate(['/register']);
         return;
       }
@@ -105,10 +100,10 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
       this.userId.set(userId);
       this.phone.set(phone || null);
 
-      // Detectar si hubo error al enviar OTP inicial
       if (error === 'otp_not_sent') {
-        this.errorMessage.set('⚠️ Paso 1: Vincula tu cuenta con Telegram para recibir el código.');
-        this.canResend.set(true); // Permitir reenvío inmediato
+        const msg = '⚠️ Paso 1: Vincula tu cuenta con Telegram para recibir el código.';
+        this.errorMessage.set(msg);
+        this.canResend.set(true);
       }
 
       // 🔌 CONECTAR SOCKET PARA RECIBIR OTP AUTOMÁTICAMENTE
@@ -117,13 +112,10 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
       this.socketSubscription = this.websocketService.newOtpCode$.subscribe(
         (data) => {
           if (data && data.code) {
-            console.log('📡 Código OTP recibido por WebSocket:', data.code);
-            // Autocompletar el código
             this.otpCode.set(data.code);
             this.successMessage.set('✨ Código recibido automáticamente');
             this.showInput.set(true);
 
-            // Opcional: Auto-verificar después de un segundo
             setTimeout(() => {
               if (this.isCodeValid()) {
                 this.verifyCode();
@@ -134,17 +126,13 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
       );
     });
 
-    // Iniciar countdown de expiración
     this.startExpirationCountdown();
   }
 
-  // Señal para controlar la visibilidad del input
-  // 🔥 CAMBIO: Por defecto en FALSE para obligar a ver el botón de vincular primero
   showInput = signal(false);
 
   openTelegramInput() {
     this.showInput.set(true);
-    // Reiniciar timer si estaba expirado
     if (this.countdown() === 0) {
       this.resendCode();
     }
@@ -166,7 +154,9 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
         this.countdown.set(current - 1);
       } else {
         this.clearTimers();
-        this.errorMessage.set('El código ha expirado. Solicita uno nuevo.');
+        const msg = 'El código ha expirado. Solicita uno nuevo.';
+        this.errorMessage.set(msg);
+        this.toast.warning('Código expirado', msg);
       }
     }, 1000);
   }
@@ -202,26 +192,25 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
 
   onOtpInput(event: Event): void {
     const input = event.target as HTMLInputElement;
-    let value = input.value.replace(/\D/g, ''); // Solo números
-
-    // Limitar a 6 dígitos
-    if (value.length > 6) {
-      value = value.substring(0, 6);
-    }
-
+    let value = input.value.replace(/\D/g, '');
+    if (value.length > 6) value = value.substring(0, 6);
     this.otpCode.set(value);
     this.errorMessage.set(null);
   }
 
   verifyCode(): void {
     if (!this.isCodeValid()) {
-      this.errorMessage.set('Por favor, ingresa un código de 6 dígitos');
+      const msg = 'Por favor, ingresa un código de 6 dígitos';
+      this.errorMessage.set(msg);
+      this.toast.validationError(msg);
       return;
     }
 
     const userId = this.userId();
     if (!userId) {
-      this.errorMessage.set('Error: No se encontró el ID del usuario');
+      const msg = 'Error: No se encontró el ID del usuario';
+      this.errorMessage.set(msg);
+      this.toast.error('Error', msg);
       return;
     }
 
@@ -232,41 +221,48 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     this.authService.verifyOtp(userId, this.otpCode())
       .subscribe({
         next: (response: any) => {
-
+          // El toast "¡Cuenta verificada!" lo maneja AuthService (verifyOtp tap)
           this.successMessage.set(response.message || '¡Cuenta verificada exitosamente!');
           this.clearTimers();
-
-          // Navegar automáticamente después de 2 segundos
-          setTimeout(() => {
-            // El AuthService ya maneja la navegación según el rol
-          }, 2000);
         },
         error: (error) => {
-
           this.isVerifying.set(false);
 
           if (error.status === 400) {
-            this.errorMessage.set(error.error.message_text || 'Código incorrecto');
+            const msg = error.error.message_text || 'Código incorrecto';
+            this.errorMessage.set(msg);
 
-            // Actualizar intentos restantes
             if (error.error.attemptsRemaining !== undefined) {
               this.attemptsRemaining.set(error.error.attemptsRemaining);
-
               if (error.error.attemptsRemaining === 0) {
-                this.errorMessage.set('Has excedido el número de intentos. Solicita un nuevo código.');
+                const expMsg = 'Has excedido el número de intentos. Solicita un nuevo código.';
+                this.errorMessage.set(expMsg);
+                this.toast.error('Sin intentos restantes', expMsg);
+              } else {
+                this.toast.warning('Código incorrecto', `${msg}. Te quedan ${error.error.attemptsRemaining} intento(s).`);
               }
+            } else {
+              this.toast.warning('Código incorrecto', msg);
             }
+
           } else if (error.status === 403) {
-            this.errorMessage.set('Has excedido el número de intentos. Solicita un nuevo código.');
+            const msg = 'Has excedido el número de intentos. Solicita un nuevo código.';
+            this.errorMessage.set(msg);
             this.attemptsRemaining.set(0);
+            this.toast.error('Sin intentos restantes', msg);
+
           } else if (error.status === 410) {
-            this.errorMessage.set('El código ha expirado. Solicita uno nuevo.');
+            const msg = 'El código ha expirado. Solicita uno nuevo.';
+            this.errorMessage.set(msg);
             this.clearTimers();
+            this.toast.warning('Código expirado', msg);
+
           } else {
-            this.errorMessage.set(error.error?.message_text || 'Ocurrió un error. Inténtalo de nuevo.');
+            const msg = error.error?.message_text || 'Ocurrió un error. Inténtalo de nuevo.';
+            this.errorMessage.set(msg);
+            this.toast.error('Error al verificar', msg);
           }
 
-          // Limpiar el código si es incorrecto
           this.otpCode.set('');
         },
         complete: () => {
@@ -277,13 +273,17 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
 
   resendCode(): void {
     if (!this.canResend() && this.resendCountdown() > 0) {
-      this.errorMessage.set(`Debes esperar ${this.resendCountdown()} segundos antes de reenviar`);
+      const msg = `Debes esperar ${this.resendCountdown()} segundos antes de reenviar`;
+      this.errorMessage.set(msg);
+      this.toast.info('Espera un momento', msg);
       return;
     }
 
     const userId = this.userId();
     if (!userId) {
-      this.errorMessage.set('Error: No se encontró el ID del usuario');
+      const msg = 'Error: No se encontró el ID del usuario';
+      this.errorMessage.set(msg);
+      this.toast.error('Error', msg);
       return;
     }
 
@@ -294,32 +294,28 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     this.authService.resendOtp(userId)
       .subscribe({
         next: (response: any) => {
-
+          // El toast "Código enviado" lo maneja AuthService (resendOtp tap)
           this.successMessage.set(response.message || 'Código reenviado exitosamente');
-
-          // Reiniciar los contadores
-          this.countdown.set(600); // 10 minutos
+          this.countdown.set(600);
           this.startExpirationCountdown();
           this.startResendCountdown();
-
-          // Resetear intentos
           this.attemptsRemaining.set(3);
           this.otpCode.set('');
-          this.showInput.set(true); // Asegurar que el input se muestre al reenviar
+          this.showInput.set(true);
         },
         error: (error) => {
-
-
           if (error.status === 429) {
+            const msg = error.error.message_text || 'Has alcanzado el límite de reenvíos';
+            this.errorMessage.set(msg);
+            this.toast.warning('Límite alcanzado', msg);
             if (error.error.waitSeconds) {
-              this.errorMessage.set(error.error.message_text);
               this.resendCountdown.set(error.error.waitSeconds);
               this.startResendCountdown();
-            } else {
-              this.errorMessage.set(error.error.message_text || 'Has alcanzado el límite de reenvíos');
             }
           } else {
-            this.errorMessage.set(error.error?.message_text || 'Error al reenviar el código');
+            const msg = error.error?.message_text || 'Error al reenviar el código';
+            this.errorMessage.set(msg);
+            this.toast.error('Error al reenviar', msg);
           }
         },
         complete: () => {

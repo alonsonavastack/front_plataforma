@@ -15,6 +15,8 @@ export interface AllUser {
   profession?: string;
   description?: string;
   state: boolean | number;
+  auth_provider?: string;
+  google_id?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -42,6 +44,7 @@ export class UsersService {
   private searchTermSignal = signal<string>('');
   private roleFilterSignal = signal<string>('');
   private stateFilterSignal = signal<boolean | string>('');
+  private authProviderFilterSignal = signal<string>('');
 
   // Computed para usuarios filtrados
   filteredUsers = computed(() => {
@@ -49,6 +52,7 @@ export class UsersService {
     const search = this.searchTermSignal().toLowerCase();
     const role = this.roleFilterSignal();
     const state = this.stateFilterSignal();
+    const authProvider = this.authProviderFilterSignal();
 
     // Filtrar por búsqueda
     if (search) {
@@ -72,6 +76,15 @@ export class UsersService {
       });
     }
 
+    // Filtrar por proveedor de autenticación
+    if (authProvider) {
+      if (authProvider === 'google') {
+        users = users.filter(user => user.auth_provider === 'google');
+      } else if (authProvider === 'local') {
+        users = users.filter(user => !user.auth_provider || user.auth_provider !== 'google');
+      }
+    }
+
     return users;
   });
 
@@ -86,6 +99,10 @@ export class UsersService {
 
   setStateFilter(state: boolean | string): void {
     this.stateFilterSignal.set(state);
+  }
+
+  setAuthProviderFilter(provider: string): void {
+    this.authProviderFilterSignal.set(provider);
   }
 
   // Headers con token

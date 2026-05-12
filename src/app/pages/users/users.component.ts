@@ -27,6 +27,7 @@ export class UsersComponent implements OnInit {
   searchTerm = signal('');
   roleFilter = signal<string>('');
   stateFilter = signal<string>('');
+  authProviderFilter = signal<string>('');
 
   // Stats
   totalUsers = computed(() => this.users().length);
@@ -128,6 +129,13 @@ export class UsersComponent implements OnInit {
     this.stateFilter.set(value);
     this.currentPage.set(1);
     this.usersService.setStateFilter(value === '' ? '' : value === 'true');
+  }
+
+  onAuthProviderFilter(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.authProviderFilter.set(value);
+    this.currentPage.set(1);
+    this.usersService.setAuthProviderFilter(value);
   }
 
   // Modal de cambio de rol
@@ -341,5 +349,12 @@ export class UsersComponent implements OnInit {
   getStateText(user: AllUser): string {
     const isActive = this.isUserActive(user);
     return isActive ? 'Activo' : 'Inactivo';
+  }
+
+  getProviderBadgeClass(provider?: string): string {
+    if (provider === 'google') {
+      return 'bg-white/10 text-white border border-white/20';
+    }
+    return 'bg-slate-500/20 text-slate-400 border border-slate-500/30';
   }
 }

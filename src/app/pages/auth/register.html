@@ -8,59 +8,6 @@
       </div>
 
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
-        <!-- Tipo de cuenta -->
-        <div class="bg-slate-900/50 border border-white/10 rounded-xl p-4 mb-6">
-          <label class="block mb-3 text-sm font-medium text-slate-300">
-            <span class="flex items-center gap-2">
-              <svg class="w-5 h-5 text-lime-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-              </svg>
-              ¿Qué tipo de cuenta deseas?
-            </span>
-          </label>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <label class="relative cursor-pointer">
-              <input type="radio" formControlName="rol" value="cliente" class="peer sr-only" />
-              <div
-                class="p-4 rounded-lg border-2 border-slate-700 peer-checked:border-lime-400 peer-checked:bg-lime-400/10 transition-all hover:border-lime-400/50">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
-                      </path>
-                    </svg>
-                  </div>
-                  <div>
-                    <div class="font-semibold text-white">Estudiante</div>
-                    <div class="text-xs text-slate-400">Aprende y crece</div>
-                  </div>
-                </div>
-              </div>
-            </label>
-
-            <label class="relative cursor-pointer">
-              <input type="radio" formControlName="rol" value="instructor" class="peer sr-only" />
-              <div
-                class="p-4 rounded-lg border-2 border-slate-700 peer-checked:border-lime-400 peer-checked:bg-lime-400/10 transition-all hover:border-lime-400/50">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-full bg-lime-500/20 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-6 h-6 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
-                      </path>
-                    </svg>
-                  </div>
-                  <div>
-                    <div class="font-semibold text-white">Instructor</div>
-                    <div class="text-xs text-slate-400">Enseña y comparte</div>
-                  </div>
-                </div>
-              </div>
-            </label>
-          </div>
-        </div>
 
         <!-- Información personal -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -90,45 +37,6 @@
           <input type="email" id="email" formControlName="email"
             class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
             placeholder="tu@correo.com" required />
-        </div>
-
-        <!-- Campo de teléfono (OBLIGATORIO para OTP) -->
-        <div>
-          <label for="phone" class="block mb-2 text-sm font-medium text-slate-300">
-            <span class="flex items-center gap-2">
-              📱 Teléfono (Telegram) <span class="text-red-400">*</span>
-            </span>
-          </label>
-          <div class="flex gap-2">
-            <div class="w-32">
-              <app-country-code-selector [selectedDialCode]="selectedCountryCode()"
-                (countrySelected)="onCountrySelected($event)"></app-country-code-selector>
-            </div>
-            <input type="tel" id="phone" formControlName="phone"
-              class="flex-1 bg-slate-900/70 border border-slate-700 text-white text-base rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
-              placeholder="Número de Telegram" required />
-          </div>
-          <p class="mt-1 text-xs text-lime-400/80">
-            * Te enviaremos un código de verificación a este Telegram.
-          </p>
-          <p class="text-xs text-lime-400 mt-1 flex items-center gap-1">
-            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                clip-rule="evenodd" />
-            </svg>
-            <span>Selecciona tu país y ingresa tu número de teléfono</span>
-          </p>
-        </div>
-
-        <!-- Campo de profesión (opcional) -->
-        <div>
-          <label for="profession" class="block mb-2 text-sm font-medium text-slate-300">
-            Profesión (Opcional)
-          </label>
-          <input type="text" id="profession" formControlName="profession"
-            class="w-full bg-slate-900/70 border border-slate-700 text-white text-sm rounded-lg focus:ring-lime-500 focus:border-lime-500 block p-2.5"
-            placeholder="Desarrollador, Diseñador..." />
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -178,6 +86,14 @@
           Crear Cuenta
           }
         </button>
+
+        <div class="relative flex py-4 items-center">
+            <div class="flex-grow border-t border-slate-700"></div>
+            <span class="flex-shrink-0 mx-4 text-slate-400 text-sm">O regístrate con</span>
+            <div class="flex-grow border-t border-slate-700"></div>
+        </div>
+
+        <div class="flex justify-center w-full min-h-[44px]" id="google-btn-container"></div>
 
         <div class="text-sm text-center text-slate-400">
           ¿Ya tienes una cuenta? <a routerLink="/login" class="font-medium text-lime-400 hover:underline">Inicia sesión

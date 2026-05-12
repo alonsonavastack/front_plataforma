@@ -1,11 +1,10 @@
-// pages/auth/forgot-password.ts
-import { Component, OnInit, signal, computed, effect, OnDestroy } from '@angular/core';
-
+import { Component, OnInit, signal, computed, OnDestroy, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { HeaderComponent } from '../../layout/header/header';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-forgot-password',
@@ -14,21 +13,19 @@ import { HeaderComponent } from '../../layout/header/header';
   templateUrl: './forgot-password.html'
 })
 export class ForgotPasswordComponent implements OnInit, OnDestroy {
-  // Signals
+  private toast = inject(ToastService);
+
   email = signal('');
   otpCode = signal('');
   newPassword = signal('');
   confirmPassword = signal('');
   currentStep = signal<'email' | 'otp' | 'password'>('email');
   isLoading = signal(false);
-  errorMessage = signal<string | null>(null);
-  successMessage = signal<string | null>(null);
-  countdown = signal(600); // 10 minutos en segundos
+  countdown = signal(600);
   resendCountdown = signal(0);
   canResend = signal(false);
   attemptsRemaining = signal(3);
 
-  // Timers
   private countdownInterval: any;
   private resendInterval: any;
 
@@ -38,7 +35,6 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute
   ) {}
 
-  // Computed
   timeRemaining = computed(() => {
     const seconds = this.countdown();
     const minutes = Math.floor(seconds / 60);
@@ -46,18 +42,13 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   });
 
-  resendTimeRemaining = computed(() => {
-    const seconds = this.resendCountdown();
-    return `${seconds}s`;
-  });
+  resendTimeRemaining = computed(() => `${this.resendCountdown()}s`);
 
-  // Validación del código
   isCodeValid = computed(() => {
     const code = this.otpCode();
     return code.length === 6 && /^\d+$/.test(code);
   });
 
-  // Validación de contraseñas
   isPasswordValid = computed(() => {
     const password = this.newPassword();
     const confirm = this.confirmPassword();
@@ -65,7 +56,6 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    // Obtener parámetros de la URL
     this.route.queryParams.subscribe(params => {
       const step = params['step'];
       const email = params['email'];
@@ -85,154 +75,129 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
     this.clearTimers();
   }
 
-  // Step 1: Solicitar recuperación
   requestRecovery() {
     const email = this.email().trim();
 
     if (!email) {
-      this.errorMessage.set('Por favor ingresa tu email');
+      this.toast.warning('Campo requerido', 'Por favor ingresa tu email');
       return;
     }
 
     this.isLoading.set(true);
-    this.errorMessage.set(null);
 
     this.http.post(`${environment.url}users/request-password-recovery`, { email })
       .subscribe({
-        next: (response: any) => {
+        next: () => {
           this.isLoading.set(false);
-          this.successMessage.set('Código enviado. Revisa tu Telegram.');
-
-          // Redirigir al paso de verificación OTP
+          this.toast.success('Código enviado', 'Revisa tu correo electrónico');
           setTimeout(() => {
             this.router.navigate(['/forgot-password'], {
-              queryParams: { step: 'otp', email: email }
+              queryParams: { step: 'otp', email }
             });
           }, 1500);
         },
         error: (err) => {
           this.isLoading.set(false);
-
-          this.errorMessage.set(
-            err.error?.message_text ||
-            err.error?.message ||
-            'Error al solicitar recuperación. Verifica tu email.'
-          );
+          const msg = err.error?.message_text || err.error?.message || 'Error al solicitar recuperación. Verifica tu email.';
+          if (err.status === 0) {
+            this.toast.networkError();
+          } else if (err.status >= 500) {
+            this.toast.serverError();
+          } else {
+            this.toast.error('Error', msg);
+          }
         }
       });
   }
 
-  // Step 2: Verificar código OTP
   verifyRecoveryCode() {
-    const email = this.email();
-    const code = this.otpCode();
-
     if (!this.isCodeValid()) {
-      this.errorMessage.set('Por favor ingresa un código válido de 6 dígitos');
+      this.toast.warning('Código inválido', 'Por favor ingresa un código válido de 6 dígitos');
       return;
     }
 
     this.isLoading.set(true);
-    this.errorMessage.set(null);
 
-    this.http.post(`${environment.url}users/verify-recovery-otp`, { email, code })
+    this.http.post(`${environment.url}users/verify-recovery-otp`, { email: this.email(), code: this.otpCode() })
       .subscribe({
         next: (response: any) => {
           this.isLoading.set(false);
-          this.successMessage.set('Código verificado correctamente.');
-
-          // Guardar token de recuperación temporalmente
+          this.toast.success('Código verificado', 'Ahora puedes cambiar tu contraseña');
           localStorage.setItem('recoveryToken', response.recoveryToken);
-
-          // Redirigir al paso de cambio de contraseña
           setTimeout(() => {
             this.router.navigate(['/forgot-password'], {
-              queryParams: { step: 'password', email: email }
+              queryParams: { step: 'password', email: this.email() }
             });
           }, 1500);
         },
         error: (err) => {
           this.isLoading.set(false);
-
           if (err.error?.attemptsRemaining !== undefined) {
             this.attemptsRemaining.set(err.error.attemptsRemaining);
           }
-
-          this.errorMessage.set(
-            err.error?.message_text ||
-            err.error?.message ||
-            'Código incorrecto. Inténtalo de nuevo.'
-          );
+          const msg = err.error?.message_text || err.error?.message || 'Inténtalo de nuevo.';
+          if (err.status === 0) {
+            this.toast.networkError();
+          } else if (err.status >= 500) {
+            this.toast.serverError();
+          } else {
+            this.toast.error('Código incorrecto', msg);
+          }
         }
       });
   }
 
-  // Step 3: Cambiar contraseña
   resetPassword() {
-    const newPassword = this.newPassword();
-    const confirmPassword = this.confirmPassword();
-    const recoveryToken = localStorage.getItem('recoveryToken');
-
     if (!this.isPasswordValid()) {
-      this.errorMessage.set('Las contraseñas deben coincidir y tener al menos 6 caracteres');
+      this.toast.warning('Contraseñas inválidas', 'Deben coincidir y tener al menos 6 caracteres');
       return;
     }
 
+    const recoveryToken = localStorage.getItem('recoveryToken');
     if (!recoveryToken) {
-      this.errorMessage.set('Token de recuperación no encontrado. Solicita un nuevo código.');
+      this.toast.error('Token no encontrado', 'Solicita un nuevo código de recuperación.');
       return;
     }
 
     this.isLoading.set(true);
-    this.errorMessage.set(null);
 
-    this.http.post(`${environment.url}users/reset-password`, {
-      recoveryToken,
-      newPassword
-    })
+    this.http.post(`${environment.url}users/reset-password`, { recoveryToken, newPassword: this.newPassword() })
       .subscribe({
-        next: (response: any) => {
+        next: () => {
           this.isLoading.set(false);
-          this.successMessage.set('Contraseña restablecida exitosamente. Redirigiendo al login...');
-
-          // Limpiar token de recuperación
           localStorage.removeItem('recoveryToken');
-
-          // Redirigir al login
+          this.toast.success('Contraseña restablecida', 'Redirigiendo al login...');
           setTimeout(() => {
             this.router.navigate(['/login']);
           }, 2000);
         },
         error: (err) => {
           this.isLoading.set(false);
-          this.errorMessage.set(
-            err.error?.message_text ||
-            err.error?.message ||
-            'Error al restablecer la contraseña. Inténtalo de nuevo.'
-          );
+          const msg = err.error?.message_text || err.error?.message || 'Error al restablecer la contraseña.';
+          if (err.status === 0) {
+            this.toast.networkError();
+          } else if (err.status >= 500) {
+            this.toast.serverError();
+          } else {
+            this.toast.error('Error', msg);
+          }
         }
       });
   }
 
-  // Reenviar código OTP
   resendRecoveryCode() {
-    const email = this.email();
-
-    if (!email) {
-      this.errorMessage.set('Email no encontrado');
+    if (!this.email()) {
+      this.toast.error('Error', 'Email no encontrado');
       return;
     }
 
     this.isLoading.set(true);
-    this.errorMessage.set(null);
 
-    this.http.post(`${environment.url}users/resend-recovery-otp`, { email })
+    this.http.post(`${environment.url}users/resend-recovery-otp`, { email: this.email() })
       .subscribe({
-        next: (response: any) => {
+        next: () => {
           this.isLoading.set(false);
-          this.successMessage.set('Código reenviado. Revisa tu Telegram.');
-
-          // Reiniciar contadores
+          this.toast.success('Código reenviado', 'Revisa tu correo electrónico');
           this.countdown.set(600);
           this.resendCountdown.set(60);
           this.canResend.set(false);
@@ -241,29 +206,30 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.isLoading.set(false);
-
           if (err.error?.waitSeconds) {
             this.resendCountdown.set(err.error.waitSeconds);
             this.startResendCountdown();
           }
-
-          this.errorMessage.set(
-            err.error?.message_text ||
-            err.error?.message ||
-            'Error al reenviar código. Inténtalo de nuevo.'
-          );
+          const msg = err.error?.message_text || err.error?.message || 'Error al reenviar código. Inténtalo de nuevo.';
+          if (err.status === 0) {
+            this.toast.networkError();
+          } else if (err.status === 429) {
+            this.toast.warning('Límite alcanzado', msg);
+          } else if (err.status >= 500) {
+            this.toast.serverError();
+          } else {
+            this.toast.error('Error', msg);
+          }
         }
       });
   }
 
-  // Input handlers
   onOtpInput(event: any) {
     const value = event.target.value.replace(/\D/g, '').slice(0, 6);
     this.otpCode.set(value);
     event.target.value = value;
   }
 
-  // Navegación
   goToLogin() {
     this.router.navigate(['/login']);
   }
@@ -280,7 +246,6 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Timers
   private startExpirationCountdown() {
     this.clearTimers();
     this.countdownInterval = setInterval(() => {
@@ -289,7 +254,7 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
         this.countdown.set(current - 1);
       } else {
         this.clearTimers();
-        this.errorMessage.set('El código ha expirado. Solicita uno nuevo.');
+        this.toast.warning('Código expirado', 'Solicita un nuevo código de recuperación');
         this.canResend.set(true);
       }
     }, 1000);

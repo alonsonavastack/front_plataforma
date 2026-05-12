@@ -1,1 +1,0 @@
-import{a}from"./chunk-VHWY7CKD.js";import"./chunk-NVPNYBPK.js";import"./chunk-NJI6BZLU.js";import"./chunk-DEEZNLO7.js";import"./chunk-IJBPKGLS.js";import"./chunk-NETPWXVZ.js";import"./chunk-ZGVWU7EJ.js";import"./chunk-GPQRKWNL.js";import"./chunk-I4MTPUBM.js";export{a as AdminWalletsComponent};

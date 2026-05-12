@@ -22,5 +22,6 @@ export const environment: Environment = {
   stripe: {
     publishableKey: 'pk_test_51T2cMW2WxgBBW0AaqS2YAdLwVDonQuDiZZqUbpUCzKvWX9WsmYGyqby5Ftd2pPC9YJp46Dl0rvBPYSI9Xw1kfaI9006aRDDcRN'
   },
-  telegramBot: 'ProyectosDevSharksBot'
+  telegramBot: 'ProyectosDevSharksBot',
+  googleClientId: '29745605382-bfa5i85funt4od87or39hot18bn7a6hh.apps.googleusercontent.com'
 };

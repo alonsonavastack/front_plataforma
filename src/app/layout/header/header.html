@@ -144,6 +144,16 @@
               </svg>
               Ver Sitio
             </a>
+            @if (authService.user()?.rol === 'cliente') {
+            <a routerLink="/become-instructor" (click)="isProfileMenuOpen.set(false)"
+              class="flex items-center gap-3 px-4 py-2.5 text-sm text-lime-400 font-medium hover:bg-lime-500/10 transition-colors duration-200">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+              Enseña en Dev Hub Sharks
+            </a>
+            }
             @if (authService.user()?.rol === 'admin' || authService.user()?.rol === 'instructor') {
             <a routerLink="/dashboard" (click)="isProfileMenuOpen.set(false)"
               class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-lime-300 transition-colors duration-200">
@@ -233,6 +243,9 @@
     <div class="pt-4 mt-4 space-y-2 border-t border-gray-700">
       <a [routerLink]="getProfileLink()" (click)="isProfileMenuOpen.set(false)"
         class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/80 hover:text-lime-300">Mi Panel</a>
+      @if (authService.user()?.rol === 'cliente') {
+        <a routerLink="/become-instructor" class="block px-4 py-2 text-sm text-lime-400 font-medium hover:bg-slate-700/80">Enseña en Dev Hub Sharks</a>
+      }
       <button (click)="logout()"
         class="w-full text-left block px-4 py-2 text-sm text-red-400 font-medium hover:bg-slate-700/80">
         Cerrar Sesión
