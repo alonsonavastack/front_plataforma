@@ -99,8 +99,34 @@ export class AuthService {
    */
   currentUserAvatar = computed(() => {
     const user = this.user();
+
+    const buildInitials = () => {
+      if (!user) return 'U';
+      const name = (user.name || '').trim();
+      const surname = (user.surname || '').trim();
+      if (name || surname) {
+        const parts = `${name} ${surname}`.trim().split(/\s+/);
+        const initials = parts.length === 1
+          ? parts[0].charAt(0)
+          : `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`;
+        return initials.toUpperCase();
+      }
+
+      if (user.email) {
+        const local = user.email.split('@')[0];
+        const parts = local.split(/[._\-]/).filter(Boolean);
+        const initials = parts.length
+          ? parts.map(part => part.charAt(0)).join('').slice(0, 2)
+          : local.charAt(0);
+        return initials.toUpperCase();
+      }
+
+      return 'U';
+    };
+
     if (!user?.avatar) {
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent((user?.name || 'U') + '+' + (user?.surname || ''))}&background=a3e635&color=1e293b&bold=true&size=128`;
+      const initials = buildInitials();
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=a3e635&color=1e293b&bold=true&size=128`;
     }
 
     const avatar = user.avatar.trim();

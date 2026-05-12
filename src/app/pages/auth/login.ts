@@ -68,17 +68,26 @@ export class LoginComponent implements AfterViewInit {
   renderGoogleButton() {
     if (typeof window === 'undefined' || !(window as any).google) return;
 
-    (window as any).google.accounts.id.initialize({
-      client_id: environment.googleClientId,
-      callback: this.handleGoogleCredentialResponse.bind(this)
-    });
+    const google = (window as any).google;
+    const buttonOptions = {
+      theme: 'outline',
+      size: 'large',
+      width: 250,
+      type: 'standard',
+      ux_mode: 'popup'
+    };
+
+    if (!google.accounts.id._initializedByApp) {
+      google.accounts.id.initialize({
+        client_id: environment.googleClientId,
+        callback: this.handleGoogleCredentialResponse.bind(this)
+      });
+      google.accounts.id._initializedByApp = true;
+    }
 
     const googleBtnContainer = document.getElementById('google-btn-container');
     if (googleBtnContainer) {
-      (window as any).google.accounts.id.renderButton(
-        googleBtnContainer,
-        { theme: 'outline', size: 'large', width: '100%', type: 'standard' }
-      );
+      google.accounts.id.renderButton(googleBtnContainer, buttonOptions);
     }
   }
 
@@ -99,6 +108,10 @@ export class LoginComponent implements AfterViewInit {
             const msg = err.error?.message_text || 'No existe una cuenta asociada a este perfil de Google.';
             this.errorMessage.set(msg);
             this.toast.error('Cuenta no encontrada', msg);
+          } else if (err.status === 403) {
+            const msg = err.error?.message_text || 'Google no permite este origen. Verifica tu configuración de OAuth.';
+            this.errorMessage.set(msg);
+            this.toast.error('Error con Google', msg);
           } else if (err.status === 0) {
             this.errorMessage.set('No se pudo conectar con el servidor');
             this.toast.networkError();

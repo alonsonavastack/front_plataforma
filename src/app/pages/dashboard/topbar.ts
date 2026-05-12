@@ -150,10 +150,31 @@ export class TopbarComponent implements OnInit, OnDestroy, AfterViewInit {
   /**
    * 🖼️ Construye la URL correcta para el avatar del usuario
    */
-  buildAvatarUrl(avatar?: string, name?: string, surname?: string): string {
+  buildAvatarUrl(avatar?: string, name?: string, surname?: string, email?: string): string {
+    const buildInitials = () => {
+      const fullName = `${name || ''} ${surname || ''}`.trim();
+      if (fullName) {
+        const parts = fullName.split(/\s+/);
+        const initials = parts.length === 1
+          ? parts[0].charAt(0)
+          : `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`;
+        return initials.toUpperCase();
+      }
+
+      if (email) {
+        const local = email.split('@')[0];
+        const parts = local.split(/[._\-]/).filter(Boolean);
+        const initials = parts.length
+          ? parts.map(part => part.charAt(0)).join('').slice(0, 2)
+          : local.charAt(0);
+        return initials.toUpperCase();
+      }
+
+      return 'U';
+    };
+
     if (!avatar) {
-      // Si no tiene avatar, usar UI Avatars
-      const initials = `${name || 'U'}+${surname || 'U'}`;
+      const initials = buildInitials();
       return `https://ui-avatars.com/api/?name=${initials}&background=random&color=fff`;
     }
 
